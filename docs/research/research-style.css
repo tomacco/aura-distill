@@ -180,6 +180,9 @@ header::after {
     margin-bottom: 2rem;
     letter-spacing: 0.02em;
     transition: color 0.2s;
+    position: sticky;
+    top: 1.5rem;
+    z-index: 100;
 }
 .back:hover { color: var(--accent); }
 

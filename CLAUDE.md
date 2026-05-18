@@ -58,5 +58,5 @@ The authoring agent spawns a reviewer in a worktree with zero shared context. Th
 
 ## Branch conventions
 
-- `main` — stable, released (protected: PRs required, enforced on admins)
+- `main` — stable, released (quality gate: REVIEW-PROTOCOL.md)
 - `feature/*` — in-progress work

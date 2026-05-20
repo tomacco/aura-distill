@@ -71,6 +71,20 @@ It is valid to conclude: "we don't know how to solve this yet." Incomplete under
 - When distilling: not every signal deserves encoding. Ask: "will this matter in 5 sessions?" Provisional knowledge stays provisional until battle-tested. A session with 3 corrections and 20 successes is a good session.
 - Silence is a signal: knowledge applied N times without correction → confidence earns its way up. Don't promote on first use. Don't demote on first challenge. Let patterns emerge.
 
+**Frustration tracking.** When the user shows frustration (terse corrections, "not working", repeated "status?" on the same issue, explicit "this is broken"), log it to `{DISTILL_DIR}/frustrations.md`. Format:
+
+```
+## [date] [topic] — [one-line summary]
+Trigger: what happened
+Attempts: what was tried
+Status: unresolved | resolved | parked
+TTL: [30d from creation — auto-expire if not refreshed]
+```
+
+This file has a **30-day TTL per entry**. During distillation, delete entries older than 30 days unless they were refreshed (re-triggered in a recent session). If an entry recurs within its TTL, reset the TTL and increment a `recurrence` counter. Recurrence ≥ 3 = escalate to a knowledge entry (this is a structural problem, not a one-off).
+
+Frustration data survives distillation — it is NOT consumed by /distill. It persists across sessions so patterns emerge. But TTLs keep it from growing forever.
+
 **The SPINE is your memory.** Treat it as authoritative. If you read a file and it says "user prefers X", do X without asking.
 
 ## Always-On User Preferences

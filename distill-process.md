@@ -652,6 +652,22 @@ Memory pressure: X/10 → Y/10
 **Open questions:** (anything ambiguous that needs user input)
 ```
 
+## Step 4b: Frustration maintenance
+
+During every distillation, process `{DISTILL_DIR}/frustrations.md`:
+
+1. **TTL expiry**: Delete entries older than 30 days that were NOT refreshed by a recent session
+2. **Recurrence check**: If a frustration was re-triggered (same topic, within TTL), reset TTL and increment `recurrence` counter
+3. **Escalation**: If `recurrence >= 3`, this is structural. Encode it as a knowledge entry (craft or ops tier) with `[IMPORTANT]` marker. Remove from frustrations.md.
+4. **Resolution**: If a frustration's `status` changed to `resolved` in this session, keep it for 7 more days (in case it recurs), then auto-expire.
+
+Frustrations are NOT consumed by distillation — they persist across sessions. Only TTL expiry and escalation-to-knowledge remove them.
+
+In the distillation report, include:
+- Active frustrations: N (with recurrence counts)
+- Expired this session: N
+- Escalated to knowledge: list
+
 ## Step 5: Compaction (tier maintenance)
 
 After encoding new learnings, maintain tier health:

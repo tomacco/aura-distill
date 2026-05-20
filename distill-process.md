@@ -396,6 +396,19 @@ Every knowledge entry SHOULD include confidence metadata. Format:
 - Update `last_validated` date
 - If crosses threshold (3+) → promote to next level
 
+**Silence-based promotion (overfitting prevention):**
+- Knowledge applied 3+ times with zero corrections → promote `provisional` → `validated`
+- Knowledge applied 10+ times, survived at least 1 challenge → promote to `hardened`
+- Knowledge not applied in 30+ days → flag for review (stale, not necessarily wrong)
+- NEVER promote on first use. A single session is one data point, not a pattern.
+
+**Correction classification (before encoding):**
+Not every correction means the prior was wrong. Classify first:
+- **Calibration** (close but needed tuning) → update in place, keep confidence level
+- **Context shift** (right before, context changed) → note both contexts with `[CONTEXT]` marker
+- **Genuine error** (was wrong) → correct, reset confidence to `provisional`
+This prevents overfit: a context shift is not a bug in the knowledge — it's a boundary condition.
+
 **On paradigm signals (high-confidence correction):**
 - DO NOT silently update
 - Record the correction with context: what changed and why

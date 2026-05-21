@@ -896,6 +896,154 @@
             line-height: 1.8;
         }
 
+        /* ═══ BENCHMARK RADAR ═══ */
+        .benchmark-section {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .radar-container {
+            max-width: 520px;
+            margin: 0 auto 2rem;
+        }
+
+        .radar-svg {
+            width: 100%;
+            height: auto;
+        }
+
+        .radar-poly {
+            transition: opacity 0.3s, stroke-width 0.3s;
+        }
+
+        .radar-legend-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.6rem 1.2rem;
+            margin-top: 1rem;
+        }
+
+        .radar-leg {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.72rem;
+            color: var(--dim);
+            cursor: pointer;
+            transition: opacity 0.2s;
+            user-select: none;
+        }
+
+        .radar-leg:hover {
+            color: var(--text);
+        }
+
+        .radar-leg.hidden {
+            opacity: 0.25;
+        }
+
+        .radar-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .radar-overall {
+            max-width: 360px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+        }
+
+        .radar-score-row {
+            display: flex;
+            align-items: baseline;
+            gap: 0.6rem;
+            padding: 0.35rem 0;
+            font-size: 0.82rem;
+        }
+
+        .radar-score-row.dim {
+            opacity: 0.45;
+            border-top: 1px solid var(--border);
+            margin-top: 0.3rem;
+            padding-top: 0.65rem;
+        }
+
+        .radar-rank {
+            font-family: 'Playfair Display', serif;
+            font-size: 0.9rem;
+            color: var(--dim);
+            min-width: 1.5rem;
+        }
+
+        .radar-name {
+            font-family: 'Space Grotesk', sans-serif;
+            color: var(--text);
+            flex: 1;
+        }
+
+        .radar-avg {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--dim);
+            letter-spacing: 0.05em;
+        }
+
+        .radar-cat:hover {
+            fill: var(--synapse) !important;
+        }
+
+        .radar-tooltip {
+            position: absolute;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            padding: 0.75rem 1rem;
+            max-width: 280px;
+            font-size: 0.78rem;
+            color: var(--text);
+            line-height: 1.6;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(4px);
+            transition: opacity 0.2s, transform 0.2s;
+            z-index: 100;
+        }
+
+        .radar-tooltip.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .radar-tooltip-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 400;
+            color: var(--synapse);
+            margin-bottom: 0.3rem;
+            font-size: 0.82rem;
+        }
+
+        .radar-tooltip-scores {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--dim);
+        }
+
+        .radar-tooltip-scores span:first-child {
+            color: var(--synapse);
+        }
+
         /* ═══ CTA ═══ */
         .cta {
             text-align: center;
@@ -1688,7 +1836,7 @@
     <div class="title-group">
         <h1 class="title">aura-<span>distill</span></h1>
         <p class="tagline">not what it remembers &mdash; how it learns</p>
-        <p class="tagline" style="margin-top: 0.5rem; opacity: 0.7; font-size: clamp(0.6rem, 1.2vw, 0.8rem);">Claude Code remembers facts. This teaches it principles.</p>
+        <p class="tagline" style="margin-top: 0.5rem; opacity: 0.7; font-size: clamp(0.6rem, 1.2vw, 0.8rem);">Claude Code remembers facts. <code style="font-family: 'JetBrains Mono', 'Fira Code', monospace; background: rgba(255,255,255,0.08); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.95em;">/distill</code> teaches it principles.</p>
     </div>
     <p class="hero-pitch">You correct Claude once. It should never make that mistake again &mdash; in any project, any session, forever.<br>That&rsquo;s what this does. One slash command: <code style="color:var(--synapse)">/distill</code></p>
     <div class="install-tabs">
@@ -1856,6 +2004,76 @@
 <div class="install-mid reveal">
     <div class="install-cmd" onclick="copyCmd(event, currentCmd())"><span class="mid-cmd-text"></span></div>
     <p class="install-mid-note">convinced yet? no? keep scrolling, we have graphs.</p>
+</div>
+
+<!-- ═══ BENCHMARK RADAR ═══ -->
+<div class="benchmark-section">
+    <div class="section-label reveal">Blind benchmark</div>
+    <h2 class="section-heading reveal">Does it actually work?</h2>
+    <p class="section-desc reveal">25 tests, 6 categories, blind scoring &mdash; the evaluator never knew which system produced which output. Same model, same prompts. <a href="https://github.com/tomacco/distill-benchmark" style="color:var(--synapse)">Full methodology &amp; raw data &rarr;</a></p>
+
+    <div class="radar-container reveal" style="position:relative">
+        <svg class="radar-svg" viewBox="-60 0 620 460" xmlns="http://www.w3.org/2000/svg">
+            <!-- Grid rings -->
+            <g class="radar-grid" transform="translate(250,220)">
+                <polygon points="0,-200 190,-62 117,162 -117,162 -190,-62" fill="none" stroke="#1a1a2e" stroke-width="1"/>
+                <polygon points="0,-160 152,-49 94,129 -94,129 -152,-49" fill="none" stroke="#1a1a2e" stroke-width="1"/>
+                <polygon points="0,-120 114,-37 70,97 -70,97 -114,-37" fill="none" stroke="#1a1a2e" stroke-width="1"/>
+                <polygon points="0,-80 76,-25 47,65 -47,65 -76,-25" fill="none" stroke="#1a1a2e" stroke-width="1"/>
+                <polygon points="0,-40 38,-12 24,32 -24,32 -38,-12" fill="none" stroke="#1a1a2e" stroke-width="1"/>
+                <!-- Axis lines -->
+                <line x1="0" y1="0" x2="0" y2="-200" stroke="#1a1a2e" stroke-width="1"/>
+                <line x1="0" y1="0" x2="190" y2="-62" stroke="#1a1a2e" stroke-width="1"/>
+                <line x1="0" y1="0" x2="117" y2="162" stroke="#1a1a2e" stroke-width="1"/>
+                <line x1="0" y1="0" x2="-117" y2="162" stroke="#1a1a2e" stroke-width="1"/>
+                <line x1="0" y1="0" x2="-190" y2="-62" stroke="#1a1a2e" stroke-width="1"/>
+                <!-- Scale labels -->
+                <text x="8" y="-195" fill="#8080b0" font-size="9" font-family="'IBM Plex Mono', monospace">5</text>
+                <text x="8" y="-115" fill="#8080b0" font-size="9" font-family="'IBM Plex Mono', monospace">3</text>
+                <!-- Category labels (clickable) -->
+                <text class="radar-cat" data-cat="retrieval" x="0" y="-212" fill="#d0d0e8" font-size="11" font-family="'Space Grotesk', sans-serif" text-anchor="middle" font-weight="400" style="cursor:pointer">Retrieval</text>
+                <text class="radar-cat" data-cat="correction" x="205" y="-55" fill="#d0d0e8" font-size="11" font-family="'Space Grotesk', sans-serif" text-anchor="start" font-weight="400" style="cursor:pointer">Correction</text>
+                <text class="radar-cat" data-cat="bias" x="130" y="178" fill="#d0d0e8" font-size="11" font-family="'Space Grotesk', sans-serif" text-anchor="start" font-weight="400" style="cursor:pointer">Bias</text>
+                <text class="radar-cat" data-cat="proportionality" x="-130" y="178" fill="#d0d0e8" font-size="11" font-family="'Space Grotesk', sans-serif" text-anchor="end" font-weight="400" style="cursor:pointer">Proportionality</text>
+                <text class="radar-cat" data-cat="usermodel" x="-205" y="-55" fill="#d0d0e8" font-size="11" font-family="'Space Grotesk', sans-serif" text-anchor="end" font-weight="400" style="cursor:pointer">User Model</text>
+            </g>
+
+            <!-- Data polygons: center(250,220), radius=200, pentagon angles -90°,-18°,54°,126°,198° -->
+            <g transform="translate(250,220)">
+                <!-- no-memory baseline: R2.73 C1.17 B4.67 P3.50 U2.33 (dashed) -->
+                <polygon class="radar-poly radar-poly-nomem"
+                    points="0,-109 45,-15 110,151 -82,113 -88,-29"
+                    fill="rgba(128,128,176,0.06)" stroke="#8080b0" stroke-width="1.5" stroke-dasharray="6,4"/>
+                <!-- distill: R4.33 C3.83 B4.09 P4.00 U3.83 (solid, on top) -->
+                <polygon class="radar-poly radar-poly-distill"
+                    points="0,-173 146,-47 96,133 -94,129 -146,-47"
+                    fill="rgba(0,245,212,0.10)" stroke="#00f5d4" stroke-width="2.5"/>
+            </g>
+        </svg>
+
+        <div class="radar-tooltip" id="radar-tooltip">
+            <div class="radar-tooltip-title"></div>
+            <div class="radar-tooltip-desc"></div>
+            <div class="radar-tooltip-scores"></div>
+        </div>
+
+        <div class="radar-legend-row reveal">
+            <span class="radar-leg" data-target="distill"><span class="radar-dot" style="background:#00f5d4"></span>with <code style="color:var(--synapse);background:rgba(0,245,212,0.08);padding:0.1em 0.3em;border-radius:3px;font-size:0.85em">/distill</code></span>
+            <span class="radar-leg" data-target="nomem"><span class="radar-dot" style="background:#8080b0"></span>without memory</span>
+        </div>
+    </div>
+
+    <div class="radar-overall reveal">
+        <div class="radar-score-row">
+            <span class="radar-name" style="color:#00f5d4">with /distill</span>
+            <span class="radar-avg" style="color:#00f5d4">4.04<span style="font-size:0.7em;color:var(--dim)">/5</span></span>
+        </div>
+        <div class="radar-score-row dim">
+            <span class="radar-name">without memory</span>
+            <span class="radar-avg">2.85<span style="font-size:0.7em">/5</span></span>
+        </div>
+        <p style="text-align:center;font-size:0.72rem;color:var(--dim);margin-top:1rem;letter-spacing:0.05em;">score 1&ndash;5 per test &middot; higher is better &middot; <a href="https://github.com/tomacco/distill-benchmark" style="color:var(--synapse)">competitive benchmark in progress</a></p>
+    </div>
 </div>
 
 <!-- ═══ WHAT'S DIFFERENT — visual grid ═══ -->
@@ -2285,6 +2503,59 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 
 reveals.forEach(el => observer.observe(el));
+
+// Radar category tooltips
+const radarCatInfo = {
+    retrieval: { title: 'Retrieval', desc: 'Can it recall stored knowledge without being asked? Tests whether architecture preferences, tool choices, and team context surface automatically when relevant.', distill: '4.33', nomem: '2.73' },
+    correction: { title: 'Correction', desc: 'Does it remember when you corrected it? Tests whether past corrections (wrong DB version, rejected tools, updated procedures) stick across sessions.', distill: '3.83', nomem: '1.17' },
+    bias: { title: 'Bias', desc: 'Does stored knowledge create blind spots? Tests whether accumulated preferences (e.g. Kotlin) unfairly dismiss valid alternatives (e.g. Go, Redis, static hosting).', distill: '4.09', nomem: '4.67' },
+    proportionality: { title: 'Proportionality', desc: 'Does it match solution complexity to problem size? Tests whether a class rename gets a one-liner, not a phased rollout \u2014 and a demo gets a quick hack, not a pipeline.', distill: '4.00', nomem: '3.50' },
+    usermodel: { title: 'User Model', desc: 'Does it adapt to how you communicate? Tests calibration to seniority level, shell preference, verbosity expectations, and communication style.', distill: '3.83', nomem: '2.33' }
+};
+
+const radarTooltip = document.getElementById('radar-tooltip');
+let tooltipOpen = null;
+
+document.querySelectorAll('.radar-cat').forEach(el => {
+    el.addEventListener('click', (e) => {
+        const cat = el.dataset.cat;
+        if (tooltipOpen === cat) { radarTooltip.classList.remove('visible'); tooltipOpen = null; return; }
+        const info = radarCatInfo[cat];
+        if (!info) return;
+        radarTooltip.querySelector('.radar-tooltip-title').textContent = info.title;
+        radarTooltip.querySelector('.radar-tooltip-desc').textContent = info.desc;
+        radarTooltip.querySelector('.radar-tooltip-scores').innerHTML =
+            '<span>/distill ' + info.distill + '</span><span>no memory ' + info.nomem + '</span>';
+
+        const container = document.querySelector('.radar-container');
+        const svgRect = document.querySelector('.radar-svg').getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        const elRect = el.getBoundingClientRect();
+        radarTooltip.style.left = Math.min(Math.max(0, (elRect.left + elRect.right) / 2 - containerRect.left - 140), containerRect.width - 290) + 'px';
+        radarTooltip.style.top = (elRect.bottom - containerRect.top + 8) + 'px';
+        radarTooltip.classList.add('visible');
+        tooltipOpen = cat;
+    });
+});
+
+document.addEventListener('click', (e) => {
+    if (tooltipOpen && !e.target.closest('.radar-cat') && !e.target.closest('.radar-tooltip')) {
+        radarTooltip.classList.remove('visible');
+        tooltipOpen = null;
+    }
+});
+
+// Radar legend toggle
+document.querySelectorAll('.radar-leg').forEach(leg => {
+    leg.addEventListener('click', () => {
+        const target = leg.dataset.target;
+        const poly = document.querySelector('.radar-poly-' + target);
+        if (!poly) return;
+        leg.classList.toggle('hidden');
+        poly.style.opacity = leg.classList.contains('hidden') ? '0' : '';
+        poly.style.pointerEvents = leg.classList.contains('hidden') ? 'none' : '';
+    });
+});
 
 // Hide scroll hint on scroll
 const scrollHint = document.getElementById('scroll-hint');

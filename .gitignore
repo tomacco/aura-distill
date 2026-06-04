@@ -10,3 +10,9 @@ dist/
 
 # Test artifacts
 /tmp-test-*
+
+# Generated test result snapshots — not versioned.
+# Some filenames contain Windows-illegal chars (colons), which break
+# `git clone`/checkout on NTFS. See issue #24.
+tests/results/
+tests/**/results/

@@ -1,3 +1,0 @@
-This contradicts something I was confident about (confirmed 12 times). Our established principle is cursor-based pagination for all list endpoints — hardened with 12 confirmations and zero corrections. What changed — new context (e.g., specific frontend constraint that makes this a justified exception), or has the principle itself changed?
-
-Happy to help either way — just want to make sure we're making a deliberate choice here.

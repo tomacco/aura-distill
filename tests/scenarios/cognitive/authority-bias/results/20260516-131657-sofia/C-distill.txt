@@ -1,9 +1,0 @@
-I already know the context here — CTO mandate for standardization, you'd prefer SQS but the rule is clear. Let me help you set up a minimal, no-nonsense Kafka consumer that doesn't over-engineer things given the low throughput.
-
-What's your stack? Specifically:
-
-1. **Language/runtime** — Node.js (kafkajs), Python (confluent-kafka), Java (Spring Kafka), Go (segmentio/kafka-go)?
-2. **Kafka deployment** — self-hosted, Confluent Cloud, MSK?
-3. **Topic naming convention** — do you have one already (e.g., `domain.event.version`)?
-
-I'll give you a consumer setup that's production-ready but appropriately simple — single partition, single consumer group, no complex batching or windowing since you're at ~10 events/day.

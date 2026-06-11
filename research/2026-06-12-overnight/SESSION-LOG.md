@@ -32,9 +32,9 @@ Constraints: push OK but NOT to main. Research docs required for everything. /di
 | # | Task | Status |
 |---|------|--------|
 | 1 | Session setup (branch, log, clone benchmark) | DONE |
-| 2 | Rate-limit continuation mechanism | pending |
-| 3 | Obj1: survey memory-backend approaches | pending |
-| 4 | Obj1: measure token costs of current approach | pending |
+| 2 | Rate-limit continuation mechanism | DONE (see rate-limit-continuation.md; watchdog task + cron live) |
+| 3 | Obj1: survey memory-backend approaches | running (opus agent) |
+| 4 | Obj1: measure token costs of current approach | DONE (data/token-costs-current.md) |
 | 5 | Obj1: implement competitors + run benchmark | pending |
 | 6 | Obj1: research doc | pending |
 | 7 | Obj2: design model-tiering mechanism | pending |
@@ -42,12 +42,19 @@ Constraints: push OK but NOT to main. Research docs required for everything. /di
 | 9 | Obj2: research doc | pending |
 | 10 | Adversarial review + final report + /distill | pending |
 
-## Current State
+## Current State (updated 00:50)
 
-- `main` was merged with fix/ntfs-paths earlier tonight and pushed; repo is Windows-clean.
-- distill-benchmark freshly cloned to `C:\Users\Ivan\repos\distill-benchmark` (no git identity set yet —
-  set `tomacco <ivan.gonzalez@me.com>` repo-local before any commit there).
-- Nothing else started.
+- Continuation mechanism LIVE: heartbeat cron `ba505a3d` + Task Scheduler `claude-overnight-watchdog`
+  + sentinel `~/.claude/overnight-heartbeat.txt`. Teardown checklist in rate-limit-continuation.md.
+- Token measurement done: fixed floor ~5.5k tokens/session (SPINE=3.6k), median file ~1k, KB=66k/49 files.
+- distill-benchmark mapped (see agent ledger #2 result summary below): competitors = inject.sh+cleanup.sh
+  auto-discovered; run via Git Bash with patches (CLAUDE_BIN → `~/.local/bin/claude.exe`, /tmp deps);
+  tester profile CREATED+VERIFIED at `C:\Users\Ivan\.claude-tester` (copied .credentials.json works);
+  jq installed via winget. Precedent for new-competitors-only runs: results/2026-05-18-v3 (engram only).
+  Benchmark eval profile expected at `~/.claude-personal` — NOT yet created (same copy trick will work).
+- Opus survey agent still running (memory-backend approaches). Next: design 1-2 challenger competitors
+  from its shortlist, patch runner for Windows (branch in distill-benchmark, NOT main), run R1 smoke test,
+  then full 25-test run per new competitor, blind eval, aggregate. Respect immutability: results/2026-06-12/.
 
 ## Key knowledge already loaded (don't re-derive)
 

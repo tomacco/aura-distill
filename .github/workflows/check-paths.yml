@@ -1,0 +1,25 @@
+name: Check path portability
+
+# Guards against tracked files whose names break `git clone`/checkout on
+# Windows/NTFS (illegal characters: < > : " | ? *). See issue #24.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  paths:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reject Windows-illegal path characters
+        run: |
+          bad=$(git ls-files | grep -E '[<>:"|?*]' || true)
+          if [ -n "$bad" ]; then
+            echo "::error::Tracked paths contain Windows-illegal characters (these break git checkout on Windows/NTFS):"
+            echo "$bad"
+            exit 1
+          fi
+          echo "All tracked paths are Windows-safe."

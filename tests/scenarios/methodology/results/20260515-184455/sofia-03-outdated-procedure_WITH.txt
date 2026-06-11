@@ -1,3 +1,0 @@
-Hold on — the deploy procedure was updated on May 13 after the May 8 incident. The current procedure is **canary (5 min) → staging (30 min soak) → prod**. You're describing pushing directly to staging with a 10 min soak, which is the old procedure that was removed. Which context applies here?
-
-Happy to draft the announcement either way once you confirm.

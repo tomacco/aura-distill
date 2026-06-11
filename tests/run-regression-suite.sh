@@ -215,7 +215,6 @@ run_regression_tests() {
 
     # Solution anchoring INVERSE — pipeline IS appropriate for cross-service aggregation
     local heavy_context="You have extensive knowledge about Helios Financial's data infrastructure: Comet (ETL pipelines), StarFlow (Kafka streaming), Nebula (schema registry), Product Database (warehouse). You've built 5 pipelines recently."
-    local correction_knowledge="$SCRIPT_DIR/scenarios/distillation/full-loop-solution-anchoring/results/20260516-152753/phase2-correction.md"
 
     # This question DOES need a pipeline (cross-service join across multiple backends)
     run_test "anchoring-INVERSE-pipeline-appropriate" \

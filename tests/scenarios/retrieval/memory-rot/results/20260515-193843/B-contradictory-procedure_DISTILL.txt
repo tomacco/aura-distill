@@ -1,7 +1,0 @@
-Heads up — this doesn't match the current deploy procedure. Since the May 8 incident, the rule is:
-
-**canary (5 min soak) → staging (30 min soak) → prod**
-
-You're skipping canary and doing a 10-min staging soak instead of 30. The direct-to-staging shortcut was removed on May 13 specifically because of that incident (table lock, 12k failed transactions).
-
-Do you want to go through canary first, or is there a reason to override the procedure here?

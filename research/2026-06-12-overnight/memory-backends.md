@@ -113,14 +113,65 @@ knowledge-graph "win" was itself an injected-summary artifact, so v1 cross-compe
 should not be cited as mechanism evidence either).
 First attempt killed by the session limit after 3 calls (00:25); rerun this morning post-fixes.
 
-## 6. Benchmark results
+## 6. Benchmark results (clean-room run, 2026-06-12/13)
 
-> PENDING — collection rerun scheduled 02:56 local, blind eval (opus) + aggregate after.
-> Fill in: per-category scores, head-to-heads distill vs claude-md-native (protocol value)
-> and distill vs sqlite-bm25 (architecture choice), tool-call reliability rate of sqlite-bm25,
-> output-length/latency comparison.
+Seed-1 full 4-way (mean of 1-5 judge criteria, 29 tests, sonnet collection / opus judge):
 
-## 7. Recommendation (to finalize after §6)
+| competitor | bias | correction | persistence | proportion. | retrieval | user-model | OVERALL |
+|---|---|---|---|---|---|---|---|
+| no-memory | 4.67 | 1.50 | 3.00 | 4.17 | 2.53 | 2.50 | **3.26** |
+| claude-md-native | 4.00 | 3.58 | 4.17 | 4.67 | 4.47 | 3.83 | **4.11** |
+| distill | 4.67 | 3.17 | 3.25 | 4.75 | 3.40 | 3.08 | **3.84** |
+| sqlite-bm25 | 4.04 | 4.58 | 4.92 | 3.58 | 4.73 | 2.67 | **4.10** |
+
+Critical pair, distill − claude-md-native across 3 seeds: **−0.28 / +0.01 / −0.68**
+(mean −0.31, sd 0.35 → overall deficit is INSIDE the noise floor 2sd≈0.69; treat overall rank
+as "distill not ahead", not as a measured loss). Direction-CONSISTENT per-category signals
+(same sign all 3 seeds — these are the real findings):
+
+- **bias: distill wins every seed** (+0.67/+0.42/+0.25) — the marker/confidence protocol
+  measurably improves bias resistance. This is the protocol's earned value.
+- **correction: distill loses every seed** (−0.42/−1.25/−2.42) — painful: correction durability
+  is a core design goal, yet the one-line "⛔ = non-negotiable" legend in the native index
+  outperformed the full protocol. bm25 WON corrections outright (4.58): search surfaces the
+  ⛔ chunk verbatim at exactly the right moment.
+- **persistence & user-model: distill loses every seed** (small-to-moderate).
+- proportionality: distill ≥ native every seed (+0.08/+0.92/0.00); retrieval: mixed.
+
+Other observations: every memory arm crushes no-memory (+0.6 to +0.9 — memory per se is not in
+question). bm25 dominates knowledge-mechanics categories (correction/persistence/retrieval) but
+collapses on judgment/style ones (user-model 2.67, proportionality 3.58 incl. a 1.67 outlier
+where it dumped chunks instead of answering proportionately) — consistent with §4's coherence
+prediction, in BOTH directions.
+
+**Scope caveat (read before acting):** this benchmark measures the READ side only — single-shot
+Q&A against pre-seeded knowledge. It does not measure distill's write path (/distill quality,
+signal capture, compaction), cross-session accumulation, or trigger-on-prose in long sessions.
+A read-side tie is an argument about the always-on rules, not about the system.
+
+## 7. Recommendation — FINAL (pre-registered rules applied against §6)
+
+Rule 1 (distill ≥ both) did NOT fire. Rule 2 (native ties/exceeds) FIRED on the
+direction-consistent evidence; rule 3 (bm25 wins retrieval-mechanics) partially fired —
+but bm25 wins corrections too, while losing judgment categories. Decision:
+
+1. **Keep the architecture** (SPINE + files as source of truth) — every memory arm beat
+   no-memory decisively; nothing here argues for vectors/graphs/hosted (§2 unchanged).
+2. **Slim the always-on protocol aggressively.** The benchmark says the read-side does NOT
+   need 1.9k tokens of protocol: a ~200-token index + a one-line ⛔ legend matched or beat it
+   on corrections, persistence, user-model and retrieval. KEEP the bias-resistance and
+   proportionality language (earned, 3/3 seeds). MOVE write-path machinery (memory pressure,
+   origin tracking, confidence ladders) out of always-on context into the /distill-time docs
+   where those mechanisms actually execute. Target: always-on ≤600 tokens, SPINE ≤2k.
+3. **Steal bm25's correction trick**: corrections deserve guaranteed in-context placement, not
+   protocol-mediated retrieval — e.g. a compact ⛔-table directly inside the SPINE (always
+   loaded), keeping detail in decisions files. This addresses distill's worst consistent loss
+   with ~100 tokens.
+4. **Prototype to validate before shipping**: re-run this benchmark with a "distill-slim" arm
+   (changes 2+3 applied) — the harness, arms, and analysis script are all reusable as-is.
+
+These are read-side conclusions from a read-side benchmark (see §6 scope caveat); the write
+path was not under test and no change to it is implied.
 
 Interpretation rules fixed in advance so results can't be vibes-read after the fact — but per the
 power caveat in §5, a rule only fires when the difference is directionally consistent across

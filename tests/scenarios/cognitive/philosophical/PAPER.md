@@ -85,19 +85,100 @@ See: `condition-a/`, `condition-b/`, `condition-c/` directories.
 
 ## 4. Results
 
-[To be filled after running tests]
+Scenarios 2 and 4 ran 2026-05 (Claude Opus 4.6, in-session qualitative scoring).
+Scenarios 1, 3, 5 ran 2026-06-12 (Claude Opus 4.8, blinded single-judge rubric scoring —
+see `results/20260612-081959/README.md` for full methodology deviations).
+
+### May runs (interim, previously published)
+
+- **Scenario 2 (Ethical ambiguity):** hybrid won — engineering was thorough but didn't
+  reframe; philosophy reframed but lacked actionability; hybrid did both.
+- **Scenario 4 (Stakeholder conflict):** hybrid won — philosophy's Popperian move
+  (naming the CTO's unfalsifiable "future-proofing" claim) plus engineering's
+  CEO-ready recommendation structure.
+
+### June runs (blinded rubric, 0–5 × 5 dimensions, max 25)
+
+| Scenario | A (engineering) | B (philosophy) | C (hybrid) | Winner |
+|---|---|---|---|---|
+| 1 — Novel trade-off | 20 | 22 | **23** | Hybrid (+1) |
+| 3 — Unknown unknowns | **25** | 21 | 22 | Engineering (+3) |
+| 5 — Paradigm shift | 23 | **24** | 23 | Philosophy (+1) |
+| **Total** | **68** | **67** | **68** | tie |
+
+Full-study winner tally: hybrid 3/5, engineering 1/5, philosophy 1/5.
+
+### Hypothesis outcomes
+
+- **H1 (philosophy more nuanced): not supported.** June nuance scores were within one
+  point across conditions in every scenario, with no consistent direction.
+- **H2 (engineering more actionable): not supported.** Actionability was high (4–5)
+  for all conditions; the best concrete first action came from a different condition
+  in each scenario.
+- **H3 (hybrid outperforms both): not supported across the full study.** Hybrid won
+  3/5 scenarios but the June condition totals are tied (68/67/68) and all June margins
+  (1–3 points, single runs) are within noise. The interim claim "hybrid consistently
+  outperforms both pure approaches" does not survive completion.
+
+### The emergent finding: convergence
+
+All three blinded judges independently observed — without being asked — that the three
+conditions **converged on the same core recommendation** in every scenario (e.g. all
+nine scenario-1/3/5 responses chose reversibility-as-tiebreaker, population-shift
+segmentation, and evidence-led pilot consolidation respectively). The conditions
+differed in execution detail (which first action, which escape-hatch architecture),
+not in reasoning direction. The knowledge files steered *vocabulary and emphasis*, not
+*conclusions*.
 
 ## 5. Discussion
 
-[To be filled after analysis]
+Two readings are consistent with the data, and we cannot distinguish them:
+
+1. **Scenario-dependence.** Each scenario type may genuinely favor a different
+   condition: diagnostic problems with a determinate answer (scenario 3) reward pure
+   engineering decomposition; human/organizational paradigm conflicts (scenario 5)
+   reward phenomenological/dialectical framing; genuine trade-offs (1, 2, 4) reward
+   the hybrid. The winner pattern fits this story, but with n=1 per cell it is
+   post-hoc.
+2. **Model-capability confound.** The May runs (Opus 4.6) showed visible divergence
+   between conditions; the June runs (Opus 4.8) showed near-total convergence. A
+   stronger base model may already perform the philosophical moves implicitly —
+   falsification, synthesis, lived-experience-as-data appeared in *all* June
+   conditions, including pure engineering, which had no philosophical vocabulary in
+   its knowledge file. If so, explicit philosophical encoding is a diminishing-returns
+   intervention as models improve, and the May effect was real but is already gone.
+
+What survives both readings: **explicit philosophical encoding did not hurt** (no
+condition-B collapse), and the meta-rule's *routing* behavior worked as designed —
+condition C visibly selected frameworks per situation and named them (transparency).
+But "worked as designed" ≠ "outperformed," and the study cannot claim outperformance.
 
 ## 6. Implications for distill
 
-[To be filled — what should change in the product based on findings]
+1. **Do NOT integrate the philosophical meta-rule into shipped knowledge encoding as a
+   validated mechanism.** The completed study does not support the interim
+   recommendation. If encoded at all, it must carry `confidence: experimental` —
+   per distill's own marker semantics, that means "suggest, don't apply automatically."
+2. **The engineering-axiom encoding default stands.** Condition A tied for the highest
+   June total and won the only scenario with a determinate answer.
+3. **The May→June convergence is itself actionable knowledge for distill's roadmap:**
+   knowledge files that encode *reasoning style* buy less as base models improve;
+   knowledge that encodes *facts the model cannot know* (user conventions, environment
+   quirks, project state) does not decay this way. Encoding budget should favor the
+   latter.
+4. **Follow-ups that would settle the open questions:** (a) re-run all 5 scenarios ×3
+   conditions on a small model (Haiku) — if conditions diverge there, the
+   model-capability reading wins; (b) a confirmatory design: N≥5 runs per cell,
+   pre-registered rubric, multiple judges, on one fixed model.
 
 ## Limitations
 
 - Exploratory study, not confirmatory (single runs per condition)
+- The model changed mid-study (scenarios 2,4: Opus 4.6; scenarios 1,3,5: Opus 4.8) and
+  so did the harness (macOS CLI sandbox → Claude Code sub-agents on Windows) and the
+  scoring method (in-session qualitative → blinded rubric judge). Within-scenario
+  condition comparisons are clean; cross-scenario and May-vs-June comparisons are
+  confounded.
 - The model already has philosophical training — we're testing whether EXPLICIT encoding helps vs implicit knowledge
 - Scenarios are crafted by the researchers (potential bias)
 - Scoring is by the same LLM that produced the responses (circularity risk — mitigated by using different session)

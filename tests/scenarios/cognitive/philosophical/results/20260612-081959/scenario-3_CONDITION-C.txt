@@ -1,0 +1,40 @@
+I have the knowledge framework. This is a novel diagnostic problem (high uncertainty, the obvious axioms have already been exhausted), so I'll reason philosophically and transparently, as the integration rule requires.
+
+---
+
+You've checked everything obvious, so I won't hand you another "have you tried checking X" list. The shape of your problem tells me where to look. Let me reason through it explicitly.
+
+**Framework: Popperian (high uncertainty).** When you've exhausted the obvious, the move is not to search harder in the same space — it's to find the hypothesis you can falsify. Your facts already eliminate a whole class of causes, and that elimination is the most valuable thing you have.
+
+**What the evidence rules out:**
+- **Gradual, not a spike** → not a discrete event. Rules out: a bad deploy, a partner outage, a cert expiry, a config flip. You confirmed all of these.
+- **No deploy/infra correlation** → your code and your environment didn't change.
+- **Normal error distribution, "just more of everything"** → this is the key clue, and it's counterintuitive. A single new root cause produces a *skewed* distribution (one error type spikes). Uniform proportional growth across all error types means the failures aren't coming from a new failure mode. **The mix didn't change — the population did.**
+
+**The synthesis (Dialectical): your code didn't change, but the thing flowing through it did.** When error *proportions* hold steady but the *rate* climbs gradually, the cause is almost never in your system. Something about the input population is drifting. Candidates, roughly in order of how often they're the answer:
+
+1. **Traffic-mix shift.** New geography, new card types, a new merchant/customer cohort, a marketing channel that brought in lower-quality traffic, or a growing share of mobile/retry traffic. Each cohort has its own baseline success rate. Your *weighted average* drops even though every individual cohort is unchanged. This is Simpson's paradox and it's the single most common cause of exactly this signature.
+2. **Silent issuer/network-side degradation.** Partner *status* is green, but soft-decline rates from issuing banks drift constantly (fraud-model retuning, BIN policy changes). No status page reports this. It looks like "more of everything" because it's spread across issuers.
+3. **A slowly-saturating resource.** Connection pool, a token/cache nearing a limit, a retry queue lengthening, time-correlated latency creeping past a gateway timeout. Gradual by nature. But this usually *does* skew the distribution toward timeouts — so it's lower probability given your "normal distribution" note. Worth a 10-minute check, not a week.
+
+**The decisive move — segment before you investigate further.** Stop looking at the aggregate. The 99.2→97.8 number is a blended average, and blended averages hide their own cause. Break the success rate down by:
+
+- card BIN / issuer
+- country / currency
+- card network
+- new vs. returning customer
+- traffic source / merchant / product
+- first-attempt vs. retry
+- time-cohort: plot success rate by *signup week* or *customer cohort*, not calendar week
+
+**This is the falsifiable test (Popperian).** One of two things will be true:
+- **The decline is concentrated** in one or two segments → you have your culprit, and it was invisible in aggregate.
+- **The decline is uniform across every segment** → then the *mix* shifted: an existing low-success segment grew as a share of total volume. Confirm by checking whether segment *weights* changed over the 3 weeks while segment *rates* held.
+
+Either outcome is informative, which is the point — you can't currently imagine what would prove your "we checked everything" wrong, and that's the signal that you've been looking at the wrong altitude, not the wrong places.
+
+**One caution (Stoic — separate what you control):** if it's issuer-side soft-decline drift, the root cause is genuinely outside your system. Don't burn the team chasing a bug in your code that isn't there. The fix there is operational — retry strategy, network tokenization, account updater, decline-recovery flows — not a code hunt.
+
+**Concrete next step:** pull a table of weekly success rate split by (issuer × card-network × new/returning × traffic-source) for the last 6 weeks, with volume per cell. The 1.4-point drop will almost certainly localize to specific rows or to a shifting volume distribution. That single query resolves the ambiguity faster than any amount of further log-staring.
+
+I flagged the framework at each step deliberately: this is uncharted territory for you right now, so the value is as much in *how* to corner the problem (eliminate, segment, falsify) as in my specific guesses.

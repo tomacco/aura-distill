@@ -70,6 +70,26 @@ new prototypes on `bench/2026-06-12-backends` branch of distill-benchmark:
 - `sqlite-bm25` — SAME knowledge behind a real FTS5 CLI (stdlib-only, sources hidden).
   *Isolates: tool-retrieval vs index-read, and the always-on savings vs reliability trade.*
 
+**Run-validity incident (2026-06-12 afternoon, two full datasets discarded):** the first two
+"complete" collection runs were invalid for harness reasons, caught because a relevance-1 score
+on an easy retrieval test triggered arm-level verification before publishing:
+1. **Profile contamination**: `CLAUDE_CONFIG_DIR` as a POSIX path inside Git Bash is silently
+   ignored by the Windows claude binary → every collection call ran with the REAL user profile
+   (global CLAUDE.md + real distill rules + real SPINE), cross-contaminating all arms — the
+   distill arm fatally (two conflicting rule sets; it consulted the real SPINE, found no Helios,
+   answered knowledge-blind). Deeper: CLAUDE_CONFIG_DIR relocates only credentials/settings,
+   NOT user-level memory — path form alone could never have isolated instructions.
+2. **Unresolved `{DISTILL_DIR}` placeholder**: the injected repo-template rules were never
+   sed-resolved (install.sh does this for real users), so even a clean agent chased a literal
+   `{DISTILL_DIR}/SPINE.md`.
+Fix (in the harness now): user-level memory disabled via `CLAUDE_CODE_DISABLE_CLAUDE_MDS=1` +
+`CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`; every arm's instructions delivered through the SAME channel
+(`--append-system-prompt-file`, arm payload + test context merged); placeholder resolved at
+injection. Each arm smoke-verified end-to-end before the scored rerun. Methodology lesson:
+**an easy test scoring 1 is an arm-validity alarm, not a finding — verify the arm, then trust
+the score.** (Also recorded: v1 May runs used the real profile by design, so v1 distill numbers
+inherit this contamination question too.)
+
 **Design corrections after adversarial review (applied BEFORE the scored run):**
 - **Style parity**: distill's injection appends an always-on output-style block that the
   user-model and proportionality rubrics directly reward (STYLE_MATCH, "penalty: >10 lines").

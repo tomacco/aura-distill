@@ -40,7 +40,8 @@ Constraints: push OK but NOT to main. Research docs required for everything. /di
 | 7 | Obj2: design model-tiering mechanism | DONE (model-tiering.md — Fable-lean orchestration, routing table, distill-as-compressor) |
 | 8 | Obj2: test mechanism | in progress (live ledger = evidence; tight-loop validation runs tonight — subagents WORK during the limit window, only headless is blocked) |
 | 9 | Obj2: research doc | DONE pending test results fold-in (model-tiering.md) |
-| 10 | Adversarial review + final report + /distill | pending |
+| 10 | Adversarial review + final report + /distill | DONE (2026-06-13) |
+| 11 | distill-slim head-to-head (Ivan-approved follow-up) | IN PROGRESS — slim arm built+smoke-verified (competitors/distill-slim); pipeline running: collect slim into 3 seed dirs + JOINT re-eval all dirs + aggregate. RESUME AFTER 5:20 LIMIT: Task Scheduler job claude-slim-resume fires 05:25+every 30min, runs runner/resume-slim-guard.ps1 (self-guarding, idempotent — NO Claude needed for the pipeline). After ALL DONE in %TEMP%\bench-slim.log: python analysis/analyze-2026-06-12.py (5-arm aware), fold verdict into memory-backends.md §6/§7, commit, report. Watchdog claude-overnight-watchdog re-armed for session revival. |
 
 ## Current State (updated 00:50)
 

@@ -1,6 +1,8 @@
 # Research: Strategic model tiering — Fable 5 lean, Opus/Sonnet for bulk
 
-Status: mechanism designed + exercised live this session; tight-loop validation in progress. 2026-06-12.
+Status: mechanism designed, exercised live all session (data/agent-ledger.md), and validated
+with N=2 clean-context agents (tight-loops methodology): 3/5 routing cases reproduced identically,
+2 ambiguities surfaced and encoded as the routing modifiers below. 2026-06-12.
 
 ## The problem
 
@@ -45,6 +47,21 @@ artifacts; everything else is delegated with a conclusions-only return contract.
 | Design-heavy research, judgment under ambiguity, adversarial review | **opus** | memory-backend survey (58k tokens in subagent, dense report returned) |
 | Specialized factual agents | their default model | claude-code-guide (41k tokens, structured answer returned) |
 | Synthesis, strategy, decisions, final writing, user intent | **Fable main loop** | research docs, run design, go/no-go calls |
+
+### Routing modifiers (added after N=2 clean-agent tight-loop validation)
+
+- **Compound tasks split, never escalate whole.** When work spans rows (explore + judge,
+  research + recommend), the cheaper model does the bulk phase and returns a report; Fable (or
+  opus) does the judgment phase ON the report. Both validators independently hit this gap:
+  "survey npm and recommend two" routed sonnet by one, opus by the other. Rule: bulk → sonnet,
+  recommendation happens at the report level.
+- **Session mode scales the delegation bar.** Autonomous session (user away): delegate per the
+  table. Interactive session: a spawn costs 30s-6min of the USER's time — answer small things
+  directly; delegate only work that takes minutes regardless.
+- **Already-in-context exemption.** If the answer verifiably sits in main-loop context, answer
+  directly. The protection rules guard against LOADING content, not against USING what's loaded.
+- **The <200-line read threshold is a proxy.** The real criterion is context persistence: don't
+  pull anything into Fable context that later turns will re-attend to without benefit.
 
 ### Context-protection rules (main loop)
 

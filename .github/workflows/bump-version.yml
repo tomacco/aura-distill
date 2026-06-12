@@ -6,8 +6,11 @@ on:
     paths-ignore:
       - 'VERSION'
       - 'install.sh'
+      - 'install.ps1'
       - 'docs/header.svg'
+      - 'docs/index.html'
       - 'README.md'
+      - '.github/**'
 
 jobs:
   bump:
@@ -35,14 +38,19 @@ jobs:
           # Update VERSION file
           echo "$new_version" > VERSION
 
-          # Update install.sh
-          sed -i "s/VERSION=\"$current\"/VERSION=\"$new_version\"/" install.sh
+          # Pattern-based substitutions: match ANY x.y.z, not the current version.
+          # Matching the current version literally no-ops silently if a file ever
+          # drifts (this happened: README/header.svg sat at v0.7.0 through 1.1.x).
+          sed -i -E "s/^VERSION=\"[0-9]+\.[0-9]+\.[0-9]+\"/VERSION=\"$new_version\"/" install.sh
+          # [$] avoids backslash-escaping ambiguity for the literal dollar sign
+          sed -i -E "s/^([$]Version[[:space:]]+=[[:space:]]+')[0-9]+\.[0-9]+\.[0-9]+(')/\1$new_version\2/" install.ps1
+          # v1.2.3 in text and v=1.2.3 in the README's svg cache-buster
+          sed -i -E "s/v(=?)[0-9]+\.[0-9]+\.[0-9]+/v\1$new_version/g" docs/header.svg README.md docs/index.html
 
-          # Update header.svg
-          sed -i "s/v$current/v$new_version/g" docs/header.svg
-
-          # Update README.md
-          sed -i "s/v$current/v$new_version/g" README.md
+          # Fail loudly if any file did not pick up the new version
+          for f in VERSION install.sh install.ps1 README.md docs/header.svg docs/index.html; do
+            grep -q "$new_version" "$f" || { echo "::error::$f was not updated to $new_version"; exit 1; }
+          done
 
           echo "new_version=$new_version" >> $GITHUB_ENV
 
@@ -50,6 +58,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add VERSION install.sh docs/header.svg README.md
+          git add VERSION install.sh install.ps1 docs/header.svg docs/index.html README.md
           git commit -m "Bump version to v${new_version} [version-bump]" || echo "No changes to commit"
           git push

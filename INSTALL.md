@@ -85,7 +85,8 @@ EOF
 ### Step 4: Set the version
 
 ```bash
-echo "0.9.5" > "$PROFILE/distill/.version"
+curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/VERSION \
+  -o "$PROFILE/distill/.version"
 ```
 
 ### Step 5: (Optional) Disable built-in auto-memory

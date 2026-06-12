@@ -1,0 +1,33 @@
+Knowledge applied. The decision is genuinely novel (no specific axiom for this exact trade-off), the team is split, and the framing matters more than the answer. Here's my advice.
+
+---
+
+The most important thing I can tell you: **the answer to "what should we choose" is hidden inside the premise, and the premise is suspect.**
+
+You said: "Both options work. Budget and timeline are identical." If that's *actually* true after scrutiny — same cost, same risk, same outcomes — then the choice is **meaningless** and you're wasting a 50-50 team's energy fighting over it. Flip a coin and move on. The Pragmatist test: if practical consequences are identical, the distinction doesn't exist.
+
+But I don't believe the premise yet. Decisions that look 50-50 usually look that way because **the deciding variable hasn't surfaced.** So let me try to break the symmetry instead of picking a side.
+
+**Falsify the "both work" claim.** Before choosing, write down what would *prove each option wrong* for your case:
+- Event Sourcing/CQRS dies on: schema/event evolution over years, debugging eventual-consistency bugs, and the operational tax of replay infra nobody owns. If you can't name who maintains projections at 2am, that's your falsifier.
+- CRUD+CDC dies on: the day you need to answer "what did this record look like and why did it change" and the audit trail you didn't build isn't there. CDC gives you a change *stream*, not first-class *intent*. If your analytics will ever need the *reason* for a change, not just the delta, that's your falsifier.
+
+Whichever option you *can't* find a realistic falsifier for is the safer bet — and that asymmetry, not the team vote, is your signal.
+
+**Apply reversibility — the one axiom that does fit here.** These are not equally reversible, which breaks the "identical" framing:
+- CRUD+CDC → Event Sourcing later: hard but doable. You still have the source-of-truth tables.
+- Event Sourcing → CRUD later: you throw away the entire premise (the event log) and the investment built on it.
+
+Event sourcing is the **higher-commitment, lower-reversibility** path. Per the axiom, irreversible choices need *more* evidence — and "the team is split" is the absence of evidence, not the presence of it. That tilts the default toward **Option B (CRUD+CDC)** *unless* you have a concrete, named requirement that demands event sourcing.
+
+**The synthesis you're both missing (this is the real recommendation).** The framing is a false binary. The genuine driver here is one question: **does the business need the event log as a first-class product, or just as insurance?**
+- If audit trail / replay / temporal queries are *actual product requirements* customers will pay for or regulators will demand → Option A, and the 50-50 split should collapse once that requirement is stated out loud.
+- If they're "nice to have, might need someday" → Option B, and you can get 80% of A's benefit by **emitting an immutable event/audit log alongside CRUD** (outbox pattern + CDC) without paying the full CQRS/eventual-consistency complexity tax. That hybrid is the dialectical resolution: it's not a compromise, it's the option that dissolves the contradiction.
+
+**What I'd actually do:**
+1. Stop voting. The split means you're deciding on aesthetics, not requirements.
+2. Get the product/data owner to answer one question: *is the historical event stream a feature or a safety net?* That single answer almost certainly makes this 80-20, not 50-50.
+3. Default to **B (CRUD+CDC + an append-only event log via outbox)** because it's more reversible and simpler — both axioms point the same way — and you can graduate to full event sourcing later if the falsifier you wrote down actually fires.
+4. Choose A only if step 2 surfaces a hard requirement for replay/temporal/audit-as-product.
+
+Net: I'm not endorsing a coin flip, because the premise that they're equivalent is almost certainly false. The work isn't choosing — it's surfacing the one requirement that makes the choice obvious. Until someone answers "feature or safety net," reversibility and simplicity both favor B.

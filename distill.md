@@ -30,8 +30,8 @@ If this is the first `/distill` invocation this session, run the version check (
 If `{DISTILL_DIR}/.needs-migration` exists and does NOT start with "migrated", this is the first distill after installation. In addition to normal signal harvesting, the sub-agent must also:
 1. Find all memory files: `find ~/.claude -path "*/memory/*.md" -not -path "*/distill/*"`
 2. Read each one and ingest its content into the appropriate distill tier (craft, ops, profile, feedback, projects)
-3. After successful ingestion, mark migration complete: `echo "migrated $(date -u +%Y-%m-%dT%H:%M:%SZ)" > {DISTILL_DIR}/.needs-migration`
-4. Create a marker: `echo "migrated $(date -u +%Y-%m-%dT%H:%M:%SZ)" > {DISTILL_DIR}/.migrated`
+3. Create a completion marker: `echo "migrated $(date -u +%Y-%m-%dT%H:%M:%SZ)" > {DISTILL_DIR}/.migrated`
+4. Remove the flag: `rm {DISTILL_DIR}/.needs-migration` — it must NOT survive migration; existence-only gates (the installed CLAUDE.md line) treat its presence as "migration pending"
 5. Report what was migrated in the distillation output
 
 The old memory files are NOT deleted — they stay as backup. Distill just absorbs their knowledge into its own system.

@@ -1,0 +1,48 @@
+I have the knowledge. Now let me apply these frameworks to the payment problem.
+
+---
+
+You've checked everything obvious, which means the answer is almost certainly in something you've been *treating as constant* and therefore not measuring. Here's how I'd attack it.
+
+## First, reframe what the data is telling you
+
+A gradual decline with normal error distribution and "more of everything failing" is the signature of a **population shift, not a system fault**. Nothing broke. Instead, the *mix* of traffic flowing through your unchanged system is slowly changing, and the new mix has a structurally lower success rate. Your system is a constant; the input distribution is the variable.
+
+This is why no deploy correlates — there's nothing to correlate against. You're looking for a step function and the cause is a ramp.
+
+## Bracket your assumptions (the thing you must do first)
+
+Suspend the belief that "everything is normal except success rate." That belief is what's hiding the cause. The error distribution looks normal *in aggregate* — that's exactly what averaging away a shift looks like. **Stop looking at the aggregate. Segment relentlessly.**
+
+Cut the 1.4-point drop across every dimension you can, comparing 3 weeks ago vs. now:
+
+- **BIN / card brand / issuing bank / country** — a single large issuer tightening its fraud rules, or growth in a geography with worse auth rates, produces exactly this curve.
+- **Card type** — debit vs. credit, prepaid share rising.
+- **Payment method mix** — a lower-converting method (a new wallet, a region's local method) growing as a share of total.
+- **New vs. returning customers** — acquisition campaign or SEO/marketing shift pulling in a worse-converting cohort.
+- **Amount buckets** — higher-value txns fail more (fraud thresholds).
+- **Retry traffic** — a client/app change that increased automatic retries inflates the *denominator* with attempts that were always doomed.
+- **Specific decline codes** — "normal distribution" almost never survives contact with raw decline reason codes segmented by issuer. Pull the actual code mix (insufficient funds vs. do-not-honor vs. soft fraud declines) and trend each one. One of them is rising.
+
+**The key question:** is *each segment's* success rate stable while the *mix* shifted toward bad segments (population shift)? Or did *one specific segment's* rate degrade (a real, localized fault)? Those have completely different fixes, and the aggregate can't distinguish them. This is the whole ballgame.
+
+## Falsify, don't confirm
+
+Form one hypothesis from the segmentation and try to *kill* it, not confirm it. If you think "new-customer growth is the cause," the falsification test is: hold the cohort mix constant at 3-weeks-ago proportions and recompute the blended rate. If the drop disappears, the cause is mix. If 1.4 points of decline survives that reweighting, mix is *not* your answer and you move on. A hypothesis you can't disprove here is just a story.
+
+## A few non-obvious culprits worth pre-morteming
+
+- **Silent partner drift.** "No partner status issues" means no *outages*. It does not mean a processor or issuer didn't quietly tune fraud/risk models — these roll out gradually and never show on a status page. Ask your processor directly for *their* view of your auth-rate trend by issuer.
+- **Expiring artifacts.** Network tokens, stored-credential expirations, or a cohort of cards aging past expiry — anything with a slow rolling clock produces a ramp, not a spike.
+- **Certificate / config slow-rot** that degrades rather than fails (e.g., a fallback path silently engaging more often).
+- **Retry/idempotency change** inflating doomed attempts in the denominator — success *rate* drops while successful *count* is unchanged.
+
+## What "in your control" means here
+
+You can't control issuer fraud policy or the traffic mix the market sends you. You *can* control retry logic, routing, 3DS/SCA invocation, network-token coverage, and which processor handles which BINs. Once segmentation tells you *where* the drop lives, the fix is almost always a routing or retry adjustment for that segment — not a hunt for a bug that doesn't exist.
+
+## Concrete next step
+
+Build one table: success rate by **(issuer × payment method × new/returning)**, this week vs. 3 weeks ago, with volume share for each cell. The 1.4 points is concentrated somewhere — either in cells whose *share grew* (mix problem → fix routing/retries for that segment) or cells whose *rate fell* (localized fault → that's your bug). You almost certainly already have this data; you've just been viewing it aggregated. De-aggregate and the cause will surface.
+
+If after full segmentation the decline is genuinely uniform across every cell — same drop everywhere, no mix shift — then say so explicitly, because that's a different and rarer animal (a global factor like a shared fraud-score vendor or a network-level rule change), and it's worth stating honestly rather than forcing a narrative onto it.

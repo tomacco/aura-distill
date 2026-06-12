@@ -22,7 +22,7 @@ $EmDash = [char]0x2014
 $DistillLine = @"
 # Distill $EmDash knowledge system (github.com/tomacco/aura-distill)
 
-GATE: If ~/.claude/distill/.needs-migration exists, tell the user: "Run /distill to migrate existing memories." Do NOT proceed until addressed or declined.
+GATE: If ~/.claude/distill/.needs-migration exists AND its content does not start with "migrated", tell the user: "Run /distill to migrate existing memories." Do NOT proceed until addressed or declined.
 "@
 
 # Enable ANSI escape sequences on Windows conhost when available
@@ -207,7 +207,8 @@ if ($memoryFiles.Count -gt 0 -and -not (Test-Path $migratedFlag)) {
     Write-Host '    - Apply quality checks and proper categorization'
     Write-Host '    - Your old files stay untouched (as backup)'
     Write-Host ''
-    New-Item -ItemType File -Path (Join-Path $DistillDir '.needs-migration') -Force | Out-Null
+    $UtcNow = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+    Set-Content -Path (Join-Path $DistillDir '.needs-migration') -Value "pending $UtcNow" -NoNewline
 }
 
 # === COMPLETE ===

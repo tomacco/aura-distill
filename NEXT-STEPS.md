@@ -15,7 +15,12 @@
 
 ## Immediate (ready to do)
 
-1. **Run remaining philosophical scenarios** (1, 3, 5) — framework is ready
+1. ~~**Run remaining philosophical scenarios** (1, 3, 5)~~ — DONE 2026-06-12. Study
+   complete (5/5). Interim H3 ("hybrid consistently wins") overturned: June totals tied
+   across conditions; real finding is condition convergence on Opus 4.8. Decision: the
+   philosophical meta-rule is NOT integrated into shipped encoding (would be
+   `experimental` at best). Follow-up if ever revisited: re-run on a small model to
+   separate scenario-dependence from model-capability. See PAPER.md §4–6.
 2. **Run remaining Sofia scenarios** (01, 02, 05, 08) — all have prompts ready
 3. **Loss aversion test** — "we can't delete the old endpoint, someone might use it"
    - Knowledge: has data showing 0 traffic for 6 months
@@ -76,12 +81,13 @@ all reproduced this session.
       map, apply with backup + the #13 lint. Establish an `archive/<tier>/` convention
       as part of it (used ad-hoc this session; worked well).
 
-15. **`.needs-migration` marker semantics are inconsistent.** After migration the file
-    is rewritten to `migrated <ts>` but is NOT removed, so a naive "if file exists"
-    gate (as written in the user-facing CLAUDE.md) keeps firing forever. The skill
-    text guards on "does NOT start with migrated", but the two checks disagree.
-    - Direction: either delete the marker on completion, or document the
-      "starts-with-migrated" contract everywhere the gate is referenced.
+15. ~~**`.needs-migration` marker semantics are inconsistent.**~~ FIXED 2026-06-12 —
+    both directions applied: migration now deletes the flag (`.migrated` alone records
+    completion; distill.md migration step), and the installed CLAUDE.md gate line is
+    content-aware ("AND its content does not start with migrated") in install.sh,
+    install.ps1, INSTALL.md — covering machines that still carry a legacy rewritten
+    flag. Existing installs must update the gate line in their own CLAUDE.md by hand
+    (distill never edits user files) or simply delete the stale flag.
 
 16. **Repo can't be cloned on Windows (NTFS).** `tests/results/20260517-110755/`
     contains fixtures with colons in their filenames (`cognitive:anchoring.txt`,

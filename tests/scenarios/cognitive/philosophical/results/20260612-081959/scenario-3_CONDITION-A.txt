@@ -1,0 +1,45 @@
+I've read the knowledge index and principles. Now let me apply them to the payment problem.
+
+---
+
+The phrase "we have checked everything obvious" is doing a lot of work here, and it's where I want to apply pressure. A gradual decline with normal-looking error distribution and no correlating change is the signature of a problem you can't see because you're aggregating it away. Let me reason from root cause.
+
+## Reframe the symptom
+
+"More of everything failing" with a stable error distribution is itself a clue. A single broken thing produces a *spike in one error type*. A flat 1.4-point erosion across all error types over three weeks means the population you're measuring is *shifting*, not that any one code path broke. The failure isn't in your system — it's in the mix of traffic flowing through it. **Stop looking at the system; start looking at the inputs.**
+
+## The decomposition: a rate is a ratio, and ratios move for two reasons
+
+Success rate = successes / attempts. It can fall because the numerator degrades (something got worse) OR because the denominator's composition changed (the same code now sees harder traffic). You've exhaustively checked the first. The evidence — gradual, uncorrelated, evenly distributed — points hard at the second. **Validate that assumption before building on it.** Don't debug the payment path further until you've ruled out a population shift.
+
+## What to actually do — disaggregate before you debug
+
+The single biggest mistake here is continuing to investigate the aggregate. A blended 97.8% is a weighted average hiding a mix. Re-slice the *same* data you already have along every dimension before touching code:
+
+- **Cohort the decline by time.** Is every segment down 1.4 points, or is one segment cratering while the rest hold flat? Almost always it's the latter. Find the segment.
+- **Slice by:** card BIN / issuing bank, card network, country/region, currency, payment method, customer type (new vs returning), card-on-file vs fresh entry, app version / SDK version, retry vs first-attempt, and amount band.
+- **Plot each slice's volume alongside its success rate.** You're hunting for one of two shapes:
+  1. A segment whose *success rate* is dropping (a specific issuer tightening rules, a specific BIN range, a partner who silently changed behavior even if their status page is green).
+  2. A segment whose *volume* is growing while its success rate is merely *normal-but-low* — a marketing campaign, new geography, or new cohort (e.g. more new users, more of a high-decline card type) mechanically dragging the blended average down with zero change to any code path.
+
+Shape 2 is the one teams miss for weeks, because nothing is "broken." Three weeks of gradual decline matches the ramp of a campaign, an A/B rollout, an SEO/affiliate channel, or a pricing change pulling in a different customer mix.
+
+## Highest-probability root causes, ranked by fit to your evidence
+
+1. **Traffic-mix shift (denominator).** A growing low-quality cohort — new market, new acquisition channel, more first-time/no-CVV/prepaid cards, more retries. Best fit for "gradual + no deploy + normal error distribution."
+2. **Silent issuer/network tightening.** Banks adjust fraud models continuously; no status page reports it. Shows up as rising soft-declines (insufficient funds, do-not-honor, fraud suspicion) concentrated in specific BINs. Check the *issuer decline reason codes*, not your own error buckets.
+3. **A slow-moving internal drift that doesn't look like a deploy:** an expiring cert/token rolling out gradually, a cache or feature flag at increasing rollout %, a data field that's been degrading (e.g. a 3DS or device-fingerprint signal quietly going stale), or a dependency you ramped via config not deploy. Config and flag changes won't show in your deploy correlation — check those changelogs separately.
+4. **Your own funnel upstream.** More attempts reaching the payment step that were never going to succeed (validation loosened, a "retry payment" button added, an abandoned-cart re-prompt). Same code, worse inputs.
+
+## Concrete next steps
+
+1. Pull issuer/gateway **decline reason codes** for the failing transactions and trend each code over the three weeks. One or two codes will be carrying the whole 1.4 points. That single chart usually ends the investigation.
+2. Build the **per-segment success-rate-and-volume** view above. Find the cohort that diverges from the baseline date.
+3. Once you have the diverging segment, ask "what started ramping three weeks ago that feeds this segment" — campaign, channel, geo, flag, A/B test, partner config. That's your `why`.
+
+## Two challenges to your framing
+
+- **"No deploys correlate" is a weaker signal than it feels.** Most gradual payment regressions come from config, feature flags, gradual rollouts, partner-side changes, or traffic shifts — none of which appear in deploy history. The absence of a deploy correlation is exactly what you'd expect for the most likely causes. Don't let it steer you away.
+- **Decide whether 1.4 points is even worth a deep hunt.** If the diverging segment turns out to be a new, structurally-lower-converting market you intentionally opened, the "regression" is just an accounting artifact of a mix change — and the right move is to *segment your SLO by cohort* so a healthy growth decision stops looking like an outage. Verify the cause before you decide it's a problem to fix.
+
+The one-liner: **disaggregate the rate before debugging the system — a flat, gradual, uncorrelated decline is a population shift until proven otherwise, and decline reason codes plus per-segment trends will tell you which population in about an hour.**

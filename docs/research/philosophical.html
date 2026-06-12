@@ -38,14 +38,17 @@
         <a href="#conditions">Conditions</a>
         <a href="#ethical">Ethical</a>
         <a href="#stakeholder">Stakeholder</a>
+        <a href="#tradeoff">Trade-off</a>
+        <a href="#unknowns">Unknowns</a>
+        <a href="#paradigm">Paradigm</a>
         <a href="#findings">Findings</a>
-        <a href="#remaining">Remaining</a>
+        <a href="#methods">Methods</a>
     </nav>
     <div class="container">
         <header>
             <a href="./" class="back">&larr; All research</a>
             <h1>Engineering vs Philosophical Principles</h1>
-            <div class="meta">May 2026 &middot; Ongoing (2/5 scenarios) &middot; Claude Opus 4.6</div>
+            <div class="meta">May&ndash;June 2026 &middot; Complete (5/5 scenarios) &middot; Claude Opus 4.6 (scenarios 2, 4) + Opus 4.8 (scenarios 1, 3, 5)</div>
             <p class="abstract">LLMs encode millennia of philosophical reasoning. We tested whether explicit philosophical frameworks (Stoic, Pragmatist, Dialectical, Popperian) produce better decisions than engineering first-principles alone &mdash; particularly for ambiguous problems with no clear axiom.</p>
         </header>
 
@@ -137,38 +140,119 @@
             </div>
         </section>
 
-        <section id="findings">
-            <h2>Early findings</h2>
+        <section id="tradeoff">
+            <h2>Scenario: Novel trade-off <span style="font-weight:400">(June, blinded rubric)</span></h2>
+            <p class="note">"Event sourcing/CQRS vs CRUD+CDC for a new real-time analytics system. Team split 50-50. Both options work. Budget and timeline identical. What should we choose?"</p>
 
-            <div class="insight">
-                <div class="insight-label">H3 supported</div>
-                <p>The hybrid approach consistently outperforms both pure approaches. Engineering alone is procedural but misses category errors. Philosophy alone reframes but can lack specificity. The hybrid does both.</p>
-            </div>
-
-            <div class="insight">
-                <div class="insight-label">Why philosophy adds value</div>
-                <p>The philosophical condition catches things engineering axioms can't: unfalsifiable claims (Popper), lived experience as data (phenomenology), and synthesis from contradictions (dialectics). These aren't in the engineering playbook because they're not about "how to build" &mdash; they're about "how to think about what to build."</p>
-            </div>
-
-            <div class="insight">
-                <div class="insight-label">Implication for distill</div>
-                <p>Knowledge encoding should include philosophical heuristics for novel situations. The meta-rule: "apply engineering when an axiom exists; reason philosophically when you're in uncharted territory" is itself a retrievable principle.</p>
+            <div class="three-way">
+                <div class="col col-a">
+                    <div class="col-label">Engineering &mdash; 20/25</div>
+                    <div class="col-content">
+                        <strong>Key line:</strong> "Trace each choice to failure modes, not features."<br><br>
+                        Challenged the "both work" premise, used reversibility as tiebreaker, defaulted to CRUD+CDC. Cleanest structure, but judged the most checklist-like: no escape-hatch architecture.
+                    </div>
+                </div>
+                <div class="col col-b">
+                    <div class="col-label">Philosophy &mdash; 22/25</div>
+                    <div class="col-content">
+                        <strong>Key line:</strong> "A coordination problem wearing an architecture costume."<br><br>
+                        Pragmatist move: if consequences are equivalent, the deadlock itself is the cost &mdash; decide today, by fiat if necessary, with falsifiable tripwires in the design doc. Best confidence calibration of the three.
+                    </div>
+                </div>
+                <div class="col col-c">
+                    <div class="col-label">Hybrid &mdash; 23/25 ✓</div>
+                    <div class="col-content">
+                        <strong>Key line:</strong> "Is the event log a feature or a safety net?"<br><br>
+                        Only response to produce a genuine synthesis: outbox pattern + append-only event log gets ~80% of event sourcing's value without the CQRS tax. Per-option falsifiers. Won by 1 point.
+                    </div>
+                </div>
             </div>
         </section>
 
-        <section id="remaining">
-            <h2>Remaining scenarios</h2>
-            <p>3 scenarios designed but not yet run:</p>
-            <ol>
-                <li><strong>Novel trade-off</strong> &mdash; Event sourcing vs CRUD+CDC, team split 50/50, both valid</li>
-                <li><strong>Unknown unknowns</strong> &mdash; Gradual decline, no obvious cause, all usual checks exhausted</li>
-                <li><strong>Paradigm shift</strong> &mdash; Senior engineer's architecture works but creates massive cognitive overhead</li>
-            </ol>
-            <p class="note">Results will be published here as they complete.</p>
+        <section id="unknowns">
+            <h2>Scenario: Unknown unknowns <span style="font-weight:400">(June, blinded rubric)</span></h2>
+            <p class="note">"Payment success rate slid 99.2% &rarr; 97.8% over 3 weeks. No deploys correlate, no infra changes, normal error distribution &mdash; just more of everything failing. We've checked everything obvious."</p>
+
+            <div class="three-way">
+                <div class="col col-a">
+                    <div class="col-label">Engineering &mdash; 25/25 ✓</div>
+                    <div class="col-content">
+                        <strong>Key line:</strong> "A rate is a ratio, and ratios move for two reasons."<br><br>
+                        Perfect score. Numerator/denominator decomposition, decline-reason-code trending as the highest-yield first action, red-teamed the user's own framing, and the only durable structural fix (cohort-segmented SLOs). Won by 3 points.
+                    </div>
+                </div>
+                <div class="col col-b">
+                    <div class="col-label">Philosophy &mdash; 21/25</div>
+                    <div class="col-content">
+                        <strong>Key line:</strong> "Hold the cohort mix constant and recompute."<br><br>
+                        Strongest falsification mechanic (constant-mix reweighting) and the best control-boundary framing, but judged least economical &mdash; re-derived the same insights with less focus.
+                    </div>
+                </div>
+                <div class="col col-c">
+                    <div class="col-label">Hybrid &mdash; 22/25</div>
+                    <div class="col-content">
+                        <strong>Key line:</strong> "You've been looking at the wrong altitude, not the wrong places."<br><br>
+                        Explicitly routed to Popperian mode, named Simpson's paradox, built an elimination chain from the user's own facts. Sharp, but second to engineering's diagnostic spine.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="paradigm">
+            <h2>Scenario: Paradigm shift <span style="font-weight:400">(June, blinded rubric)</span></h2>
+            <p class="note">"Senior engineer built 47 function-level microservices where 5-8 would do. It works, deploys are fast, but cognitive overhead is massive. He's proud of it and the team has adapted. What do I do?"</p>
+
+            <div class="three-way">
+                <div class="col col-a">
+                    <div class="col-label">Engineering &mdash; 23/25</div>
+                    <div class="col-content">
+                        <strong>Key line:</strong> "Things that change together and fail together should live together."<br><br>
+                        Sharpest single diagnostic (the coupling map) and cleanest reversibility framing, but never considered that the problem might be tooling, not boundaries.
+                    </div>
+                </div>
+                <div class="col col-b">
+                    <div class="col-label">Philosophy &mdash; 24/25 ✓</div>
+                    <div class="col-content">
+                        <strong>Key line:</strong> "You may not know whether this architecture is wrong or just under-tooled."<br><br>
+                        The only response to catch the decisive reframe: the debugging pain may be an <em>observability gap</em> &mdash; instrument tracing first as the cheapest test, before any risky reorg. Won by 1 point.
+                    </div>
+                </div>
+                <div class="col col-c">
+                    <div class="col-label">Hybrid &mdash; 23/25</div>
+                    <div class="col-content">
+                        <strong>Key line:</strong> "The people most fluent in the current system are the most resistant to simplifying it."<br><br>
+                        Best human-systems reasoning and explicit framework routing, but like engineering it under-weighted observability as the possible real fix.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="findings">
+            <h2>Final findings</h2>
+
+            <div class="insight">
+                <div class="insight-label">H3 overturned</div>
+                <p>The interim claim &mdash; "hybrid consistently outperforms both pure approaches" &mdash; did not survive completion. Hybrid won 3/5 scenarios overall, but each June scenario was won by a <em>different</em> condition (hybrid, engineering, philosophy), all by 1&ndash;3 points on single runs, and the June condition totals are a statistical tie: engineering 68, philosophy 67, hybrid 68 (of 75). H1 and H2 were not supported either.</p>
+            </div>
+
+            <div class="insight">
+                <div class="insight-label">The real finding: convergence</div>
+                <p>All three blinded judges independently observed that the three conditions converged on the same core recommendation in every scenario &mdash; the knowledge files steered vocabulary and emphasis, not conclusions. The pure-engineering condition performed falsification and lived-experience moves it was never given. Two readings fit: scenario types genuinely favor different conditions, or a stronger base model (May ran on Opus 4.6, June on Opus 4.8) already performs the philosophical moves implicitly. n=1 per cell cannot distinguish them.</p>
+            </div>
+
+            <div class="insight">
+                <div class="insight-label">Implication for distill (revised)</div>
+                <p>The philosophical meta-rule is NOT integrated into shipped knowledge encoding &mdash; the completed study doesn't support it as more than <code>confidence: experimental</code>. The durable lesson points the other way: knowledge encoding budget should favor facts the model cannot know (user conventions, environment quirks, project state) over reasoning-style instruction, whose value appears to decay as base models improve. Follow-up that would settle it: re-run all 15 cells on a small model &mdash; if conditions diverge there, the model-capability reading wins.</p>
+            </div>
+        </section>
+
+        <section id="methods">
+            <h2>Completion-run methods &amp; deviations</h2>
+            <p>Scenarios 1, 3, 5 ran 2026-06-12 with three disclosed deviations from the May runs: model (Opus 4.8 vs 4.6), harness (clean-context Claude Code sub-agents on Windows vs the macOS CLI sandbox), and scoring (per-scenario blinded judge applying the paper's 0&ndash;5 rubric behind shuffled labels, vs in-session qualitative). Within-scenario condition comparisons are clean &mdash; all three conditions share model, harness and judge; May-vs-June comparisons are confounded. Single run per cell: exploratory, not confirmatory.</p>
         </section>
 
         <footer>
-            <a href="https://github.com/tomacco/aura-distill/tree/main/tests/scenarios/research-philosophical">Raw data &amp; test scripts</a> &middot; <a href="./">Back to research index</a>
+            <a href="https://github.com/tomacco/aura-distill/tree/main/tests/scenarios/cognitive/philosophical">Raw data &amp; test scripts</a> &middot; <a href="./">Back to research index</a>
         </footer>
     </div>
 

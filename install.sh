@@ -15,7 +15,7 @@ REPO="https://raw.githubusercontent.com/tomacco/aura-distill/main"
 PROFILE_DIR=""
 DISTILL_LINE='# Distill — knowledge system (github.com/tomacco/aura-distill)
 
-GATE: If ~/.claude/distill/.needs-migration exists, tell the user: "Run /distill to migrate existing memories." Do NOT proceed until addressed or declined.'
+GATE: If ~/.claude/distill/.needs-migration exists AND its content does not start with "migrated", tell the user: "Run /distill to migrate existing memories." Do NOT proceed until addressed or declined.'
 
 # ═══ COLORS & FORMATTING ═══
 CYAN=$(printf '\033[0;36m')

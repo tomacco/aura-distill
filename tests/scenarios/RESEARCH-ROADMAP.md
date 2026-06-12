@@ -17,11 +17,15 @@
 - Fix: "trigger on actions not just questions" — one sentence fixed the behavior
 - Re-test: both pass after fix
 
-### 3. Philosophical Principles
+### 3. Philosophical Principles — COMPLETE (5/5, 2026-06-12)
 - 3 conditions: engineering-only, philosophy-only, hybrid
-- Finding: hybrid consistently outperforms both pure approaches
-- Philosophy adds reframing; engineering adds actionability
-- 2/5 scenarios complete
+- Interim finding (2/5, Opus 4.6): hybrid consistently outperformed — OVERTURNED on completion
+- Final (5/5): each June scenario won by a different condition; June totals a statistical
+  tie (A 68 / B 67 / C 68 of 75); full tally hybrid 3/5, engineering 1, philosophy 1
+- Real finding: all conditions CONVERGE on the same recommendations on Opus 4.8 —
+  knowledge files steered vocabulary, not conclusions
+- Decision: meta-rule NOT integrated into shipped encoding (experimental at best)
+- See tests/scenarios/cognitive/philosophical/PAPER.md §4–6 + results/20260612-081959/
 
 ### 4. Confidence Scoring
 - Assertiveness scales with confidence level ✓

@@ -35,8 +35,8 @@ Constraints: push OK but NOT to main. Research docs required for everything. /di
 | 2 | Rate-limit continuation mechanism | DONE (see rate-limit-continuation.md; watchdog task + cron live) |
 | 3 | Obj1: survey memory-backend approaches | DONE (opus agent; verdict: thin-index+files is the converged design; challengers = BM25 CLI + native CLAUDE.md control) |
 | 4 | Obj1: measure token costs of current approach | DONE (data/token-costs-current.md) |
-| 5 | Obj1: implement competitors + run benchmark | IN PROGRESS — competitors built+smoke-tested on branch bench/2026-06-12-backends of distill-benchmark; FULL RUN KILLED BY SESSION LIMIT (resets 2:50am local); poisoned results/2026-06-12 deleted; idempotent runner/resume-collection.sh ready; one-shot cron 6710b9f7 fires 02:56 to rerun → blind eval (EVAL_MODEL=opus) → aggregate |
-| 6 | Obj1: research doc | in progress (draft pending benchmark numbers) |
+| 5 | Obj1: implement competitors + run benchmark | IN PROGRESS — morning rerun (post-confound-fixes, 1 full seed + 3x critical pair, Ivan-approved): seed-1 + seed-2 collection COMPLETE; seed-3 killed by a SECOND limit (reset 12:50); pipeline re-launched 13:25, idempotent (finishes s3 + 3 opus blind evals + aggregate). NOTE: main aura-distill checkout now owned by ANOTHER session (branch research/philosophical-completion) — overnight work moved to WORKTREE C:\Users\Ivan\repos\aura-distill-overnight; watchdog re-pointed there + test-fired OK |
+| 6 | Obj1: research doc | in progress (complete except §6 scores + final recommendation) |
 | 7 | Obj2: design model-tiering mechanism | DONE (model-tiering.md — Fable-lean orchestration, routing table, distill-as-compressor) |
 | 8 | Obj2: test mechanism | in progress (live ledger = evidence; tight-loop validation runs tonight — subagents WORK during the limit window, only headless is blocked) |
 | 9 | Obj2: research doc | DONE pending test results fold-in (model-tiering.md) |

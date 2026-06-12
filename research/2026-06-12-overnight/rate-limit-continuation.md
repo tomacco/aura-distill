@@ -66,6 +66,40 @@ makes the two layers mutually exclusive in practice.
 3. OS-level scheduler + headless `--continue`, gated on a staleness sentinel, for true death.
 4. After 2026-06-15: prefer pushing bulk work to SDK/headless runs to spare the interactive pool.
 
+## POST-MORTEM (2026-06-12 morning): the mechanism FAILED in production — full RCA
+
+**What happened:** the session limit hit ~01:15 (interactive session included — the subagent pool
+that was alive at 01:05 drained shortly after). The session sat limit-paused until Ivan returned
+~07:58. No layer resumed work after the 2:50 reset. ~5 hours of planned benchmark work lost.
+
+**Why, layer by layer:**
+
+1. **Layer 1 (in-session cron) — architecturally unable to help, now confirmed empirically.**
+   Queued prompts do NOT execute while the client is limit-paused, and they did NOT flush at the
+   2:50 reset. They flushed only on user interaction at ~07:58. Conclusion (new fact, was an
+   "unknown" in the design doc): *in-session scheduling cannot survive an account-wide limit;
+   interactive Claude Code stays paused until a human touches it.*
+2. **Layer 2 (external watchdog) — the layer DESIGNED for exactly this — was dead on arrival.**
+   Task Scheduler fired every 30 min all night; every run exited instantly with 0x80070002
+   ("file not found"): the task action invoked bare `pwsh.exe`, which the Task Scheduler execution
+   context could not resolve. The script never ran once; the log stayed empty. A working layer 2
+   would have resumed at ~03:26.
+3. **New failure mode found this morning:** the tester profile 401'd — a copied
+   `.credentials.json` goes stale when the source profile refreshes its OAuth token. Copied-
+   credential profiles must be re-copied at the start of each run window.
+
+**Root cause (5-whys, systemic):** not the architecture — the deployment. The watchdog task was
+registered but never test-fired. One `Start-ScheduledTask` + log check at registration would have
+exposed the path bug in 30 seconds at 00:45. This is the execution-gap pattern: built the full
+mechanism, skipped the verification step because the build "looked done".
+
+**Encoded fixes:**
+- Scheduled-task registrations MUST use absolute executable paths AND be test-fired immediately,
+  with the log checked, before being trusted. (Applied below.)
+- Auto-continuation across account limits requires an OS-level scheduler path; in-session
+  scheduling is only good for stalls that leave the session responsive.
+- Refresh copied-credential profiles at the start of every run window.
+
 ## Teardown (morning checklist)
 
 - `Unregister-ScheduledTask -TaskName claude-overnight-watchdog -Confirm:$false`

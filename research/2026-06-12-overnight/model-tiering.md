@@ -1,8 +1,9 @@
 # Research: Strategic model tiering — Fable 5 lean, Opus/Sonnet for bulk
 
-Status: mechanism designed, exercised live all session (data/agent-ledger.md), and validated
-with N=2 clean-context agents (tight-loops methodology): 3/5 routing cases reproduced identically,
-2 ambiguities surfaced and encoded as the routing modifiers below. 2026-06-12.
+Status: mechanism designed, exercised live all session (data/agent-ledger.md), and given an
+EXPLORATORY tight-loop pass (N=2 clean-context agents: 3/5 routing cases reproduced identically;
+2 ambiguities surfaced and patched post-hoc as the routing modifiers below — the patched rules
+have NOT been re-tested against held-out cases). 2026-06-12.
 
 ## The problem
 
@@ -20,9 +21,12 @@ Fable context from growing.
 | Sonnet 4.6 (`claude-sonnet-4-6`) | $3 / $15 | ~0.23× | 1M | Bulk delegation default |
 | Haiku 4.5 (`claude-haiku-4-5`) | $1 / $5 | ~0.08× | 200K | Mechanical lookups |
 
-*Includes Fable's new tokenizer counting ~30% more tokens for identical content — its effective
-premium over Opus is ~2.6×, over Sonnet ~4.3×. On subscription (not API billing) the same ratios
-govern usage-limit consumption. Two structural facts sharpen this:
+*Includes Fable's new tokenizer counting ~30% more tokens for identical content (documented in
+Anthropic's Fable 5 migration guide; re-measurable via `count_tokens`, which returns both
+tokenizers' counts). The 2.6×/4.3× effective premium holds **under API billing**. On subscription,
+usage-limit metering is assumed roughly cost-proportional but is NOT verified — model weighting
+inside the limit pool is undocumented. Scope all savings claims accordingly until measured.
+Two structural facts sharpen the case regardless of the exact ratio:
 
 1. **Cache discipline**: switching the main-loop model mid-session invalidates the prompt cache.
    The officially documented workaround (agent-design guidance) is *exactly* the subagent pattern:
@@ -98,14 +102,28 @@ The expensive model never pays output-tokens to retype what the cheap model can 
 - Small targeted reads (<~200 lines) — a delegation round-trip costs more than the read.
 - Anything requiring write access outside the project dir (subagents can't write there — ops/agent-patterns).
 
-## Live evidence (this session's ledger, data/agent-ledger.md)
+## Live evidence (this session's ledger, data/agent-ledger.md) — honest accounting
 
-By the time of writing: 3 delegated agents consumed ~165k tokens at sonnet/opus/default rates and
-returned ~6k tokens of conclusions into Fable context. Had the main loop done that work itself,
-those ~165k tokens (plus tool-call intermediates) would have entered Fable 5 context at ~2.6-4.3×
-the effective cost — and bloated the context that every subsequent Fable turn re-pays attention
-over. The benchmark collection (100+ LLM calls) runs entirely OUTSIDE the session via the runner
-(headless claude, sonnet-pinned) — zero Fable tokens per call.
+Naive version (rejected by adversarial review as inflated): "165k subagent tokens would have
+entered Fable context." Wrong on two counts: each spawn carries fixed scaffolding overhead
+(measured: a trivial haiku probe cost **16.4k tokens** for a 3-word answer — that's the per-spawn
+floor), and exploration agents burn deliberation/tool churn a resident main loop wouldn't duplicate.
+
+The honest comparison per delegation: **(raw content the main loop would otherwise have ingested
++ its own deliberation) × Fable premium − (subagent total at its cheaper rate)** — plus the
+harder-to-price benefit that Fable's context stays small, which every later turn repays.
+
+| Delegation | Bulk the main loop avoided ingesting | Subagent total | Verdict |
+|---|---|---|---|
+| benchmark repo map (sonnet) | ~40-60k tokens of file reads + grep churn | 66k @ sonnet | clear win + context kept lean |
+| memory survey (opus, web) | ~30-50k of pages/snippets | 58k @ opus | win (and work Fable shouldn't burn turns on) |
+| CC docs research | ~20-30k of doc pages | 41k | win |
+| haiku "OK" probe | n/a (experiment) | 16.4k | **net-negative as a lookup pattern** — proves the floor |
+
+Conclusion: delegation pays when the avoided bulk is ≳2× the ~16k spawn floor (i.e. ≳30k tokens
+of would-be context), and is counterproductive below it — which is exactly the <200-line direct-read
+rule. The benchmark collection (100+ calls) runs entirely OUTSIDE the session via the headless
+runner — zero Fable tokens per call; that remains the largest single saving of the night.
 
 ## Adoption plan (proposed, pending Ivan)
 

@@ -70,8 +70,28 @@ new prototypes on `bench/2026-06-12-backends` branch of distill-benchmark:
 - `sqlite-bm25` — SAME knowledge behind a real FTS5 CLI (stdlib-only, sources hidden).
   *Isolates: tool-retrieval vs index-read, and the always-on savings vs reliability trade.*
 
-Not merged with May runs (different Claude version + default model — incomparable).
-First attempt killed by the session limit after 3 calls (00:25); idempotent resume armed for 02:56.
+**Design corrections after adversarial review (applied BEFORE the scored run):**
+- **Style parity**: distill's injection appends an always-on output-style block that the
+  user-model and proportionality rubrics directly reward (STYLE_MATCH, "penalty: >10 lines").
+  The identical block is now injected into claude-md-native and sqlite-bm25, so the ONLY
+  difference between arms is the retrieval mechanism. Without this fix the protocol-value
+  contrast was unidentifiable.
+- **Provenance**: the injected distill rules are a verbatim copy of main @ v1.1.4 (repo template,
+  ~1.7k tokens); the 1,823-token figure in §4 is the user-installed copy with the Always-On
+  section populated. A stale "v2 branch" comment in inject.sh said otherwise; fixed.
+- **Builder-chosen parameters disclosed** (sqlite-bm25 was built by the same author who maintains
+  distill): k=5, OR-only token matching (no AND/phrase fallback), chunking at `##` section level,
+  sources hidden (tool is sole access path). These choices plausibly disadvantage the challenger;
+  any bm25 loss on coherence/precision should trigger a sensitivity re-run (k=8, AND-first) before
+  being believed.
+- **Power**: single run per cell, integer 1-5 LLM-judge scores → one criterion flip moves a
+  category mean by ~0.07-0.33. The benchmark reports DIRECTION and MAGNITUDE; it cannot resolve
+  differences below the (unmeasured) judge noise floor. Conclusions phrased accordingly.
+
+Not merged with May runs (different Claude version + default model — incomparable; note the v1
+knowledge-graph "win" was itself an injected-summary artifact, so v1 cross-competitor orderings
+should not be cited as mechanism evidence either).
+First attempt killed by the session limit after 3 calls (00:25); rerun this morning post-fixes.
 
 ## 6. Benchmark results
 
@@ -82,7 +102,9 @@ First attempt killed by the session limit after 3 calls (00:25); idempotent resu
 
 ## 7. Recommendation (to finalize after §6)
 
-Pre-registered interpretation rules, so results can't be vibes-read after the fact:
+Interpretation rules fixed in advance so results can't be vibes-read after the fact — but per the
+power caveat in §5, a rule only fires when the difference is directionally consistent across
+categories, not on a single overall-mean gap (the ±0.15 band is a heuristic, not a derived bound):
 
 1. **If distill ≥ both challengers overall** → keep architecture; act on token findings only:
    diet the SPINE (3.6k → aim ≤2k: trim per-line "when to read" prose, move detail into files)
@@ -97,9 +119,12 @@ Pre-registered interpretation rules, so results can't be vibes-read after the fa
 4. **If sqlite-bm25 wins outright** → bigger conversation: the index belongs in a tool, not in
    context. Prototype palinode-style operation-based writes before committing.
 
-Either way: **vector DBs, graphs, and hosted memory layers are ruled out at this scale** —
-on evidence, not taste. Revisit the vector question only if the KB grows ~10× (≥500 entries)
-or multi-author vocabulary drift appears (the two regimes where lexical match degrades).
+On vectors/graphs/hosted layers: **no local test was run (excluded by design), so the honest
+claim is weaker than "ruled out"**: contested external evidence consistently points away from
+them at this scale, their dependency cost violates a hard requirement, and no surveyed result
+shows them beating file-based approaches below the context-window crossover. Treat as
+"no case for them today", and revisit if the KB grows ~10× (≥500 entries) or multi-author
+vocabulary drift appears (the two regimes where lexical matching degrades).
 
 ## 8. Sources
 

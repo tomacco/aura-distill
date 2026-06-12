@@ -42,7 +42,8 @@ jobs:
           # Matching the current version literally no-ops silently if a file ever
           # drifts (this happened: README/header.svg sat at v0.7.0 through 1.1.x).
           sed -i -E "s/^VERSION=\"[0-9]+\.[0-9]+\.[0-9]+\"/VERSION=\"$new_version\"/" install.sh
-          sed -i -E "s/^\\\$Version  = '[0-9]+\.[0-9]+\.[0-9]+'/\$Version  = '$new_version'/" install.ps1
+          # [$] avoids backslash-escaping ambiguity for the literal dollar sign
+          sed -i -E "s/^([$]Version[[:space:]]+=[[:space:]]+')[0-9]+\.[0-9]+\.[0-9]+(')/\1$new_version\2/" install.ps1
           # v1.2.3 in text and v=1.2.3 in the README's svg cache-buster
           sed -i -E "s/v(=?)[0-9]+\.[0-9]+\.[0-9]+/v\1$new_version/g" docs/header.svg README.md docs/index.html
 

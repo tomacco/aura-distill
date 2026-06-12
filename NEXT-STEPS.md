@@ -39,6 +39,12 @@
 
 6. **Update landing page results section** with confidence scoring + decision fatigue data
 
+7. **Homebrew formula is stale at v1.0.0** (PR #27 review finding). README advertises
+   `brew install` as the primary macOS path, but the formula pins the v1.0.0 tarball +
+   sha256 and its test asserts "1.0.0". Can't be auto-bumped — needs a release process:
+   cut a git tag for the current version, recompute sha256, update url/sha256/test
+   assertion in `homebrew/Formula/aura-distill.rb`.
+
 ## Structural concerns to investigate
 
 7. Multi-file retrieval reliability (double-standards test showed gaps)

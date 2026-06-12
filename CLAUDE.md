@@ -30,8 +30,14 @@ When developing or testing:
 ## Version management
 
 - Current version is in `VERSION` file (semver)
-- `install.sh` has its own `VERSION` variable that must be kept in sync
-- Bump both when releasing
+- The auto-bump workflow (`.github/workflows/bump-version.yml`) bumps the patch version
+  on every content merge to main and syncs it across `VERSION`, `install.sh`,
+  `install.ps1`, `README.md`, `docs/header.svg`, and `docs/index.html`
+- After editing the workflow, run `./test-version-bump.sh` — it executes the run block
+  verbatim against fixture copies and asserts all six files update
+- The Homebrew formula (`homebrew/Formula/aura-distill.rb`) is NOT auto-bumped: it pins
+  a tagged release tarball + sha256, so updating it requires cutting a git tag and
+  recomputing the hash (manual release step)
 
 ## Key conventions
 

@@ -22,7 +22,7 @@ $EmDash = [char]0x2014
 $DistillLine = @"
 # Distill $EmDash knowledge system (github.com/tomacco/aura-distill)
 
-GATE: If ~/.claude/distill/.needs-migration exists, tell the user: "Run /distill to migrate existing memories." Do NOT proceed until addressed or declined.
+GATE: If ~/.claude/distill/.needs-migration exists AND its content does not start with "migrated", tell the user: "Run /distill to migrate existing memories." Do NOT proceed until addressed or declined.
 "@
 
 # Enable ANSI escape sequences on Windows conhost when available

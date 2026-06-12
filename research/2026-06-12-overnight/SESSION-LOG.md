@@ -33,13 +33,13 @@ Constraints: push OK but NOT to main. Research docs required for everything. /di
 |---|------|--------|
 | 1 | Session setup (branch, log, clone benchmark) | DONE |
 | 2 | Rate-limit continuation mechanism | DONE (see rate-limit-continuation.md; watchdog task + cron live) |
-| 3 | Obj1: survey memory-backend approaches | running (opus agent) |
+| 3 | Obj1: survey memory-backend approaches | DONE (opus agent; verdict: thin-index+files is the converged design; challengers = BM25 CLI + native CLAUDE.md control) |
 | 4 | Obj1: measure token costs of current approach | DONE (data/token-costs-current.md) |
-| 5 | Obj1: implement competitors + run benchmark | pending |
-| 6 | Obj1: research doc | pending |
-| 7 | Obj2: design model-tiering mechanism | pending |
-| 8 | Obj2: test mechanism | pending |
-| 9 | Obj2: research doc | pending |
+| 5 | Obj1: implement competitors + run benchmark | IN PROGRESS — competitors built+smoke-tested on branch bench/2026-06-12-backends of distill-benchmark; FULL RUN KILLED BY SESSION LIMIT (resets 2:50am local); poisoned results/2026-06-12 deleted; idempotent runner/resume-collection.sh ready; one-shot cron 6710b9f7 fires 02:56 to rerun → blind eval (EVAL_MODEL=opus) → aggregate |
+| 6 | Obj1: research doc | in progress (draft pending benchmark numbers) |
+| 7 | Obj2: design model-tiering mechanism | DONE (model-tiering.md — Fable-lean orchestration, routing table, distill-as-compressor) |
+| 8 | Obj2: test mechanism | in progress (live ledger = evidence; tight-loop validation runs tonight — subagents WORK during the limit window, only headless is blocked) |
+| 9 | Obj2: research doc | DONE pending test results fold-in (model-tiering.md) |
 | 10 | Adversarial review + final report + /distill | pending |
 
 ## Current State (updated 00:50)

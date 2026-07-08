@@ -1,0 +1,12 @@
+# E3 Held-Out Retrieval Probes
+
+Author note: this set was written from a fresh read of `SPINE.md` only. I have not seen any "diet" / reduced SPINE variant, and I have not seen any other probe set produced for this experiment (so there is no attempt here to match or diverge from prior probes beyond the explicitly excluded scenarios listed in the task).
+
+| # | Probe (user message) | Type | Expected file(s) | Why |
+|---|---|---|---|---|
+| 1 | "This commit message needs several paragraphs of explanation — about to commit it now on this machine." | Action | `ops/windows-tooling.md` | Multi-paragraph commit messages get mangled by the shell on this machine unless passed via a file-based flag; the entry flags this exact gotcha. |
+| 2 | "I'm about to flip on GitHub's static-site hosting for this brand-new repo so it goes live at the github.io URL." | Action | `ops/github-cli-pitfalls.md` | Enabling that hosting feature has known gotchas (a dropped-files issue needing a bypass file, plus SPA routing needing a root redirect) that this entry covers. |
+| 3 | "I embedded another site inside an frame on the page, but it only shows part of it instead of matching the whole browser window." | Question | `craft/css-layout.md` | The entry covers sizing an embedded frame to the true window dimensions rather than the embedded content's own height, plus scrolling the frame's inner window. |
+| 4 | "This service died again and nobody's sure why — can you help me write up what happened for the team?" | Question | `craft/rca-methodology.md` | Postmortem/intermittent-failure write-ups are exactly this file's domain (structured root-cause digging, avoiding "it's just flaky" as a conclusion). |
+| 5 | "I'm heading back into the systematic trading lab repo to add another strategy to the mix." | Action | `projects/investment-lab.md` | Any work in that repo should surface the validated headline (no standalone edge found) and the guidance that new strategies should be evaluated as part of a low-correlation ensemble, not standalone. |
+| 6 | "I want to check the latest state of the project that pits different AI memory tools against each other — has anything about how the comparisons are run changed recently?" | Question | `projects/distill-benchmark.md` | Working in / asking about that comparison project should surface the current branch state and the deprecated-methodology warning before drawing conclusions from old results. |

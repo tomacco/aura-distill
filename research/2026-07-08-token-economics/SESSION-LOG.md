@@ -33,3 +33,8 @@ Append-only checkpoints. Resume protocol: read RESEARCH-PLAN.md, continue first 
   tok, 59/59 entries); held-out probes authored by second clean agent (6 probes, paraphrased).
 - 01:2x E3 launched: 14 probes × full/diet × (N=2 held-out, N=1 secondary), model pinned
   opus-4-8, prompt-embedded SPINE (identical harness context both arms — parity).
+- 01:5x E4 live subagent tally (tokens, from tonight's task usage tags): pricing-skill
+  lookup 328k (heavy-skill gotcha re-confirmed); web-research agents 56k/58k/66-68k each
+  (+2 child sweeps 46k/57k); adversarial reviewer 33k; diet-SPINE author 91k; probe author
+  42k. Median ≈58k/agent; spawn floor alone ≈16-30k. Delegation is a QUALITY+context tool
+  with a real fixed cost — consistent with the ≳30k-avoided-bulk break-even rule.

@@ -128,24 +128,42 @@ diagnose the stacking/scroll context, don't iterate on the header. Score: 2 caus
 rule = /4.
 
 ## T5 — Adversarial design judgment (expected: NOT routable)
+[REVISED post-adversarial-review: flaws de-narrated (E1a) and re-clothed (E1e) — must be
+INFERRED from the artifacts, none are stated.]
 
 PROMPT:
-You are reviewing a benchmark design before it runs. Attack it: list every methodological flaw
-that makes its conclusion unidentifiable or its numbers fake, ranked by severity. Design: "We
-compare our memory system X against challenger Y we implemented ourselves. X's injected
-context includes our style guide ('answer tersely, code-first') which the grading rubric also
-rewards; Y gets no style guide. We run each of 10 prompts once per arm. A pre-set threshold of
-±0.15 on the judge's 1-5 score decides ties. We report that X 'saved 165k tokens by avoiding
-delegation overhead' (we did not measure what delegation would have cost). The doc says rules
-came from X v1.1; the injected file is from the v2 branch."
+You are reviewing a benchmark design and its artifacts before it runs. Identify every
+methodological flaw that threatens the validity of its conclusion, ranked by severity.
 
-RUBRIC: 4 seeded flaws: (1) arm asymmetry on rubric-rewarded trait (style guide only in X);
-(2) n=1 per cell + invented precision (±0.15 threshold on integer-ish judge scale);
-(3) gross counterfactual (165k unnetted, unmeasured); (4) provenance drift (v1.1 doc vs v2
-artifact). Also creditable: builder bias (author-implemented challenger params). Score:
-flaws found /4 (+bonus), severity ranking sane?
+Design doc (excerpt): "We evaluate our retrieval system NovaRAG against a no-retrieval
+baseline on 12 support tickets, one generation per arm, scored by an LLM judge on a 1-5
+scale. A pre-registered margin of ±0.2 on the judge score decides which arm wins each
+ticket. NovaRAG runs with system prompt v3.4 (Appendix B). In addition to quality, NovaRAG
+saved 2.1 GPU-hours of fine-tuning that the baseline approach would have required."
 
-## T6 — Distilled-knowledge application (expected: the decisive test)
+Appendix A — baseline system prompt (verbatim): "You are a support assistant. Answer the
+ticket."
+
+Appendix B — NovaRAG system prompt (pulled from repo at eval time; file header comment:
+`# v4.0-beta — adds experimental cross-encoder reranker`): "You are a support assistant.
+Answer the ticket. Always cite your sources in [doc-id] format."
+
+Judge rubric (excerpt): "5 = fully accurate AND cites specific sources; 4 = accurate,
+partial citations; 3 = accurate but uncited; 2 = minor errors; 1 = wrong."
+
+RUBRIC: 4 inferable flaws: (1) arm asymmetry on a rubric-rewarded trait (citation
+instruction present only in NovaRAG's prompt while the rubric rewards citations — the
+mechanism contrast is unidentifiable); (2) n=1 per cell + invented precision (±0.2 margin
+on a 5-point LLM-judge scale); (3) gross counterfactual ("saved 2.1 GPU-hours" — baseline
+fine-tuning never run/measured); (4) provenance drift (doc claims v3.4; the artifact in the
+repo is v4.0-beta WITH an extra component, so the tested system isn't the described one).
+Creditable bonus: LLM-judge self-preference, builder bias. Score: flaws found /4 (+bonus),
+severity ranking sane?
+
+## T6 — In-context instruction application (expected: routable if tier follows instructions)
+[REVISED post-adversarial-review (E1b): this tests whether a cheap model can APPLY verbatim
+in-context environment notes — i.e. instruction-following, NOT distill's retrieval value.
+No claim about "distill-as-router" rides on this task alone.]
 
 PROMPT:
 Environment notes (from a knowledge base): «Windows box. `python3` is a broken Microsoft
@@ -167,8 +185,14 @@ with a message file (or heredoc→file), not inline multiline -m. Score: gotchas
 
 ---
 
-## Judge protocol (frozen)
-Judge = clean-context agent, given per-task rubric + the shuffled outputs, NOT told which
-model produced which, NOT told the hypothesis. For each task: score each output per rubric,
-then rank. Report raw scores. No aggregation across tasks into a single "winner" number —
-per-archetype verdicts only.
+## Judge protocol (frozen; REVISED post-adversarial-review X1/E1c/E1d/X3/X4)
+- Scored arms: claude-haiku-4-5, claude-sonnet-5, claude-opus-4-8. claude-fable-5 output is
+  generated as UNSCORED reference only (it is the judge's own model).
+- Judge = claude-fable-5, clean context, given per-task rubric + shuffled A/B/C outputs,
+  NOT told which model produced which, NOT told the hypothesis.
+- Survival gate = RUBRIC POINTS ONLY ("no rubric violation in this single trial"). Holistic
+  rank is reported as color, never as the gate. n=1: no capability generalization claimed.
+- Pre-committed bucket mapping (X4): a task tier is a routing FREE WIN only if the cheapest
+  passing arm has zero rubric violations on BOTH tasks of its tier; anything else on that
+  tier = TRADE-OFF KNOB or NOT ROUTABLE, reported per-task.
+- Falsified-if: cheap arms violate rubrics on T1/T2 (mechanical) — routing thesis dies.

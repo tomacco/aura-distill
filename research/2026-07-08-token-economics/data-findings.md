@@ -21,12 +21,17 @@ Decomposition (share of $): cache reads 0.51 (Fable) / 0.57 (Opus); 1h cache wri
 0.22; output 0.15 / 0.21; fresh input 0.004.
 **Generated work is ~15-20% of cost; ~85% is re-reading and re-writing context.**
 
-## F3 — Counterfactual context caps (cost bounds, not behavior claims)
-Holding output + fresh input constant, scaling cache traffic to a capped mean context:
-cap 150k → save 19% · cap 100k → save 40% · cap 60k → save 57% ($496/window).
-Assumption disclosed: linear scaling of cache traffic with resident context; capping context
-can change behavior/quality — treat as upper-bound sizing of the lever, to be validated by
-the harness-hygiene practices (aggressive /clear, subagent bulk work, leaner always-on context).
+## F3 — Counterfactual context caps (UNACHIEVABLE UPPER BOUNDS, not savings)
+[Reframed per adversarial review E5a/E5b.] Holding output + fresh input constant, scaling
+cache traffic linearly to a capped mean context: cap 150k → −19% · cap 100k → −40% ·
+cap 60k → −57% of window cost.
+These are SENSITIVITY figures, not achievable savings: much of that context was USED by the
+work; capping it changes behavior and quality in unknown ways. The mechanism cost of
+approaching the bound: lost in-session recall, more re-reads, higher orchestration effort
+(aggressive /clear, subagent bulk work, leaner always-on context). TTL assumption: re-price
+keeps the observed hit pattern scaled linearly; usage is ~100% 1h-TTL cache writes (5m ≈ 0
+in the data), so no expiry-pattern modeling is attempted. Read as: "context posture is where
+the money is," not "$X can be saved."
 
 ## F4 — Distill overhead, measured precisely
 - Session-start floor: ~5.5k tokens (SPINE 3.6k + monitor); as one-off read: **$0.006/session**.

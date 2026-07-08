@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Economics — aura-distill Research</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,400;0,7..72,600;1,7..72,300;1,7..72,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="research-style.css">
+</head>
+<body>
+    <button class="mode-toggle" onclick="toggleMode()" aria-label="Toggle dark mode">
+        <span class="icon-sun">☀</span>
+        <span class="icon-moon">☽</span>
+    </button>
+    <nav class="toc">
+        <a href="#question">Question</a>
+        <a href="#method">Method</a>
+        <a href="#anatomy">Cost anatomy</a>
+        <a href="#ledger">The distill ledger</a>
+        <a href="#friction">Friction curves</a>
+        <a href="#diet">SPINE diet</a>
+        <a href="#verdict">Verdict</a>
+        <a href="#limits">Limitations</a>
+    </nav>
+    <div class="container">
+        <header>
+            <a href="./" class="back">&larr; All research</a>
+            <h1>The Token Economics of Remembering</h1>
+            <div class="meta">July 2026 &middot; 33 real sessions, 3,360 requests, 656M tokens mined &middot; 5 experiments, adversarially reviewed pre-run</div>
+            <p class="abstract">A memory system costs tokens to maintain: an index read every session, knowledge files retrieved, a distillation pass after work ends. Does it give more back than it takes? We mined 40 days of the developer's real Claude Code transcripts to price distill's overhead precisely, measured what friction knowledge actually prevents, and stress-tested a cheaper index. Numbers are reported tokens-first; dollar figures are API-equivalent counterfactuals (real usage runs on a flat-rate subscription).</p>
+        </header>
+
+        <section id="question">
+            <h2>The question</h2>
+            <p>The intuition: distill saves tokens in the long run because errors stop repeating and sessions start with knowledge instead of re-exploration. But the intuition had never been priced. Three sub-questions:</p>
+            <ol>
+                <li>What does the maintainer's usage actually cost, and where do the tokens go?</li>
+                <li>What is distill's <em>all-in</em> overhead — index carry, retrievals, the /distill pass itself?</li>
+                <li>What can we prove about the savings side — and what can't we prove yet?</li>
+            </ol>
+        </section>
+
+        <section id="method">
+            <h2>Method</h2>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <div class="detail-label">Corpus</div>
+                    <div class="detail-value">Every local Claude Code transcript on the machine: 35 JSONL files, 33 sessions with usage, 2026-05-29 → 2026-07-08</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Unit</div>
+                    <div class="detail-value">Per-request API usage records (input, output, cache read, cache write by TTL), deduplicated by message id</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Pricing</div>
+                    <div class="detail-value">API list prices (Fable $10/$50, Opus 4.8 $5/$25 per MTok; cache read ×0.1, 1h write ×2) — verified against current docs the same night</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Integrity</div>
+                    <div class="detail-value">All experiment designs pre-registered, then attacked by a clean-context adversarial reviewer BEFORE any scored run (17 findings, all fixed pre-run)</div>
+                </div>
+            </div>
+            <p class="note">Subagent transcripts don't persist to the projects directory — every figure is a main-loop floor. Session titles and personal file names never leave the machine; the published dataset carries aggregates and pseudonymized paths only.</p>
+        </section>
+
+        <section id="anatomy">
+            <h2>Cost anatomy: generation is the cheap part</h2>
+            <p>40 days of heavy use moved <strong>656M tokens</strong> for 4.2M tokens of actual output — an API-equivalent of $868, 100% of it on the two most expensive models (Fable 5, Opus 4.8). Decomposed:</p>
+            <table>
+                <thead><tr><th>Component</th><th>Tokens</th><th>Share of cost</th></tr></thead>
+                <tbody>
+                    <tr><td>Cache reads (context re-read every request)</td><td>635M</td><td><strong>51–57%</strong></td></tr>
+                    <tr><td>Cache writes (context growth, 1h TTL)</td><td>16.3M</td><td>22–34%</td></tr>
+                    <tr><td>Output (the actual work)</td><td>4.2M</td><td>15–21%</td></tr>
+                    <tr><td>Fresh uncached input</td><td>0.5M</td><td>&lt;1%</td></tr>
+                </tbody>
+            </table>
+            <div class="insight">
+                <div class="insight-label">The headline</div>
+                <p>~85% of spend is moving context around, not generating anything. The median request drags <strong>153k tokens of resident context</strong> (p90: 389k); that number grew 5× between May and June as sessions became marathons. Any cost strategy that doesn't address context posture is optimizing the 15%.</p>
+            </div>
+            <p>Spend is also concentrated: the top 5 sessions (deck-building and masterclass marathons) account for <strong>69% of everything</strong>. The other 28 sessions average ~$10 API-equivalent. Routing small sessions to small models would save almost nothing; the leverage is inside the big sessions.</p>
+            <p>Sensitivity, not savings: re-pricing the window with mean context capped at 100k/60k tokens yields −40%/−57% — an <em>unachievable upper bound</em> (the work used much of that context), quoted only to size the lever. TTL note: observed usage is ~100% 1-hour-TTL cache writes; the re-price scales the observed hit pattern linearly.</p>
+        </section>
+
+        <section id="ledger">
+            <h2>The distill ledger: overhead side, measured to the cent</h2>
+            <table>
+                <thead><tr><th>Overhead item</th><th>Measured</th><th>Window total (API-equiv)</th></tr></thead>
+                <tbody>
+                    <tr><td>Session-start floor (SPINE 3.6k + monitor rules)</td><td>~5.5k tokens/session</td><td>$0.18 as reads</td></tr>
+                    <tr><td>SPINE carried in resident context, re-read every request</td><td>3.6k × 3,360 requests</td><td>$12.10</td></tr>
+                    <tr><td>/distill main-loop turns</td><td>12 invocations, median $1.31</td><td>$29.94</td></tr>
+                    <tr><td>/distill subagent (invisible in transcripts)</td><td>live samples 46–328k tokens</td><td>≈$6–18 (estimate)</td></tr>
+                    <tr><td>Knowledge-file retrievals</td><td>36 reads, median file ~1k tokens</td><td>&lt;$1</td></tr>
+                </tbody>
+            </table>
+            <div class="insight">
+                <div class="insight-label">All-in overhead</div>
+                <p>≈$50 per 40-day window — <strong>5–6% of total spend</strong>. The index carry (SPINE re-read every request) costs more than every knowledge retrieval combined; the retrieval risk worth worrying about is under-retrieval, not cost. SPINE was Read-tool-loaded in only 17 of 33 sessions.</p>
+            </div>
+        </section>
+
+        <section id="friction">
+            <h2>Friction curves: what encoding actually prevents</h2>
+            <p>We scanned command output (Bash/PowerShell/Edit tool results only) for error signatures tied to encoded knowledge, and tracked recurrence over the window. A methodology trap first: a naive scan over <em>all</em> text inflated counts 3–10× — because reading a knowledge file that <em>describes</em> an error puts its signature into the context. Count errors only where they can actually happen.</p>
+            <div class="comparison">
+                <div class="comparison-header">
+                    <span class="comparison-scenario">Environment gotchas (encoded in ops/ files)</span>
+                    <span class="comparison-score score-positive">Recurrence ≈ ZERO after encoding</span>
+                </div>
+                <div class="comparison-sides">
+                    <div class="side side-with">
+                        <div class="side-label">One-and-done</div>
+                        <div class="side-content">git index.lock (1 session, never again) &middot; NTFS colon paths (1) &middot; python3 Store stub (1) &middot; screenshot relative-path ENOENT (2 sessions, then never) &middot; cp1252 Unicode crashes (4 sessions, zero events after Jul 1)</div>
+                    </div>
+                    <div class="side side-warning">
+                        <div class="side-label">The exception: behavioral rules</div>
+                        <div class="side-content">"Edit requires a prior Read" harness error: <strong>25 events across 7 sessions</strong>, still occurring on the last day of the window — despite being encoded. Knowledge kills environment traps; it does not reliably change in-flight habits.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="insight">
+                <div class="insight-label">Execution gap, quantified</div>
+                <p>This is the first hard measurement of a thesis distill already carried as a principle: encoded knowledge prevents <em>lookup-shaped</em> failures, while <em>habit-shaped</em> failures need structural checkpoints, not more prose. Each friction event costs a median 5–18k output tokens of self-recovery (upper bound; ≈$0.3–1 each).</p>
+            </div>
+            <p>Honest accounting: friction non-recurrence saved roughly $10–30 over the window — real, but small next to the context tax. The larger claimed benefit (avoided re-exploration and wrong turns in marathon sessions) has <strong>no counterfactual in this dataset</strong>: we never run the same session without knowledge. The distill-benchmark measures quality deltas; it doesn't yet record token deltas. That instrumentation is the top follow-up this study produces. Best external proxies: 40–60% of real agent-trajectory input tokens measured as redundant (AgentDiet, arXiv:2509.23586); Anthropic's memory + context-editing eval reporting 84% token reduction on 100-turn tasks (vendor-internal).</p>
+        </section>
+
+        <section id="diet">
+            <h2>Experiment: putting the SPINE on a diet</h2>
+            <p>The SPINE is 3.6k tokens, re-read constantly. A clean-context agent (which never saw the test set) compressed it by a mechanical rule — every entry becomes <code>[Title](path) — ≤8-word trigger</code>, all 59 entries preserved — landing at 1.2k tokens. A second clean agent (which never saw the diet SPINE) authored 6 held-out retrieval probes, paraphrased so string-matching can't win. Both arms ran on the same pinned model, N=2 per held-out probe.</p>
+            <div class="comparison">
+                <div class="comparison-header">
+                    <span class="comparison-scenario">Held-out probes (primary, pre-registered)</span>
+                    <span class="comparison-score badge-loss">NOT a free win</span>
+                </div>
+                <div class="comparison-sides">
+                    <div class="side side-without">
+                        <div class="side-label">Full SPINE (3.6k)</div>
+                        <div class="side-content">Recall 12/12. But 7 over-reads — richer descriptions invite tangential files; avg 1,845 tokens of files read per probe.</div>
+                    </div>
+                    <div class="side side-with">
+                        <div class="side-label">Diet SPINE (1.2k)</div>
+                        <div class="side-content">Recall 10/12 — it missed BOTH repetitions of the GitHub-Pages probe: compression dropped the distinctive trigger nouns. Only 3 over-reads; avg 1,317 tokens read (−29%).</div>
+                    </div>
+                </div>
+            </div>
+            <div class="insight">
+                <div class="insight-label">Classification: trade-off knob, not free win</div>
+                <p>The diet SPINE saves ~2.4k tokens of carry per session <em>plus</em> ~29% of retrieval-read volume — and measurably loses recall on paraphrased probes (1 of 6 held-out domains, consistently). Under this project's release rule — optimizations that change distill's output need explicit opt-in — this ships, if at all, as a documented option. A v2 compression rule that must preserve distinctive nouns is the obvious next test. Also noteworthy: even the full SPINE missed once on the secondary set — retrieval is not a solved problem at any index size.</p>
+            </div>
+        </section>
+
+        <section id="verdict">
+            <h2>Verdict</h2>
+            <ol>
+                <li><strong>Distill's overhead is certain and small: 5–6% of spend.</strong> The index carry dominates it; retrieval cost is noise.</li>
+                <li><strong>Measured savings (friction non-recurrence) do not alone repay it; the unmeasured side is where the case lives.</strong> Environment-gotcha recurrence drops to ~zero after encoding — but at ~$0.3–1 per avoided event, friction alone returns $10–30 against ~$50 of overhead. The re-derivation counterfactual (what a knowledge-free session would have burned re-exploring) is unmeasured — and external trajectory studies put redundant work at 40–60% of agent input tokens. Verdict: <em>overhead proven, savings evidence directional; instrument before claiming victory.</em></li>
+                <li><strong>The token conversation is mostly not about memory.</strong> Memory overhead (5–6%) and even /distill passes are rounding errors next to context posture: ~85% of cost is context movement, and the median request carries 153k tokens. If cost is the concern, the order of operations is context hygiene → delegation → routing → memory diet.</li>
+                <li><strong>Distill's honest cost role today: not a token saver — a token <em>shaper</em>.</strong> It converts unbounded, repeated re-derivation into a small fixed floor plus rare 1k-token reads. The floor is provably cheap. Proving the avoided re-derivation needs the benchmark to log tokens, which is now a tracked follow-up.</li>
+            </ol>
+        </section>
+
+        <section id="limits">
+            <h2>Limitations</h2>
+            <ol>
+                <li>Single user, single machine, 40-day window, n=33 sessions. Cleanup policies mean earlier history is gone.</li>
+                <li>Main-loop only: subagent usage doesn't persist locally — all totals are floors, and the /distill subagent cost is an estimate from live same-night samples.</li>
+                <li>$ figures are API-price counterfactuals; actual billing is a flat-rate subscription whose metering treats cache reads differently (officially: discounted; one documented community case disagrees — unresolved upstream).</li>
+                <li>Friction signatures are a curated list tied to encoded knowledge; unencoded friction isn't counted. Recovery windows include some task continuation (upper bound).</li>
+                <li>The author of the system also authored the study. Mitigations: pre-registration, clean-context adversarial review before every scored run, held-out test authorship, and this limitations list. The review's structural warning stands: this study cannot conclude "distill isn't worth it" — only bound its overhead and falsify specific savings claims.</li>
+            </ol>
+        </section>
+
+        <footer>
+            <a href="https://github.com/tomacco/aura-distill/tree/research/2026-07-08-token-economics/research/2026-07-08-token-economics">Raw data, designs, adversarial review &amp; scripts</a> &middot; <a href="./">Back to research index</a>
+        </footer>
+    </div>
+
+    <script src="research-theme.js"></script>
+    <script src="research-tracker.js"></script>
+</body>
+</html>

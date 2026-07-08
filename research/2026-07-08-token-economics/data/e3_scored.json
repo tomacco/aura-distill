@@ -1,0 +1,654 @@
+[
+ {
+  "probe": "H1",
+  "arm": "diet",
+  "rep": "r1",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 1,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 1587,
+  "listed": [
+   "ops/windows-tooling.md"
+  ]
+ },
+ {
+  "probe": "H1",
+  "arm": "diet",
+  "rep": "r2",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 1,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 1587,
+  "listed": [
+   "ops/windows-tooling.md"
+  ]
+ },
+ {
+  "probe": "H1",
+  "arm": "full",
+  "rep": "r1",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 1,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 1587,
+  "listed": [
+   "ops/windows-tooling.md"
+  ]
+ },
+ {
+  "probe": "H1",
+  "arm": "full",
+  "rep": "r2",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 1,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 1587,
+  "listed": [
+   "ops/windows-tooling.md"
+  ]
+ },
+ {
+  "probe": "H2",
+  "arm": "diet",
+  "rep": "r1",
+  "tier": "heldout",
+  "recall": "0/1",
+  "recall_full": false,
+  "listed_n": 2,
+  "over_n": 2,
+  "over": [
+   "craft/static-site-access-gating.md",
+   "feedback/working-conventions.md"
+  ],
+  "read_tokens": 1778,
+  "listed": [
+   "craft/static-site-access-gating.md",
+   "feedback/working-conventions.md"
+  ]
+ },
+ {
+  "probe": "H2",
+  "arm": "diet",
+  "rep": "r2",
+  "tier": "heldout",
+  "recall": "0/1",
+  "recall_full": false,
+  "listed_n": 1,
+  "over_n": 1,
+  "over": [
+   "craft/static-site-access-gating.md"
+  ],
+  "read_tokens": 1091,
+  "listed": [
+   "craft/static-site-access-gating.md"
+  ]
+ },
+ {
+  "probe": "H2",
+  "arm": "full",
+  "rep": "r1",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 2,
+  "over_n": 1,
+  "over": [
+   "craft/static-site-access-gating.md"
+  ],
+  "read_tokens": 1968,
+  "listed": [
+   "craft/static-site-access-gating.md",
+   "ops/github-cli-pitfalls.md"
+  ]
+ },
+ {
+  "probe": "H2",
+  "arm": "full",
+  "rep": "r2",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 2,
+  "over_n": 1,
+  "over": [
+   "craft/static-site-access-gating.md"
+  ],
+  "read_tokens": 1968,
+  "listed": [
+   "craft/static-site-access-gating.md",
+   "ops/github-cli-pitfalls.md"
+  ]
+ },
+ {
+  "probe": "H3",
+  "arm": "diet",
+  "rep": "r1",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 1,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 1440,
+  "listed": [
+   "craft/css-layout.md"
+  ]
+ },
+ {
+  "probe": "H3",
+  "arm": "diet",
+  "rep": "r2",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 1,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 1440,
+  "listed": [
+   "craft/css-layout.md"
+  ]
+ },
+ {
+  "probe": "H3",
+  "arm": "full",
+  "rep": "r1",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 3,
+  "over_n": 2,
+  "over": [
+   "ops/cdp-verification.md",
+   "ops/playwright-mcp.md"
+  ],
+  "read_tokens": 3563,
+  "listed": [
+   "craft/css-layout.md",
+   "ops/cdp-verification.md",
+   "ops/playwright-mcp.md"
+  ]
+ },
+ {
+  "probe": "H3",
+  "arm": "full",
+  "rep": "r2",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 2,
+  "over_n": 1,
+  "over": [
+   "ops/cdp-verification.md"
+  ],
+  "read_tokens": 2505,
+  "listed": [
+   "craft/css-layout.md",
+   "ops/cdp-verification.md"
+  ]
+ },
+ {
+  "probe": "H4",
+  "arm": "diet",
+  "rep": "r1",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 1,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 988,
+  "listed": [
+   "craft/rca-methodology.md"
+  ]
+ },
+ {
+  "probe": "H4",
+  "arm": "diet",
+  "rep": "r2",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 1,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 988,
+  "listed": [
+   "craft/rca-methodology.md"
+  ]
+ },
+ {
+  "probe": "H4",
+  "arm": "full",
+  "rep": "r1",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 2,
+  "over_n": 1,
+  "over": [
+   "ops/session-limits-continuation.md"
+  ],
+  "read_tokens": 2025,
+  "listed": [
+   "craft/rca-methodology.md",
+   "ops/session-limits-continuation.md"
+  ]
+ },
+ {
+  "probe": "H4",
+  "arm": "full",
+  "rep": "r2",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 2,
+  "over_n": 1,
+  "over": [
+   "ops/session-limits-continuation.md"
+  ],
+  "read_tokens": 2025,
+  "listed": [
+   "craft/rca-methodology.md",
+   "ops/session-limits-continuation.md"
+  ]
+ },
+ {
+  "probe": "H5",
+  "arm": "diet",
+  "rep": "r1",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 1,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 1538,
+  "listed": [
+   "projects/investment-lab.md"
+  ]
+ },
+ {
+  "probe": "H5",
+  "arm": "diet",
+  "rep": "r2",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 1,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 1538,
+  "listed": [
+   "projects/investment-lab.md"
+  ]
+ },
+ {
+  "probe": "H5",
+  "arm": "full",
+  "rep": "r1",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 1,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 1538,
+  "listed": [
+   "projects/investment-lab.md"
+  ]
+ },
+ {
+  "probe": "H5",
+  "arm": "full",
+  "rep": "r2",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 1,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 1538,
+  "listed": [
+   "projects/investment-lab.md"
+  ]
+ },
+ {
+  "probe": "H6",
+  "arm": "diet",
+  "rep": "r1",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 1,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 919,
+  "listed": [
+   "projects/distill-benchmark.md"
+  ]
+ },
+ {
+  "probe": "H6",
+  "arm": "diet",
+  "rep": "r2",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 1,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 919,
+  "listed": [
+   "projects/distill-benchmark.md"
+  ]
+ },
+ {
+  "probe": "H6",
+  "arm": "full",
+  "rep": "r1",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 1,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 919,
+  "listed": [
+   "projects/distill-benchmark.md"
+  ]
+ },
+ {
+  "probe": "H6",
+  "arm": "full",
+  "rep": "r2",
+  "tier": "heldout",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 1,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 919,
+  "listed": [
+   "projects/distill-benchmark.md"
+  ]
+ },
+ {
+  "probe": "S1",
+  "arm": "diet",
+  "rep": "r1",
+  "tier": "secondary",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 1,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 626,
+  "listed": [
+   "ops/raspberry-pi.md"
+  ]
+ },
+ {
+  "probe": "S1",
+  "arm": "full",
+  "rep": "r1",
+  "tier": "secondary",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 1,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 626,
+  "listed": [
+   "ops/raspberry-pi.md"
+  ]
+ },
+ {
+  "probe": "S2",
+  "arm": "diet",
+  "rep": "r1",
+  "tier": "secondary",
+  "recall": "2/2",
+  "recall_full": true,
+  "listed_n": 2,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 2447,
+  "listed": [
+   "craft/time-relative-phrase-handling.md",
+   "ops/windows-tooling.md"
+  ]
+ },
+ {
+  "probe": "S2",
+  "arm": "full",
+  "rep": "r1",
+  "tier": "secondary",
+  "recall": "2/2",
+  "recall_full": true,
+  "listed_n": 3,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 3484,
+  "listed": [
+   "craft/time-relative-phrase-handling.md",
+   "ops/session-limits-continuation.md",
+   "ops/windows-tooling.md"
+  ]
+ },
+ {
+  "probe": "S3",
+  "arm": "diet",
+  "rep": "r1",
+  "tier": "secondary",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 2,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 3025,
+  "listed": [
+   "craft/backtesting.md",
+   "craft/signal-research.md"
+  ]
+ },
+ {
+  "probe": "S3",
+  "arm": "full",
+  "rep": "r1",
+  "tier": "secondary",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 3,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 3587,
+  "listed": [
+   "craft/backtesting.md",
+   "ops/free-data-sources.md",
+   "projects/investment-lab.md"
+  ]
+ },
+ {
+  "probe": "S4",
+  "arm": "diet",
+  "rep": "r1",
+  "tier": "secondary",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 3,
+  "over_n": 2,
+  "over": [
+   "craft/static-site-access-gating.md",
+   "feedback/working-conventions.md"
+  ],
+  "read_tokens": 2655,
+  "listed": [
+   "craft/static-site-access-gating.md",
+   "feedback/working-conventions.md",
+   "ops/github-cli-pitfalls.md"
+  ]
+ },
+ {
+  "probe": "S4",
+  "arm": "full",
+  "rep": "r1",
+  "tier": "secondary",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 2,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 1865,
+  "listed": [
+   "ops/github-cli-pitfalls.md",
+   "profile/ethics-dual-use.md"
+  ]
+ },
+ {
+  "probe": "S5",
+  "arm": "diet",
+  "rep": "r1",
+  "tier": "secondary",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 1,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 1440,
+  "listed": [
+   "craft/css-layout.md"
+  ]
+ },
+ {
+  "probe": "S5",
+  "arm": "full",
+  "rep": "r1",
+  "tier": "secondary",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 1,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 1440,
+  "listed": [
+   "craft/css-layout.md"
+  ]
+ },
+ {
+  "probe": "S6",
+  "arm": "diet",
+  "rep": "r1",
+  "tier": "secondary",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 3,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 6600,
+  "listed": [
+   "craft/talk-slide-engine.md",
+   "craft/talk-slide-motion.md",
+   "projects/rules-not-vibes.md"
+  ]
+ },
+ {
+  "probe": "S6",
+  "arm": "full",
+  "rep": "r1",
+  "tier": "secondary",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 2,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 4741,
+  "listed": [
+   "craft/talk-slide-engine.md",
+   "craft/talk-slide-motion.md"
+  ]
+ },
+ {
+  "probe": "S7",
+  "arm": "diet",
+  "rep": "r1",
+  "tier": "secondary",
+  "recall": "1/1",
+  "recall_full": true,
+  "listed_n": 4,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 3444,
+  "listed": [
+   "craft/adversarial-review-methodology.md",
+   "craft/self-benchmark-integrity.md",
+   "projects/aura-distill.md",
+   "projects/distill-benchmark.md"
+  ]
+ },
+ {
+  "probe": "S7",
+  "arm": "full",
+  "rep": "r1",
+  "tier": "secondary",
+  "recall": "0/1",
+  "recall_full": false,
+  "listed_n": 2,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 1395,
+  "listed": [
+   "projects/aura-distill.md",
+   "projects/distill-benchmark.md"
+  ]
+ },
+ {
+  "probe": "S8",
+  "arm": "diet",
+  "rep": "r1",
+  "tier": "secondary",
+  "recall": "2/2",
+  "recall_full": true,
+  "listed_n": 3,
+  "over_n": 0,
+  "over": [],
+  "read_tokens": 2966,
+  "listed": [
+   "ops/home-network.md",
+   "ops/linux-shell-ssh.md",
+   "projects/homelab-pi.md"
+  ]
+ },
+ {
+  "probe": "S8",
+  "arm": "full",
+  "rep": "r1",
+  "tier": "secondary",
+  "recall": "2/2",
+  "recall_full": true,
+  "listed_n": 4,
+  "over_n": 1,
+  "over": [
+   "ops/session-limits-continuation.md"
+  ],
+  "read_tokens": 4003,
+  "listed": [
+   "ops/home-network.md",
+   "ops/linux-shell-ssh.md",
+   "ops/session-limits-continuation.md",
+   "projects/homelab-pi.md"
+  ]
+ }
+]

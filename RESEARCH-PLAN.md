@@ -20,13 +20,13 @@ aggregates and scrubbed examples only.
       (per-session, per-model, cache, sidechain, monthly; NO raw content committed)
 - [x] 2. DATA: distill overhead measured (session-start floor, /distill invocation cost,
       knowledge-file read volume) — committed as analysis doc
-- [ ] 3. DATA: distill savings evidence (friction-recurrence before/after encoding;
+- [x] 3. DATA: distill savings evidence (friction-recurrence before/after encoding;
       re-derivation counterfactuals, overheads netted out) — committed
-- [ ] 4. DATA: model-mix + routing analysis (tokens by model, routable fraction, $ deltas
+- [x] 4. DATA: model-mix + routing analysis (tokens by model, routable fraction, $ deltas
       at API pricing; pricing verified via claude-api skill) — committed
-- [ ] 5. RESEARCH: web research on novel approaches (routing/cascades, memory economics,
+- [x] 5. RESEARCH: web research on novel approaches (routing/cascades, memory economics,
       caching, cost-aware distillation) — synthesis doc committed
-- [ ] 6. EXPERIMENTS: designs written; clean-context ADVERSARIAL REVIEW of designs passed
+- [x] 6. EXPERIMENTS: designs written; clean-context ADVERSARIAL REVIEW of designs passed
       (craft/self-benchmark-integrity.md) — review verdict committed
 - [ ] 7. EXPERIMENTS: approved experiments run (token-conscious; fail fast on limit
       strings); results committed
@@ -40,3 +40,4 @@ aggregates and scrubbed examples only.
 ## Notes / state (append-only)
 - 2026-07-09 00:05 — Plan created. Worktree + branch created. Pricing subagent running.
 - 2026-07-09 ~00:50 — Dataset + findings F1-F9 committed. Watchdog live+test-fired. Web briefs 3/4 in. Designs pre-registered; adversarial review running. NEXT: review verdict -> run E1/E3 -> routing synthesis -> pages.
+- 2026-07-09 ~01:45 — E3 DONE (diet SPINE = trade-off knob: 10/12 vs 12/12 held-out recall, -29% read volume). E5 done. Review fixes committed. Token-economics page drafted. E1 on final arm.

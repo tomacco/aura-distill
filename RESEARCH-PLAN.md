@@ -16,9 +16,9 @@ aggregates and scrubbed examples only.
 
 ## Plan
 
-- [ ] 1. DATA: transcript miner script written + run; aggregate dataset committed
+- [x] 1. DATA: transcript miner script written + run; aggregate dataset committed
       (per-session, per-model, cache, sidechain, monthly; NO raw content committed)
-- [ ] 2. DATA: distill overhead measured (session-start floor, /distill invocation cost,
+- [x] 2. DATA: distill overhead measured (session-start floor, /distill invocation cost,
       knowledge-file read volume) — committed as analysis doc
 - [ ] 3. DATA: distill savings evidence (friction-recurrence before/after encoding;
       re-derivation counterfactuals, overheads netted out) — committed
@@ -39,3 +39,4 @@ aggregates and scrubbed examples only.
 
 ## Notes / state (append-only)
 - 2026-07-09 00:05 — Plan created. Worktree + branch created. Pricing subagent running.
+- 2026-07-09 ~00:50 — Dataset + findings F1-F9 committed. Watchdog live+test-fired. Web briefs 3/4 in. Designs pre-registered; adversarial review running. NEXT: review verdict -> run E1/E3 -> routing synthesis -> pages.

@@ -1,0 +1,35 @@
+{
+ "decomposition": {
+  "claude-opus-4-8": {
+   "fresh_input": 1.19,
+   "cache_write_1h": 68.55,
+   "cache_write_5m": 0.0,
+   "cache_read": 175.97,
+   "output": 63.88,
+   "total": 309.59,
+   "shares": {
+    "fresh_input": 0.004,
+    "cache_write_1h": 0.221,
+    "cache_write_5m": 0.0,
+    "cache_read": 0.568,
+    "output": 0.206
+   }
+  },
+  "claude-fable-5": {
+   "fresh_input": 2.44,
+   "cache_write_1h": 189.18,
+   "cache_write_5m": 0.0,
+   "cache_read": 283.17,
+   "output": 83.13,
+   "total": 557.93,
+   "shares": {
+    "fresh_input": 0.004,
+    "cache_write_1h": 0.339,
+    "cache_write_5m": 0.0,
+    "cache_read": 0.508,
+    "output": 0.149
+   }
+  }
+ },
+ "total_actual": 867.52
+}

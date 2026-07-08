@@ -1,0 +1,435 @@
+{
+ "events": [
+  [
+   "2026-06-09",
+   "49cf3b87",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-06-09",
+   "49cf3b87",
+   "screenshot_enoent",
+   "PowerShell"
+  ],
+  [
+   "2026-07-01",
+   "4c29f538",
+   "cp1252_unicode",
+   "Bash"
+  ],
+  [
+   "2026-07-06",
+   "53bf3cac",
+   "cmd_not_found",
+   "Bash"
+  ],
+  [
+   "2026-07-07",
+   "53bf3cac",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac",
+   "edit_string_notfound",
+   "Edit"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac",
+   "cmd_not_found",
+   "Bash"
+  ],
+  [
+   "2026-06-07",
+   "70854644",
+   "cmd_not_found",
+   "PowerShell"
+  ],
+  [
+   "2026-06-10",
+   "73c26104",
+   "screenshot_enoent",
+   "PowerShell"
+  ],
+  [
+   "2026-06-11",
+   "7b4269f7",
+   "git_index_lock",
+   "PowerShell"
+  ],
+  [
+   "2026-06-11",
+   "7b4269f7",
+   "ntfs_colon_path",
+   "PowerShell"
+  ],
+  [
+   "2026-06-11",
+   "7b4269f7",
+   "git_index_lock",
+   "PowerShell"
+  ],
+  [
+   "2026-06-11",
+   "7b4269f7",
+   "python3_stub",
+   "PowerShell"
+  ],
+  [
+   "2026-06-11",
+   "7b4269f7",
+   "cmd_not_found",
+   "PowerShell"
+  ],
+  [
+   "2026-06-11",
+   "7b4269f7",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-06-11",
+   "7b4269f7",
+   "cp1252_unicode",
+   "PowerShell"
+  ],
+  [
+   "2026-06-11",
+   "7b4269f7",
+   "cmd_not_found",
+   "PowerShell"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7",
+   "session_limit",
+   "PowerShell"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7",
+   "session_limit",
+   "PowerShell"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-06-13",
+   "7b4269f7",
+   "cp1252_unicode",
+   "Bash"
+  ],
+  [
+   "2026-06-13",
+   "7b4269f7",
+   "encoding_generic",
+   "Bash"
+  ],
+  [
+   "2026-06-13",
+   "7b4269f7",
+   "cp1252_unicode",
+   "PowerShell"
+  ],
+  [
+   "2026-06-13",
+   "7b4269f7",
+   "encoding_generic",
+   "PowerShell"
+  ],
+  [
+   "2026-06-13",
+   "7b4269f7",
+   "cp1252_unicode",
+   "Bash"
+  ],
+  [
+   "2026-06-13",
+   "7b4269f7",
+   "encoding_generic",
+   "Bash"
+  ],
+  [
+   "2026-06-13",
+   "7b4269f7",
+   "cp1252_unicode",
+   "Bash"
+  ],
+  [
+   "2026-06-13",
+   "7b4269f7",
+   "encoding_generic",
+   "Bash"
+  ],
+  [
+   "2026-06-11",
+   "b4528fce",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-06-11",
+   "b4528fce",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-06-11",
+   "b4528fce",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-06-07",
+   "bc2d3095",
+   "edit_string_notfound",
+   "Edit"
+  ],
+  [
+   "2026-06-09",
+   "bc2d3095",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-06-09",
+   "bc2d3095",
+   "edit_needs_read",
+   "Write"
+  ],
+  [
+   "2026-06-09",
+   "bc2d3095",
+   "screenshot_enoent",
+   "Bash"
+  ],
+  [
+   "2026-06-09",
+   "bc2d3095",
+   "screenshot_enoent",
+   "Bash"
+  ],
+  [
+   "2026-06-10",
+   "bc2d3095",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-06-10",
+   "bc2d3095",
+   "screenshot_enoent",
+   "Bash"
+  ],
+  [
+   "2026-06-10",
+   "bc2d3095",
+   "screenshot_enoent",
+   "Bash"
+  ],
+  [
+   "2026-07-01",
+   "cf3fcb1d",
+   "edit_needs_read",
+   "Write"
+  ],
+  [
+   "2026-06-08",
+   "d74c2b8e",
+   "cp1252_unicode",
+   "Bash"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997",
+   "edit_needs_read",
+   "Edit"
+  ],
+  [
+   "2026-06-14",
+   "f70b81c5",
+   "cp1252_unicode",
+   "Bash"
+  ],
+  [
+   "2026-06-14",
+   "f70b81c5",
+   "cmd_not_found",
+   "Bash"
+  ]
+ ],
+ "summary": {
+  "edit_needs_read": {
+   "n": 25,
+   "n_sessions": 7,
+   "dates": [
+    "2026-06-09",
+    "2026-06-10",
+    "2026-06-11",
+    "2026-06-12",
+    "2026-07-01",
+    "2026-07-07",
+    "2026-07-08"
+   ]
+  },
+  "cp1252_unicode": {
+   "n": 8,
+   "n_sessions": 4,
+   "dates": [
+    "2026-06-08",
+    "2026-06-11",
+    "2026-06-13",
+    "2026-06-14",
+    "2026-07-01"
+   ]
+  },
+  "screenshot_enoent": {
+   "n": 6,
+   "n_sessions": 3,
+   "dates": [
+    "2026-06-09",
+    "2026-06-10"
+   ]
+  },
+  "cmd_not_found": {
+   "n": 6,
+   "n_sessions": 4,
+   "dates": [
+    "2026-06-07",
+    "2026-06-11",
+    "2026-06-14",
+    "2026-07-06",
+    "2026-07-08"
+   ]
+  },
+  "encoding_generic": {
+   "n": 4,
+   "n_sessions": 1,
+   "dates": [
+    "2026-06-13"
+   ]
+  },
+  "edit_string_notfound": {
+   "n": 2,
+   "n_sessions": 2,
+   "dates": [
+    "2026-06-07",
+    "2026-07-08"
+   ]
+  },
+  "git_index_lock": {
+   "n": 2,
+   "n_sessions": 1,
+   "dates": [
+    "2026-06-11"
+   ]
+  },
+  "session_limit": {
+   "n": 2,
+   "n_sessions": 1,
+   "dates": [
+    "2026-06-12"
+   ]
+  },
+  "ntfs_colon_path": {
+   "n": 1,
+   "n_sessions": 1,
+   "dates": [
+    "2026-06-11"
+   ]
+  },
+  "python3_stub": {
+   "n": 1,
+   "n_sessions": 1,
+   "dates": [
+    "2026-06-11"
+   ]
+  }
+ },
+ "method": "matches only in Bash/PowerShell/Edit tool_result output"
+}

@@ -1,0 +1,2167 @@
+{
+ "generated": "2026-07-09",
+ "n_transcript_files": 35,
+ "n_sessions_with_usage": 33,
+ "parse_errors": 1,
+ "window": [
+  "2026-05-29",
+  "2026-07-08"
+ ],
+ "pricing_note": "API-equivalent pricing; cache 5m write x1.25, 1h write x2, read x0.1 of input price. Actual billing is Max subscription \u2014 $ figures are API-equivalent counterfactuals.",
+ "by_model": {
+  "claude-opus-4-8": {
+   "inp": 238130.0,
+   "c5": 0.0,
+   "c1": 6854859.0,
+   "cr": 351947430.0,
+   "out": 2555134.0,
+   "cost": 309.5913,
+   "reqs": 1849.0
+  },
+  "claude-fable-5": {
+   "inp": 243831.0,
+   "c5": 0.0,
+   "c1": 9459142.0,
+   "cr": 283170873.0,
+   "out": 1662680.0,
+   "cost": 557.926,
+   "reqs": 1511.0
+  }
+ },
+ "by_month_model": {
+  "2026-05|claude-opus-4-8": {
+   "inp": 44.0,
+   "c5": 0.0,
+   "c1": 80447.0,
+   "cr": 789905.0,
+   "out": 11827.0,
+   "cost": 1.4953
+  },
+  "2026-06|claude-opus-4-8": {
+   "inp": 204317.0,
+   "c5": 0.0,
+   "c1": 6133066.0,
+   "cr": 308356382.0,
+   "out": 2225694.0,
+   "cost": 272.1728
+  },
+  "2026-06|claude-fable-5": {
+   "inp": 179251.0,
+   "c5": 0.0,
+   "c1": 7380711.0,
+   "cr": 174762851.0,
+   "out": 1059858.0,
+   "cost": 377.1625
+  },
+  "2026-07|claude-opus-4-8": {
+   "inp": 33769.0,
+   "c5": 0.0,
+   "c1": 641346.0,
+   "cr": 42801143.0,
+   "out": 317613.0,
+   "cost": 35.9232
+  },
+  "2026-07|claude-fable-5": {
+   "inp": 64580.0,
+   "c5": 0.0,
+   "c1": 2078431.0,
+   "cr": 108408022.0,
+   "out": 602822.0,
+   "cost": 180.7635
+  }
+ },
+ "sessions": [
+  {
+   "id_prefix": "5189eef4",
+   "project": "C--Users-Ivan-git-inception-ai",
+   "date": "2026-05-29",
+   "duration_min": 0.1,
+   "n_user_prompts": 1,
+   "n_requests": 1,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-opus-4-8": {
+     "inp": 2.0,
+     "c5": 0.0,
+     "c1": 31524.0,
+     "cr": 0.0,
+     "out": 222.0,
+     "cost": 0.3208
+    }
+   },
+   "cost_usd_api_equiv": 0.32,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 222.0,
+   "first_request_ctx": {
+    "inp": 2,
+    "c5": 0,
+    "c1": 31524,
+    "cr": 0,
+    "total_ctx": 31526
+   },
+   "distill_read_calls": 0,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {},
+   "cc_version_first": "2.1.111"
+  },
+  {
+   "id_prefix": "71664761",
+   "project": "C--Users-Ivan-git-inception-ai",
+   "date": "2026-05-29",
+   "duration_min": 5.8,
+   "n_user_prompts": 5,
+   "n_requests": 21,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-opus-4-8": {
+     "inp": 42.0,
+     "c5": 0.0,
+     "c1": 48923.0,
+     "cr": 789905.0,
+     "out": 11605.0,
+     "cost": 1.1745174999999999
+    }
+   },
+   "cost_usd_api_equiv": 1.17,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 11605.0,
+   "first_request_ctx": {
+    "inp": 2,
+    "c5": 0,
+    "c1": 31517,
+    "cr": 0,
+    "total_ctx": 31519
+   },
+   "distill_read_calls": 0,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {},
+   "cc_version_first": "2.1.111"
+  },
+  {
+   "id_prefix": "70854644",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-07",
+   "duration_min": 910.8,
+   "n_user_prompts": 49,
+   "n_requests": 159,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-opus-4-8": {
+     "inp": 10854.0,
+     "c5": 0.0,
+     "c1": 792886.0,
+     "cr": 26468002.0,
+     "out": 287234.0,
+     "cost": 28.39798099999999
+    }
+   },
+   "cost_usd_api_equiv": 28.4,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 287234.0,
+   "first_request_ctx": {
+    "inp": 4239,
+    "c5": 0,
+    "c1": 3914,
+    "cr": 20433,
+    "total_ctx": 28586
+   },
+   "distill_read_calls": 1,
+   "distill_read_chars": 0,
+   "distill_invoked": true,
+   "sigs": {},
+   "cc_version_first": "2.1.168"
+  },
+  {
+   "id_prefix": "bc2d3095",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-07",
+   "duration_min": 4258.0,
+   "n_user_prompts": 68,
+   "n_requests": 688,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-opus-4-8": {
+     "inp": 50319.0,
+     "c5": 0.0,
+     "c1": 2666928.0,
+     "cr": 196642185.0,
+     "out": 1062414.0,
+     "cost": 151.80231750000016
+    }
+   },
+   "cost_usd_api_equiv": 151.8,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 1062414.0,
+   "first_request_ctx": {
+    "inp": 4239,
+    "c5": 0,
+    "c1": 3814,
+    "cr": 20433,
+    "total_ctx": 28486
+   },
+   "distill_read_calls": 4,
+   "distill_read_chars": 0,
+   "distill_invoked": true,
+   "sigs": {
+    "crlf_phantom": 16,
+    "edit_needs_read": 3
+   },
+   "cc_version_first": "2.1.167"
+  },
+  {
+   "id_prefix": "d74c2b8e",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-07",
+   "duration_min": 964.5,
+   "n_user_prompts": 16,
+   "n_requests": 90,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-opus-4-8": {
+     "inp": 6959.0,
+     "c5": 0.0,
+     "c1": 859171.0,
+     "cr": 21676311.0,
+     "out": 165807.0,
+     "cost": 23.609835499999992
+    }
+   },
+   "cost_usd_api_equiv": 23.61,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 165807.0,
+   "first_request_ctx": {
+    "inp": 4239,
+    "c5": 0,
+    "c1": 3900,
+    "cr": 20433,
+    "total_ctx": 28572
+   },
+   "distill_read_calls": 0,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {
+    "cp1252_unicode": 1
+   },
+   "cc_version_first": "2.1.168"
+  },
+  {
+   "id_prefix": "1094497e",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-08",
+   "duration_min": 17.4,
+   "n_user_prompts": 4,
+   "n_requests": 15,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-opus-4-8": {
+     "inp": 4525.0,
+     "c5": 0.0,
+     "c1": 23139.0,
+     "cr": 565266.0,
+     "out": 7835.0,
+     "cost": 0.7325229999999999
+    }
+   },
+   "cost_usd_api_equiv": 0.73,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 7835.0,
+   "first_request_ctx": {
+    "inp": 4239,
+    "c5": 0,
+    "c1": 3870,
+    "cr": 20433,
+    "total_ctx": 28542
+   },
+   "distill_read_calls": 2,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {},
+   "cc_version_first": "2.1.168"
+  },
+  {
+   "id_prefix": "b144be19",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-08",
+   "duration_min": 406.9,
+   "n_user_prompts": 3,
+   "n_requests": 20,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-opus-4-8": {
+     "inp": 11549.0,
+     "c5": 0.0,
+     "c1": 82458.0,
+     "cr": 948372.0,
+     "out": 11540.0,
+     "cost": 1.645011
+    }
+   },
+   "cost_usd_api_equiv": 1.65,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 11540.0,
+   "first_request_ctx": {
+    "inp": 4239,
+    "c5": 0,
+    "c1": 3869,
+    "cr": 20433,
+    "total_ctx": 28541
+   },
+   "distill_read_calls": 2,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {},
+   "cc_version_first": "2.1.168"
+  },
+  {
+   "id_prefix": "1f8f5801",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-09",
+   "duration_min": 100.2,
+   "n_user_prompts": 8,
+   "n_requests": 85,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-fable-5": {
+     "inp": 24849.0,
+     "c5": 0.0,
+     "c1": 473547.0,
+     "cr": 13786577.0,
+     "out": 115329.0,
+     "cost": 29.272457000000003
+    }
+   },
+   "cost_usd_api_equiv": 29.27,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 115329.0,
+   "first_request_ctx": {
+    "inp": 4245,
+    "c5": 0,
+    "c1": 4968,
+    "cr": 20430,
+    "total_ctx": 29643
+   },
+   "distill_read_calls": 2,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {
+    "crlf_phantom": 1
+   },
+   "cc_version_first": "2.1.170"
+  },
+  {
+   "id_prefix": "3ad5e4de",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-09",
+   "duration_min": 1.6,
+   "n_user_prompts": 3,
+   "n_requests": 5,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-fable-5": {
+     "inp": 4253.0,
+     "c5": 0.0,
+     "c1": 456336.0,
+     "cr": 561509.0,
+     "out": 2900.0,
+     "cost": 9.875759
+    }
+   },
+   "cost_usd_api_equiv": 9.88,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 2900.0,
+   "first_request_ctx": {
+    "inp": 4245,
+    "c5": 0,
+    "c1": 5136,
+    "cr": 20430,
+    "total_ctx": 29811
+   },
+   "distill_read_calls": 0,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {},
+   "cc_version_first": "2.1.170"
+  },
+  {
+   "id_prefix": "49cf3b87",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-09",
+   "duration_min": 154.4,
+   "n_user_prompts": 10,
+   "n_requests": 140,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-fable-5": {
+     "inp": 14617.0,
+     "c5": 0.0,
+     "c1": 1113578.0,
+     "cr": 35524460.0,
+     "out": 157199.0,
+     "cost": 65.80214000000002
+    }
+   },
+   "cost_usd_api_equiv": 65.8,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 157199.0,
+   "first_request_ctx": {
+    "inp": 4245,
+    "c5": 0,
+    "c1": 4969,
+    "cr": 20430,
+    "total_ctx": 29644
+   },
+   "distill_read_calls": 2,
+   "distill_read_chars": 0,
+   "distill_invoked": true,
+   "sigs": {
+    "crlf_phantom": 8,
+    "edit_needs_read": 1
+   },
+   "cc_version_first": "2.1.170"
+  },
+  {
+   "id_prefix": "69f900dc",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-09",
+   "duration_min": 7.9,
+   "n_user_prompts": 3,
+   "n_requests": 12,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-opus-4-8": {
+     "inp": 4396.0,
+     "c5": 0.0,
+     "c1": 15740.0,
+     "cr": 372451.0,
+     "out": 6561.0,
+     "cost": 0.5296305
+    }
+   },
+   "cost_usd_api_equiv": 0.53,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 6561.0,
+   "first_request_ctx": {
+    "inp": 4245,
+    "c5": 0,
+    "c1": 3918,
+    "cr": 20437,
+    "total_ctx": 28600
+   },
+   "distill_read_calls": 0,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {},
+   "cc_version_first": "2.1.170"
+  },
+  {
+   "id_prefix": "73c26104",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-10",
+   "duration_min": 19.3,
+   "n_user_prompts": 3,
+   "n_requests": 30,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-fable-5": {
+     "inp": 4819.0,
+     "c5": 0.0,
+     "c1": 121654.0,
+     "cr": 3275642.0,
+     "out": 29560.0,
+     "cost": 7.2349120000000005
+    }
+   },
+   "cost_usd_api_equiv": 7.23,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 29560.0,
+   "first_request_ctx": {
+    "inp": 4245,
+    "c5": 0,
+    "c1": 5337,
+    "cr": 20430,
+    "total_ctx": 30012
+   },
+   "distill_read_calls": 2,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {},
+   "cc_version_first": "2.1.170"
+  },
+  {
+   "id_prefix": "bc40251b",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-10",
+   "duration_min": 55.0,
+   "n_user_prompts": 5,
+   "n_requests": 89,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-opus-4-8": {
+     "inp": 24970.0,
+     "c5": 0.0,
+     "c1": 207991.0,
+     "cr": 12847042.0,
+     "out": 125607.0,
+     "cost": 11.768456
+    }
+   },
+   "cost_usd_api_equiv": 11.77,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 125607.0,
+   "first_request_ctx": {
+    "inp": 4245,
+    "c5": 0,
+    "c1": 3898,
+    "cr": 20437,
+    "total_ctx": 28580
+   },
+   "distill_read_calls": 1,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {
+    "crlf_phantom": 5
+   },
+   "cc_version_first": "2.1.170"
+  },
+  {
+   "id_prefix": "ccff50ec",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-10",
+   "duration_min": 6.6,
+   "n_user_prompts": 1,
+   "n_requests": 5,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-fable-5": {
+     "inp": 4659.0,
+     "c5": 0.0,
+     "c1": 25038.0,
+     "cr": 155307.0,
+     "out": 4416.0,
+     "cost": 0.9234570000000001
+    }
+   },
+   "cost_usd_api_equiv": 0.92,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 4416.0,
+   "first_request_ctx": {
+    "inp": 4245,
+    "c5": 0,
+    "c1": 5021,
+    "cr": 20430,
+    "total_ctx": 29696
+   },
+   "distill_read_calls": 0,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {},
+   "cc_version_first": "2.1.170"
+  },
+  {
+   "id_prefix": "e3207eeb",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-10",
+   "duration_min": 69.3,
+   "n_user_prompts": 7,
+   "n_requests": 25,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-opus-4-8": {
+     "inp": 10936.0,
+     "c5": 0.0,
+     "c1": 95190.0,
+     "cr": 2076462.0,
+     "out": 29380.0,
+     "cost": 2.779311
+    }
+   },
+   "cost_usd_api_equiv": 2.78,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 29380.0,
+   "first_request_ctx": {
+    "inp": 4245,
+    "c5": 0,
+    "c1": 4058,
+    "cr": 20437,
+    "total_ctx": 28740
+   },
+   "distill_read_calls": 1,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {},
+   "cc_version_first": "2.1.170"
+  },
+  {
+   "id_prefix": "5eca7581",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-11",
+   "duration_min": 4285.1,
+   "n_user_prompts": 18,
+   "n_requests": 86,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-fable-5": {
+     "inp": 11117.0,
+     "c5": 0.0,
+     "c1": 289244.0,
+     "cr": 6541163.0,
+     "out": 75332.0,
+     "cost": 16.203812999999997
+    },
+    "claude-opus-4-8": {
+     "inp": 147.0,
+     "c5": 0.0,
+     "c1": 171019.0,
+     "cr": 747474.0,
+     "out": 13959.0,
+     "cost": 2.433637
+    }
+   },
+   "cost_usd_api_equiv": 18.64,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 89291.0,
+   "first_request_ctx": {
+    "inp": 4251,
+    "c5": 0,
+    "c1": 5198,
+    "cr": 20434,
+    "total_ctx": 29883
+   },
+   "distill_read_calls": 1,
+   "distill_read_chars": 0,
+   "distill_invoked": true,
+   "sigs": {},
+   "cc_version_first": "2.1.173"
+  },
+  {
+   "id_prefix": "7b4269f7",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-11",
+   "duration_min": 2079.5,
+   "n_user_prompts": 27,
+   "n_requests": 248,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-fable-5": {
+     "inp": 54209.0,
+     "c5": 0.0,
+     "c1": 3704176.0,
+     "cr": 71601416.0,
+     "out": 217782.0,
+     "cost": 157.11612600000007
+    },
+    "claude-opus-4-8": {
+     "inp": 7322.0,
+     "c5": 0.0,
+     "c1": 87479.0,
+     "cr": 1870416.0,
+     "out": 30854.0,
+     "cost": 2.617958
+    }
+   },
+   "cost_usd_api_equiv": 159.73,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 248636.0,
+   "first_request_ctx": {
+    "inp": 4606,
+    "c5": 0,
+    "c1": 5197,
+    "cr": 20434,
+    "total_ctx": 30237
+   },
+   "distill_read_calls": 4,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {
+    "git_index_lock": 4,
+    "ntfs_colon": 3,
+    "crlf_phantom": 12,
+    "edit_needs_read": 3,
+    "cp1252_unicode": 6,
+    "session_limit": 3,
+    "task_sched_abspath": 1
+   },
+   "cc_version_first": "2.1.173"
+  },
+  {
+   "id_prefix": "b4528fce",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-11",
+   "duration_min": 78.0,
+   "n_user_prompts": 11,
+   "n_requests": 97,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-fable-5": {
+     "inp": 6507.0,
+     "c5": 0.0,
+     "c1": 266103.0,
+     "cr": 15449098.0,
+     "out": 136135.0,
+     "cost": 27.642978000000014
+    }
+   },
+   "cost_usd_api_equiv": 27.64,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 136135.0,
+   "first_request_ctx": {
+    "inp": 4251,
+    "c5": 0,
+    "c1": 4965,
+    "cr": 20434,
+    "total_ctx": 29650
+   },
+   "distill_read_calls": 2,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {
+    "crlf_phantom": 8,
+    "edit_needs_read": 3
+   },
+   "cc_version_first": "2.1.170"
+  },
+  {
+   "id_prefix": "cf1730f4",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-11",
+   "duration_min": 2.6,
+   "n_user_prompts": 2,
+   "n_requests": 6,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-fable-5": {
+     "inp": 4261.0,
+     "c5": 0.0,
+     "c1": 12952.0,
+     "cr": 174636.0,
+     "out": 3418.0,
+     "cost": 0.647186
+    }
+   },
+   "cost_usd_api_equiv": 0.65,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 3418.0,
+   "first_request_ctx": {
+    "inp": 4251,
+    "c5": 0,
+    "c1": 5206,
+    "cr": 20434,
+    "total_ctx": 29891
+   },
+   "distill_read_calls": 0,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {},
+   "cc_version_first": "2.1.173"
+  },
+  {
+   "id_prefix": "e68d78c6",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-11",
+   "duration_min": 1.8,
+   "n_user_prompts": 1,
+   "n_requests": 9,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-fable-5": {
+     "inp": 4396.0,
+     "c5": 0.0,
+     "c1": 21193.0,
+     "cr": 322212.0,
+     "out": 4280.0,
+     "cost": 1.004032
+    }
+   },
+   "cost_usd_api_equiv": 1.0,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 4280.0,
+   "first_request_ctx": {
+    "inp": 4251,
+    "c5": 0,
+    "c1": 5195,
+    "cr": 20434,
+    "total_ctx": 29880
+   },
+   "distill_read_calls": 0,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {},
+   "cc_version_first": "2.1.173"
+  },
+  {
+   "id_prefix": "f70b81c5",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-11",
+   "duration_min": 4447.9,
+   "n_user_prompts": 46,
+   "n_requests": 206,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-fable-5": {
+     "inp": 5942.0,
+     "c5": 0.0,
+     "c1": 163993.0,
+     "cr": 6937031.0,
+     "out": 64925.0,
+     "cost": 13.522561
+    },
+    "claude-opus-4-8": {
+     "inp": 18917.0,
+     "c5": 0.0,
+     "c1": 348452.0,
+     "cr": 13075833.0,
+     "out": 160779.0,
+     "cost": 14.136496499999996
+    }
+   },
+   "cost_usd_api_equiv": 27.66,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 225704.0,
+   "first_request_ctx": {
+    "inp": 4251,
+    "c5": 0,
+    "c1": 5193,
+    "cr": 20434,
+    "total_ctx": 29878
+   },
+   "distill_read_calls": 4,
+   "distill_read_chars": 0,
+   "distill_invoked": true,
+   "sigs": {
+    "cp1252_unicode": 3,
+    "git_index_lock": 3,
+    "ntfs_colon": 3
+   },
+   "cc_version_first": "2.1.173"
+  },
+  {
+   "id_prefix": "d96a6997",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-12",
+   "duration_min": 1006.4,
+   "n_user_prompts": 11,
+   "n_requests": 86,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-fable-5": {
+     "inp": 26003.0,
+     "c5": 0.0,
+     "c1": 449990.0,
+     "cr": 8742560.0,
+     "out": 122150.0,
+     "cost": 24.10988999999999
+    }
+   },
+   "cost_usd_api_equiv": 24.11,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 122150.0,
+   "first_request_ctx": {
+    "inp": 4606,
+    "c5": 0,
+    "c1": 5238,
+    "cr": 20571,
+    "total_ctx": 30415
+   },
+   "distill_read_calls": 2,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {
+    "task_sched_abspath": 1,
+    "edit_needs_read": 7,
+    "crlf_phantom": 3,
+    "cp1252_unicode": 1,
+    "git_index_lock": 1,
+    "ntfs_colon": 1
+   },
+   "cc_version_first": "2.1.175"
+  },
+  {
+   "id_prefix": "f16981f9",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-12",
+   "duration_min": 525.9,
+   "n_user_prompts": 9,
+   "n_requests": 92,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-fable-5": {
+     "inp": 13619.0,
+     "c5": 0.0,
+     "c1": 282907.0,
+     "cr": 11691240.0,
+     "out": 126432.0,
+     "cost": 23.807169999999996
+    },
+    "claude-opus-4-8": {
+     "inp": 4876.0,
+     "c5": 0.0,
+     "c1": 111557.0,
+     "cr": 408464.0,
+     "out": 2067.0,
+     "cost": 1.3958570000000001
+    }
+   },
+   "cost_usd_api_equiv": 25.2,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 128499.0,
+   "first_request_ctx": {
+    "inp": 4608,
+    "c5": 0,
+    "c1": 25896,
+    "cr": 0,
+    "total_ctx": 30504
+   },
+   "distill_read_calls": 1,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {
+    "cp1252_unicode": 1,
+    "git_index_lock": 1,
+    "ntfs_colon": 1,
+    "task_sched_abspath": 1,
+    "session_limit": 1,
+    "crlf_phantom": 2
+   },
+   "cc_version_first": "2.1.176"
+  },
+  {
+   "id_prefix": "06d77964",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-16",
+   "duration_min": 5824.5,
+   "n_user_prompts": 3,
+   "n_requests": 10,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-opus-4-8": {
+     "inp": 4855.0,
+     "c5": 0.0,
+     "c1": 42935.0,
+     "cr": 325821.0,
+     "out": 13310.0,
+     "cost": 0.9492854999999999
+    }
+   },
+   "cost_usd_api_equiv": 0.95,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 13310.0,
+   "first_request_ctx": {
+    "inp": 4606,
+    "c5": 0,
+    "c1": 3981,
+    "cr": 20630,
+    "total_ctx": 29217
+   },
+   "distill_read_calls": 0,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {},
+   "cc_version_first": "2.1.177"
+  },
+  {
+   "id_prefix": "b78b866d",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-20",
+   "duration_min": 70.5,
+   "n_user_prompts": 10,
+   "n_requests": 43,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-opus-4-8": {
+     "inp": 12233.0,
+     "c5": 0.0,
+     "c1": 124341.0,
+     "cr": 3381899.0,
+     "out": 97178.0,
+     "cost": 5.424974499999999
+    }
+   },
+   "cost_usd_api_equiv": 5.42,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 97178.0,
+   "first_request_ctx": {
+    "inp": 4606,
+    "c5": 0,
+    "c1": 3891,
+    "cr": 20894,
+    "total_ctx": 29391
+   },
+   "distill_read_calls": 0,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {},
+   "cc_version_first": "2.1.183"
+  },
+  {
+   "id_prefix": "d9169c39",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-20",
+   "duration_min": 21.8,
+   "n_user_prompts": 1,
+   "n_requests": 8,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-opus-4-8": {
+     "inp": 4749.0,
+     "c5": 0.0,
+     "c1": 27687.0,
+     "cr": 305080.0,
+     "out": 1654.0,
+     "cost": 0.4945049999999999
+    }
+   },
+   "cost_usd_api_equiv": 0.49,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 1654.0,
+   "first_request_ctx": {
+    "inp": 4606,
+    "c5": 0,
+    "c1": 3892,
+    "cr": 20894,
+    "total_ctx": 29392
+   },
+   "distill_read_calls": 0,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {
+    "cp1252_unicode": 1,
+    "git_index_lock": 1,
+    "ntfs_colon": 1
+   },
+   "cc_version_first": "2.1.183"
+  },
+  {
+   "id_prefix": "320c9a2d",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-25",
+   "duration_min": 7.6,
+   "n_user_prompts": 5,
+   "n_requests": 13,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-opus-4-8": {
+     "inp": 4897.0,
+     "c5": 0.0,
+     "c1": 18009.0,
+     "cr": 448811.0,
+     "out": 8496.0,
+     "cost": 0.6413805
+    }
+   },
+   "cost_usd_api_equiv": 0.64,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 8496.0,
+   "first_request_ctx": {
+    "inp": 4744,
+    "c5": 0,
+    "c1": 3914,
+    "cr": 20894,
+    "total_ctx": 29552
+   },
+   "distill_read_calls": 0,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {},
+   "cc_version_first": "2.1.183"
+  },
+  {
+   "id_prefix": "189b31aa",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-26",
+   "duration_min": 3.0,
+   "n_user_prompts": 1,
+   "n_requests": 5,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-opus-4-8": {
+     "inp": 4912.0,
+     "c5": 0.0,
+     "c1": 30156.0,
+     "cr": 178068.0,
+     "out": 4217.0,
+     "cost": 0.520579
+    }
+   },
+   "cost_usd_api_equiv": 0.52,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 4217.0,
+   "first_request_ctx": {
+    "inp": 4775,
+    "c5": 0,
+    "c1": 4228,
+    "cr": 20894,
+    "total_ctx": 29897
+   },
+   "distill_read_calls": 0,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {
+    "cp1252_unicode": 1,
+    "git_index_lock": 1,
+    "ntfs_colon": 1
+   },
+   "cc_version_first": "2.1.191"
+  },
+  {
+   "id_prefix": "cf3fcb1d",
+   "project": "C--Users-Ivan",
+   "date": "2026-06-30",
+   "duration_min": 1443.9,
+   "n_user_prompts": 28,
+   "n_requests": 332,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-opus-4-8": {
+     "inp": 32909.0,
+     "c5": 0.0,
+     "c1": 853655.0,
+     "cr": 51843505.0,
+     "out": 373007.0,
+     "cost": 43.94802250000002
+    }
+   },
+   "cost_usd_api_equiv": 43.95,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 373007.0,
+   "first_request_ctx": {
+    "inp": 4775,
+    "c5": 0,
+    "c1": 4481,
+    "cr": 25435,
+    "total_ctx": 34691
+   },
+   "distill_read_calls": 2,
+   "distill_read_chars": 0,
+   "distill_invoked": true,
+   "sigs": {
+    "cp1252_unicode": 3,
+    "git_index_lock": 3,
+    "ntfs_colon": 3,
+    "task_sched_abspath": 1,
+    "edit_needs_read": 1,
+    "crlf_phantom": 2
+   },
+   "cc_version_first": "2.1.195"
+  },
+  {
+   "id_prefix": "4c29f538",
+   "project": "C--Users-Ivan",
+   "date": "2026-07-01",
+   "duration_min": 52.7,
+   "n_user_prompts": 6,
+   "n_requests": 129,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-opus-4-8": {
+     "inp": 12012.0,
+     "c5": 0.0,
+     "c1": 171510.0,
+     "cr": 16397561.0,
+     "out": 121998.0,
+     "cost": 13.023890500000002
+    }
+   },
+   "cost_usd_api_equiv": 13.02,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 121998.0,
+   "first_request_ctx": {
+    "inp": 4777,
+    "c5": 0,
+    "c1": 4525,
+    "cr": 21576,
+    "total_ctx": 30878
+   },
+   "distill_read_calls": 0,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {
+    "cp1252_unicode": 1,
+    "git_index_lock": 1,
+    "ntfs_colon": 1,
+    "port_zombie": 1
+   },
+   "cc_version_first": "2.1.197"
+  },
+  {
+   "id_prefix": "30eb693f",
+   "project": "C--Users-Ivan",
+   "date": "2026-07-03",
+   "duration_min": 81.1,
+   "n_user_prompts": 8,
+   "n_requests": 22,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-opus-4-8": {
+     "inp": 5749.0,
+     "c5": 0.0,
+     "c1": 44109.0,
+     "cr": 578502.0,
+     "out": 19410.0,
+     "cost": 1.2443359999999999
+    },
+    "claude-fable-5": {
+     "inp": 147.0,
+     "c5": 0.0,
+     "c1": 50257.0,
+     "cr": 582461.0,
+     "out": 12768.0,
+     "cost": 2.2274709999999995
+    }
+   },
+   "cost_usd_api_equiv": 3.47,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 32178.0,
+   "first_request_ctx": {
+    "inp": 4919,
+    "c5": 0,
+    "c1": 3780,
+    "cr": 23139,
+    "total_ctx": 31838
+   },
+   "distill_read_calls": 0,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {
+    "cp1252_unicode": 1,
+    "git_index_lock": 1,
+    "ntfs_colon": 1
+   },
+   "cc_version_first": "2.1.198"
+  },
+  {
+   "id_prefix": "53bf3cac",
+   "project": "C--Users-Ivan",
+   "date": "2026-07-06",
+   "duration_min": 2763.6,
+   "n_user_prompts": 49,
+   "n_requests": 563,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-fable-5": {
+     "inp": 60879.0,
+     "c5": 0.0,
+     "c1": 1925004.0,
+     "cr": 106583123.0,
+     "out": 563135.0,
+     "cost": 173.8487429999999
+    }
+   },
+   "cost_usd_api_equiv": 173.85,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 563135.0,
+   "first_request_ctx": {
+    "inp": 5252,
+    "c5": 0,
+    "c1": 5484,
+    "cr": 23355,
+    "total_ctx": 34091
+   },
+   "distill_read_calls": 3,
+   "distill_read_chars": 0,
+   "distill_invoked": true,
+   "sigs": {
+    "cp1252_unicode": 4,
+    "git_index_lock": 4,
+    "ntfs_colon": 4,
+    "crlf_phantom": 10,
+    "edit_needs_read": 7,
+    "compress_archive_zip": 1
+   },
+   "cc_version_first": "2.1.199"
+  },
+  {
+   "id_prefix": "d5ce833d",
+   "project": "C--Users-Ivan",
+   "date": "2026-07-08",
+   "duration_min": 9.0,
+   "n_user_prompts": 2,
+   "n_requests": 20,
+   "n_sidechain_requests": 0,
+   "models": {
+    "claude-fable-5": {
+     "inp": 3554.0,
+     "c5": 0.0,
+     "c1": 103170.0,
+     "cr": 1242438.0,
+     "out": 26919.0,
+     "cost": 4.687328
+    }
+   },
+   "cost_usd_api_equiv": 4.69,
+   "sidechain_cost_usd": 0.0,
+   "out_tokens": 26919.0,
+   "first_request_ctx": {
+    "inp": 626,
+    "c5": 0,
+    "c1": 11319,
+    "cr": 23885,
+    "total_ctx": 35830
+   },
+   "distill_read_calls": 1,
+   "distill_read_chars": 0,
+   "distill_invoked": false,
+   "sigs": {
+    "cp1252_unicode": 1,
+    "git_index_lock": 1,
+    "ntfs_colon": 2,
+    "task_sched_abspath": 1,
+    "session_limit": 1
+   },
+   "cc_version_first": "2.1.204"
+  }
+ ],
+ "sig_events": [
+  [
+   "2026-06-26",
+   "189b31aa-eb59-46e0-a03b-287feb261010",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-06-26",
+   "189b31aa-eb59-46e0-a03b-287feb261010",
+   "git_index_lock"
+  ],
+  [
+   "2026-06-26",
+   "189b31aa-eb59-46e0-a03b-287feb261010",
+   "ntfs_colon"
+  ],
+  [
+   "2026-06-09",
+   "1f8f5801-411b-4309-95cb-f78056822dda",
+   "crlf_phantom"
+  ],
+  [
+   "2026-07-03",
+   "30eb693f-a1a3-43ce-9a31-d60a4a801cba",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-07-03",
+   "30eb693f-a1a3-43ce-9a31-d60a4a801cba",
+   "git_index_lock"
+  ],
+  [
+   "2026-07-03",
+   "30eb693f-a1a3-43ce-9a31-d60a4a801cba",
+   "ntfs_colon"
+  ],
+  [
+   "2026-06-09",
+   "49cf3b87-1a60-4739-84e1-6c9aaaf641e5",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-09",
+   "49cf3b87-1a60-4739-84e1-6c9aaaf641e5",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-09",
+   "49cf3b87-1a60-4739-84e1-6c9aaaf641e5",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-09",
+   "49cf3b87-1a60-4739-84e1-6c9aaaf641e5",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-09",
+   "49cf3b87-1a60-4739-84e1-6c9aaaf641e5",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-09",
+   "49cf3b87-1a60-4739-84e1-6c9aaaf641e5",
+   "edit_needs_read"
+  ],
+  [
+   "2026-06-09",
+   "49cf3b87-1a60-4739-84e1-6c9aaaf641e5",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-09",
+   "49cf3b87-1a60-4739-84e1-6c9aaaf641e5",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-09",
+   "49cf3b87-1a60-4739-84e1-6c9aaaf641e5",
+   "crlf_phantom"
+  ],
+  [
+   "2026-07-01",
+   "4c29f538-7fd8-4064-950a-41a5eaf55194",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-07-01",
+   "4c29f538-7fd8-4064-950a-41a5eaf55194",
+   "git_index_lock"
+  ],
+  [
+   "2026-07-01",
+   "4c29f538-7fd8-4064-950a-41a5eaf55194",
+   "ntfs_colon"
+  ],
+  [
+   "2026-07-01",
+   "4c29f538-7fd8-4064-950a-41a5eaf55194",
+   "port_zombie"
+  ],
+  [
+   "2026-07-06",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-07-06",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "git_index_lock"
+  ],
+  [
+   "2026-07-06",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "ntfs_colon"
+  ],
+  [
+   "2026-07-06",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "crlf_phantom"
+  ],
+  [
+   "2026-07-06",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-07-06",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "git_index_lock"
+  ],
+  [
+   "2026-07-06",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "ntfs_colon"
+  ],
+  [
+   "2026-07-06",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "crlf_phantom"
+  ],
+  [
+   "2026-07-06",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "crlf_phantom"
+  ],
+  [
+   "2026-07-07",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "edit_needs_read"
+  ],
+  [
+   "2026-07-07",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "crlf_phantom"
+  ],
+  [
+   "2026-07-07",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-07-07",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "git_index_lock"
+  ],
+  [
+   "2026-07-07",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "ntfs_colon"
+  ],
+  [
+   "2026-07-07",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "crlf_phantom"
+  ],
+  [
+   "2026-07-07",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "crlf_phantom"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "crlf_phantom"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "edit_needs_read"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "edit_needs_read"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "edit_needs_read"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "crlf_phantom"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "crlf_phantom"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "edit_needs_read"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "edit_needs_read"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "edit_needs_read"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "compress_archive_zip"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "git_index_lock"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "ntfs_colon"
+  ],
+  [
+   "2026-07-08",
+   "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-11",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "git_index_lock"
+  ],
+  [
+   "2026-06-11",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "ntfs_colon"
+  ],
+  [
+   "2026-06-11",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "git_index_lock"
+  ],
+  [
+   "2026-06-11",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-11",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-11",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "edit_needs_read"
+  ],
+  [
+   "2026-06-11",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-06-11",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "session_limit"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "git_index_lock"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "task_sched_abspath"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "ntfs_colon"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "git_index_lock"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "ntfs_colon"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "session_limit"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "edit_needs_read"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "edit_needs_read"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-12",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "session_limit"
+  ],
+  [
+   "2026-06-13",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-06-13",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-13",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-06-13",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-06-13",
+   "7b4269f7-fc66-4dcd-aa76-14c5d52e5ba5",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-06-11",
+   "b4528fce-8f9b-41d4-85c5-68cfab847532",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-11",
+   "b4528fce-8f9b-41d4-85c5-68cfab847532",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-11",
+   "b4528fce-8f9b-41d4-85c5-68cfab847532",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-11",
+   "b4528fce-8f9b-41d4-85c5-68cfab847532",
+   "edit_needs_read"
+  ],
+  [
+   "2026-06-11",
+   "b4528fce-8f9b-41d4-85c5-68cfab847532",
+   "edit_needs_read"
+  ],
+  [
+   "2026-06-11",
+   "b4528fce-8f9b-41d4-85c5-68cfab847532",
+   "edit_needs_read"
+  ],
+  [
+   "2026-06-11",
+   "b4528fce-8f9b-41d4-85c5-68cfab847532",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-11",
+   "b4528fce-8f9b-41d4-85c5-68cfab847532",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-11",
+   "b4528fce-8f9b-41d4-85c5-68cfab847532",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-11",
+   "b4528fce-8f9b-41d4-85c5-68cfab847532",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-11",
+   "b4528fce-8f9b-41d4-85c5-68cfab847532",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-07",
+   "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-07",
+   "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-08",
+   "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-08",
+   "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-08",
+   "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-09",
+   "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-09",
+   "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-09",
+   "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "edit_needs_read"
+  ],
+  [
+   "2026-06-09",
+   "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "edit_needs_read"
+  ],
+  [
+   "2026-06-09",
+   "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-09",
+   "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-09",
+   "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-10",
+   "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "edit_needs_read"
+  ],
+  [
+   "2026-06-10",
+   "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-10",
+   "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-10",
+   "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-10",
+   "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-10",
+   "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-10",
+   "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-10",
+   "bc40251b-a4a3-4170-82cd-ee65af1f8bbc",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-10",
+   "bc40251b-a4a3-4170-82cd-ee65af1f8bbc",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-10",
+   "bc40251b-a4a3-4170-82cd-ee65af1f8bbc",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-10",
+   "bc40251b-a4a3-4170-82cd-ee65af1f8bbc",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-10",
+   "bc40251b-a4a3-4170-82cd-ee65af1f8bbc",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-30",
+   "cf3fcb1d-64cf-4967-9faf-901bee763a61",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-06-30",
+   "cf3fcb1d-64cf-4967-9faf-901bee763a61",
+   "git_index_lock"
+  ],
+  [
+   "2026-06-30",
+   "cf3fcb1d-64cf-4967-9faf-901bee763a61",
+   "ntfs_colon"
+  ],
+  [
+   "2026-07-01",
+   "cf3fcb1d-64cf-4967-9faf-901bee763a61",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-07-01",
+   "cf3fcb1d-64cf-4967-9faf-901bee763a61",
+   "git_index_lock"
+  ],
+  [
+   "2026-07-01",
+   "cf3fcb1d-64cf-4967-9faf-901bee763a61",
+   "ntfs_colon"
+  ],
+  [
+   "2026-07-01",
+   "cf3fcb1d-64cf-4967-9faf-901bee763a61",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-07-01",
+   "cf3fcb1d-64cf-4967-9faf-901bee763a61",
+   "git_index_lock"
+  ],
+  [
+   "2026-07-01",
+   "cf3fcb1d-64cf-4967-9faf-901bee763a61",
+   "task_sched_abspath"
+  ],
+  [
+   "2026-07-01",
+   "cf3fcb1d-64cf-4967-9faf-901bee763a61",
+   "ntfs_colon"
+  ],
+  [
+   "2026-07-01",
+   "cf3fcb1d-64cf-4967-9faf-901bee763a61",
+   "edit_needs_read"
+  ],
+  [
+   "2026-07-01",
+   "cf3fcb1d-64cf-4967-9faf-901bee763a61",
+   "crlf_phantom"
+  ],
+  [
+   "2026-07-01",
+   "cf3fcb1d-64cf-4967-9faf-901bee763a61",
+   "crlf_phantom"
+  ],
+  [
+   "2026-07-08",
+   "d5ce833d-a019-4cc3-b789-acd99070f034",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-07-08",
+   "d5ce833d-a019-4cc3-b789-acd99070f034",
+   "git_index_lock"
+  ],
+  [
+   "2026-07-08",
+   "d5ce833d-a019-4cc3-b789-acd99070f034",
+   "ntfs_colon"
+  ],
+  [
+   "2026-07-08",
+   "d5ce833d-a019-4cc3-b789-acd99070f034",
+   "ntfs_colon"
+  ],
+  [
+   "2026-07-08",
+   "d5ce833d-a019-4cc3-b789-acd99070f034",
+   "task_sched_abspath"
+  ],
+  [
+   "2026-07-08",
+   "d5ce833d-a019-4cc3-b789-acd99070f034",
+   "session_limit"
+  ],
+  [
+   "2026-06-08",
+   "d74c2b8e-b173-4e2e-91d4-e55eba436afc",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-06-20",
+   "d9169c39-867c-448c-aab0-b3306efe2212",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-06-20",
+   "d9169c39-867c-448c-aab0-b3306efe2212",
+   "git_index_lock"
+  ],
+  [
+   "2026-06-20",
+   "d9169c39-867c-448c-aab0-b3306efe2212",
+   "ntfs_colon"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997-e2af-4a74-8f35-0bd2872de864",
+   "task_sched_abspath"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997-e2af-4a74-8f35-0bd2872de864",
+   "edit_needs_read"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997-e2af-4a74-8f35-0bd2872de864",
+   "edit_needs_read"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997-e2af-4a74-8f35-0bd2872de864",
+   "edit_needs_read"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997-e2af-4a74-8f35-0bd2872de864",
+   "edit_needs_read"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997-e2af-4a74-8f35-0bd2872de864",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997-e2af-4a74-8f35-0bd2872de864",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997-e2af-4a74-8f35-0bd2872de864",
+   "git_index_lock"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997-e2af-4a74-8f35-0bd2872de864",
+   "ntfs_colon"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997-e2af-4a74-8f35-0bd2872de864",
+   "edit_needs_read"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997-e2af-4a74-8f35-0bd2872de864",
+   "edit_needs_read"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997-e2af-4a74-8f35-0bd2872de864",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997-e2af-4a74-8f35-0bd2872de864",
+   "edit_needs_read"
+  ],
+  [
+   "2026-06-12",
+   "d96a6997-e2af-4a74-8f35-0bd2872de864",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-12",
+   "f16981f9-5ba7-4fc4-9a0b-c3a0a6d248ac",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-06-12",
+   "f16981f9-5ba7-4fc4-9a0b-c3a0a6d248ac",
+   "git_index_lock"
+  ],
+  [
+   "2026-06-12",
+   "f16981f9-5ba7-4fc4-9a0b-c3a0a6d248ac",
+   "ntfs_colon"
+  ],
+  [
+   "2026-06-12",
+   "f16981f9-5ba7-4fc4-9a0b-c3a0a6d248ac",
+   "task_sched_abspath"
+  ],
+  [
+   "2026-06-12",
+   "f16981f9-5ba7-4fc4-9a0b-c3a0a6d248ac",
+   "session_limit"
+  ],
+  [
+   "2026-06-12",
+   "f16981f9-5ba7-4fc4-9a0b-c3a0a6d248ac",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-12",
+   "f16981f9-5ba7-4fc4-9a0b-c3a0a6d248ac",
+   "crlf_phantom"
+  ],
+  [
+   "2026-06-14",
+   "f70b81c5-2d74-4808-8d14-8ac2d43ecbe0",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-06-14",
+   "f70b81c5-2d74-4808-8d14-8ac2d43ecbe0",
+   "git_index_lock"
+  ],
+  [
+   "2026-06-14",
+   "f70b81c5-2d74-4808-8d14-8ac2d43ecbe0",
+   "ntfs_colon"
+  ],
+  [
+   "2026-06-14",
+   "f70b81c5-2d74-4808-8d14-8ac2d43ecbe0",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-06-14",
+   "f70b81c5-2d74-4808-8d14-8ac2d43ecbe0",
+   "git_index_lock"
+  ],
+  [
+   "2026-06-14",
+   "f70b81c5-2d74-4808-8d14-8ac2d43ecbe0",
+   "ntfs_colon"
+  ],
+  [
+   "2026-06-14",
+   "f70b81c5-2d74-4808-8d14-8ac2d43ecbe0",
+   "cp1252_unicode"
+  ],
+  [
+   "2026-06-14",
+   "f70b81c5-2d74-4808-8d14-8ac2d43ecbe0",
+   "git_index_lock"
+  ],
+  [
+   "2026-06-14",
+   "f70b81c5-2d74-4808-8d14-8ac2d43ecbe0",
+   "ntfs_colon"
+  ]
+ ]
+}

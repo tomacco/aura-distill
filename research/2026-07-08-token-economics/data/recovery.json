@@ -1,0 +1,235 @@
+{
+ "summary": {
+  "edit_needs_read": {
+   "n": 14,
+   "median_out": 6498.0,
+   "mean_out": 8416,
+   "median_reqs": 10.0
+  },
+  "screenshot_enoent": {
+   "n": 4,
+   "median_out": 10222.5,
+   "mean_out": 10809,
+   "median_reqs": 13.0
+  },
+  "cmd_not_found": {
+   "n": 4,
+   "median_out": 18015.5,
+   "mean_out": 18188,
+   "median_reqs": 12.5
+  },
+  "cp1252_unicode": {
+   "n": 3,
+   "median_out": 5032,
+   "mean_out": 32029,
+   "median_reqs": 5
+  },
+  "encoding_generic": {
+   "n": 3,
+   "median_out": 6153,
+   "mean_out": 6636,
+   "median_reqs": 8
+  },
+  "edit_string_notfound": {
+   "n": 2,
+   "median_out": 17554.0,
+   "mean_out": 17554,
+   "median_reqs": 25.5
+  },
+  "git_index_lock": {
+   "n": 1,
+   "median_out": 7072,
+   "mean_out": 7072,
+   "median_reqs": 11
+  }
+ },
+ "events": [
+  {
+   "sig": "edit_needs_read",
+   "date": "2026-06-09",
+   "out": 18723,
+   "reqs": 21
+  },
+  {
+   "sig": "screenshot_enoent",
+   "date": "2026-06-09",
+   "out": 13204,
+   "reqs": 22
+  },
+  {
+   "sig": "cp1252_unicode",
+   "date": "2026-07-01",
+   "out": 86926,
+   "reqs": 89
+  },
+  {
+   "sig": "cmd_not_found",
+   "date": "2026-07-06",
+   "out": 32606,
+   "reqs": 46
+  },
+  {
+   "sig": "edit_needs_read",
+   "date": "2026-07-07",
+   "out": 3376,
+   "reqs": 14
+  },
+  {
+   "sig": "edit_string_notfound",
+   "date": "2026-07-08",
+   "out": 32787,
+   "reqs": 48
+  },
+  {
+   "sig": "edit_needs_read",
+   "date": "2026-07-08",
+   "out": 5632,
+   "reqs": 9
+  },
+  {
+   "sig": "edit_needs_read",
+   "date": "2026-07-08",
+   "out": 6021,
+   "reqs": 11
+  },
+  {
+   "sig": "cmd_not_found",
+   "date": "2026-06-07",
+   "out": 10934,
+   "reqs": 6
+  },
+  {
+   "sig": "screenshot_enoent",
+   "date": "2026-06-10",
+   "out": 9844,
+   "reqs": 15
+  },
+  {
+   "sig": "git_index_lock",
+   "date": "2026-06-11",
+   "out": 7072,
+   "reqs": 11
+  },
+  {
+   "sig": "cmd_not_found",
+   "date": "2026-06-11",
+   "out": 25097,
+   "reqs": 19
+  },
+  {
+   "sig": "edit_needs_read",
+   "date": "2026-06-12",
+   "out": 1228,
+   "reqs": 4
+  },
+  {
+   "sig": "edit_needs_read",
+   "date": "2026-06-12",
+   "out": 2229,
+   "reqs": 4
+  },
+  {
+   "sig": "encoding_generic",
+   "date": "2026-06-13",
+   "out": 3567,
+   "reqs": 8
+  },
+  {
+   "sig": "encoding_generic",
+   "date": "2026-06-13",
+   "out": 10187,
+   "reqs": 7
+  },
+  {
+   "sig": "encoding_generic",
+   "date": "2026-06-13",
+   "out": 6153,
+   "reqs": 9
+  },
+  {
+   "sig": "edit_needs_read",
+   "date": "2026-06-11",
+   "out": 9762,
+   "reqs": 14
+  },
+  {
+   "sig": "edit_string_notfound",
+   "date": "2026-06-07",
+   "out": 2321,
+   "reqs": 3
+  },
+  {
+   "sig": "edit_needs_read",
+   "date": "2026-06-09",
+   "out": 27343,
+   "reqs": 26
+  },
+  {
+   "sig": "edit_needs_read",
+   "date": "2026-06-09",
+   "out": 10490,
+   "reqs": 17
+  },
+  {
+   "sig": "screenshot_enoent",
+   "date": "2026-06-09",
+   "out": 9587,
+   "reqs": 10
+  },
+  {
+   "sig": "edit_needs_read",
+   "date": "2026-06-10",
+   "out": 9824,
+   "reqs": 9
+  },
+  {
+   "sig": "screenshot_enoent",
+   "date": "2026-06-10",
+   "out": 10601,
+   "reqs": 11
+  },
+  {
+   "sig": "edit_needs_read",
+   "date": "2026-07-01",
+   "out": 8676,
+   "reqs": 19
+  },
+  {
+   "sig": "cp1252_unicode",
+   "date": "2026-06-08",
+   "out": 5032,
+   "reqs": 5
+  },
+  {
+   "sig": "edit_needs_read",
+   "date": "2026-06-12",
+   "out": 6975,
+   "reqs": 7
+  },
+  {
+   "sig": "edit_needs_read",
+   "date": "2026-06-12",
+   "out": 3030,
+   "reqs": 5
+  },
+  {
+   "sig": "edit_needs_read",
+   "date": "2026-06-12",
+   "out": 4512,
+   "reqs": 8
+  },
+  {
+   "sig": "cp1252_unicode",
+   "date": "2026-06-14",
+   "out": 4128,
+   "reqs": 4
+  },
+  {
+   "sig": "cmd_not_found",
+   "date": "2026-06-14",
+   "out": 4113,
+   "reqs": 2
+  }
+ ],
+ "method": "output tokens from error tool_result until next real user prompt (self-recovery window, upper bound: includes task continuation)"
+}

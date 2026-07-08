@@ -1,0 +1,312 @@
+{
+ "writes": [
+  [
+   "2026-06-12T07:24",
+   "d96a6997",
+   "feedback/preferences.md",
+   "Edit"
+  ],
+  [
+   "2026-06-12T07:24",
+   "d96a6997",
+   "SPINE.md",
+   "Edit"
+  ]
+ ],
+ "reads": [
+  [
+   "2026-06-08T16:50",
+   "1094497e",
+   "SPINE.md"
+  ],
+  [
+   "2026-06-08T16:50",
+   "1094497e",
+   "ops/raspberry-pi.md"
+  ],
+  [
+   "2026-06-09T20:30",
+   "1f8f5801",
+   "craft/talk-slide-motion.md"
+  ],
+  [
+   "2026-06-09T20:30",
+   "1f8f5801",
+   "profile/file-01.md"
+  ],
+  [
+   "2026-06-09T20:13",
+   "49cf3b87",
+   "craft/talk-slide-motion.md"
+  ],
+  [
+   "2026-06-09T22:46",
+   "49cf3b87",
+   "SPINE.md"
+  ],
+  [
+   "2026-07-06T22:26",
+   "53bf3cac",
+   "SPINE.md"
+  ],
+  [
+   "2026-07-07T18:39",
+   "53bf3cac",
+   "SPINE.md"
+  ],
+  [
+   "2026-07-08T15:17",
+   "53bf3cac",
+   "SPINE.md"
+  ],
+  [
+   "2026-06-11T20:53",
+   "5eca7581",
+   "SPINE.md"
+  ],
+  [
+   "2026-06-08T10:01",
+   "70854644",
+   "SPINE.md"
+  ],
+  [
+   "2026-06-10T14:01",
+   "73c26104",
+   "SPINE.md"
+  ],
+  [
+   "2026-06-10T14:01",
+   "73c26104",
+   "craft/talk-slide-motion.md"
+  ],
+  [
+   "2026-06-11T22:04",
+   "7b4269f7",
+   "ops/claude-code-workflows.md"
+  ],
+  [
+   "2026-06-11T22:05",
+   "7b4269f7",
+   "craft/tight-loops-llm-validation.md"
+  ],
+  [
+   "2026-06-12T06:17",
+   "7b4269f7",
+   "SPINE.md"
+  ],
+  [
+   "2026-06-08T13:31",
+   "b144be19",
+   "projects/file-02.md"
+  ],
+  [
+   "2026-06-08T20:12",
+   "b144be19",
+   "projects/file-03.md"
+  ],
+  [
+   "2026-06-11T20:04",
+   "b4528fce",
+   "SPINE.md"
+  ],
+  [
+   "2026-06-11T20:04",
+   "b4528fce",
+   "craft/talk-slide-motion.md"
+  ],
+  [
+   "2026-06-07T15:58",
+   "bc2d3095",
+   "SPINE.md"
+  ],
+  [
+   "2026-06-07T15:58",
+   "bc2d3095",
+   "projects/file-04.md"
+  ],
+  [
+   "2026-06-10T12:17",
+   "bc2d3095",
+   "projects/file-05.md"
+  ],
+  [
+   "2026-06-10T14:02",
+   "bc2d3095",
+   "SPINE.md"
+  ],
+  [
+   "2026-06-10T13:31",
+   "bc40251b",
+   "craft/talk-slide-motion.md"
+  ],
+  [
+   "2026-06-30T17:20",
+   "cf3fcb1d",
+   "SPINE.md"
+  ],
+  [
+   "2026-07-01T15:18",
+   "cf3fcb1d",
+   "ops/windows-tooling.md"
+  ],
+  [
+   "2026-07-08T21:58",
+   "d5ce833d",
+   "ops/session-limits-continuation.md"
+  ],
+  [
+   "2026-06-12T06:17",
+   "d96a6997",
+   "craft/execution-gap.md"
+  ],
+  [
+   "2026-06-12T15:26",
+   "d96a6997",
+   "SPINE.md"
+  ],
+  [
+   "2026-06-10T12:31",
+   "e3207eeb",
+   "craft/talk-slide-motion.md"
+  ],
+  [
+   "2026-06-12T22:49",
+   "f16981f9",
+   "SPINE.md"
+  ],
+  [
+   "2026-06-11T20:13",
+   "f70b81c5",
+   "projects/file-06.md"
+  ],
+  [
+   "2026-06-14T20:59",
+   "f70b81c5",
+   "SPINE.md"
+  ],
+  [
+   "2026-06-14T21:00",
+   "f70b81c5",
+   "projects/file-06.md"
+  ],
+  [
+   "2026-06-14T21:44",
+   "f70b81c5",
+   "SPINE.md"
+  ]
+ ],
+ "distill_invocations": [
+  {
+   "ts": "2026-06-09T22:38",
+   "session": "49cf3b87-1a60-4739-84e1-6c9aaaf641e5",
+   "cost": 2.5050470000000002,
+   "out": 9339,
+   "reqs": 4
+  },
+  {
+   "ts": "2026-07-07T18:31",
+   "session": "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "cost": 0.8735820000000001,
+   "out": 5325,
+   "reqs": 3
+  },
+  {
+   "ts": "2026-07-08T08:32",
+   "session": "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "cost": 1.186522,
+   "out": 7253,
+   "reqs": 3
+  },
+  {
+   "ts": "2026-07-08T15:06",
+   "session": "53bf3cac-0cf4-4b6e-8cfa-940e9bfe59a7",
+   "cost": 1.5727280000000001,
+   "out": 6384,
+   "reqs": 3
+  },
+  {
+   "ts": "2026-06-11T20:48",
+   "session": "5eca7581-fb29-4420-9d5b-9e4bc2509e30",
+   "cost": 1.442584,
+   "out": 7412,
+   "reqs": 6
+  },
+  {
+   "ts": "2026-06-08T10:00",
+   "session": "70854644-c441-4b65-88ef-3f484fba3ca8",
+   "cost": 1.4651239999999999,
+   "out": 19384,
+   "reqs": 4
+  },
+  {
+   "ts": "2026-06-07T16:01",
+   "session": "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "cost": 0.283297,
+   "out": 4278,
+   "reqs": 3
+  },
+  {
+   "ts": "2026-06-09T18:09",
+   "session": "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "cost": 15.2345625,
+   "out": 87354,
+   "reqs": 28
+  },
+  {
+   "ts": "2026-06-10T13:56",
+   "session": "bc2d3095-685b-41c8-9ac5-36c797c70305",
+   "cost": 0.649002,
+   "out": 4811,
+   "reqs": 5
+  },
+  {
+   "ts": "2026-07-01T17:11",
+   "session": "cf3fcb1d-64cf-4967-9faf-901bee763a61",
+   "cost": 3.4149109999999996,
+   "out": 23043,
+   "reqs": 20
+  },
+  {
+   "ts": "2026-06-14T21:43",
+   "session": "f70b81c5-2d74-4808-8d14-8ac2d43ecbe0",
+   "cost": 0.959877,
+   "out": 11986,
+   "reqs": 7
+  },
+  {
+   "ts": "2026-06-14T22:16",
+   "session": "f70b81c5-2d74-4808-8d14-8ac2d43ecbe0",
+   "cost": 0.348507,
+   "out": 2360,
+   "reqs": 2
+  }
+ ],
+ "n_ctx_samples": 3364,
+ "ctx_per_request_by_month": {
+  "2026-05": {
+   "n": 22,
+   "median": 40594.0,
+   "mean": 39563,
+   "p90": 47588
+  },
+  "2026-06": {
+   "n": 2460,
+   "median": 147858.0,
+   "mean": 202039,
+   "p90": 449973
+  },
+  "2026-07": {
+   "n": 882,
+   "median": 164799.5,
+   "mean": 175100,
+   "p90": 313297
+  }
+ },
+ "ctx_per_request_overall": {
+  "n": 3364,
+  "median": 153442.0,
+  "mean": 193914,
+  "p90": 388804
+ },
+ "redaction_note": "projects/* and profile/* knowledge filenames pseudonymized"
+}

@@ -6,7 +6,7 @@ announcing the resume (lesson from 2026-07-09 morning), then continue.
 
 - [x] 0. PR #36 merged (Ivan instruction), watchdog redeployed + test-fired
 - [x] 1. T4 transform-vs-sticky browser test → update craft/css-layout.md verdict
-- [ ] 2. Upstream issue filed: defer built-in tool schemas in subagent spawns
+- [x] 2. Upstream issue filed: defer built-in tool schemas in subagent spawns
 - [ ] 3. S1 durable-layers PR open (capabilities/ docs, reviewed, NOT merged)
 - [ ] 4. Capabilities-skill design doc committed (research branch)
 - [ ] 5. distill-benchmark token-telemetry branch pushed (PR open, NOT merged)
@@ -17,3 +17,4 @@ announcing the resume (lesson from 2026-07-09 morning), then continue.
 Notes (append-only):
 - 2026-07-09 ~14:0x — Block started. Option A (inversion) assumed per Ivan's endorsement.
 - ~13:45 — Sticky test DONE: transform/filter/will-change/contain/perspective all STICK; only overflow ancestor breaks. KB corrected ([DEPRECATED] old claim). Test page committed.
+- ~13:50 — Upstream issue filed: anthropics/claude-code#76045 (defer built-in tool schemas).

@@ -643,6 +643,25 @@ Memory pressure: X/10 → Y/10
 
 After encoding new learnings, maintain tier health:
 
+### Economics accounting (every distillation)
+
+Distill optimizes for memory quality AND token economics. Measure — never estimate from
+memory — using chars/4 as the token approximation:
+
+1. Sum the sizes of every file you WROTE or EDITED this run → `written_tokens`
+2. Size of SPINE.md after your updates → `spine_tokens`
+3. Total size of all tier files (`profile/ ops/ craft/ projects/ feedback/`, excluding
+   `archive/`) → `kb_tokens`
+4. Include all three in your report's **Economics** line.
+
+Why it matters: the SPINE is carried in context on every request of every session — each
+token added to it is a recurring cost, not a one-time one. Tier-2 files are lazy-loaded
+(pay-per-read), so detail belongs THERE, pointers in the SPINE. When compacting, weigh
+recurring-cost tokens (SPINE, always-on) heavier than pay-per-read tokens (tier files).
+Economics NEVER overrides integrity: never drop or compress a [NON-NEGOTIABLE], [DIRECTIVE],
+or safety-relevant entry to save tokens — verbatim fidelity wins there, and rare-but-
+catastrophic knowledge is worth more than any token math suggests.
+
 ### Spine compaction (if > 60 lines)
 1. Merge entries pointing to the same domain
 2. Entries whose Tier 2 files haven't been updated in 90+ days → ask user if still relevant

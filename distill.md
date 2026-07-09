@@ -132,6 +132,7 @@ Return a distillation report:
 - Learnings encoded: list with file paths
 - User model updates: what changed
 - Tier health: current state
+- Economics: tokens written this run (sum of chars/4 across files you wrote), SPINE size in tokens (chars/4), total KB size in tokens (sum over all tier files)
 - Flagged tensions: any honesty-vs-comfort conflicts
 - Open questions: anything you couldn't resolve without asking the user
 `
@@ -144,9 +145,18 @@ When the sub-agent completes:
 
 1. **Read the spine** — `Read {DISTILL_DIR}/SPINE.md` to bring the updated knowledge index into the current session context. This is how the current session benefits immediately from what was just distilled.
 
-2. **Relay the report** to the user concisely. Only surface:
+2. **Record the economics ledger** — append ONE line to `{DISTILL_DIR}/data/economics.jsonl` (create the `data/` directory if missing). Distill optimizes for memory quality AND token economics; a system that never measures its own cost cannot claim to save anything. The line:
+
+```json
+{"ts":"<ISO-8601 UTC>","distill_tokens":<subagent token total from the Agent tool result's usage, or null if unavailable>,"written_tokens":<from report>,"spine_tokens":<from report>,"kb_tokens":<from report>,"signals":<N>,"files_written":<count>}
+```
+
+   Rules: append-only, one JSON object per line, no rewriting past lines. If a value is unknown, use `null` — never invent numbers. This file is local data, never synced anywhere.
+
+3. **Relay the report** to the user concisely. Only surface:
    - What was learned (the principles, not the raw signals)
    - Where it was saved
+   - One economics line (cost of this distillation + current KB footprint — from the ledger entry)
    - Any open questions that need user input
    - Any flagged tensions
 

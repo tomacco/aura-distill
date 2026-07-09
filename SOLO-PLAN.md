@@ -21,3 +21,4 @@ Notes (append-only):
 - ~14:1x — Skill design committed; durable-layers PR branch pushed, review running.
 - ~14:4x — PR #37 (durable layers, review-fixed) + distill-benchmark PR #1 (telemetry, smoke-tested: real usage + arm-injection capture verified) both open, NOT merged.
 - ~15:1x — E-B compliance live in collector (real-session filter; first data: 3/3 real sessions read SPINE). Limit detector de-contaminated + interactive-freeze blind spot documented. Living ledger updated on PR #37 branch. Box 8 stays UNCHECKED intentionally: watchdog stays armed while I hold the session for Ivan's return.
+- ~19:0x — PR #37 MERGED (Ivan). Skill S2 WIP pushed (feature/capabilities-skill: SKILL.md + 6 recipes; runner/installer/review/PR remain). PreCompact hook LIVE in user settings (distill checkpoint: logs compactions + injects preserve-verbatim guidance). Local distill auto-updated to 1.1.9; first economics ledger line written.

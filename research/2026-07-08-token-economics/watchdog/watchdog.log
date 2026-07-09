@@ -143,3 +143,4 @@
 2026-07-09 04:53:35  tick
 2026-07-09 04:53:35  RESUMING: transcript stale 20.0 min, plan has unchecked boxes
 2026-07-09 04:53:35  spawned claude --resume as PID 12872
+2026-07-09 05:25:20  resume attempt exited with code 

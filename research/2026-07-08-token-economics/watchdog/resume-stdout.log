@@ -1,0 +1,23 @@
+Good morning! The overnight research is complete and shipped: branch `research/2026-07-08-token-economics` on github.com/tomacco/aura-distill (never touched main), with two new research pages in the house style — **token-economics.html** and **model-routing.html** — plus index cards, the full dataset (PII-scrubbed), pre-registered designs, the adversarial review, and a SESSION-LOG. Pages verified rendering via local server + Playwright. The resume watchdog you asked for was built, test-fired, resumed the session several times during the night, and was deleted after ship. Merge the branch when you're happy and Pages goes live.
+
+## The headline findings
+
+**1. The token conversation is mostly not about memory.** From your real 40 days of transcripts (33 sessions, 3,360 requests, 656M tokens ≈ $868 API-equivalent): **~85% of cost is context movement** — cache reads 51-57%, cache writes 22-34%, actual output only 15-21%. Median request drags 153k tokens of resident context. Top 5 sessions = 69% of all spend. Order of levers: **context hygiene ≫ delegation ≫ model routing ≫ memory diet**.
+
+**2. Distill's ledger, measured to the cent:** all-in overhead ≈ **5-6% of spend** (~$50/window: /distill turns $30, subagent ~$6-18, SPINE carry $12). Savings side: encoded *environment gotchas* show **~zero recurrence after encoding** (index.lock, NTFS colons, python3 stub, cp1252 — all one-and-done), but *behavioral rules* recur regardless (edit-before-read: 25× despite encoding) — your execution-gap thesis, now quantified. Friction savings alone ($10-30) don't repay the $50; the big claimed saving (avoided re-derivation) has **no counterfactual in the data**. Honest published verdict: *overhead proven, savings directional — distill is a token shaper, not yet a proven saver.* Top follow-up: add token telemetry to distill-benchmark arms.
+
+**3. Routing (blind-judged, adversarially reviewed pre-run):** mechanical transforms and extraction survived **Haiku untouched** — the one wrong extraction answer came from *Opus*. Comprehension needs Sonnet; adversarial judgment stays frontier. Haiku applied 4/5 in-context gotchas. Hidden tax: cheap models emit 3-7× more output tokens. And the E2 twist: an orchestrator already routes near-optimally *without* a routing file — **your monoculture is a habit gap, not a knowledge gap**, so the fix is structural (subagent `model:` defaults) not prose. Also: distill-learned routing has essentially **zero prior art** — genuinely novel territory if you want it.
+
+## Per your decision frame
+
+- **Free wins (no output change):** benchmark token telemetry, the transcript-mining methodology fix, `model:` frontmatter on read-only subagents.
+- **Trade-off knobs (need your call + explicit opt-in):** diet SPINE (1.2k vs 3.6k: −29% read volume but held-out recall dropped 10/12 — a v2 "preserve distinctive nouns" rule is the next test); [ROUTE] markers in knowledge; context-cap discipline.
+
+## Also worth knowing
+
+- `/distill` ran at session end (38 signals → 13 knowledge files, 118k subagent tokens — E4's instrumented measurement). The unflattering verdicts are encoded in the KB itself.
+- The blind judge caught a probable **overgeneralization in your own knowledge base** (css-layout: transform-vs-sticky) — flagged `[needs verification]`, needs a 10-minute browser test.
+- The adversarial review earned its keep again: 17 findings pre-run, 2 of which would have invalidated experiments (E3's train=test leak was the big one).
+- Open for your review: the routing table in `ops/model-tiering.md` is still `[PROVISIONAL pending Ivan's review]`, and a settings-level hook would fix the edit-before-read recurrence better than another rule — say the word and I'll set it up via `/update-config`.
+
+Sleep was well spent. ☕

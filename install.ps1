@@ -166,8 +166,23 @@ function Install-TokenSaverAgent {
         Write-Warn "agents/$name.md exists and isn't ours -- preserved untouched"
         return
     }
-    Get-File "$Repo/agents/$name.md" $target
-    Write-Done "agents/$name.md ${DIM}(preset subagent)${RESET}"
+    # Download to temp and validate before touching the target; never abort the
+    # whole install on a failed optional download.
+    $tmp = [System.IO.Path]::GetTempFileName()
+    try {
+        Get-File "$Repo/agents/$name.md" $tmp
+        $body = Get-Content $tmp -Raw
+        if ($body -match 'aura-distill' -and $body -match "name: $name") {
+            Move-Item -Force $tmp $target
+            Write-Done "agents/$name.md ${DIM}(preset subagent)${RESET}"
+        } else {
+            Remove-Item $tmp -Force -ErrorAction SilentlyContinue
+            Write-Warn "agents/$name.md download invalid -- skipped (re-run the installer to retry)"
+        }
+    } catch {
+        Remove-Item $tmp -Force -ErrorAction SilentlyContinue
+        Write-Warn "agents/$name.md download failed -- skipped (re-run the installer to retry)"
+    }
 }
 
 if ($TokenSaver -eq 'remove' -or $TokenSaver -eq 'off') {
@@ -274,7 +289,8 @@ Write-Host ''
 if ($existingVersion) {
     Write-Host "  ${CYAN}Upgraded${RESET} v$existingVersion -> v$Version"
     Write-Host ''
-    if ((Test-Path $TsMarker) -and ((Get-Content $TsMarker -Raw).Trim() -eq 'enabled')) {
+    $TsAnnounced = Join-Path $DistillDir '.token-saver-announced'
+    if ((Test-Path $TsMarker) -and ((Get-Content $TsMarker -Raw).Trim() -eq 'enabled') -and -not (Test-Path $TsAnnounced)) {
         Write-Host "  ${BOLD}${PURPLE}NEW $EmDash Token Saver${RESET}"
         Write-Host "  Two preset subagents (${BOLD}scribe${RESET}, ${BOLD}scout${RESET}) that skip the tool-schema tax:"
         Write-Host "  a text-only job now boots at ~2k tokens instead of ~19-27k. Local files only,"
@@ -282,6 +298,7 @@ if ($existingVersion) {
         Write-Host "  research behind it: ${CYAN}https://tomacco.github.io/aura-distill/token-saving.html${RESET}"
         Write-Host "  ${DIM}Opt out anytime: `$env:DISTILL_TOKEN_SAVER='remove'; re-run the installer${RESET}"
         Write-Host ''
+        Set-Content -Path $TsAnnounced -Value '1' -Encoding utf8 -NoNewline
     }
 }
 Write-Host "  ${DIM}Uninstall (keeps your learnings):${RESET}"

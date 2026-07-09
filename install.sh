@@ -270,8 +270,19 @@ install_token_saver_agent() {
         warn_msg "agents/${name}.md exists and isn't ours — preserved untouched"
         return
     fi
-    curl -sL "$REPO/agents/${name}.md" > "$target"
-    done_msg "agents/${name}.md ${DIM}(preset subagent)${RESET}"
+    # Download to temp and validate before touching the target: a raw-GitHub 404
+    # exits 0 with body "404: Not Found", and a poisoned file would then be
+    # protected forever by the not-ours guard above.
+    local tmp
+    tmp=$(mktemp)
+    if curl -fsL "$REPO/agents/${name}.md" > "$tmp" 2>/dev/null \
+       && grep -q "aura-distill" "$tmp" && grep -q "^name: ${name}" "$tmp"; then
+        mv "$tmp" "$target"
+        done_msg "agents/${name}.md ${DIM}(preset subagent)${RESET}"
+    else
+        rm -f "$tmp"
+        warn_msg "agents/${name}.md download failed — skipped (re-run the installer to retry)"
+    fi
 }
 
 case "$TOKEN_SAVER" in
@@ -374,7 +385,7 @@ echo ""
 if [ -n "$EXISTING_VERSION" ]; then
     printf "  ${CYAN}Upgraded${RESET} v${EXISTING_VERSION} → v${VERSION}\n"
     echo ""
-    if [ "$(cat "$TS_MARKER" 2>/dev/null)" = "enabled" ]; then
+    if [ "$(cat "$TS_MARKER" 2>/dev/null)" = "enabled" ] && [ ! -f "$DISTILL_DIR/.token-saver-announced" ]; then
         printf "  ${BOLD}${PURPLE}NEW — Token Saver${RESET}\n"
         printf "  Two preset subagents (${BOLD}scribe${RESET}, ${BOLD}scout${RESET}) that skip the tool-schema tax:\n"
         printf "  a text-only job now boots at ~2k tokens instead of ~19-27k. Local files only,\n"
@@ -382,6 +393,7 @@ if [ -n "$EXISTING_VERSION" ]; then
         printf "  research behind it: ${CYAN}https://tomacco.github.io/aura-distill/token-saving.html${RESET}\n"
         printf "  ${DIM}Opt out anytime: re-run the installer with --remove-token-saver${RESET}\n"
         echo ""
+        touch "$DISTILL_DIR/.token-saver-announced"
     fi
 fi
 printf "  ${DIM}Uninstall (keeps your learnings):${RESET}\n"

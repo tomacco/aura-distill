@@ -7,9 +7,9 @@ announcing the resume (lesson from 2026-07-09 morning), then continue.
 - [x] 0. PR #36 merged (Ivan instruction), watchdog redeployed + test-fired
 - [x] 1. T4 transform-vs-sticky browser test → update craft/css-layout.md verdict
 - [x] 2. Upstream issue filed: defer built-in tool schemas in subagent spawns
-- [ ] 3. S1 durable-layers PR open (capabilities/ docs, reviewed, NOT merged)
+- [x] 3. S1 durable-layers PR open (capabilities/ docs, reviewed, NOT merged)
 - [x] 4. Capabilities-skill design doc committed (research branch)
-- [ ] 5. distill-benchmark token-telemetry branch pushed (PR open, NOT merged)
+- [x] 5. distill-benchmark token-telemetry branch pushed (PR open, NOT merged)
 - [ ] 6. E-B compliance instrumentation added to metering collector
 - [ ] 7. E-A caps experiment: pre-registration committed; run only if no limit pressure
 - [ ] 8. Final SESSION-LOG entry + watchdog task DELETED + summary for Ivan
@@ -19,3 +19,4 @@ Notes (append-only):
 - ~13:45 — Sticky test DONE: transform/filter/will-change/contain/perspective all STICK; only overflow ancestor breaks. KB corrected ([DEPRECATED] old claim). Test page committed.
 - ~13:50 — Upstream issue filed: anthropics/claude-code#76045 (defer built-in tool schemas).
 - ~14:1x — Skill design committed; durable-layers PR branch pushed, review running.
+- ~14:4x — PR #37 (durable layers, review-fixed) + distill-benchmark PR #1 (telemetry, smoke-tested: real usage + arm-injection capture verified) both open, NOT merged.

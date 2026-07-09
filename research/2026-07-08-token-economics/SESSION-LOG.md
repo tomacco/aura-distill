@@ -38,3 +38,8 @@ Append-only checkpoints. Resume protocol: read RESEARCH-PLAN.md, continue first 
   (+2 child sweeps 46k/57k); adversarial reviewer 33k; diet-SPINE author 91k; probe author
   42k. Median ≈58k/agent; spawn floor alone ≈16-30k. Delegation is a QUALITY+context tool
   with a real fixed cost — consistent with the ≳30k-avoided-bulk break-even rule.
+- 05:2x E1 complete + judged; E2 complete; pages verified visually (local http server —
+  file:// is blocked in Playwright MCP). T6 harness artifact disclosed; bonus finding:
+  --disallowedTools "*" cuts headless context floor ~28k -> ~6k (tool schemas dominate).
+- 05:2x SHIP: branch pushed; watchdog schtask deleted (verified); /distill run at session
+  end = E4 instrumented measurement + tonight's signals.

@@ -2,6 +2,17 @@
 
 All notable changes to aura-distill.
 
+## [Unreleased]
+
+### Added
+- **Token Saver** — two preset subagents installed to `~/.claude/agents/`: `scribe` (text-only jobs: judge/summarize/classify/extract/draft — no tools, boots ~2k tokens vs ~19–27k default, measured 14x lighter) and `scout` (read-only exploration: Glob/Grep/Read — ~3.5x lighter, cannot modify anything). Backed by the July 2026 token-economics research (tool schemas ≈22k of a default spawn's ~27k starting context).
+- **Full user control** for Token Saver: `--token-saver` / `--no-token-saver` / `--remove-token-saver` flags (install.sh) and `$env:DISTILL_TOKEN_SAVER` = `on`/`off`/`remove` (install.ps1). Choice persists across updates via `distill/.token-saver`. Installer never overwrites agent files it didn't create.
+- **Landing page** `docs/token-saving.html` — the token-saving research line explained (inverted pyramid, SVG diagrams, measured numbers): what shipped, what's in research (learned spawn profiles), what became a trade-off knob instead of shipping (diet SPINE), what was corrected (naive friction accounting). Announced by the installer on update.
+- **Research pages**: `docs/research/token-economics.html` (40 days of real usage mined: ~85% of cost is context movement; distill overhead 5–6% of spend) and `docs/research/model-routing.html` (task-shape routing trials; orchestrators route near-optimally unaided).
+
+### Privacy
+- Token Saver collects nothing — local files only. Standing policy documented on the landing page: any future telemetry must be opt-in, aggregate-only, with a published schema.
+
 ## [0.7.0] - 2026-05-15 (unreleased)
 
 ### Added

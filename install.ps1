@@ -143,6 +143,53 @@ if (-not (Test-Path $RulesDir)) { New-Item -ItemType Directory -Force -Path $Rul
 Get-File "$Repo/rules/distill.md" (Join-Path $RulesDir 'distill.md')
 Write-Done "rules/distill.md ${DIM}(auto-loads every session)${RESET}"
 
+# === TOKEN SAVER (agent presets) ===
+# Full control via env var (installer runs through `irm | iex`, so no CLI flags):
+#   $env:DISTILL_TOKEN_SAVER = 'off'     -> skip/disable
+#   $env:DISTILL_TOKEN_SAVER = 'remove'  -> remove the preset files
+# The choice persists in distill/.token-saver across updates.
+# What it is and why: https://tomacco.github.io/aura-distill/token-saving.html
+
+Write-Section 'Token Saver'
+
+$AgentsDir = Join-Path $ClaudeHome 'agents'
+$TsMarker  = Join-Path $DistillDir '.token-saver'
+$TokenSaver = if ($env:DISTILL_TOKEN_SAVER) { $env:DISTILL_TOKEN_SAVER.ToLower() } else { 'auto' }
+if ($TokenSaver -eq 'auto' -and (Test-Path $TsMarker) -and ((Get-Content $TsMarker -Raw).Trim() -eq 'disabled')) {
+    $TokenSaver = 'off'
+}
+
+function Install-TokenSaverAgent {
+    param([string]$name)
+    $target = Join-Path $AgentsDir "$name.md"
+    if ((Test-Path $target) -and -not (Select-String -Path $target -Pattern 'aura-distill' -Quiet)) {
+        Write-Warn "agents/$name.md exists and isn't ours -- preserved untouched"
+        return
+    }
+    Get-File "$Repo/agents/$name.md" $target
+    Write-Done "agents/$name.md ${DIM}(preset subagent)${RESET}"
+}
+
+if ($TokenSaver -eq 'remove' -or $TokenSaver -eq 'off') {
+    foreach ($a in @('scribe', 'scout')) {
+        $t = Join-Path $AgentsDir "$a.md"
+        if ((Test-Path $t) -and (Select-String -Path $t -Pattern 'aura-distill' -Quiet)) {
+            Remove-Item $t -Force
+            Write-Done "Removed agents/$a.md"
+        }
+    }
+    Set-Content -Path $TsMarker -Value 'disabled' -Encoding utf8 -NoNewline
+    Write-Skip "Token Saver ${DIM}(off -- enable anytime: `$env:DISTILL_TOKEN_SAVER='on'; re-run)${RESET}"
+} else {
+    if (-not (Test-Path $AgentsDir)) { New-Item -ItemType Directory -Force -Path $AgentsDir | Out-Null }
+    Install-TokenSaverAgent 'scribe'
+    Install-TokenSaverAgent 'scout'
+    Set-Content -Path $TsMarker -Value 'enabled' -Encoding utf8 -NoNewline
+    Write-Info 'Two lightweight subagent presets -- local files only, nothing is collected or sent anywhere.'
+    Write-Info "What they do & the research: ${CYAN}https://tomacco.github.io/aura-distill/token-saving.html${RESET}"
+    Write-Info "Not for you? ${DIM}`$env:DISTILL_TOKEN_SAVER='remove'; re-run the installer${RESET}"
+}
+
 # === SESSION INTEGRATION ===
 
 Write-Section 'Session integration'
@@ -227,6 +274,15 @@ Write-Host ''
 if ($existingVersion) {
     Write-Host "  ${CYAN}Upgraded${RESET} v$existingVersion -> v$Version"
     Write-Host ''
+    if ((Test-Path $TsMarker) -and ((Get-Content $TsMarker -Raw).Trim() -eq 'enabled')) {
+        Write-Host "  ${BOLD}${PURPLE}NEW $EmDash Token Saver${RESET}"
+        Write-Host "  Two preset subagents (${BOLD}scribe${RESET}, ${BOLD}scout${RESET}) that skip the tool-schema tax:"
+        Write-Host "  a text-only job now boots at ~2k tokens instead of ~19-27k. Local files only,"
+        Write-Host "  fully yours, nothing collected. The 5-minute read on what changed and the"
+        Write-Host "  research behind it: ${CYAN}https://tomacco.github.io/aura-distill/token-saving.html${RESET}"
+        Write-Host "  ${DIM}Opt out anytime: `$env:DISTILL_TOKEN_SAVER='remove'; re-run the installer${RESET}"
+        Write-Host ''
+    }
 }
 Write-Host "  ${DIM}Uninstall (keeps your learnings):${RESET}"
 Write-Host "    ${DIM}Remove-Item -Recurse -Force `$HOME\.claude\distill, `$HOME\.claude\commands\distill.md, `$HOME\.claude\rules\distill.md${RESET}"

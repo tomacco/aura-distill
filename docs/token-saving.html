@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Saving — aura-distill</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,400;0,7..72,600;1,7..72,300;1,7..72,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="research/research-style.css">
+    <style>
+        section a { color: var(--accent); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); }
+        section a:hover { border-bottom-color: var(--accent); }
+        .svg-figure { margin: 2rem 0; padding: 1.5rem; background: var(--surface); border-radius: 6px; }
+        .svg-figure svg { width: 100%; height: auto; display: block; }
+        .svg-caption { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--dim); margin-top: 0.75rem; text-align: center; }
+        .bar-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; fill: var(--text); }
+        .bar-value { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; fill: var(--bright); }
+        .stack-label { font-family: 'Inter', sans-serif; font-size: 12px; fill: var(--bright); }
+        .stack-sub { font-family: 'JetBrains Mono', monospace; font-size: 10px; fill: var(--dim); }
+        .status-row { display: flex; gap: 0.75rem; align-items: baseline; padding: 0.85rem 0; border-bottom: 1px solid var(--border); }
+        .status-chip { font-family: 'JetBrains Mono', monospace; font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.2rem 0.55rem; border-radius: 3px; white-space: nowrap; }
+        .chip-shipped { background: color-mix(in srgb, var(--positive) 15%, transparent); color: var(--positive); }
+        .chip-research { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); }
+        .chip-knob { background: color-mix(in srgb, var(--accent-4) 18%, transparent); color: var(--accent-4); }
+        .chip-corrected { background: color-mix(in srgb, var(--dim) 18%, transparent); color: var(--dim); }
+        .status-body { font-size: 0.9rem; color: var(--text); line-height: 1.65; }
+        .controls-block { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; background: var(--surface); border-radius: 4px; padding: 1rem 1.25rem; line-height: 2; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <button class="mode-toggle" onclick="toggleMode()" aria-label="Toggle dark mode">
+        <span class="icon-sun">☀</span>
+        <span class="icon-moon">☽</span>
+    </button>
+    <nav class="toc">
+        <a href="#news">What's new</a>
+        <a href="#foryou">What changes for you</a>
+        <a href="#hood">Under the hood</a>
+        <a href="#evidence">The evidence</a>
+        <a href="#line">The research line</a>
+        <a href="#privacy">Your data</a>
+        <a href="#control">Full control</a>
+    </nav>
+    <div class="container">
+        <header>
+            <a href="./" class="back">&larr; aura-distill</a>
+            <h1>Token Saving</h1>
+            <div class="meta">Feature hub &middot; updated July 2026 &middot; every claim links to published research</div>
+            <p class="abstract">Distill's job is to make your Claude remember. This page tracks a second job it's taking on: making your Claude <em>cheaper to run</em> — without ever trading away quality behind your back. What ships here is measured first, published with raw data, and always yours to switch off.</p>
+        </header>
+
+        <section id="news">
+            <h2>The news, first</h2>
+            <p><strong>Distill now installs two lightweight subagent presets — <code>scribe</code> and <code>scout</code>.</strong> They make the helper agents Claude Code spawns for you dramatically cheaper to start: a text-only job (judging, summarizing, classifying) boots at <strong>~2,000 tokens instead of ~19,000–27,000</strong>. That's it. No behavior change, no data collected, two small text files on your disk, one command to remove them.</p>
+        </section>
+
+        <section id="foryou">
+            <h2>What changes for you</h2>
+            <p>Nothing you have to learn. When Claude Code delegates work to a helper (it does this more than most people realize — search sweeps, reviews, summaries), it can now pick a preset that matches the job's <em>shape</em> instead of always spawning a fully-equipped generalist:</p>
+            <ul>
+                <li><strong>scribe</strong> — for jobs that only read the prompt and return text. Carries no tools at all.</li>
+                <li><strong>scout</strong> — for find-and-report jobs. Carries read-only tools (search and read; it <em>cannot</em> modify anything — a safety property, not just a cost one).</li>
+                <li><strong>generalist</strong> — the built-in default, unchanged, still there for open-ended work.</li>
+            </ul>
+            <p>You'll simply see "scribe" or "scout" in the spawn line where you used to see a generic agent — and a smaller number in your usage.</p>
+        </section>
+
+        <section id="hood">
+            <h2>Under the hood: what a helper actually costs</h2>
+            <p>Most people use Claude Code + distill without seeing what a "simple" subagent carries on its back. Every helper is a fresh Claude instance, and before it reads the first word of your task, its context is already loaded with scaffolding — the biggest slab of which is <em>tool schemas</em>: the formal descriptions of every tool it could theoretically use (shell, file editing, browser…), shipped in full even if the job never touches one.</p>
+            <div class="svg-figure">
+                <svg viewBox="0 0 720 240" role="img" aria-label="Anatomy of a default subagent spawn vs a scribe preset">
+                    <!-- default spawn stack -->
+                    <text x="10" y="18" class="stack-label">Default helper — what it carries before reading your task</text>
+                    <rect x="10" y="30" width="480" height="44" rx="3" fill="var(--accent)" opacity="0.75"/>
+                    <text x="22" y="57" class="stack-label" fill="#fff">Tool schemas — every tool described in full</text>
+                    <text x="440" y="57" class="stack-sub" fill="#fff">~22k</text>
+                    <rect x="10" y="78" width="110" height="44" rx="3" fill="var(--accent-4)" opacity="0.6"/>
+                    <text x="22" y="105" class="stack-sub">scaffolding ~5k</text>
+                    <rect x="124" y="78" width="60" height="44" rx="3" fill="var(--positive)" opacity="0.55"/>
+                    <text x="130" y="105" class="stack-sub">your task</text>
+                    <!-- scribe stack -->
+                    <text x="10" y="160" class="stack-label">scribe — same task, tools stripped</text>
+                    <rect x="10" y="172" width="34" height="44" rx="3" fill="var(--accent-4)" opacity="0.6"/>
+                    <rect x="48" y="172" width="60" height="44" rx="3" fill="var(--positive)" opacity="0.55"/>
+                    <text x="54" y="199" class="stack-sub">your task</text>
+                    <text x="120" y="199" class="stack-sub">≈2k total — the work is the same, the backpack is gone</text>
+                </svg>
+                <div class="svg-caption">anatomy of a helper's starting context — measured on real spawns, July 2026</div>
+            </div>
+            <p>The schemas aren't waste when the job needs tools. They're pure tax when it doesn't — and judging, summarizing, extracting and drafting never do. The presets simply stop paying for capabilities the job can't use. Your main session is untouched; this is only about the helpers.</p>
+        </section>
+
+        <section id="evidence">
+            <h2>The evidence</h2>
+            <p>Measured on real spawns with an identical minimal task, July 2026 (raw JSON in the research repo):</p>
+            <div class="svg-figure">
+                <svg viewBox="0 0 720 190" role="img" aria-label="Measured context floors by configuration">
+                    <text x="10" y="16" class="bar-label">starting context (tokens) — lower is better</text>
+                    <rect x="150" y="30"  width="540" height="22" rx="2" fill="var(--accent)" opacity="0.8"/>
+                    <text x="10" y="45" class="bar-label">default helper</text>
+                    <text x="560" y="45" class="bar-value" fill="#fff">27,403</text>
+                    <rect x="150" y="62"  width="155" height="22" rx="2" fill="var(--accent-4)" opacity="0.8"/>
+                    <text x="10" y="77" class="bar-label">scout (read-only)</text>
+                    <text x="312" y="77" class="bar-value">7,873</text>
+                    <rect x="150" y="94"  width="103" height="22" rx="2" fill="var(--positive)" opacity="0.7"/>
+                    <text x="10" y="109" class="bar-label">no tools (flag)</text>
+                    <text x="260" y="109" class="bar-value">5,236</text>
+                    <rect x="150" y="126" width="39" height="22" rx="2" fill="var(--positive)"/>
+                    <text x="10" y="141" class="bar-label">scribe (preset)</text>
+                    <text x="196" y="141" class="bar-value">1,965</text>
+                    <text x="10" y="175" class="stack-sub">in-session check: the same one-word task cost 18,967 tokens on a default agent vs 12,855 on a read-only one</text>
+                </svg>
+                <div class="svg-caption">14x lighter start for text-only jobs; ~3.5x for read-only exploration</div>
+            </div>
+            <p>Context for the numbers: mining 40 days of the maintainer's own usage (33 sessions, 3,360 requests) showed that <strong>~85% of token cost is moving context around</strong>, not generating answers. Helper spawns pay that tax at birth — which is why trimming their starting context is the rare lever that costs nothing in quality. Full analysis: <a href="research/token-economics.html">The Token Economics of Remembering</a>.</p>
+        </section>
+
+        <section id="line">
+            <h2>The research line: shipped, in research, and honestly disproven</h2>
+            <p>Token saving is a research program, not a settings page. The release rule, set by the maintainer: <em>an optimization ships silently only if it provably changes nothing about distill's output. Anything that trades tokens against something else becomes an explicit, documented, opt-in knob — or doesn't ship.</em> Here's the current state of every line:</p>
+            <div class="status-row">
+                <span class="status-chip chip-shipped">Shipped</span>
+                <span class="status-body"><strong>Agent presets (scribe/scout).</strong> Free win: same outputs, 14x/3.5x lighter starts, off switch included. You're reading its announcement.</span>
+            </div>
+            <div class="status-row">
+                <span class="status-chip chip-research">In research</span>
+                <span class="status-body"><strong>Learned spawn profiles.</strong> Distill retrospectives could learn, from your own sessions, which job shapes route to which preset <em>and which model tier</em> — cheap models for mechanical work, frontier for judgment. Early trials: mechanical transforms and extraction survived the cheapest tier untouched (the only wrong answer came from the most expensive model); judgment tasks did not. Two 2026 surveys confirm nobody ships memory-learned routing yet. <a href="research/model-routing.html">The routing study</a>.</span>
+            </div>
+            <div class="status-row">
+                <span class="status-chip chip-knob">Trade-off knob</span>
+                <span class="status-body"><strong>Index compression ("diet SPINE").</strong> Compressing the always-loaded knowledge index to a third of its size saved real tokens but measurably lost retrieval recall on paraphrased requests (10/12 vs 12/12 held-out). By the release rule it did NOT ship — if it ever does, it will be opt-in with this exact consequence stated.</span>
+            </div>
+            <div class="status-row">
+                <span class="status-chip chip-corrected">Corrected</span>
+                <span class="status-body"><strong>Naive savings accounting.</strong> Our first friction measurements over-counted 3–10x (reading a knowledge file that <em>describes</em> an error puts its text in the conversation). Published as a methodology warning so nobody repeats it — including us.</span>
+            </div>
+            <div class="status-row" style="border-bottom:none">
+                <span class="status-chip chip-research">In research</span>
+                <span class="status-body"><strong>Does memory pay for itself?</strong> Honest current answer: distill's overhead is proven small (~5–6% of spend); its savings are directional but not yet counterfactually measured. The benchmark is being instrumented to log tokens so this becomes a number, not a belief. Falsifiable claims only.</span>
+            </div>
+        </section>
+
+        <section id="privacy">
+            <h2>Your data</h2>
+            <p><strong>This feature collects nothing.</strong> No telemetry, no phoning home, no analytics — the presets are two markdown files on your disk, and every number on this page comes from the maintainer's <em>own</em> usage, published voluntarily with personal data scrubbed. That's the standing policy for the whole token-saving line: measurements happen on our machines, not yours.</p>
+            <p>If distill ever proposes usage telemetry, it will follow the same rule as every trade-off knob: explicit opt-in, aggregate-only, published schema, and you can read exactly what would be sent before agreeing. Nothing about your knowledge base, your code, or your prompts would ever qualify.</p>
+        </section>
+
+        <section id="control">
+            <h2>Full control</h2>
+            <p>The feature is on after updating (it changes nothing about distill's behavior — only what helpers carry). Your choice persists across updates:</p>
+            <div class="controls-block">
+# macOS / Linux<br>
+curl -sL .../install.sh | bash -s -- --remove-token-saver &nbsp;<span style="color:var(--dim)"># remove the presets</span><br>
+curl -sL .../install.sh | bash -s -- --token-saver &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--dim)"># bring them back</span><br>
+<br>
+# Windows (PowerShell)<br>
+$env:DISTILL_TOKEN_SAVER='remove'; irm .../install.ps1 | iex<br>
+$env:DISTILL_TOKEN_SAVER='on'; &nbsp;&nbsp;&nbsp;&nbsp;irm .../install.ps1 | iex<br>
+<br>
+# or just delete the files — they're yours<br>
+~/.claude/agents/scribe.md &nbsp;&nbsp;~/.claude/agents/scout.md
+            </div>
+            <p class="note">The installer never overwrites an <code>agents/scribe.md</code> or <code>agents/scout.md</code> it didn't create — if you already have agents with those names, yours win.</p>
+        </section>
+
+        <footer>
+            <a href="research/token-economics.html">The economics study</a> &middot; <a href="research/model-routing.html">The routing study</a> &middot; <a href="https://github.com/tomacco/aura-distill">Source on GitHub</a> &middot; <a href="./">Home</a>
+        </footer>
+    </div>
+
+    <script src="research/research-theme.js"></script>
+    <script src="research/research-tracker.js"></script>
+</body>
+</html>

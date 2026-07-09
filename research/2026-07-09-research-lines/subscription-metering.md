@@ -13,8 +13,13 @@ it's the whole game. This single unknown scales every other economics conclusion
 ## Observables (no private API access needed)
 1. Per-request usage composition from local transcripts (fresh input, cache read, cache
    write, output) — we already mine this.
-2. Limit events: "hit your session/usage limit" strings in transcripts + their timestamps
-   → limit-hit days vs composition.
+2. Limit events — two sources, both needed:
+   (a) transcript plain-string error records (contamination-guarded: short string content
+   only, never tool_result blobs — the limit string lives inside our own knowledge files);
+   (b) the resume-watchdog log (fail-fast attempt timestamps). KNOWN LIMITATION: an
+   interactive session freezing on a limit writes NO transcript record — (a) alone
+   structurally under-counts; treat watchdog fail-fast bursts as the ground truth for
+   interactive freezes.
 3. 5h-window structure: session activity clustering reconstructable from timestamps.
 
 ## Method

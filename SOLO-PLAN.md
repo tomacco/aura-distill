@@ -10,7 +10,7 @@ announcing the resume (lesson from 2026-07-09 morning), then continue.
 - [x] 3. S1 durable-layers PR open (capabilities/ docs, reviewed, NOT merged)
 - [x] 4. Capabilities-skill design doc committed (research branch)
 - [x] 5. distill-benchmark token-telemetry branch pushed (PR open, NOT merged)
-- [ ] 6. E-B compliance instrumentation added to metering collector
+- [x] 6. E-B compliance instrumentation added to metering collector
 - [ ] 7. E-A caps experiment: pre-registration committed; run only if no limit pressure
 - [ ] 8. Final SESSION-LOG entry + watchdog task DELETED + summary for Ivan
 

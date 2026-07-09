@@ -46,12 +46,17 @@ for path in glob.glob(os.path.join(PROJ, "*", "*.jsonl")):
                 day["output"] += u.get("output_tokens", 0)
                 day["requests"] += 1
                 day["m_" + (msg.get("model") or "?").replace(",", "_")] += u.get("output_tokens", 0)
-            elif o.get("type") == "user":
+            elif o.get("type") in ("user", "system"):
+                # Contamination guard (learned the hard way, twice): the limit STRING
+                # appears inside knowledge files and scripts read into context. Count a
+                # limit event ONLY in short plain-string content (real error surfaces),
+                # never inside tool_result blobs or file text.
                 content = (o.get("message") or {}).get("content")
-                txt = content if isinstance(content, str) else json.dumps(content)[:2000] if content else ""
-                m = LIMIT_RX.search(txt or "")
-                if m:
-                    limits.append(f"{o.get('timestamp','?')}  {m.group(0)[:120]}")
+                txt = content if isinstance(content, str) else ""
+                if txt and len(txt) < 400:
+                    m = LIMIT_RX.search(txt)
+                    if m:
+                        limits.append(f"{o.get('timestamp','?')}  {m.group(0)[:120]}")
 
 # --- E-B retrieval-compliance (per-session, contamination-safe: counts actual
 # Read tool_use calls on distill paths, never text mentions) ---

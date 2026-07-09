@@ -43,3 +43,7 @@ Append-only checkpoints. Resume protocol: read RESEARCH-PLAN.md, continue first 
   --disallowedTools "*" cuts headless context floor ~28k -> ~6k (tool schemas dominate).
 - 05:2x SHIP: branch pushed; watchdog schtask deleted (verified); /distill run at session
   end = E4 instrumented measurement + tonight's signals.
+- 05:4x E4 instrumented /distill (this session, unusually signal-dense — disclosed):
+  subagent 117,983 tokens / 53 tool uses / 9.2 min; 38 signals -> 13 knowledge files.
+  Distill closed the loop on its own study: the unflattering verdicts are now encoded in
+  the knowledge base itself.

@@ -34,7 +34,7 @@ aggregates and scrubbed examples only.
       style; index.html updated; committed
 - [x] 9. SOURCE DOCS: research/2026-07-08-token-economics/*.md (methodology, data notes,
       SESSION-LOG) committed
-- [ ] 10. SHIP: research branch pushed to origin (NEVER main); final SESSION-LOG entry;
+- [x] 10. SHIP: research branch pushed to origin (NEVER main); final SESSION-LOG entry;
       watchdog schtask DELETED (hygiene)
 
 ## Notes / state (append-only)
@@ -42,3 +42,4 @@ aggregates and scrubbed examples only.
 - 2026-07-09 ~00:50 — Dataset + findings F1-F9 committed. Watchdog live+test-fired. Web briefs 3/4 in. Designs pre-registered; adversarial review running. NEXT: review verdict -> run E1/E3 -> routing synthesis -> pages.
 - 2026-07-09 ~01:45 — E3 DONE (diet SPINE = trade-off knob: 10/12 vs 12/12 held-out recall, -29% read volume). E5 done. Review fixes committed. Token-economics page drafted. E1 on final arm.
 - 2026-07-09 ~05:20 — E1 judged (T1/T2 routable to haiku; T5 frontier; T4 contested — rubric traced to KB overgeneralization, filed as distill signal; T6 haiku 4/5, sonnet/opus cells invalid-disclosed). E2 done: no-file arm routes near-optimally -> gap is habit not knowledge. Both pages + index rendered & verified via local server + Playwright. Shipping.
+- 2026-07-09 ~05:25 — Box 10 done: branch on origin, watchdog schtask DELETED (verified). Overnight mission complete; /distill closing pass next.

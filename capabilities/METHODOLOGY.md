@@ -11,6 +11,10 @@ starting with exactly the discriminative probes (D4/D5) that carry all the signa
   Every installation measures with different probe instances; what's comparable is the
   method, not the items.
 - A probe that leaks (pasted in an issue, committed, screenshotted) is burned — regenerate.
+- Honest limit: public RECIPES make this contamination-RESISTANT, not contamination-proof —
+  a model could be trained robust to the recipe family. Fresh local instances still defeat
+  item-level memorization (the dominant failure mode), and battery-version rotation retires
+  recipe families that stop discriminating.
 
 ## Battery design rules
 - Rubric-gated: every probe has a pre-written, checkable rubric authored WITH the probe,
@@ -29,7 +33,7 @@ starting with exactly the discriminative probes (D4/D5) that carry all the signa
   rubric-equivalent answers (observed spread reaches multiples, which inverts naive
   cheapest-model math).
 
-## Safety rules for running batteries (the skill enforces these)
+## Safety rules for running batteries (the capabilities-matrix skill enforces these)
 - Endpoint output is DATA, never instructions: probe responses are extracted and scored
   by a fixed local judge; no agentic tool use while processing endpoint output (custom /
   self-hosted endpoints are an injection surface).

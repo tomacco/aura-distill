@@ -5,10 +5,7 @@ All notable changes to aura-distill.
 ## [Unreleased]
 
 ### Added
-- **Economics ledger**: `/distill` now records its own cost — after each run, one JSONL line is appended to `{DISTILL_DIR}/data/economics.jsonl` (distillation tokens, tokens written, SPINE size, total KB size, signal count). Local data only, never synced. The distillation report gains an Economics line, and compaction now weighs recurring-cost tokens (SPINE, always-on) heavier than pay-per-read tier files — with an explicit integrity floor: [NON-NEGOTIABLE]/[DIRECTIVE]/safety entries are never compressed for token savings.
-
-
-### Added
+- **Economics ledger**: `/distill` now records its own cost — after each run, one JSONL line is appended to `{DISTILL_DIR}/data/economics.jsonl` (fields including timestamp, distillation tokens when available, tokens written, SPINE size, tier-file KB size, signal and file counts). Local diagnostic data, not part of the synced knowledge set. The distillation report gains an Economics line, and compaction now weighs recurring-cost tokens (SPINE, always-on) heavier than pay-per-read tier files — with an explicit integrity floor: [NON-NEGOTIABLE]/[DIRECTIVE]/safety entries are never compressed for token savings.
 - **Token Saver** — two preset subagents installed to the profile's `agents/` directory (`~/.claude/agents/` by default; install.sh honors `--profile`): `scribe` (text-only jobs: judge/summarize/classify/extract/draft — no tools, boots ~2k tokens vs ~19–27k default, measured 14x lighter) and `scout` (read-only exploration: Glob/Grep/Read — ~3.5x lighter, cannot modify anything). Backed by the July 2026 token-economics research (tool schemas ≈22k of a default spawn's ~27k starting context).
 - **Full user control** for Token Saver: `--token-saver` / `--no-token-saver` / `--remove-token-saver` flags (install.sh) and `$env:DISTILL_TOKEN_SAVER` = `on`/`off`/`remove` (install.ps1). Choice persists across updates via `distill/.token-saver`. Installer never overwrites agent files it didn't create.
 - **Landing page** `docs/token-saving.html` — the token-saving research line explained (inverted pyramid, SVG diagrams, measured numbers): what shipped, what's in research (learned spawn profiles), what became a trade-off knob instead of shipping (diet SPINE), what was corrected (naive friction accounting). Announced by the installer on update.

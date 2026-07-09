@@ -47,3 +47,12 @@ Append-only checkpoints. Resume protocol: read RESEARCH-PLAN.md, continue first 
   subagent 117,983 tokens / 53 tool uses / 9.2 min; 38 signals -> 13 knowledge files.
   Distill closed the loop on its own study: the unflattering verdicts are now encoded in
   the knowledge base itself.
+- 07-09 solo block: PR #36 merged (economics ledger live). Sticky claim CORRECTED by
+  browser test (transform does NOT break sticky; only overflow ancestors — KB updated,
+  [DEPRECATED] on old claim). Upstream anthropics/claude-code#76045 filed (defer builtin
+  schemas, ~22k/spawn). Durable layers shipped as PR #37 (steelman-integrated:
+  probes private, scores local, policy public; independent review BLOCK+6 flags fixed).
+  Capabilities-skill design committed. distill-benchmark PR #1: real token telemetry +
+  arm-injection overhead (smoke-tested). Metering collector: E-B compliance columns +
+  de-contaminated limit detection (interactive freezes leave NO transcript record —
+  watchdog log is ground truth). E-A run deferred per pre-registered gate.

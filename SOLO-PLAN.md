@@ -11,7 +11,7 @@ announcing the resume (lesson from 2026-07-09 morning), then continue.
 - [x] 4. Capabilities-skill design doc committed (research branch)
 - [x] 5. distill-benchmark token-telemetry branch pushed (PR open, NOT merged)
 - [x] 6. E-B compliance instrumentation added to metering collector
-- [ ] 7. E-A caps experiment: pre-registration committed; run only if no limit pressure
+- [x] 7. E-A caps: grid pre-registered in research line doc; RUN DEFERRED (heavy usage day, real limit hit yesterday — gate says wait; also caps line awaits Ivan review)
 - [ ] 8. Final SESSION-LOG entry + watchdog task DELETED + summary for Ivan
 
 Notes (append-only):
@@ -20,3 +20,4 @@ Notes (append-only):
 - ~13:50 — Upstream issue filed: anthropics/claude-code#76045 (defer built-in tool schemas).
 - ~14:1x — Skill design committed; durable-layers PR branch pushed, review running.
 - ~14:4x — PR #37 (durable layers, review-fixed) + distill-benchmark PR #1 (telemetry, smoke-tested: real usage + arm-injection capture verified) both open, NOT merged.
+- ~15:1x — E-B compliance live in collector (real-session filter; first data: 3/3 real sessions read SPINE). Limit detector de-contaminated + interactive-freeze blind spot documented. Living ledger updated on PR #37 branch. Box 8 stays UNCHECKED intentionally: watchdog stays armed while I hold the session for Ivan's return.

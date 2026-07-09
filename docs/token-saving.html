@@ -18,7 +18,7 @@
         .bar-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; fill: var(--text); }
         .bar-value { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; fill: var(--bright); }
         .stack-label { font-family: 'Inter', sans-serif; font-size: 12px; fill: var(--bright); }
-        .stack-sub { font-family: 'JetBrains Mono', monospace; font-size: 10px; fill: var(--dim); }
+        .stack-sub { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; fill: var(--text); }
         .status-row { display: flex; gap: 0.75rem; align-items: baseline; padding: 0.85rem 0; border-bottom: 1px solid var(--border); }
         .status-chip { font-family: 'JetBrains Mono', monospace; font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.2rem 0.55rem; border-radius: 3px; white-space: nowrap; }
         .chip-shipped { background: color-mix(in srgb, var(--positive) 15%, transparent); color: var(--positive); }
@@ -71,22 +71,20 @@
             <h2>Under the hood: what a helper actually costs</h2>
             <p>Most people use Claude Code + distill without seeing what a "simple" subagent carries on its back. Every helper is a fresh Claude instance, and before it reads the first word of your task, its context is already loaded with scaffolding — the biggest slab of which is <em>tool schemas</em>: the formal descriptions of every tool it could theoretically use (shell, file editing, browser…), shipped in full even if the job never touches one.</p>
             <div class="svg-figure">
-                <svg viewBox="0 0 720 240" role="img" aria-label="Anatomy of a default subagent spawn vs a scribe preset">
-                    <!-- default spawn stack -->
+                <svg viewBox="0 0 720 200" role="img" aria-label="Anatomy of a default subagent spawn vs a scribe preset">
+                    <!-- Labels live on the surface in ink tokens, never on the colored marks. -->
                     <text x="10" y="18" class="stack-label">Default helper — what it carries before reading your task</text>
-                    <rect x="10" y="30" width="480" height="44" rx="3" fill="var(--accent)" opacity="0.75"/>
-                    <text x="22" y="57" class="stack-label" fill="#fff">Tool schemas — every tool described in full</text>
-                    <text x="440" y="57" class="stack-sub" fill="#fff">~22k</text>
-                    <rect x="10" y="78" width="110" height="44" rx="3" fill="var(--accent-4)" opacity="0.6"/>
-                    <text x="22" y="105" class="stack-sub">scaffolding ~5k</text>
-                    <rect x="124" y="78" width="60" height="44" rx="3" fill="var(--positive)" opacity="0.55"/>
-                    <text x="130" y="105" class="stack-sub">your task</text>
-                    <!-- scribe stack -->
-                    <text x="10" y="160" class="stack-label">scribe — same task, tools stripped</text>
-                    <rect x="10" y="172" width="34" height="44" rx="3" fill="var(--accent-4)" opacity="0.6"/>
-                    <rect x="48" y="172" width="60" height="44" rx="3" fill="var(--positive)" opacity="0.55"/>
-                    <text x="54" y="199" class="stack-sub">your task</text>
-                    <text x="120" y="199" class="stack-sub">≈2k total — the work is the same, the backpack is gone</text>
+                    <rect x="10"  y="30" width="516" height="34" rx="3" fill="var(--accent)"/>
+                    <rect x="528" y="30" width="118" height="34" rx="3" fill="var(--accent-4)"/>
+                    <rect x="648" y="30" width="62"  height="34" rx="3" fill="var(--positive)"/>
+                    <text x="10"  y="84" class="stack-sub">tool schemas — every tool described in full · ~22k</text>
+                    <text x="528" y="84" class="stack-sub">scaffolding ~5k</text>
+                    <text x="648" y="84" class="stack-sub">your task</text>
+                    <!-- scribe stack: same entity colors as above (color follows the entity) -->
+                    <text x="10" y="140" class="stack-label">scribe — same task, tools stripped</text>
+                    <rect x="10" y="152" width="36" height="34" rx="3" fill="var(--accent-4)"/>
+                    <rect x="48" y="152" width="62" height="34" rx="3" fill="var(--positive)"/>
+                    <text x="122" y="174" class="stack-sub">≈2k total — the work is the same, the backpack is gone</text>
                 </svg>
                 <div class="svg-caption">anatomy of a helper's starting context — measured on real spawns, July 2026</div>
             </div>
@@ -99,18 +97,18 @@
             <div class="svg-figure">
                 <svg viewBox="0 0 720 190" role="img" aria-label="Measured context floors by configuration">
                     <text x="10" y="16" class="bar-label">starting context (tokens) — lower is better</text>
-                    <rect x="150" y="30"  width="540" height="22" rx="2" fill="var(--accent)" opacity="0.8"/>
+                    <rect x="150" y="30"  width="460" height="22" rx="2" fill="var(--accent)"/>
                     <text x="10" y="45" class="bar-label">default helper</text>
-                    <text x="560" y="45" class="bar-value" fill="#fff">27,403</text>
-                    <rect x="150" y="62"  width="155" height="22" rx="2" fill="var(--accent-4)" opacity="0.8"/>
+                    <text x="618" y="45" class="bar-value">27,403</text>
+                    <rect x="150" y="62"  width="132" height="22" rx="2" fill="var(--accent-4)"/>
                     <text x="10" y="77" class="bar-label">scout (read-only)</text>
-                    <text x="312" y="77" class="bar-value">7,873</text>
-                    <rect x="150" y="94"  width="103" height="22" rx="2" fill="var(--positive)" opacity="0.7"/>
+                    <text x="290" y="77" class="bar-value">7,873</text>
+                    <rect x="150" y="94"  width="88" height="22" rx="2" fill="var(--positive)"/>
                     <text x="10" y="109" class="bar-label">no tools (flag)</text>
-                    <text x="260" y="109" class="bar-value">5,236</text>
-                    <rect x="150" y="126" width="39" height="22" rx="2" fill="var(--positive)"/>
+                    <text x="246" y="109" class="bar-value">5,236</text>
+                    <rect x="150" y="126" width="33" height="22" rx="2" fill="var(--positive)"/>
                     <text x="10" y="141" class="bar-label">scribe (preset)</text>
-                    <text x="196" y="141" class="bar-value">1,965</text>
+                    <text x="191" y="141" class="bar-value">1,965</text>
                     <text x="10" y="175" class="stack-sub">in-session check: the same one-word task cost 18,967 tokens on a default agent vs 12,855 on a read-only one</text>
                 </svg>
                 <div class="svg-caption">14x lighter start for text-only jobs; ~3.5x for read-only exploration</div>

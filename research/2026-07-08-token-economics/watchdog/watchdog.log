@@ -10,3 +10,136 @@
 2026-07-09 00:18:36  fresh: transcript age 0.1 min
 2026-07-09 00:23:36  tick
 2026-07-09 00:23:36  fresh: transcript age 0.0 min
+2026-07-09 00:28:36  tick
+2026-07-09 00:28:36  fresh: transcript age 0.1 min
+2026-07-09 00:33:36  tick
+2026-07-09 00:33:36  fresh: transcript age 4.0 min
+2026-07-09 00:38:36  tick
+2026-07-09 00:38:36  fresh: transcript age 9.0 min
+2026-07-09 00:43:35  tick
+2026-07-09 00:43:35  fresh: transcript age 14.0 min
+2026-07-09 00:48:35  tick
+2026-07-09 00:48:35  RESUMING: transcript stale 19.0 min, plan has unchecked boxes
+2026-07-09 00:48:35  spawned claude --resume as PID 43640
+2026-07-09 00:48:37  resume attempt exited with code 
+2026-07-09 00:53:35  tick
+2026-07-09 00:53:35  fresh: transcript age 5.0 min
+2026-07-09 00:58:35  tick
+2026-07-09 00:58:35  fresh: transcript age 0.9 min
+2026-07-09 01:03:35  tick
+2026-07-09 01:03:35  fresh: transcript age 5.9 min
+2026-07-09 01:08:35  tick
+2026-07-09 01:08:35  fresh: transcript age 10.9 min
+2026-07-09 01:13:35  tick
+2026-07-09 01:13:35  RESUMING: transcript stale 15.9 min, plan has unchecked boxes
+2026-07-09 01:13:35  spawned claude --resume as PID 3840
+2026-07-09 01:13:38  resume attempt exited with code 
+2026-07-09 01:18:35  tick
+2026-07-09 01:18:35  fresh: transcript age 5.0 min
+2026-07-09 01:23:35  tick
+2026-07-09 01:23:35  fresh: transcript age 10.0 min
+2026-07-09 01:28:35  tick
+2026-07-09 01:28:35  fresh: transcript age 15.0 min
+2026-07-09 01:33:35  tick
+2026-07-09 01:33:35  RESUMING: transcript stale 20.0 min, plan has unchecked boxes
+2026-07-09 01:33:35  spawned claude --resume as PID 30740
+2026-07-09 01:33:38  resume attempt exited with code 
+2026-07-09 01:38:35  tick
+2026-07-09 01:38:35  fresh: transcript age 5.0 min
+2026-07-09 01:43:35  tick
+2026-07-09 01:43:35  fresh: transcript age 10.0 min
+2026-07-09 01:48:35  tick
+2026-07-09 01:48:35  fresh: transcript age 15.0 min
+2026-07-09 01:53:35  tick
+2026-07-09 01:53:35  RESUMING: transcript stale 20.0 min, plan has unchecked boxes
+2026-07-09 01:53:35  spawned claude --resume as PID 38224
+2026-07-09 01:53:37  resume attempt exited with code 
+2026-07-09 01:58:35  tick
+2026-07-09 01:58:35  fresh: transcript age 0.9 min
+2026-07-09 02:03:35  tick
+2026-07-09 02:03:35  fresh: transcript age 5.9 min
+2026-07-09 02:08:35  tick
+2026-07-09 02:08:35  fresh: transcript age 10.9 min
+2026-07-09 02:13:35  tick
+2026-07-09 02:13:35  RESUMING: transcript stale 15.9 min, plan has unchecked boxes
+2026-07-09 02:13:35  spawned claude --resume as PID 2768
+2026-07-09 02:13:37  resume attempt exited with code 
+2026-07-09 02:18:35  tick
+2026-07-09 02:18:35  fresh: transcript age 5.0 min
+2026-07-09 02:23:35  tick
+2026-07-09 02:23:35  fresh: transcript age 10.0 min
+2026-07-09 02:28:35  tick
+2026-07-09 02:28:35  fresh: transcript age 15.0 min
+2026-07-09 02:33:35  tick
+2026-07-09 02:33:35  RESUMING: transcript stale 20.0 min, plan has unchecked boxes
+2026-07-09 02:33:35  spawned claude --resume as PID 43864
+2026-07-09 02:33:37  resume attempt exited with code 
+2026-07-09 02:38:35  tick
+2026-07-09 02:38:35  fresh: transcript age 5.0 min
+2026-07-09 02:43:35  tick
+2026-07-09 02:43:35  fresh: transcript age 10.0 min
+2026-07-09 02:48:35  tick
+2026-07-09 02:48:35  fresh: transcript age 15.0 min
+2026-07-09 02:53:35  tick
+2026-07-09 02:53:35  RESUMING: transcript stale 20.0 min, plan has unchecked boxes
+2026-07-09 02:53:35  spawned claude --resume as PID 42508
+2026-07-09 02:53:38  resume attempt exited with code 
+2026-07-09 02:58:35  tick
+2026-07-09 02:58:35  fresh: transcript age 0.9 min
+2026-07-09 03:03:35  tick
+2026-07-09 03:03:35  fresh: transcript age 5.9 min
+2026-07-09 03:08:35  tick
+2026-07-09 03:08:35  fresh: transcript age 10.9 min
+2026-07-09 03:13:35  tick
+2026-07-09 03:13:35  RESUMING: transcript stale 15.9 min, plan has unchecked boxes
+2026-07-09 03:13:35  spawned claude --resume as PID 43928
+2026-07-09 03:13:38  resume attempt exited with code 
+2026-07-09 03:18:35  tick
+2026-07-09 03:18:35  fresh: transcript age 5.0 min
+2026-07-09 03:23:35  tick
+2026-07-09 03:23:35  fresh: transcript age 10.0 min
+2026-07-09 03:28:35  tick
+2026-07-09 03:28:35  fresh: transcript age 15.0 min
+2026-07-09 03:33:35  tick
+2026-07-09 03:33:35  RESUMING: transcript stale 20.0 min, plan has unchecked boxes
+2026-07-09 03:33:35  spawned claude --resume as PID 39648
+2026-07-09 03:33:37  resume attempt exited with code 
+2026-07-09 03:38:35  tick
+2026-07-09 03:38:35  fresh: transcript age 5.0 min
+2026-07-09 03:43:35  tick
+2026-07-09 03:43:35  fresh: transcript age 10.0 min
+2026-07-09 03:48:35  tick
+2026-07-09 03:48:35  fresh: transcript age 15.0 min
+2026-07-09 03:53:35  tick
+2026-07-09 03:53:35  RESUMING: transcript stale 20.0 min, plan has unchecked boxes
+2026-07-09 03:53:35  spawned claude --resume as PID 15728
+2026-07-09 03:53:38  resume attempt exited with code 
+2026-07-09 03:58:35  tick
+2026-07-09 03:58:35  fresh: transcript age 0.9 min
+2026-07-09 04:03:35  tick
+2026-07-09 04:03:35  fresh: transcript age 5.9 min
+2026-07-09 04:08:35  tick
+2026-07-09 04:08:35  fresh: transcript age 10.9 min
+2026-07-09 04:13:35  tick
+2026-07-09 04:13:35  RESUMING: transcript stale 15.9 min, plan has unchecked boxes
+2026-07-09 04:13:35  spawned claude --resume as PID 40788
+2026-07-09 04:13:39  resume attempt exited with code 
+2026-07-09 04:18:35  tick
+2026-07-09 04:18:35  fresh: transcript age 4.9 min
+2026-07-09 04:23:35  tick
+2026-07-09 04:23:35  fresh: transcript age 9.9 min
+2026-07-09 04:28:35  tick
+2026-07-09 04:28:35  fresh: transcript age 14.9 min
+2026-07-09 04:33:35  tick
+2026-07-09 04:33:35  RESUMING: transcript stale 19.9 min, plan has unchecked boxes
+2026-07-09 04:33:35  spawned claude --resume as PID 6368
+2026-07-09 04:33:38  resume attempt exited with code 
+2026-07-09 04:38:35  tick
+2026-07-09 04:38:35  fresh: transcript age 5.0 min
+2026-07-09 04:43:35  tick
+2026-07-09 04:43:35  fresh: transcript age 10.0 min
+2026-07-09 04:48:35  tick
+2026-07-09 04:48:35  fresh: transcript age 15.0 min
+2026-07-09 04:53:35  tick
+2026-07-09 04:53:35  RESUMING: transcript stale 20.0 min, plan has unchecked boxes
+2026-07-09 04:53:35  spawned claude --resume as PID 12872

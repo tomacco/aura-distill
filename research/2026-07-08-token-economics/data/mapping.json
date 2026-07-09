@@ -1,0 +1,32 @@
+{
+ "T1": {
+  "A": "claude-haiku-4-5",
+  "B": "claude-opus-4-8",
+  "C": "claude-sonnet-5"
+ },
+ "T2": {
+  "A": "claude-opus-4-8",
+  "B": "claude-sonnet-5",
+  "C": "claude-haiku-4-5"
+ },
+ "T3": {
+  "A": "claude-haiku-4-5",
+  "B": "claude-sonnet-5",
+  "C": "claude-opus-4-8"
+ },
+ "T4": {
+  "A": "claude-sonnet-5",
+  "B": "claude-haiku-4-5",
+  "C": "claude-opus-4-8"
+ },
+ "T5": {
+  "A": "claude-sonnet-5",
+  "B": "claude-opus-4-8",
+  "C": "claude-haiku-4-5"
+ },
+ "T6": {
+  "A": "claude-sonnet-5",
+  "B": "claude-haiku-4-5",
+  "C": "claude-opus-4-8"
+ }
+}

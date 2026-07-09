@@ -1,2 +1,3 @@
 date,requests,fresh_in,cache_read,cache_write,output,model_output_json
 2026-07-08,333,338207,51987611,1680909,321838,"{""claude-fable-5"": 284504, ""claude-opus-4-8"": 11329, ""claude-haiku-4-5-20251001"": 10635, ""claude-sonnet-5"": 15370}"
+2026-07-09,325,279699,88660870,1050512,389867,"{""claude-fable-5"": 286036, ""claude-opus-4-8"": 27957, ""claude-haiku-4-5-20251001"": 40575, ""claude-sonnet-5"": 35299}"

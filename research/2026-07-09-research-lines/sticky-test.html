@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+.scroller { height: 200px; overflow-y: auto; border: 1px solid #999; margin: 8px 0; }
+.content { height: 600px; }
+.hdr { position: sticky; top: 0; background: gold; }
+.t-transform { transform: translateZ(0); }
+.t-willchange { will-change: transform; }
+.t-overflowx { overflow-x: hidden; }
+.t-contain { contain: layout paint; }
+.t-filter { filter: brightness(1); }
+.t-perspective { perspective: 100px; }
+</style></head><body>
+<div id="results" style="font-family:monospace; white-space:pre"></div>
+
+<div class="scroller" id="s-control"><div class="content"><div class="hdr">H</div>filler</div></div>
+<div class="scroller" id="s-transform"><div class="content t-transform"><div class="hdr">H</div>filler</div></div>
+<div class="scroller" id="s-willchange"><div class="content t-willchange"><div class="hdr">H</div>filler</div></div>
+<div class="scroller" id="s-overflowx"><div class="content t-overflowx"><div class="hdr">H</div>filler</div></div>
+<div class="scroller" id="s-contain"><div class="content t-contain"><div class="hdr">H</div>filler</div></div>
+<div class="scroller" id="s-filter"><div class="content t-filter"><div class="hdr">H</div>filler</div></div>
+<div class="scroller" id="s-perspective"><div class="content t-perspective"><div class="hdr">H</div>filler</div></div>
+
+<script>
+const out = [];
+for (const s of document.querySelectorAll('.scroller')) {
+  s.scrollTop = 300; // forces sync layout on read below
+  const hdr = s.querySelector('.hdr');
+  const delta = hdr.getBoundingClientRect().top - s.getBoundingClientRect().top;
+  // stuck: header pinned at scroller top (delta ~0-2px incl border). broken: scrolled away (delta ~ -300)
+  out.push(`${s.id.padEnd(14)} delta=${delta.toFixed(0).padStart(5)}  ${Math.abs(delta) < 5 ? 'STICKS' : 'BROKEN'}`);
+}
+document.getElementById('results').textContent = 'UA: ' + navigator.userAgent.split(') ').pop() + '\n' + out.join('\n');
+document.title = 'DONE';
+</script>
+</body></html>

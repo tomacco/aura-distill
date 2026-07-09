@@ -11,7 +11,7 @@ $ErrorActionPreference = 'Stop'
 
 $SessionId  = 'd5ce833d-a019-4cc3-b789-acd99070f034'
 $Transcript = 'C:\Users\Ivan\.claude\projects\C--Users-Ivan\d5ce833d-a019-4cc3-b789-acd99070f034.jsonl'
-$PlanFile   = 'C:\Users\Ivan\repos\aura-distill-token-econ\RESEARCH-PLAN.md'
+$PlanFile   = 'C:\Users\Ivan\repos\aura-distill-token-econ\SOLO-PLAN.md'
 $ClaudeExe  = 'C:\Users\Ivan\.local\bin\claude.exe'
 $WorkDir    = 'C:\Users\Ivan'
 $LogFile    = Join-Path $PSScriptRoot 'watchdog.log'
@@ -46,7 +46,7 @@ if ($ageMin -lt $StaleMin) { Log ("fresh: transcript age {0:N1} min" -f $ageMin)
 
 Log ("RESUMING: transcript stale {0:N1} min, plan has unchecked boxes" -f $ageMin)
 
-$prompt = 'Watchdog auto-resume after a pause (likely session-limit reset). Read C:\Users\Ivan\repos\aura-distill-token-econ\RESEARCH-PLAN.md and continue the overnight token-economics research at the FIRST unchecked box. Check boxes only after artifacts exist; commit to the research branch after each box; never push main.'
+$prompt = 'Watchdog auto-resume after a pause (likely session-limit reset). FIRST send a PushNotification announcing this auto-resume. Then read C:\Users\Ivan\repos\aura-distill-token-econ\SOLO-PLAN.md and continue the solo research block at the FIRST unchecked box. Check boxes only after artifacts exist; commit to the research branch after each box; never push main.'
 
 Set-Location $WorkDir
 $args = @('--resume', $SessionId, '-p', $prompt, '--dangerously-skip-permissions')

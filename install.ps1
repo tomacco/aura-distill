@@ -6,7 +6,7 @@
 
 $ErrorActionPreference = 'Stop'
 
-$Version  = '1.1.7'
+$Version  = '1.1.8'
 $Build    = '20260515-01'
 $Repo     = 'https://raw.githubusercontent.com/tomacco/aura-distill/main'
 

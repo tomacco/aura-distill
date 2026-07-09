@@ -9,6 +9,6 @@ Decoded per mapping.json. Scored arms: haiku-4-5 / sonnet-5 / opus-4-8. n=1 per 
 | T3 comprehension | 2.5/3 | 2.5/3 | 3/3 | sonnet floor; haiku partial |
 | T4 debugging | 4/4* | 4/4* | 1.5/4* | CONTESTED CELL — rubric point (transform breaks sticky) conflicts with reference output; inverted scoring flips ranks; no tier verdict |
 | T5 design judgment | ~3.25/4 | 4/4 | 4/4+bonus | frontier for adversarial review; haiku missed inference-only flaws; sonnet matched opus on points |
-| T6 instruction application | (judged separately after rerun) | | | |
+| T6 instruction application | 4/5 gotchas (missed log-verify) | INVALID (truncated at denied tool attempt) | INVALID (same) | cheap tier CAN apply in-context knowledge (single trial); no cross-tier comparison |
 
 Notes: cheap arms can be far more verbose (T2: haiku 453 output tokens vs opus 63 for the same 6 answers). T4 rubric flaw traces to the author's own knowledge file — filed as a distill signal (encoded overgeneralization).

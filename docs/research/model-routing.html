@@ -68,9 +68,10 @@
                     <tr><td>T3 Code comprehension (unfamiliar script)</td><td>2.5/3</td><td>2.5/3</td><td>3/3</td><td class="score-neutral">Sonnet floor — Haiku misses control-flow side effects</td></tr>
                     <tr><td>T4 Debugging (interacting CSS causes)</td><td>4/4*</td><td>4/4*</td><td>1.5/4*</td><td class="score-neutral">Contested cell — see note; no tier verdict</td></tr>
                     <tr><td>T5 Adversarial design judgment</td><td>~3.25/4</td><td>4/4</td><td>4/4 + bonus</td><td class="score-negative">Frontier — Haiku found surface flaws, missed the inference-only ones</td></tr>
-                    <tr><td>T6 In-context instruction application</td><td colspan="4">E1_T6_PLACEHOLDER</td></tr>
+                    <tr><td>T6 In-context instruction application (5 encoded gotchas)</td><td>4/5</td><td>invalid†</td><td>invalid†</td><td class="score-positive">Haiku applied the knowledge — missed only log-verification</td></tr>
                 </tbody>
             </table>
+            <p class="note">†T6: the sonnet and opus cells came back truncated at a denied tool attempt (a headless-harness artifact, confirmed by the judge before scoring) — they measure capture failure, not capability, and are excluded rather than re-rolled. The informative datum stands: the cheapest tier correctly applied 4 of 5 in-context environment gotchas in one trial. Bonus harness finding: disallowing tools cut the headless context floor from ~28k to ~6k tokens — tool schemas are most of a spawn's fixed cost.</p>
             <p class="note">*T4: the blind judge flagged that one rubric point ("an ancestor transform breaks position:sticky") conflicts with the reference output; the point traces to the author's own knowledge base — a possible encoded overgeneralization, now filed as a distill signal. Inverting that point flips the T4 ranking; we therefore draw no routing conclusion from T4. The full mapping-decoded verdict, packets and usage are in the repo.</p>
             <div class="insight">
                 <div class="insight-label">Two findings bigger than the table</div>

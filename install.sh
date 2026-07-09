@@ -102,12 +102,16 @@ show_section() {
 
 # ═══ PROFILE DETECTION ═══
 
-# Parse --profile argument
+# Parse arguments
 PROFILE_NAME=""
+TOKEN_SAVER="auto"   # auto = keep prior choice (default on for new installs); on/off/remove = explicit
 while [[ $# -gt 0 ]]; do
     case $1 in
         --profile) PROFILE_NAME="$2"; shift 2 ;;
         --profile=*) PROFILE_NAME="${1#*=}"; shift ;;
+        --token-saver) TOKEN_SAVER="on"; shift ;;
+        --no-token-saver) TOKEN_SAVER="off"; shift ;;
+        --remove-token-saver) TOKEN_SAVER="remove"; shift ;;
         *) shift ;;
     esac
 done
@@ -244,6 +248,65 @@ mkdir -p "$RULES_DIR"
 curl -sL "$REPO/rules/distill.md" | sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" > "$RULES_DIR/distill.md"
 done_msg "rules/distill.md ${DIM}(auto-loads every session)${RESET}"
 
+# ═══ TOKEN SAVER (agent presets) ═══
+# User has full control: --token-saver / --no-token-saver / --remove-token-saver.
+# The choice persists in $DISTILL_DIR/.token-saver across updates.
+# What it is and why: https://tomacco.github.io/aura-distill/token-saving.html
+
+show_section "Token Saver"
+
+AGENTS_DIR="$PROFILE_DIR/agents"
+TS_MARKER="$DISTILL_DIR/.token-saver"
+
+# Resolve "auto": respect a previously persisted choice; default ON for fresh state
+if [ "$TOKEN_SAVER" = "auto" ] && [ "$(cat "$TS_MARKER" 2>/dev/null)" = "disabled" ]; then
+    TOKEN_SAVER="off"
+fi
+
+install_token_saver_agent() {
+    local name=$1
+    local target="$AGENTS_DIR/${name}.md"
+    if [ -f "$target" ] && ! grep -q "aura-distill" "$target" 2>/dev/null; then
+        warn_msg "agents/${name}.md exists and isn't ours — preserved untouched"
+        return
+    fi
+    # Download to temp and validate before touching the target: a raw-GitHub 404
+    # exits 0 with body "404: Not Found", and a poisoned file would then be
+    # protected forever by the not-ours guard above.
+    local tmp
+    tmp=$(mktemp)
+    if curl -fsL "$REPO/agents/${name}.md" > "$tmp" 2>/dev/null \
+       && grep -q "aura-distill" "$tmp" && grep -q "^name: ${name}" "$tmp"; then
+        mv "$tmp" "$target"
+        done_msg "agents/${name}.md ${DIM}(preset subagent)${RESET}"
+    else
+        rm -f "$tmp"
+        warn_msg "agents/${name}.md download failed — skipped (re-run the installer to retry)"
+    fi
+}
+
+case "$TOKEN_SAVER" in
+    remove|off)
+        for a in scribe scout; do
+            if [ -f "$AGENTS_DIR/${a}.md" ] && grep -q "aura-distill" "$AGENTS_DIR/${a}.md" 2>/dev/null; then
+                rm -f "$AGENTS_DIR/${a}.md"
+                done_msg "Removed agents/${a}.md"
+            fi
+        done
+        echo "disabled" > "$TS_MARKER"
+        skip_msg "Token Saver ${DIM}(off — enable anytime: re-run with --token-saver)${RESET}"
+        ;;
+    *)
+        mkdir -p "$AGENTS_DIR"
+        install_token_saver_agent "scribe"
+        install_token_saver_agent "scout"
+        echo "enabled" > "$TS_MARKER"
+        info_msg "Two lightweight subagent presets — local files only, nothing is collected or sent anywhere."
+        info_msg "What they do & the research behind them: ${CYAN}https://tomacco.github.io/aura-distill/token-saving.html${RESET}"
+        info_msg "Not for you? ${DIM}re-run with --remove-token-saver${RESET}"
+        ;;
+esac
+
 # ═══ CLAUDE.md INTEGRATION ═══
 
 show_section "Session integration"
@@ -322,6 +385,16 @@ echo ""
 if [ -n "$EXISTING_VERSION" ]; then
     printf "  ${CYAN}Upgraded${RESET} v${EXISTING_VERSION} → v${VERSION}\n"
     echo ""
+    if [ "$(cat "$TS_MARKER" 2>/dev/null)" = "enabled" ] && [ ! -f "$DISTILL_DIR/.token-saver-announced" ]; then
+        printf "  ${BOLD}${PURPLE}NEW — Token Saver${RESET}\n"
+        printf "  Two preset subagents (${BOLD}scribe${RESET}, ${BOLD}scout${RESET}) that skip the tool-schema tax:\n"
+        printf "  a text-only job now boots at ~2k tokens instead of ~19-27k. Local files only,\n"
+        printf "  fully yours, nothing collected. The 5-minute read on what changed and the\n"
+        printf "  research behind it: ${CYAN}https://tomacco.github.io/aura-distill/token-saving.html${RESET}\n"
+        printf "  ${DIM}Opt out anytime: re-run the installer with --remove-token-saver${RESET}\n"
+        echo ""
+        touch "$DISTILL_DIR/.token-saver-announced"
+    fi
 fi
 printf "  ${DIM}Uninstall (keeps your learnings):${RESET}\n"
 printf "    ${DIM}rm -rf ~/.claude/distill ~/.claude/commands/distill.md ~/.claude/rules/distill.md${RESET}\n"

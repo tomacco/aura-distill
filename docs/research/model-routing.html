@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Routing — aura-distill Research</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,400;0,7..72,600;1,7..72,300;1,7..72,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="research-style.css">
+</head>
+<body>
+    <button class="mode-toggle" onclick="toggleMode()" aria-label="Toggle dark mode">
+        <span class="icon-sun">☀</span>
+        <span class="icon-moon">☽</span>
+    </button>
+    <nav class="toc">
+        <a href="#baseline">Baseline</a>
+        <a href="#landscape">Landscape</a>
+        <a href="#e1">Experiment: archetypes</a>
+        <a href="#e2">Experiment: routing rules</a>
+        <a href="#whitespace">The whitespace</a>
+        <a href="#playbook">Playbook</a>
+        <a href="#limits">Limitations</a>
+    </nav>
+    <div class="container">
+        <header>
+            <a href="./" class="back">&larr; All research</a>
+            <h1>Best Model for Everything? Routing Work to Cheaper Tiers</h1>
+            <div class="meta">July 2026 &middot; 6 task archetypes &times; 3 scored tiers, blind-judged &middot; routing landscape adversarially sourced</div>
+            <p class="abstract">The maintainer runs 100% of tokens on the two most expensive Claude models. Commercial routers promise 20–98% savings; independent benchmarks say most routers can't beat simple baselines. We tested which of his real task shapes actually survive a downgrade, whether a knowledge file can change an orchestrator's delegation choices, and where routing genuinely doesn't belong. Tokens first; dollars are API-equivalent counterfactuals.</p>
+        </header>
+
+        <section id="baseline">
+            <h2>Baseline: the monoculture</h2>
+            <p>From the mined 40-day dataset (see <a href="token-economics.html">Token Economics</a>): every one of 3,360 requests ran on Fable 5 or Opus 4.8. Zero Sonnet, zero Haiku. And because spend concentrates in a few marathon sessions (top 5 = 69%), the routing question is not "use a small model for small sessions" — it's "which <em>phases inside big sessions</em> can subagents run on cheaper tiers."</p>
+            <p>Delegation has a fixed cost that gates this: tonight's live measurements put research-grade subagents at a ~16–30k-token spawn floor, median ≈58k tokens each. Routing pays when the delegated bulk clears that floor — the standing ≳30k rule survives another night of data.</p>
+        </section>
+
+        <section id="landscape">
+            <h2>The routing landscape, filtered for marketing</h2>
+            <p>Three research agents swept academic routers, commercial products, and harness-native mechanisms; claims were kept only with sources, and vendor numbers are labeled as such.</p>
+            <table>
+                <thead><tr><th>Approach</th><th>Claimed</th><th>Independently verified</th></tr></thead>
+                <tbody>
+                    <tr><td>RouteLLM (academic)</td><td>85% cost cut at 95% GPT-4 quality</td><td>Benchmark replications vary by dataset (45% MMLU, 35% GSM8K)</td></tr>
+                    <tr><td>Commercial routers (Martian, Not Diamond, …)</td><td>20–98% savings</td><td>RouterArena ranks Not Diamond last of 12: "frequently selects expensive models." Almost no independent validation exists anywhere.</td></tr>
+                    <tr><td>Azure Model Router</td><td>"up to 60%"</td><td>The only product with independent data: ~55% real savings in one 30-day production test — plus real bugs (context capped by smallest pool model, cache degraded by model churn)</td></tr>
+                    <tr><td>Open-source routers (CARROT, vLLM-SR)</td><td>—</td><td>~35% cost cut at &lt;2% accuracy loss (RouterArena) — beating the commercial offerings</td></tr>
+                    <tr><td>Claude Code native</td><td>—</td><td>Per-subagent <code>model:</code> frontmatter, <code>opusplan</code>, <code>/effort</code>, experimental Advisor tool — no external router needed for this use case</td></tr>
+                </tbody>
+            </table>
+            <div class="insight">
+                <div class="insight-label">Pattern worth noticing</div>
+                <p>The independent benchmark's core finding — routers over-rely on the strongest model — is the maintainer's own usage pattern, automated. The failure mode of naive routing is the human default too.</p>
+            </div>
+        </section>
+
+        <section id="e1">
+            <h2>Experiment: which task shapes survive a downgrade</h2>
+            <p>Six archetype tasks distilled from real session history, identical prompts across claude-haiku-4-5 / claude-sonnet-5 / claude-opus-4-8 (scored) + Fable 5 (unscored reference), graded blind by a judge outside the scored set against pre-registered rubrics. One trial per cell — single observations, not capability claims. Survival gate = rubric points only; the design and rubrics were attacked by a clean-context adversarial reviewer before running (17 findings fixed, including de-narrating the judgment task and pinning the judge outside the arm set).</p>
+            <table>
+                <thead><tr><th>Archetype</th><th>haiku-4-5</th><th>sonnet-5</th><th>opus-4-8</th><th>Verdict (this trial)</th></tr></thead>
+                <tbody>
+                    <tr><td>T1 Mechanical transform (CSV→JSON, tricky rules)</td><td>6/6</td><td>6/6</td><td>6/6</td><td class="score-positive">Routable to Haiku — outputs value-identical</td></tr>
+                    <tr><td>T2 Structured extraction (noisy log, 6 exact answers)</td><td>6/6</td><td>6/6</td><td>5/6</td><td class="score-positive">Routable to Haiku — the frontier arm was the one that erred</td></tr>
+                    <tr><td>T3 Code comprehension (unfamiliar script)</td><td>2.5/3</td><td>2.5/3</td><td>3/3</td><td class="score-neutral">Sonnet floor — Haiku misses control-flow side effects</td></tr>
+                    <tr><td>T4 Debugging (interacting CSS causes)</td><td>4/4*</td><td>4/4*</td><td>1.5/4*</td><td class="score-neutral">Contested cell — see note; no tier verdict</td></tr>
+                    <tr><td>T5 Adversarial design judgment</td><td>~3.25/4</td><td>4/4</td><td>4/4 + bonus</td><td class="score-negative">Frontier — Haiku found surface flaws, missed the inference-only ones</td></tr>
+                    <tr><td>T6 In-context instruction application</td><td colspan="4">E1_T6_PLACEHOLDER</td></tr>
+                </tbody>
+            </table>
+            <p class="note">*T4: the blind judge flagged that one rubric point ("an ancestor transform breaks position:sticky") conflicts with the reference output; the point traces to the author's own knowledge base — a possible encoded overgeneralization, now filed as a distill signal. Inverting that point flips the T4 ranking; we therefore draw no routing conclusion from T4. The full mapping-decoded verdict, packets and usage are in the repo.</p>
+            <div class="insight">
+                <div class="insight-label">Two findings bigger than the table</div>
+                <p>(1) The routing line sits <em>lower</em> than the maintainer's habits assume: lookup-shaped and rule-shaped work survived Haiku untouched in this trial, and the one wrong answer in extraction came from the expensive arm. (2) Verbosity is a hidden tax: for the same 6 extraction answers, Haiku emitted 453 output tokens where Opus emitted 63 — unit price is not per-task price. Route by task shape, then check output discipline.</p>
+            </div>
+        </section>
+
+        <section id="e2">
+            <h2>Experiment: can a knowledge file change delegation?</h2>
+            <p>Learned routing from an agent's own experience logs is essentially unshipped territory (two 2026 surveys — routing-side and memory-side — have zero coverage of the pattern; no framework implements it). Before proposing it as a distill feature, the cheap question: given the same 5-item task list, does an orchestrator with a routing knowledge file choose differently than one without? Per the adversarial review, success means matching E1's ground truth — not parroting the injected file — and the no-file arm's natural behavior is the headline.</p>
+            <div class="comparison">
+                <div class="comparison-header">
+                    <span class="comparison-scenario">Same orchestrator, same 5 tasks, ± routing knowledge file (N=2 per arm)</span>
+                    <span class="comparison-score score-neutral">The no-file arm is the story</span>
+                </div>
+                <div class="comparison-sides">
+                    <div class="side side-without">
+                        <div class="side-label">Arm B — no routing file</div>
+                        <div class="side-content">Routes near-optimally unaided, both reps: Haiku for the transform, extraction and sweep; Opus for debugging and methodology review. Rationales are sound ("no judgment needed, buy the cheapest tokens"; "a missed confound is far more expensive than the model").</div>
+                    </div>
+                    <div class="side side-with">
+                        <div class="side-label">Arm A — with routing file</div>
+                        <div class="side-content">Same choices, now citing the E1 evidence; the file's one visible effect was shifting a borderline call (CSS diagnosis) toward the cheaper Sonnet floor in one rep. It also imported the verbosity warning ("cap output length").</div>
+                    </div>
+                </div>
+            </div>
+            <div class="insight">
+                <div class="insight-label">The finding underneath</div>
+                <p>Stated routing judgment was already near-perfect — yet 40 days of revealed behavior is a 100% frontier monoculture with zero delegated cheap-tier calls. The binding constraint is not knowledge; it's that the routing decision never gets <em>asked</em> in real sessions. This is the execution gap again (see <a href="token-economics.html">Token Economics</a>, friction section): prose rules don't change in-flight habits — structure does. The actionable version of "distill learns routing" is therefore less about richer rules and more about installing the decision point: subagent definitions with <code>model:</code> defaults, and a delegation checkpoint in heavy-session workflows.</p>
+            </div>
+        </section>
+
+        <section id="whitespace">
+            <h2>The whitespace: distill as a routing-rule learner</h2>
+            <p>What the literature calls "memory-augmented routing" exists as three thin papers and no products. Distill already has the full loop the papers lack: session retrospectives that notice which delegations succeeded on which tier (signal), a knowledge store with confidence/staleness metadata (memory), and a session-start monitor that injects the rules where delegation decisions happen (retrieval). The proposal that survives tonight's evidence:</p>
+            <ol>
+                <li><strong>[ROUTE] markers in ops knowledge</strong> — per task-shape entries with the E1-style evidence attached, encoded by /distill when a session produces a clean routing observation ("the Haiku sweep was verbatim-correct", "the Sonnet refactor missed the invariant").</li>
+                <li><strong>Confidence discipline</strong> — routing rules enter as [PROVISIONAL], harden only on repeated confirmation, and carry staleness thresholds (models change quarterly; a routing rule about claude-sonnet-5 must expire).</li>
+                <li><strong>Trade-off knob, not default</strong> — per this project's release rule: routing changes agent behavior, so it ships as an explicit opt-in with the consequence spelled out (cheaper bulk phases; occasional tier misjudgment costs a redo).</li>
+            </ol>
+        </section>
+
+        <section id="playbook">
+            <h2>Playbook for the "best model for everything" user</h2>
+            <ol>
+                <li><strong>Keep judgment on the frontier.</strong> The data says the expensive habit is right where it matters: design review, debugging with interacting causes, synthesis. That's also where the money already goes ($ concentration in marathon creative sessions).</li>
+                <li><strong>Route the bulk phases of big sessions</strong> — transforms, extraction, sweeps — to Haiku-tier subagents when the avoided bulk clears the ~30k-token spawn floor. Native <code>model:</code> frontmatter covers this; no external router earns its fee here.</li>
+                <li><strong>Mind the two hidden taxes:</strong> cheap-model verbosity (3–7× output for identical answers) and mid-session model switches breaking the prompt cache (subagents with their own model avoid this; <code>/model</code> flips don't).</li>
+                <li><strong>Order of operations stands:</strong> context hygiene first (~85% of cost), delegation second, tier routing third — routing optimizes the slice, hygiene optimizes the pie.</li>
+                <li><strong>Let distill learn the routing table case-by-case</strong> — the [ROUTE] proposal above — instead of trusting any router's marketing. The independent evidence says routers mostly don't beat "always strongest"; a personal, evidence-backed routing memory is the version of routing that can.</li>
+            </ol>
+        </section>
+
+        <section id="limits">
+            <h2>Limitations</h2>
+            <ol>
+                <li>n=1 per E1 cell; single night, single machine, subscription metering. Findings are directions with magnitudes, not measurements of capability.</li>
+                <li>Model set is Claude-only and July-2026-specific; every tier verdict carries an expiry date by construction.</li>
+                <li>The judge is an LLM (pinned outside the scored set, blinded, rubric-gated) — and it still surfaced one authored-rubric error, which says something about rubric authorship as the real bottleneck.</li>
+                <li>E2 tests choice behavior, not end-to-end outcome quality; the outcome test is a future run with the routing file live in real sessions.</li>
+                <li>The incumbent's author authored the study; designs were pre-registered and adversarially reviewed before running, and contested cells are reported as contested rather than resolved in the house's favor.</li>
+            </ol>
+        </section>
+
+        <footer>
+            <a href="https://github.com/tomacco/aura-distill/tree/research/2026-07-08-token-economics/research/2026-07-08-token-economics">Raw data, designs, adversarial review &amp; scripts</a> &middot; <a href="./">Back to research index</a>
+        </footer>
+    </div>
+
+    <script src="research-theme.js"></script>
+    <script src="research-tracker.js"></script>
+</body>
+</html>

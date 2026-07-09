@@ -132,7 +132,7 @@ Return a distillation report:
 - Learnings encoded: list with file paths
 - User model updates: what changed
 - Tier health: current state
-- Economics: tokens written this run (sum of chars/4 across files you wrote), SPINE size in tokens (chars/4), total KB size in tokens (sum over all tier files)
+- Economics: tokens written this run (sum of chars/4 across files you wrote), SPINE size in tokens (chars/4), tier-file KB size in tokens (sum over tier files, excludes SPINE and archive/), and the COUNT of files written
 - Flagged tensions: any honesty-vs-comfort conflicts
 - Open questions: anything you couldn't resolve without asking the user
 `
@@ -148,10 +148,10 @@ When the sub-agent completes:
 2. **Record the economics ledger** — append ONE line to `{DISTILL_DIR}/data/economics.jsonl` (create the `data/` directory if missing). Distill optimizes for memory quality AND token economics; a system that never measures its own cost cannot claim to save anything. The line:
 
 ```json
-{"ts":"<ISO-8601 UTC>","distill_tokens":<subagent token total from the Agent tool result's usage, or null if unavailable>,"written_tokens":<from report>,"spine_tokens":<from report>,"kb_tokens":<from report>,"signals":<N>,"files_written":<count>}
+{"ts":"<ISO-8601 UTC>","distill_tokens":<subagent token total ONLY if the harness surfaced a real usage figure for the spawned agent; otherwise null — this value is usually NOT available to you: default to null, NEVER estimate>,"written_tokens":<from report>,"spine_tokens":<from report>,"kb_tokens":<from report>,"signals":<N>,"files_written":<count from report>}
 ```
 
-   Rules: append-only, one JSON object per line, no rewriting past lines. If a value is unknown, use `null` — never invent numbers. This file is local data, never synced anywhere.
+   Rules: append-only, one JSON object per line, no rewriting past lines. If a value is unknown, use `null` — never invent numbers. This file is local diagnostic data, not part of the synced knowledge set; distill itself never transmits it.
 
 3. **Relay the report** to the user concisely. Only surface:
    - What was learned (the principles, not the raw signals)

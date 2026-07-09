@@ -260,9 +260,12 @@ RULES_TMP=$(mktemp)
 if curl -fsL "$REPO/rules/distill.md" | sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" > "$RULES_TMP" \
    && grep -q "Distill" "$RULES_TMP"; then
     if [ -n "$PREFS_TMP" ]; then
-        # fresh body up to the marker + the user's preserved section
-        sed "/^$PREFS_MARK/,\$d" "$RULES_TMP" > "$RULES_DIR/distill.md"
-        cat "$PREFS_TMP" >> "$RULES_DIR/distill.md"
+        # Build the merged file in a temp and move it into place atomically —
+        # never truncate the live file before the merge is complete.
+        MERGED_TMP=$(mktemp)
+        sed "/^$PREFS_MARK/,\$d" "$RULES_TMP" > "$MERGED_TMP"
+        cat "$PREFS_TMP" >> "$MERGED_TMP"
+        mv "$MERGED_TMP" "$RULES_DIR/distill.md"
         rm -f "$PREFS_TMP"
         done_msg "rules/distill.md ${DIM}(auto-loads every session; your preferences preserved)${RESET}"
     else

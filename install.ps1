@@ -163,7 +163,7 @@ try {
         if ($preservedPrefs) {
             $freshIdx = $fresh.IndexOf($prefsMark)
             $body = if ($freshIdx -ge 0) { $fresh.Substring(0, $freshIdx) } else { $fresh }
-            Set-Content -Path $rulesTarget -Value ($body + $preservedPrefs) -Encoding utf8 -NoNewline
+            [System.IO.File]::WriteAllText($rulesTarget, ($body + $preservedPrefs), (New-Object System.Text.UTF8Encoding($false)))
             Write-Done "rules/distill.md ${DIM}(auto-loads every session; your preferences preserved)${RESET}"
         } else {
             Move-Item -Force $rulesTmp $rulesTarget

@@ -140,8 +140,43 @@ if (-not (Test-Path $spinePath)) {
 Write-Section 'Knowledge retrieval'
 
 if (-not (Test-Path $RulesDir)) { New-Item -ItemType Directory -Force -Path $RulesDir | Out-Null }
-Get-File "$Repo/rules/distill.md" (Join-Path $RulesDir 'distill.md')
-Write-Done "rules/distill.md ${DIM}(auto-loads every session)${RESET}"
+
+# Preserve the user's synced Always-On preferences across updates (like SPINE).
+# /distill writes real content into this section; overwriting it is data loss.
+$rulesTarget = Join-Path $RulesDir 'distill.md'
+$prefsMark = '## Always-On User Preferences'
+$preservedPrefs = $null
+if (Test-Path $rulesTarget) {
+    $existing = Get-Content $rulesTarget -Raw
+    $idx = $existing.IndexOf($prefsMark)
+    if ($idx -ge 0) {
+        $section = $existing.Substring($idx)
+        # Only preserve real content (a bold rule line), not the empty template
+        if ($section -match "(?m)^\*\*") { $preservedPrefs = $section }
+    }
+}
+$rulesTmp = [System.IO.Path]::GetTempFileName()
+try {
+    Get-File "$Repo/rules/distill.md" $rulesTmp
+    $fresh = Get-Content $rulesTmp -Raw
+    if ($fresh -match 'Distill') {
+        if ($preservedPrefs) {
+            $freshIdx = $fresh.IndexOf($prefsMark)
+            $body = if ($freshIdx -ge 0) { $fresh.Substring(0, $freshIdx) } else { $fresh }
+            [System.IO.File]::WriteAllText($rulesTarget, ($body + $preservedPrefs), (New-Object System.Text.UTF8Encoding($false)))
+            Write-Done "rules/distill.md ${DIM}(auto-loads every session; your preferences preserved)${RESET}"
+        } else {
+            Move-Item -Force $rulesTmp $rulesTarget
+            Write-Done "rules/distill.md ${DIM}(auto-loads every session)${RESET}"
+        }
+    } else {
+        Write-Warn 'rules/distill.md download invalid -- existing file left untouched'
+    }
+} catch {
+    Write-Warn 'rules/distill.md download failed -- existing file left untouched'
+} finally {
+    Remove-Item $rulesTmp -Force -ErrorAction SilentlyContinue
+}
 
 # === TOKEN SAVER (agent presets) ===
 # Full control via env var (installer runs through `irm | iex`, so no CLI flags):

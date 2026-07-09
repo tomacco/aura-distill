@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/header.svg?v=1.1.8" alt="aura-distill" width="800"/>
+  <img src="docs/header.svg?v=1.1.9" alt="aura-distill" width="800"/>
 </p>
 
 <p align="center">
@@ -170,5 +170,5 @@ Your knowledge files in `~/.claude/distill/` are preserved. They're yours.
 ---
 
 <p align="center">
-  <sub>v1.1.8 · MIT · Built for <a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code</a></sub>
+  <sub>v1.1.9 · MIT · Built for <a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code</a></sub>
 </p>

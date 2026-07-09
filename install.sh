@@ -245,8 +245,35 @@ fi
 show_section "Knowledge retrieval"
 
 mkdir -p "$RULES_DIR"
-curl -sL "$REPO/rules/distill.md" | sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" > "$RULES_DIR/distill.md"
-done_msg "rules/distill.md ${DIM}(auto-loads every session)${RESET}"
+
+# Preserve the user's synced Always-On preferences across updates (like SPINE).
+# /distill writes real content into this section; overwriting it is data loss.
+PREFS_MARK="## Always-On User Preferences"
+PREFS_TMP=""
+if [ -f "$RULES_DIR/distill.md" ] && grep -q "^$PREFS_MARK" "$RULES_DIR/distill.md" \
+   && grep -A 30 "^$PREFS_MARK" "$RULES_DIR/distill.md" | grep -q "^\*\*"; then
+    PREFS_TMP=$(mktemp)
+    sed -n "/^$PREFS_MARK/,\$p" "$RULES_DIR/distill.md" > "$PREFS_TMP"
+fi
+
+RULES_TMP=$(mktemp)
+if curl -fsL "$REPO/rules/distill.md" | sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" > "$RULES_TMP" \
+   && grep -q "Distill" "$RULES_TMP"; then
+    if [ -n "$PREFS_TMP" ]; then
+        # fresh body up to the marker + the user's preserved section
+        sed "/^$PREFS_MARK/,\$d" "$RULES_TMP" > "$RULES_DIR/distill.md"
+        cat "$PREFS_TMP" >> "$RULES_DIR/distill.md"
+        rm -f "$PREFS_TMP"
+        done_msg "rules/distill.md ${DIM}(auto-loads every session; your preferences preserved)${RESET}"
+    else
+        mv "$RULES_TMP" "$RULES_DIR/distill.md"
+        done_msg "rules/distill.md ${DIM}(auto-loads every session)${RESET}"
+    fi
+    rm -f "$RULES_TMP"
+else
+    rm -f "$RULES_TMP" "$PREFS_TMP"
+    warn_msg "rules/distill.md download failed — existing file left untouched"
+fi
 
 # ═══ TOKEN SAVER (agent presets) ═══
 # User has full control: --token-saver / --no-token-saver / --remove-token-saver.

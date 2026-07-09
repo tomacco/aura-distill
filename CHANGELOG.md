@@ -10,6 +10,9 @@ All notable changes to aura-distill.
 - **Landing page** `docs/token-saving.html` — the token-saving research line explained (inverted pyramid, SVG diagrams, measured numbers): what shipped, what's in research (learned spawn profiles), what became a trade-off knob instead of shipping (diet SPINE), what was corrected (naive friction accounting). Announced by the installer on update.
 - **Research pages**: `docs/research/token-economics.html` (40 days of real usage mined: ~85% of cost is context movement; distill overhead 5–6% of spend) and `docs/research/model-routing.html` (task-shape routing trials; orchestrators route near-optimally unaided).
 
+### Fixed
+- **Installer data loss**: updating overwrote `rules/distill.md` wholesale, wiping the user's synced "Always-On User Preferences" section back to the empty template (caught live-testing the v1.1.7 update). Both installers now preserve the section across updates (like SPINE) — only when it holds real content, not the template — and leave the existing file untouched if the download fails.
+
 ### Privacy
 - Token Saver collects nothing — local files only. Standing policy documented on the landing page: any future telemetry must be opt-in, aggregate-only, with a published schema.
 

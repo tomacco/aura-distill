@@ -105,11 +105,15 @@ show_section() {
 # Parse arguments
 PROFILE_NAME=""
 TOKEN_SAVER="auto"   # auto = keep prior choice (default on for new installs); on/off/remove = explicit
+CAP_SKILL="auto"     # same semantics for the capabilities-matrix skill
 while [[ $# -gt 0 ]]; do
     case $1 in
         --profile) PROFILE_NAME="$2"; shift 2 ;;
         --profile=*) PROFILE_NAME="${1#*=}"; shift ;;
         --token-saver) TOKEN_SAVER="on"; shift ;;
+        --capabilities-skill) CAP_SKILL="on"; shift ;;
+        --no-capabilities-skill) CAP_SKILL="off"; shift ;;
+        --remove-capabilities-skill) CAP_SKILL="remove"; shift ;;
         --no-token-saver) TOKEN_SAVER="off"; shift ;;
         --remove-token-saver) TOKEN_SAVER="remove"; shift ;;
         *) shift ;;
@@ -334,6 +338,56 @@ case "$TOKEN_SAVER" in
         info_msg "Two lightweight subagent presets — local files only, nothing is collected or sent anywhere."
         info_msg "What they do & the research behind them: ${CYAN}https://tomacco.github.io/aura-distill/token-saving.html${RESET}"
         info_msg "Not for you? ${DIM}re-run with --remove-token-saver${RESET}"
+        ;;
+esac
+
+# ═══ CAPABILITIES SKILL (local model calibration) ═══
+# Inert until invoked; every run is dry-run-gated and cost-capped. Full control:
+# --capabilities-skill / --no-capabilities-skill / --remove-capabilities-skill.
+# What it is: https://github.com/tomacco/aura-distill/tree/main/capabilities
+
+show_section "Capabilities skill"
+
+SKILLS_DIR="$PROFILE_DIR/skills/capabilities-matrix"
+CS_MARKER="$DISTILL_DIR/.capabilities-skill"
+CS_FILES="SKILL.md recipes/D3-code-comprehension.md recipes/D4-adversarial-inference.md recipes/D5-verification-discipline.md recipes/D6-sustained-constraints.md recipes/D7-long-context-synthesis.md recipes/D8-tool-orchestration.md scripts/battery-runner.py"
+
+if [ "$CAP_SKILL" = "auto" ] && [ "$(cat "$CS_MARKER" 2>/dev/null)" = "disabled" ]; then
+    CAP_SKILL="off"
+fi
+
+case "$CAP_SKILL" in
+    remove|off)
+        if [ -d "$SKILLS_DIR" ] && grep -q "aura-distill" "$SKILLS_DIR/SKILL.md" 2>/dev/null; then
+            rm -rf "$SKILLS_DIR"
+            done_msg "Removed skills/capabilities-matrix/"
+        fi
+        echo "disabled" > "$CS_MARKER"
+        skip_msg "Capabilities skill ${DIM}(off — enable: re-run with --capabilities-skill)${RESET}"
+        ;;
+    *)
+        if [ -d "$SKILLS_DIR" ] && [ -f "$SKILLS_DIR/SKILL.md" ] && ! grep -q "aura-distill" "$SKILLS_DIR/SKILL.md" 2>/dev/null; then
+            warn_msg "skills/capabilities-matrix exists and isn't ours — preserved untouched"
+        else
+            mkdir -p "$SKILLS_DIR/recipes" "$SKILLS_DIR/scripts"
+            CS_OK=1
+            for f in $CS_FILES; do
+                tmp=$(mktemp)
+                if curl -fsL "$REPO/skills/capabilities-matrix/$f" > "$tmp" 2>/dev/null && [ -s "$tmp" ]                    && head -c 4000 "$tmp" | grep -qE "capabilities|Recipe|battery"; then
+                    mv "$tmp" "$SKILLS_DIR/$f"
+                else
+                    rm -f "$tmp"; CS_OK=0
+                    warn_msg "capabilities-matrix/$f download failed — skipped"
+                fi
+            done
+            if [ "$CS_OK" = "1" ]; then
+                echo "enabled" > "$CS_MARKER"
+                done_msg "skills/capabilities-matrix ${DIM}(local model calibration — inert until you invoke it)${RESET}"
+                info_msg "Every run shows a cost estimate first; results never leave your machine."
+            else
+                warn_msg "Capabilities skill incomplete — re-run the installer to retry"
+            fi
+        fi
         ;;
 esac
 

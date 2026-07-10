@@ -240,6 +240,45 @@ if ($TokenSaver -eq 'remove' -or $TokenSaver -eq 'off') {
     Write-Info "Not for you? ${DIM}`$env:DISTILL_TOKEN_SAVER='remove'; re-run the installer${RESET}"
 }
 
+# === CAPABILITIES SKILL (local model calibration) ===
+# Control: $env:DISTILL_CAPABILITIES_SKILL = 'on' | 'off' | 'remove'
+Write-Section 'Capabilities skill'
+$SkillDir = Join-Path $ClaudeHome 'skills/capabilities-matrix'
+$CsMarker = Join-Path $DistillDir '.capabilities-skill'
+$CapSkill = if ($env:DISTILL_CAPABILITIES_SKILL) { $env:DISTILL_CAPABILITIES_SKILL.ToLower() } else { 'auto' }
+if ($CapSkill -eq 'auto' -and (Test-Path $CsMarker) -and ((Get-Content $CsMarker -Raw).Trim() -eq 'disabled')) { $CapSkill = 'off' }
+$CsFiles = @('SKILL.md','recipes/D3-code-comprehension.md','recipes/D4-adversarial-inference.md','recipes/D5-verification-discipline.md','recipes/D6-sustained-constraints.md','recipes/D7-long-context-synthesis.md','recipes/D8-tool-orchestration.md','scripts/battery-runner.py')
+if ($CapSkill -eq 'remove' -or $CapSkill -eq 'off') {
+    if ((Test-Path (Join-Path $SkillDir 'SKILL.md')) -and (Select-String -Path (Join-Path $SkillDir 'SKILL.md') -Pattern 'aura-distill' -Quiet)) {
+        Remove-Item $SkillDir -Recurse -Force
+        Write-Done 'Removed skills/capabilities-matrix/'
+    }
+    Set-Content -Path $CsMarker -Value 'disabled' -Encoding utf8 -NoNewline
+    Write-Skip "Capabilities skill ${DIM}(off -- enable: `$env:DISTILL_CAPABILITIES_SKILL='on'; re-run)${RESET}"
+} elseif ((Test-Path (Join-Path $SkillDir 'SKILL.md')) -and -not (Select-String -Path (Join-Path $SkillDir 'SKILL.md') -Pattern 'aura-distill' -Quiet)) {
+    Write-Warn 'skills/capabilities-matrix exists and is not ours -- preserved untouched'
+} else {
+    foreach ($d in @($SkillDir, (Join-Path $SkillDir 'recipes'), (Join-Path $SkillDir 'scripts'))) {
+        if (-not (Test-Path $d)) { New-Item -ItemType Directory -Force -Path $d | Out-Null }
+    }
+    $csOk = $true
+    foreach ($f in $CsFiles) {
+        $tmp = [System.IO.Path]::GetTempFileName()
+        try {
+            Get-File "$Repo/skills/capabilities-matrix/$f" $tmp
+            $body = Get-Content $tmp -Raw
+            if ($body -match 'capabilities|Recipe|battery') {
+                Move-Item -Force $tmp (Join-Path $SkillDir $f)
+            } else { Remove-Item $tmp -Force -ErrorAction SilentlyContinue; $csOk = $false; Write-Warn "capabilities-matrix/$f invalid -- skipped" }
+        } catch { Remove-Item $tmp -Force -ErrorAction SilentlyContinue; $csOk = $false; Write-Warn "capabilities-matrix/$f download failed -- skipped" }
+    }
+    if ($csOk) {
+        Set-Content -Path $CsMarker -Value 'enabled' -Encoding utf8 -NoNewline
+        Write-Done "skills/capabilities-matrix ${DIM}(local model calibration -- inert until invoked)${RESET}"
+        Write-Info 'Every run shows a cost estimate first; results never leave your machine.'
+    } else { Write-Warn 'Capabilities skill incomplete -- re-run the installer to retry' }
+}
+
 # === SESSION INTEGRATION ===
 
 Write-Section 'Session integration'

@@ -20,7 +20,9 @@ starting with exactly the discriminative probes (D4/D5) that carry all the signa
 - Rubric-gated: every probe has a pre-written, checkable rubric authored WITH the probe,
   before any model sees it. Scores are rubric points, never holistic impressions.
 - Blind judging: outputs shuffled and model-blinded; the judge model is never one of the
-  arms being scored; judge rationale is kept with the score.
+  arms being scored; judge rationale is kept with the score. Honest limit: blinding
+  strips labels, not writing STYLE — a judge may recognize a model family by voice;
+  rubric-point scoring (never holistic) is the mitigation, not a cure.
 - Discriminativeness gate: a battery is valid only if its scores SEPARATE the models being
   compared (D1/D2 saturate on current generations — expected; a battery that only contains
   saturating probes measures nothing and must not produce contract records).

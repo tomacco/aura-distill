@@ -30,7 +30,7 @@ if hasattr(sys.stdout, "reconfigure"):  # Windows cp1252 console guard
     sys.stdout.reconfigure(encoding="utf-8")
 
 CAP_SLACK = 1.0  # cap is enforced exactly as given (skill sets it to 1.5x estimate)
-LIMIT_MARKERS = ("hit your session limit", "hit your usage limit", "rate_limit")
+LIMIT_MARKERS = ("hit your session limit", "hit your usage limit")
 
 
 def load(path):
@@ -69,14 +69,17 @@ def spent_tokens(b):
         for fn in os.listdir(rdir):
             try:
                 u = load(os.path.join(rdir, fn)).get("usage") or {}
-                total += sum(v for k, v in u.items() if isinstance(v, int))
+                # cap counts WORK tokens (input+output) to match estimate(); cache
+                # traffic excluded so cold-cache runs do not race to premature PARTIAL
+                total += sum(u.get(k, 0) for k in ("input_tokens", "output_tokens")
+                             if isinstance(u.get(k), int))
             except Exception:
                 pass
     return total
 
 
 def call_cli(arm, prompt):
-    r = subprocess.run(["claude", "-p", "--model", arm["model"], "--tools", "none",
+    r = subprocess.run(["claude", "-p", "--model", arm["model"], "--tools", "",
                         "--output-format", "json"],
                        input=prompt.encode("utf-8"), capture_output=True, timeout=300)
     out = r.stdout.decode("utf-8", "replace")
@@ -151,7 +154,9 @@ def blind(b):
             mapping[f"{cell['demand']}_{probe}_r{rep}"] = key
             open(os.path.join(bdir, f"{cell['demand']}_{probe}_r{rep}.md"), "w",
                  encoding="utf-8").write("\n".join(pkt))
-    open(os.path.join(b["workdir"], "SEALED-mapping.json"), "w",
+    sealdir = os.path.join(b["workdir"], ".sealed")
+    os.makedirs(sealdir, exist_ok=True)
+    open(os.path.join(sealdir, "mapping.json"), "w",
          encoding="utf-8").write(json.dumps(mapping, indent=1))
     print(f"blinded packets: {len(mapping)} -> {bdir}  (mapping SEALED - judge must not open)")
 
@@ -160,7 +165,7 @@ def unseal(b):
     sdir = os.path.join(b["workdir"], "scores")
     if not (os.path.isdir(sdir) and os.listdir(sdir)):
         print("REFUSED: no scores/ directory with content — score blind FIRST"); sys.exit(4)
-    print(open(os.path.join(b["workdir"], "SEALED-mapping.json"), encoding="utf-8").read())
+    print(open(os.path.join(b["workdir"], ".sealed", "mapping.json"), encoding="utf-8").read())
 
 
 def spread(b):
@@ -168,18 +173,21 @@ def spread(b):
     import statistics
     scores = {}
     sdir = os.path.join(b["workdir"], "scores")
-    mapping = load(os.path.join(b["workdir"], "SEALED-mapping.json"))
+    mapping = load(os.path.join(b["workdir"], ".sealed", "mapping.json"))
     for fn in os.listdir(sdir):
-        s = load(os.path.join(sdir, fn))   # {"packet": "...", "scores": {"A": x, ...}}
-        key = mapping[s["packet"]]
-        demand = s["packet"].split("_")[0]
-        for letter, val in s["scores"].items():
-            scores.setdefault((demand, key[letter]), []).append(val)
+        try:
+            s = load(os.path.join(sdir, fn))   # {"packet": "...", "scores": {"A": x, ...}}
+            key = mapping[s["packet"]]
+            demand = s["packet"].split("_")[0]
+            for letter, val in s["scores"].items():
+                scores.setdefault((demand, key[letter]), []).append(val)
+        except Exception as e:
+            print("WARN skipping malformed score file %s: %r" % (fn, e), file=sys.stderr)
     out = {}
     for (demand, arm), vals in sorted(scores.items()):
         out.setdefault(demand, {})[arm] = {
             "mean": round(statistics.mean(vals), 3), "n": len(vals),
-            "sd": round(statistics.pstdev(vals), 3) if len(vals) > 1 else None}
+            "sd": round(statistics.stdev(vals), 3) if len(vals) > 1 else None}  # sample sd: conservative for margin
     for demand, arms in out.items():
         means = [v["mean"] for v in arms.values()]
         sds = [v["sd"] for v in arms.values() if v["sd"] is not None]

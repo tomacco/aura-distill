@@ -54,15 +54,22 @@ below — they are baked into this skill; do not improvise around them.
 
 ### 5. RUN
 - Execute via the bundled runner (`scripts/battery-runner.py`): idempotent per cell,
-  fail-fast on rate-limit strings, text-only spawns (`--tools none` equivalents), hard cap
+  fail-fast on rate-limit strings, text-only spawns (`--tools ""`), hard cap
   enforced, every cell's raw response + usage stored locally.
 
 ### 6. JUDGE (blind)
-- Runner shuffles and blinds outputs (arm → letter, mapping sealed until scores are in).
+- Runner shuffles and blinds outputs (arm → letter; mapping sealed under `.sealed/`).
+- SEAL DISCIPLINE (non-negotiable): score ONLY from files under `blind/`. NEVER open
+  `.sealed/` or any mapping file before every score is written — peeking unbinds the
+  measurement; if you peek, the battery is void and re-runs with fresh probes. Reveal
+  the mapping only via `battery-runner.py --unseal` (it refuses until scores exist).
 - You (the fixed local judge) score rubric-point by rubric-point. No holistic scores.
   Record rationale per cell.
 
 ### 7. GATE (discriminativeness)
+- The runner's `--spread` separation flag is ADVISORY (not a significance test); you
+  make the call — and you write contract records ONLY for cells with n≥3 (the
+  METHODOLOGY floor; the runner does not enforce it, you do).
 - Per demand: if all arms' scores are statistically indistinguishable (runner reports
   spread vs dispersion), that demand's cells are NON-INFORMATIVE — no contract records
   are written for it, and the probes are flagged dead (regenerate next battery version).

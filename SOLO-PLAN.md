@@ -23,3 +23,4 @@ Notes (append-only):
 - ~15:1x — E-B compliance live in collector (real-session filter; first data: 3/3 real sessions read SPINE). Limit detector de-contaminated + interactive-freeze blind spot documented. Living ledger updated on PR #37 branch. Box 8 stays UNCHECKED intentionally: watchdog stays armed while I hold the session for Ivan's return.
 - ~19:0x — PR #37 MERGED (Ivan). Skill S2 WIP pushed (feature/capabilities-skill: SKILL.md + 6 recipes; runner/installer/review/PR remain). PreCompact hook LIVE in user settings (distill checkpoint: logs compactions + injects preserve-verbatim guidance). Local distill auto-updated to 1.1.9; first economics ledger line written.
 - Recipe validation A: PASS (scribe, 4.3k tok — 4/4 flaws inferable-only, no narration). B pending.
+- PR #38 OPEN (capabilities-matrix skill, review-fixed: seal discipline + atomic install + 8 more). Recipe D4 validated N=2. S2 COMPLETE pending Ivan merge.

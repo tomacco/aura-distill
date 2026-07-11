@@ -187,10 +187,24 @@ try {
 
 Write-Section 'Token Saver'
 
+# Marker files may carry a UTF-8 BOM (Set-Content -Encoding utf8 under PS 5.1)
+# or be empty -- read them tolerant of both, or a user's opt-out silently reverts.
+function Read-Marker {
+    param([string]$path)
+    if (-not (Test-Path $path)) { return '' }
+    $c = [System.IO.File]::ReadAllText($path)
+    return $c.Trim([char]0xFEFF, ' ', "`t", "`r", "`n")
+}
+function Write-Marker {
+    param([string]$path, [string]$value)
+    # BOM-less on every PS version: install.sh reads these markers too
+    [System.IO.File]::WriteAllText($path, $value, (New-Object System.Text.UTF8Encoding($false)))
+}
+
 $AgentsDir = Join-Path $ClaudeHome 'agents'
 $TsMarker  = Join-Path $DistillDir '.token-saver'
 $TokenSaver = if ($env:DISTILL_TOKEN_SAVER) { $env:DISTILL_TOKEN_SAVER.ToLower() } else { 'auto' }
-if ($TokenSaver -eq 'auto' -and (Test-Path $TsMarker) -and ((Get-Content $TsMarker -Raw).Trim() -eq 'disabled')) {
+if ($TokenSaver -eq 'auto' -and ((Read-Marker $TsMarker) -eq 'disabled')) {
     $TokenSaver = 'off'
 }
 
@@ -228,13 +242,13 @@ if ($TokenSaver -eq 'remove' -or $TokenSaver -eq 'off') {
             Write-Done "Removed agents/$a.md"
         }
     }
-    Set-Content -Path $TsMarker -Value 'disabled' -Encoding utf8 -NoNewline
+    Write-Marker $TsMarker 'disabled'
     Write-Skip "Token Saver ${DIM}(off -- enable anytime: `$env:DISTILL_TOKEN_SAVER='on'; re-run)${RESET}"
 } else {
     if (-not (Test-Path $AgentsDir)) { New-Item -ItemType Directory -Force -Path $AgentsDir | Out-Null }
     Install-TokenSaverAgent 'scribe'
     Install-TokenSaverAgent 'scout'
-    Set-Content -Path $TsMarker -Value 'enabled' -Encoding utf8 -NoNewline
+    Write-Marker $TsMarker 'enabled'
     Write-Info 'Two lightweight subagent presets -- local files only, nothing is collected or sent anywhere.'
     Write-Info "What they do & the research: ${CYAN}https://tomacco.github.io/aura-distill/token-saving.html${RESET}"
     Write-Info "Not for you? ${DIM}`$env:DISTILL_TOKEN_SAVER='remove'; re-run the installer${RESET}"
@@ -252,7 +266,7 @@ Write-Section 'Time Index'
 $BinDir    = Join-Path $DistillDir 'bin'
 $TiMarker  = Join-Path $DistillDir '.time-index'
 $TimeIndex = if ($env:DISTILL_TIME_INDEX) { $env:DISTILL_TIME_INDEX.ToLower() } else { 'auto' }
-if ($TimeIndex -eq 'auto' -and (Test-Path $TiMarker) -and ((Get-Content $TiMarker -Raw).Trim() -eq 'disabled')) {
+if ($TimeIndex -eq 'auto' -and ((Read-Marker $TiMarker) -eq 'disabled')) {
     $TimeIndex = 'off'
 }
 
@@ -280,11 +294,21 @@ function Install-TimeIndexScript {
 
 function Remove-TimeIndexRules {
     # Feature off = zero always-on token cost: remove the routing block entirely.
-    if ((Test-Path $rulesTarget) -and (Select-String -Path $rulesTarget -Pattern 'TIME-INDEX:BEGIN' -Quiet)) {
-        $content = Get-Content $rulesTarget -Raw
-        $stripped = $content -replace '(?s)<!-- TIME-INDEX:BEGIN.*?TIME-INDEX:END -->\r?\n?', ''
+    # Bounded strip: require BOTH markers and verify the result still holds the
+    # preferences section -- a damaged marker must never eat user data.
+    if (-not (Test-Path $rulesTarget)) { return }
+    $content = Get-Content $rulesTarget -Raw
+    if ($content -notmatch 'TIME-INDEX:BEGIN') { return }
+    if ($content -notmatch 'TIME-INDEX:END') {
+        Write-Warn 'rules/distill.md: TIME-INDEX markers damaged -- block left in place (re-run the installer to repair)'
+        return
+    }
+    $stripped = $content -replace '(?s)<!-- TIME-INDEX:BEGIN.*?TIME-INDEX:END -->\r?\n?', ''
+    if (($stripped -match '## Always-On User Preferences') -and ($stripped -notmatch 'TIME-INDEX')) {
         [System.IO.File]::WriteAllText($rulesTarget, $stripped, (New-Object System.Text.UTF8Encoding($false)))
         Write-Done "rules/distill.md ${DIM}(Time Index routing removed)${RESET}"
+    } else {
+        Write-Warn 'rules/distill.md: strip verification failed -- file left untouched'
     }
 }
 
@@ -295,14 +319,14 @@ if ($TimeIndex -eq 'remove' -or $TimeIndex -eq 'off') {
         if (Test-Path $t) { Remove-Item $t -Force; Write-Done "Removed bin/$f" }
     }
     Remove-TimeIndexRules
-    Set-Content -Path $TiMarker -Value 'disabled' -Encoding utf8 -NoNewline
+    Write-Marker $TiMarker 'disabled'
     # TIMELINE.md is user knowledge -- never deleted here, same as the rest of distill/.
     Write-Skip "Time Index ${DIM}(off -- enable anytime: `$env:DISTILL_TIME_INDEX='on'; re-run)${RESET}"
 } else {
     if (-not (Test-Path $BinDir)) { New-Item -ItemType Directory -Force -Path $BinDir | Out-Null }
     Install-TimeIndexScript 'distill-recent.sh'
     Install-TimeIndexScript 'distill-recent.ps1'
-    Set-Content -Path $TiMarker -Value 'enabled' -Encoding utf8 -NoNewline
+    Write-Marker $TiMarker 'enabled'
     Write-Info 'Time-based retrieval -- "a few weeks ago", "when we did the launch" -- from local files only.'
     Write-Info "Not for you? ${DIM}`$env:DISTILL_TIME_INDEX='remove'; re-run the installer${RESET}"
 }
@@ -392,7 +416,7 @@ if ($existingVersion) {
     Write-Host "  ${CYAN}Upgraded${RESET} v$existingVersion -> v$Version"
     Write-Host ''
     $TsAnnounced = Join-Path $DistillDir '.token-saver-announced'
-    if ((Test-Path $TsMarker) -and ((Get-Content $TsMarker -Raw).Trim() -eq 'enabled') -and -not (Test-Path $TsAnnounced)) {
+    if (((Read-Marker $TsMarker) -eq 'enabled') -and -not (Test-Path $TsAnnounced)) {
         Write-Host "  ${BOLD}${PURPLE}NEW $EmDash Token Saver${RESET}"
         Write-Host "  Two preset subagents (${BOLD}scribe${RESET}, ${BOLD}scout${RESET}) that skip the tool-schema tax:"
         Write-Host "  a text-only job now boots at ~2k tokens instead of ~19-27k. Local files only,"
@@ -400,10 +424,10 @@ if ($existingVersion) {
         Write-Host "  research behind it: ${CYAN}https://tomacco.github.io/aura-distill/token-saving.html${RESET}"
         Write-Host "  ${DIM}Opt out anytime: `$env:DISTILL_TOKEN_SAVER='remove'; re-run the installer${RESET}"
         Write-Host ''
-        Set-Content -Path $TsAnnounced -Value '1' -Encoding utf8 -NoNewline
+        Write-Marker $TsAnnounced '1'
     }
     $TiAnnounced = Join-Path $DistillDir '.time-index-announced'
-    if ((Test-Path $TiMarker) -and ((Get-Content $TiMarker -Raw).Trim() -eq 'enabled') -and -not (Test-Path $TiAnnounced)) {
+    if (((Read-Marker $TiMarker) -eq 'enabled') -and -not (Test-Path $TiAnnounced)) {
         Write-Host "  ${BOLD}${PURPLE}NEW $EmDash Time Index${RESET}"
         Write-Host "  Ask for past work the way you actually remember it -- ${BOLD}`"a few weeks ago`"${RESET},"
         Write-Host "  ${BOLD}`"when we did the launch`"${RESET} -- and it resolves in seconds instead of a transcript"
@@ -411,7 +435,7 @@ if ($existingVersion) {
         Write-Host "  only, fully yours, nothing collected."
         Write-Host "  ${DIM}Opt out anytime: `$env:DISTILL_TIME_INDEX='remove'; re-run the installer${RESET}"
         Write-Host ''
-        Set-Content -Path $TiAnnounced -Value '1' -Encoding utf8 -NoNewline
+        Write-Marker $TiAnnounced '1'
     }
 }
 Write-Host "  ${DIM}Uninstall (keeps your learnings):${RESET}"

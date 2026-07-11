@@ -53,8 +53,9 @@ TimeML/TIMEX3 marks vague expressions with modifiers rather than exact values; v
 quantifier studies give approximate mappings: "a couple of" ≈ 2 units, "a few" ≈ 3–4
 (fuzzy 2–6), "several" ≈ 3–7 — speaker- and context-variable. (Numeric ranges partly
 extrapolated to the temporal domain — treat as tunable, not ground truth.)
-→ **Design:** the phrase table in `rules/distill.md` maps phrases to overlapping ranges
-("a few weeks ago" ≈ 2–6 wk), never hard edges.
+→ **Design:** the phrase table in `rules/distill.md` maps phrases to overlapping ranges,
+never hard edges. The shipped table folds "some weeks ago" into "a few weeks ago" and
+widens the range to 2–8 wk (literature baseline is ~2–6).
 
 ## The bucket scheme this produces
 
@@ -78,7 +79,9 @@ timeline = the rest.
 ## Honest caveats
 - The "a few = 2–6 weeks" style numeric ranges are extrapolated from general vague-
   quantifier work, not measured for temporal phrases specifically. They're encoded as
-  guidance for the agent, tunable in `rules/distill.md`.
+  guidance for the agent. Note: installer updates REPLACE the routing block in
+  `rules/distill.md`, so hand-edits there are reverted — durable personal overrides
+  belong in the Always-On preferences section, which the installer preserves.
 - Weekly cyclicity, landmark discontinuities, and prototype heaping all *violate* smooth
   log-bucketing — the scheme special-cases them (calendar-anchored weeks, landmark-first
   routing) rather than pretending one curve fits.

@@ -292,8 +292,15 @@ show_section "Token Saver"
 AGENTS_DIR="$PROFILE_DIR/agents"
 TS_MARKER="$DISTILL_DIR/.token-saver"
 
+# Marker files may carry a UTF-8 BOM when written by Windows PowerShell 5.1 --
+# read them BOM- and whitespace-tolerant or a user's opt-out silently reverts.
+read_marker() {
+    [ -f "$1" ] || return 0
+    tr -d '\357\273\277' < "$1" 2>/dev/null | tr -d '[:space:]'
+}
+
 # Resolve "auto": respect a previously persisted choice; default ON for fresh state
-if [ "$TOKEN_SAVER" = "auto" ] && [ "$(cat "$TS_MARKER" 2>/dev/null)" = "disabled" ]; then
+if [ "$TOKEN_SAVER" = "auto" ] && [ "$(read_marker "$TS_MARKER")" = "disabled" ]; then
     TOKEN_SAVER="off"
 fi
 
@@ -353,7 +360,7 @@ BIN_DIR="$DISTILL_DIR/bin"
 TI_MARKER="$DISTILL_DIR/.time-index"
 
 # Resolve "auto": respect a previously persisted choice; default ON for fresh state
-if [ "$TIME_INDEX" = "auto" ] && [ "$(cat "$TI_MARKER" 2>/dev/null)" = "disabled" ]; then
+if [ "$TIME_INDEX" = "auto" ] && [ "$(read_marker "$TI_MARKER")" = "disabled" ]; then
     TIME_INDEX="off"
 fi
 
@@ -377,12 +384,26 @@ install_time_index_script() {
 
 strip_time_index_rules() {
     # Feature off = zero always-on token cost: remove the routing block entirely.
-    if [ -f "$RULES_DIR/distill.md" ] && grep -q "TIME-INDEX:BEGIN" "$RULES_DIR/distill.md"; then
-        local tmp
-        tmp=$(mktemp)
-        sed '/<!-- TIME-INDEX:BEGIN/,/<!-- TIME-INDEX:END -->/d' "$RULES_DIR/distill.md" > "$tmp"
-        mv "$tmp" "$RULES_DIR/distill.md"
+    # Bounded strip: require BOTH markers and verify the result still holds the
+    # preferences section -- a damaged END marker must never eat user data (the
+    # sed range would otherwise delete from BEGIN to end-of-file).
+    local f="$RULES_DIR/distill.md"
+    if [ ! -f "$f" ] || ! grep -q "TIME-INDEX:BEGIN" "$f"; then
+        return 0
+    fi
+    if ! grep -q "TIME-INDEX:END" "$f"; then
+        warn_msg "rules/distill.md: TIME-INDEX markers damaged — block left in place (re-run the installer to repair)"
+        return 0
+    fi
+    local tmp
+    tmp=$(mktemp)
+    sed '/<!-- TIME-INDEX:BEGIN/,/<!-- TIME-INDEX:END -->/d' "$f" > "$tmp"
+    if grep -q "## Always-On User Preferences" "$tmp" && ! grep -q "TIME-INDEX" "$tmp"; then
+        mv "$tmp" "$f"
         done_msg "rules/distill.md ${DIM}(Time Index routing removed)${RESET}"
+    else
+        rm -f "$tmp"
+        warn_msg "rules/distill.md: strip verification failed — file left untouched"
     fi
 }
 
@@ -483,7 +504,7 @@ echo ""
 if [ -n "$EXISTING_VERSION" ]; then
     printf "  ${CYAN}Upgraded${RESET} v${EXISTING_VERSION} → v${VERSION}\n"
     echo ""
-    if [ "$(cat "$TS_MARKER" 2>/dev/null)" = "enabled" ] && [ ! -f "$DISTILL_DIR/.token-saver-announced" ]; then
+    if [ "$(read_marker "$TS_MARKER")" = "enabled" ] && [ ! -f "$DISTILL_DIR/.token-saver-announced" ]; then
         printf "  ${BOLD}${PURPLE}NEW — Token Saver${RESET}\n"
         printf "  Two preset subagents (${BOLD}scribe${RESET}, ${BOLD}scout${RESET}) that skip the tool-schema tax:\n"
         printf "  a text-only job now boots at ~2k tokens instead of ~19-27k. Local files only,\n"
@@ -493,7 +514,7 @@ if [ -n "$EXISTING_VERSION" ]; then
         echo ""
         touch "$DISTILL_DIR/.token-saver-announced"
     fi
-    if [ "$(cat "$TI_MARKER" 2>/dev/null)" = "enabled" ] && [ ! -f "$DISTILL_DIR/.time-index-announced" ]; then
+    if [ "$(read_marker "$TI_MARKER")" = "enabled" ] && [ ! -f "$DISTILL_DIR/.time-index-announced" ]; then
         printf "  ${BOLD}${PURPLE}NEW — Time Index${RESET}\n"
         printf "  Ask for past work the way you actually remember it — ${BOLD}\"a few weeks ago\"${RESET},\n"
         printf "  ${BOLD}\"when we did the launch\"${RESET} — and it resolves in seconds instead of a transcript\n"

@@ -70,7 +70,7 @@ Distill operates in its OWN directory: `{DISTILL_DIR}/`. It NEVER writes to user
 │   └── distill-process.md     ← the process (installed by us)
 └── distill/                   ← OUR DIRECTORY. All distill output lives here.
     ├── SPINE.md               ← Tier 1 index (max 80 lines)
-    ├── TIMELINE.md            ← Time Index: landmark/period axis (opt-in, max 60 lines)
+    ├── TIMELINE.md            ← Time Index: landmark/period axis (user-controlled, default on; max 60 lines)
     ├── craft/                 ← Tier 2 craft knowledge
     ├── ops/                   ← Tier 2 operational knowledge
     ├── profile/               ← Tier 2 user model

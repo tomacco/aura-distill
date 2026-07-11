@@ -59,14 +59,35 @@ check "newest first within bucket" test "$(section 'YESTERDAY' | head -1 | grep 
 out2=$(bash "$SH" --home "$FIX" --now-ms "$NOW_MS" --per-bucket 1)
 check "+N more line on overflow" grep -q '+1 more sessions in this bucket' <<<"$out2"
 
-# 6. Malformed + sessionId-less lines skipped: total is 11 sessions
-check "malformed lines skipped, 11 sessions" grep -q 'DISTILL TIME INDEX -- 11 sessions' <<<"$out"
+# 6. Hostile lines survived: broken JSON, valid-JSON non-objects (null/42/"str"/
+#    [array]), sessionId-less, string-timestamp drift -> all skipped, 12 sessions
+check "hostile lines skipped, 12 sessions" grep -q 'DISTILL TIME INDEX -- 12 sessions' <<<"$out"
+check "string-timestamp drift line skipped"  test "$(grep -c 'drift-999' <<<"$out")" = 0
+check "short sessionId displayed, no crash"  grep -q 'short1 · \[tooling\] session with a short id' <<<"$out"
 
 # 7. Missing history.jsonl -> exit 2
 tmp=$(mktemp -d)
 rc=0; bash "$SH" --home "$tmp" --now-ms "$NOW_MS" >/dev/null 2>&1 || rc=$?
 rmdir "$tmp"
 check "missing history exits 2" test "$rc" = 2
+
+# 7b. All-drift file -> loud exit 4, never a silent empty index
+tmp=$(mktemp -d)
+printf 'null\n{"display":"x","timestamp":"not-a-number","project":"/p","sessionId":"s-1"}\n' > "$tmp/history.jsonl"
+rc=0; bash "$SH" --home "$tmp" --now-ms "$NOW_MS" >/dev/null 2>&1 || rc=$?
+check "schema drift exits 4 (loud)" test "$rc" = 4
+if command -v pwsh >/dev/null 2>&1; then
+    rc=0; pwsh -NoProfile -ExecutionPolicy Bypass -File "$PS1" -ClaudeHome "$tmp" -NowMs "$NOW_MS" >/dev/null 2>&1 || rc=$?
+    check "schema drift exits 4 (pwsh)" test "$rc" = 4
+fi
+rm -rf "$tmp"
+
+# 7c. Empty history file -> valid empty index, exit 0
+tmp=$(mktemp -d)
+: > "$tmp/history.jsonl"
+rc=0; bash "$SH" --home "$tmp" --now-ms "$NOW_MS" >/dev/null 2>&1 || rc=$?
+rm -rf "$tmp"
+check "empty history exits 0" test "$rc" = 0
 
 # 8. Byte parity with the PowerShell implementation (skipped if no PS host)
 PS_BIN=""

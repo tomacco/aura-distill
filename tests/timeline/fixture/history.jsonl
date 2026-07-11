@@ -14,3 +14,9 @@
 {"display":"plan the q1 architecture review agenda","pastedContents":{},"timestamp":1763200800000,"project":"/home/sofia/repos/rfcs","sessionId":"eeeebbbb-0000-4000-8000-00000000000b"}
 {not valid json at all
 {"display":"orphan line without a session id","pastedContents":{},"timestamp":1783764000000,"project":"/home/sofia"}
+null
+42
+"just a string"
+[1,2,3]
+{"display":"schema drift: string timestamp must be skipped by BOTH implementations","timestamp":"1783764000000","project":"/home/sofia","sessionId":"drift-9999-0000-4000-8000-00000000000c"}
+{"display":"session with a short id must not crash the display layer","pastedContents":{},"timestamp":1782986400000,"project":"/home/sofia/repos/tooling","sessionId":"short1"}

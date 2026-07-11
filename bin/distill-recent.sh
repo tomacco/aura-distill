@@ -13,7 +13,9 @@
 #   --per-bucket Max sessions listed per bucket (default 8; overflow is counted,
 #                never silently dropped)
 #
-# Exit codes: 0 ok, 2 history.jsonl not found, 3 no usable python.
+# Exit codes: 0 ok, 2 history.jsonl not found, 3 no usable python,
+#             4 history.jsonl present but no line matched the expected schema
+#               (upstream format may have changed -- fall back to transcripts).
 # Windows PowerShell users: use distill-recent.ps1 (same output, native).
 set -euo pipefail
 
@@ -99,20 +101,36 @@ def main():
     now = datetime.fromtimestamp(now_ms / 1000)
 
     sessions = {}
+    lines_seen = 0
     with open(hist, encoding="utf-8", errors="replace") as f:
         for line in f:
+            if not line.strip():
+                continue
+            lines_seen += 1
             try:
                 d = json.loads(line)
             except json.JSONDecodeError:
                 continue
+            # valid JSON that isn't an object (null, 42, "str", [..]) must be
+            # skipped, not crash: this file is owned by Claude Code, not us
+            if not isinstance(d, dict):
+                continue
             sid, ts = d.get("sessionId"), d.get("timestamp")
-            if not sid or not isinstance(ts, (int, float)):
+            if not sid or isinstance(ts, bool) or not isinstance(ts, (int, float)):
                 continue
             t = datetime.fromtimestamp(ts / 1000)
             s = sessions.setdefault(sid, {"start": t, "end": t, "project": d.get("project") or "", "prompts": []})
             s["start"] = min(s["start"], t)
             s["end"] = max(s["end"], t)
             s["prompts"].append(clean(d.get("display") or ""))
+
+    if lines_seen and not sessions:
+        # Loud failure beats silently-wrong: an empty index here means the
+        # upstream schema changed, not that the user has no history.
+        print(f"distill-recent: parsed {lines_seen} lines but recognized 0 sessions -- "
+              "history.jsonl format may have changed (expected objects with "
+              "display/timestamp/project/sessionId). Fall back to raw transcripts.", file=sys.stderr)
+        sys.exit(4)
 
     home_leaf = os.path.basename(os.path.normpath(os.path.expanduser("~")))
     buckets = {}

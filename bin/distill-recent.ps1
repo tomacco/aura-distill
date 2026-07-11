@@ -6,7 +6,9 @@
 # temporal-memory literature -- see research/2026-07-11-time-index/mental-timelines.md.
 #
 # Usage: distill-recent.ps1 [-ClaudeHome DIR] [-NowMs EPOCH_MS] [-PerBucket N]
-# Exit codes: 0 ok, 2 history.jsonl not found.
+# Exit codes: 0 ok, 2 history.jsonl not found,
+#             4 history.jsonl present but no line matched the expected schema
+#               (upstream format may have changed -- fall back to transcripts).
 [CmdletBinding()]
 param(
     [string]$ClaudeHome = $null,
@@ -35,9 +37,9 @@ function Get-Monday([datetime]$d) {
     $d.Date.AddDays(-1 * (([int]$d.DayOfWeek + 6) % 7))
 }
 function Clean-Text([string]$s) {
+    # regex, not a per-char loop: at 100k history lines the loop costs seconds
     if (-not $s) { return '' }
-    $chars = foreach ($ch in $s.ToCharArray()) { if ([int]$ch -lt 32) { ' ' } else { $ch } }
-    (((-join $chars) -split '\s+') | Where-Object { $_ }) -join ' '
+    ([regex]::Replace($s, '[\x00-\x1F]', ' ') -split '\s+' | Where-Object { $_ }) -join ' '
 }
 function Get-Snippet([System.Collections.ArrayList]$prompts, [int]$limit = 100) {
     $pick = ''
@@ -79,11 +81,19 @@ if ($NowMs -eq 0) { $NowMs = [DateTimeOffset]::Now.ToUnixTimeMilliseconds() }
 $now = From-Ms $NowMs
 
 $sessions = @{}
+$linesSeen = 0
 foreach ($line in [System.IO.File]::ReadLines($hist)) {
+    if (-not $line.Trim()) { continue }
+    $linesSeen++
     try { $d = $line | ConvertFrom-Json } catch { continue }
+    # valid JSON that isn't an object (null, 42, "str", [..]) must be skipped,
+    # not crash: this file is owned by Claude Code, not us
+    if ($d -isnot [System.Management.Automation.PSCustomObject]) { continue }
     if (-not $d.PSObject.Properties['sessionId'] -or -not $d.PSObject.Properties['timestamp']) { continue }
     $sid = $d.sessionId
-    if (-not $sid -or $null -eq $d.timestamp) { continue }
+    # timestamp must be numeric (parity with the python twin: strings are drift)
+    $tsOk = $d.timestamp -is [int] -or $d.timestamp -is [long] -or $d.timestamp -is [double] -or $d.timestamp -is [decimal]
+    if (-not $sid -or -not $tsOk) { continue }
     $t = From-Ms ([long]$d.timestamp)
     if (-not $sessions.ContainsKey($sid)) {
         $proj = if ($d.PSObject.Properties['project'] -and $d.project) { $d.project } else { '' }
@@ -94,6 +104,13 @@ foreach ($line in [System.IO.File]::ReadLines($hist)) {
     if ($t -gt $s.end)   { $s.end = $t }
     $disp = if ($d.PSObject.Properties['display'] -and $d.display) { $d.display } else { '' }
     [void]$s.prompts.Add((Clean-Text $disp))
+}
+
+if ($linesSeen -gt 0 -and $sessions.Count -eq 0) {
+    # Loud failure beats silently-wrong: an empty index here means the upstream
+    # schema changed, not that the user has no history.
+    [Console]::Error.WriteLine("distill-recent: parsed $linesSeen lines but recognized 0 sessions -- history.jsonl format may have changed (expected objects with display/timestamp/project/sessionId). Fall back to raw transcripts.")
+    exit 4
 }
 
 $homeLeaf = Split-Path -Leaf ($HOME.TrimEnd('\', '/'))
@@ -122,7 +139,8 @@ foreach ($bk in ($buckets.Keys | Sort-Object)) {
         $leaf = if ($s.project) { Split-Path -Leaf ($s.project.TrimEnd('\', '/')) } else { '' }
         $proj = if (-not $leaf -or $leaf -eq $homeLeaf) { '' } else { ('[{0}] ' -f $leaf) }
         [void]$out.AppendLine('')
-        [void]$out.Append(('  {0} {5} {1,3} msgs {5} {2} {5} {3}{4}' -f (Format-Dt $e[0]), $s.prompts.Count, $e[1].Substring(0, 8), $proj, (Get-Snippet $s.prompts), $SEP))
+        $sid8 = if ($e[1].Length -gt 8) { $e[1].Substring(0, 8) } else { $e[1] }
+        [void]$out.Append(('  {0} {5} {1,3} msgs {5} {2} {5} {3}{4}' -f (Format-Dt $e[0]), $s.prompts.Count, $sid8, $proj, (Get-Snippet $s.prompts), $SEP))
     }
     $extra = $entries.Count - $PerBucket
     if ($extra -gt 0) {

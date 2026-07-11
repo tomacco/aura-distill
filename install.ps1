@@ -240,6 +240,73 @@ if ($TokenSaver -eq 'remove' -or $TokenSaver -eq 'off') {
     Write-Info "Not for you? ${DIM}`$env:DISTILL_TOKEN_SAVER='remove'; re-run the installer${RESET}"
 }
 
+# === TIME INDEX (the "When" axis) ===
+# Full control via env var (installer runs through `irm | iex`, so no CLI flags):
+#   $env:DISTILL_TIME_INDEX = 'off'     -> skip/disable
+#   $env:DISTILL_TIME_INDEX = 'remove'  -> remove scripts + routing block
+# The choice persists in distill/.time-index across updates. Disabling strips the
+# routing block from rules/distill.md: off = zero always-on token cost.
+
+Write-Section 'Time Index'
+
+$BinDir    = Join-Path $DistillDir 'bin'
+$TiMarker  = Join-Path $DistillDir '.time-index'
+$TimeIndex = if ($env:DISTILL_TIME_INDEX) { $env:DISTILL_TIME_INDEX.ToLower() } else { 'auto' }
+if ($TimeIndex -eq 'auto' -and (Test-Path $TiMarker) -and ((Get-Content $TiMarker -Raw).Trim() -eq 'disabled')) {
+    $TimeIndex = 'off'
+}
+
+function Install-TimeIndexScript {
+    param([string]$name)
+    $target = Join-Path $BinDir $name
+    # Download to temp and validate before touching the target (a raw-GitHub 404
+    # exits 0 with body "404: Not Found").
+    $tmp = [System.IO.Path]::GetTempFileName()
+    try {
+        Get-File "$Repo/bin/$name" $tmp
+        $body = Get-Content $tmp -Raw
+        if ($body -match 'aura-distill Time Index') {
+            Move-Item -Force $tmp $target
+            Write-Done "bin/$name ${DIM}(recency view)${RESET}"
+        } else {
+            Remove-Item $tmp -Force -ErrorAction SilentlyContinue
+            Write-Warn "bin/$name download invalid -- skipped (re-run the installer to retry)"
+        }
+    } catch {
+        Remove-Item $tmp -Force -ErrorAction SilentlyContinue
+        Write-Warn "bin/$name download failed -- skipped (re-run the installer to retry)"
+    }
+}
+
+function Remove-TimeIndexRules {
+    # Feature off = zero always-on token cost: remove the routing block entirely.
+    if ((Test-Path $rulesTarget) -and (Select-String -Path $rulesTarget -Pattern 'TIME-INDEX:BEGIN' -Quiet)) {
+        $content = Get-Content $rulesTarget -Raw
+        $stripped = $content -replace '(?s)<!-- TIME-INDEX:BEGIN.*?TIME-INDEX:END -->\r?\n?', ''
+        [System.IO.File]::WriteAllText($rulesTarget, $stripped, (New-Object System.Text.UTF8Encoding($false)))
+        Write-Done "rules/distill.md ${DIM}(Time Index routing removed)${RESET}"
+    }
+}
+
+if ($TimeIndex -eq 'remove' -or $TimeIndex -eq 'off') {
+    # $DistillDir/bin is distill-owned (isolation rule): safe to delete outright.
+    foreach ($f in @('distill-recent.sh', 'distill-recent.ps1')) {
+        $t = Join-Path $BinDir $f
+        if (Test-Path $t) { Remove-Item $t -Force; Write-Done "Removed bin/$f" }
+    }
+    Remove-TimeIndexRules
+    Set-Content -Path $TiMarker -Value 'disabled' -Encoding utf8 -NoNewline
+    # TIMELINE.md is user knowledge -- never deleted here, same as the rest of distill/.
+    Write-Skip "Time Index ${DIM}(off -- enable anytime: `$env:DISTILL_TIME_INDEX='on'; re-run)${RESET}"
+} else {
+    if (-not (Test-Path $BinDir)) { New-Item -ItemType Directory -Force -Path $BinDir | Out-Null }
+    Install-TimeIndexScript 'distill-recent.sh'
+    Install-TimeIndexScript 'distill-recent.ps1'
+    Set-Content -Path $TiMarker -Value 'enabled' -Encoding utf8 -NoNewline
+    Write-Info 'Time-based retrieval -- "a few weeks ago", "when we did the launch" -- from local files only.'
+    Write-Info "Not for you? ${DIM}`$env:DISTILL_TIME_INDEX='remove'; re-run the installer${RESET}"
+}
+
 # === SESSION INTEGRATION ===
 
 Write-Section 'Session integration'
@@ -334,6 +401,17 @@ if ($existingVersion) {
         Write-Host "  ${DIM}Opt out anytime: `$env:DISTILL_TOKEN_SAVER='remove'; re-run the installer${RESET}"
         Write-Host ''
         Set-Content -Path $TsAnnounced -Value '1' -Encoding utf8 -NoNewline
+    }
+    $TiAnnounced = Join-Path $DistillDir '.time-index-announced'
+    if ((Test-Path $TiMarker) -and ((Get-Content $TiMarker -Raw).Trim() -eq 'enabled') -and -not (Test-Path $TiAnnounced)) {
+        Write-Host "  ${BOLD}${PURPLE}NEW $EmDash Time Index${RESET}"
+        Write-Host "  Ask for past work the way you actually remember it -- ${BOLD}`"a few weeks ago`"${RESET},"
+        Write-Host "  ${BOLD}`"when we did the launch`"${RESET} -- and it resolves in seconds instead of a transcript"
+        Write-Host "  grep. Bucket boundaries follow the temporal-memory literature. Local files"
+        Write-Host "  only, fully yours, nothing collected."
+        Write-Host "  ${DIM}Opt out anytime: `$env:DISTILL_TIME_INDEX='remove'; re-run the installer${RESET}"
+        Write-Host ''
+        Set-Content -Path $TiAnnounced -Value '1' -Encoding utf8 -NoNewline
     }
 }
 Write-Host "  ${DIM}Uninstall (keeps your learnings):${RESET}"

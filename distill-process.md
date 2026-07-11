@@ -70,6 +70,7 @@ Distill operates in its OWN directory: `{DISTILL_DIR}/`. It NEVER writes to user
 │   └── distill-process.md     ← the process (installed by us)
 └── distill/                   ← OUR DIRECTORY. All distill output lives here.
     ├── SPINE.md               ← Tier 1 index (max 80 lines)
+    ├── TIMELINE.md            ← Time Index: landmark/period axis (opt-in, max 60 lines)
     ├── craft/                 ← Tier 2 craft knowledge
     ├── ops/                   ← Tier 2 operational knowledge
     ├── profile/               ← Tier 2 user model
@@ -519,6 +520,32 @@ A bridge candidate means: "This knowledge lives in distill (source of truth), bu
 - If the user has previously approved similar bridges, note the pattern so future suggestions are faster.
 - If the same bridge is suggested repeatedly (user didn't act on it) and frustration recurs, ESCALATE: tell the user directly that this specific knowledge gap is causing repeated friction because the bridge wasn't added.
 
+### Step 3d: Timeline maintenance (Time Index)
+
+**Gate:** only if `{DISTILL_DIR}/.time-index` exists and contains `enabled`. Otherwise skip this step entirely.
+
+`{DISTILL_DIR}/TIMELINE.md` is the "When" axis: it answers queries humans phrase by time ("a few weeks ago", "when we did the talk") — which the SPINE's domain axis cannot. It complements `bin/distill-recent` (raw recency view over `history.jsonl`, which Claude Code rotates after ~5–6 weeks): the raw view covers the recent tail with day/week precision; TIMELINE.md carries the months-and-beyond range, where human memory keeps only landmarks and periods.
+
+**During each distillation**, append events from this session worth anchoring to. An event qualifies if a person would later use it to date OTHER memories: launches, deliveries, incidents, bookings, major decisions, a project starting or ending. Routine sessions do NOT get entries — the raw view already covers them.
+
+If the file is missing, create it:
+
+```
+# Timeline — the "When" axis
+<!-- Managed by /distill (Step 3d). Newest first. Max 60 lines. -->
+
+## Events (recent, day-precision)
+
+## Periods (consolidated, month/era-precision)
+```
+
+Entry format — date, the user's OWN name for the event in quotes (landmark names are retrieval keys; use their words, not yours), one-line what, pointer:
+
+```
+- 2026-07-08 "the payments launch" — payments-api v2 shipped to production → projects/payments-api.md
+- 2026-06-17 "the checkout incident" — 40-min checkout outage, postmortem done → projects/checkout.md
+```
+
 ## Step 4: Verify encoding
 
 For each learning saved, confirm:
@@ -672,6 +699,17 @@ catastrophic knowledge is worth more than any token math suggests.
 2. Compress verbose explanations into tighter formulations
 3. Move superseded content to `archive/` (Tier 3)
 4. Update spine pointer if file was split
+
+### Timeline consolidation (if Time Index enabled and TIMELINE.md > 45 lines)
+
+Mirror human memory consolidation: event-level detail fades, landmarks persist.
+
+1. Events older than ~6 weeks: merge into a month line under `## Periods`, PRESERVING every
+   landmark name verbatim — names are the retrieval keys, prose detail is what gets compressed:
+   `- 2026-06 — "the checkout incident", "the payments launch"; partitioning benchmarks → projects/`
+2. Periods older than ~1 year: compress further into quarters or named eras ("the migration era").
+3. Never drop a landmark name during consolidation. If the file still exceeds 60 lines with all
+   names kept, that's a signal the event bar is too low — tighten what qualifies, don't erase anchors.
 
 ### Always-on preference review (during every distillation)
 

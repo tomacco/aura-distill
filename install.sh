@@ -105,6 +105,7 @@ show_section() {
 # Parse arguments
 PROFILE_NAME=""
 TOKEN_SAVER="auto"   # auto = keep prior choice (default on for new installs); on/off/remove = explicit
+TIME_INDEX="auto"    # same contract as TOKEN_SAVER
 while [[ $# -gt 0 ]]; do
     case $1 in
         --profile) PROFILE_NAME="$2"; shift 2 ;;
@@ -112,6 +113,9 @@ while [[ $# -gt 0 ]]; do
         --token-saver) TOKEN_SAVER="on"; shift ;;
         --no-token-saver) TOKEN_SAVER="off"; shift ;;
         --remove-token-saver) TOKEN_SAVER="remove"; shift ;;
+        --time-index) TIME_INDEX="on"; shift ;;
+        --no-time-index) TIME_INDEX="off"; shift ;;
+        --remove-time-index) TIME_INDEX="remove"; shift ;;
         *) shift ;;
     esac
 done
@@ -337,6 +341,70 @@ case "$TOKEN_SAVER" in
         ;;
 esac
 
+# ═══ TIME INDEX (the "When" axis) ═══
+# User has full control: --time-index / --no-time-index / --remove-time-index.
+# The choice persists in $DISTILL_DIR/.time-index across updates.
+# Two local scripts + a TIMELINE.md maintained by /distill + a routing block in
+# rules/distill.md. Disabling strips the rules block: off = zero always-on cost.
+
+show_section "Time Index"
+
+BIN_DIR="$DISTILL_DIR/bin"
+TI_MARKER="$DISTILL_DIR/.time-index"
+
+# Resolve "auto": respect a previously persisted choice; default ON for fresh state
+if [ "$TIME_INDEX" = "auto" ] && [ "$(cat "$TI_MARKER" 2>/dev/null)" = "disabled" ]; then
+    TIME_INDEX="off"
+fi
+
+install_time_index_script() {
+    local name=$1
+    local target="$BIN_DIR/$name"
+    # Download to temp and validate before touching the target (a raw-GitHub 404
+    # exits 0 with body "404: Not Found").
+    local tmp
+    tmp=$(mktemp)
+    if curl -fsL "$REPO/bin/$name" > "$tmp" 2>/dev/null \
+       && grep -q "aura-distill Time Index" "$tmp"; then
+        mv "$tmp" "$target"
+        chmod +x "$target" 2>/dev/null || true
+        done_msg "bin/$name ${DIM}(recency view)${RESET}"
+    else
+        rm -f "$tmp"
+        warn_msg "bin/$name download failed — skipped (re-run the installer to retry)"
+    fi
+}
+
+strip_time_index_rules() {
+    # Feature off = zero always-on token cost: remove the routing block entirely.
+    if [ -f "$RULES_DIR/distill.md" ] && grep -q "TIME-INDEX:BEGIN" "$RULES_DIR/distill.md"; then
+        local tmp
+        tmp=$(mktemp)
+        sed '/<!-- TIME-INDEX:BEGIN/,/<!-- TIME-INDEX:END -->/d' "$RULES_DIR/distill.md" > "$tmp"
+        mv "$tmp" "$RULES_DIR/distill.md"
+        done_msg "rules/distill.md ${DIM}(Time Index routing removed)${RESET}"
+    fi
+}
+
+case "$TIME_INDEX" in
+    remove|off)
+        # $DISTILL_DIR/bin is distill-owned (isolation rule): safe to delete outright.
+        rm -f "$BIN_DIR/distill-recent.sh" "$BIN_DIR/distill-recent.ps1"
+        strip_time_index_rules
+        echo "disabled" > "$TI_MARKER"
+        # TIMELINE.md is user knowledge — never deleted here, same as the rest of distill/.
+        skip_msg "Time Index ${DIM}(off — enable anytime: re-run with --time-index)${RESET}"
+        ;;
+    *)
+        mkdir -p "$BIN_DIR"
+        install_time_index_script "distill-recent.sh"
+        install_time_index_script "distill-recent.ps1"
+        echo "enabled" > "$TI_MARKER"
+        info_msg "Time-based retrieval — \"a few weeks ago\", \"when we did the launch\" — from local files only."
+        info_msg "Not for you? ${DIM}re-run with --remove-time-index${RESET}"
+        ;;
+esac
+
 # ═══ CLAUDE.md INTEGRATION ═══
 
 show_section "Session integration"
@@ -424,6 +492,16 @@ if [ -n "$EXISTING_VERSION" ]; then
         printf "  ${DIM}Opt out anytime: re-run the installer with --remove-token-saver${RESET}\n"
         echo ""
         touch "$DISTILL_DIR/.token-saver-announced"
+    fi
+    if [ "$(cat "$TI_MARKER" 2>/dev/null)" = "enabled" ] && [ ! -f "$DISTILL_DIR/.time-index-announced" ]; then
+        printf "  ${BOLD}${PURPLE}NEW — Time Index${RESET}\n"
+        printf "  Ask for past work the way you actually remember it — ${BOLD}\"a few weeks ago\"${RESET},\n"
+        printf "  ${BOLD}\"when we did the launch\"${RESET} — and it resolves in seconds instead of a transcript\n"
+        printf "  grep. Bucket boundaries follow the temporal-memory literature. Local files\n"
+        printf "  only, fully yours, nothing collected.\n"
+        printf "  ${DIM}Opt out anytime: re-run the installer with --remove-time-index${RESET}\n"
+        echo ""
+        touch "$DISTILL_DIR/.time-index-announced"
     fi
 fi
 printf "  ${DIM}Uninstall (keeps your learnings):${RESET}\n"

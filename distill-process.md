@@ -526,7 +526,7 @@ A bridge candidate means: "This knowledge lives in distill (source of truth), bu
 
 `{DISTILL_DIR}/TIMELINE.md` is the "When" axis: it answers queries humans phrase by time ("a few weeks ago", "when we did the talk") — which the SPINE's domain axis cannot. It complements `bin/distill-recent` (raw recency view over `history.jsonl`, which Claude Code rotates after ~5–6 weeks): the raw view covers the recent tail with day/week precision; TIMELINE.md carries the months-and-beyond range, where human memory keeps only landmarks and periods.
 
-**During each distillation**, append events from this session worth anchoring to. An event qualifies if a person would later use it to date OTHER memories: launches, deliveries, incidents, bookings, major decisions, a project starting or ending. Routine sessions do NOT get entries — the raw view already covers them.
+**During each distillation**, append events from this session worth anchoring to. Your source is harvest category **F) Timeline landmarks** in the signal summary — you cannot see the conversation, so you MUST take event names from the harvest verbatim, never invent or paraphrase them (a name the user never says is a retrieval key that never matches). If the harvest has no category F, skip this step and note the gap in your report (the dispatcher may be outdated). An event qualifies if a person would later use it to date OTHER memories: launches, deliveries, incidents, bookings, major decisions, a project starting or ending. Routine sessions do NOT get entries — the raw view already covers them.
 
 If the file is missing, create it:
 

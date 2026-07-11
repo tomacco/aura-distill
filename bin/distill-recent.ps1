@@ -31,7 +31,10 @@ $MONTH_FULL = @('JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY',
 
 function Format-Dt([datetime]$d) {
     $wd = $WD[([int]$d.DayOfWeek + 6) % 7]
-    '{0} {1:00} {2} {3:HH:mm}' -f $wd, $d.Day, $MON[$d.Month - 1], $d
+    # invariant culture: ':' in HH:mm is a culture-sensitive time separator and
+    # would render as '.' on e.g. Finnish hosts, breaking parity with the sh twin
+    $hm = $d.ToString('HH:mm', [System.Globalization.CultureInfo]::InvariantCulture)
+    '{0} {1:00} {2} {3}' -f $wd, $d.Day, $MON[$d.Month - 1], $hm
 }
 function Get-Monday([datetime]$d) {
     $d.Date.AddDays(-1 * (([int]$d.DayOfWeek + 6) % 7))

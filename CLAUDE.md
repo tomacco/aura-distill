@@ -9,6 +9,7 @@ A first-principles memory system for Claude Code. Users install it via `install.
 - `distill.md` — Dispatcher (runs in main context, harvests signals, spawns sub-agent)
 - `distill-process.md` — Sub-agent instructions (the full distillation pipeline)
 - `distill-monitor.md` — Session-start monitor (minimal, loaded via `rules/distill.md`)
+- `bin/distill-recent.sh` / `.ps1` — Time Index recency view over `history.jsonl` (output-identical twins; parity enforced by `tests/timeline/run-parity-test.sh`)
 - `knowledge-architecture.md` — Tier system design doc
 - `install.sh` / `install.ps1` — User-facing installers
 - `tests/` — A/B test scenarios, cognitive bias tests, persona-based methodology tests
@@ -55,6 +56,7 @@ When developing or testing:
 - Test personas: Sofia (senior backend engineer) and Marcus (product manager)
 - Run persona tests: `./tests/scenarios/methodology/run-persona-test.sh`
 - Run integration tests: `./test-sandbox.sh`
+- `tests/timeline/` — deterministic Time Index tests (fixture history, frozen NOW, bash↔PowerShell parity): `./tests/timeline/run-parity-test.sh`
 
 ## PR reviews
 

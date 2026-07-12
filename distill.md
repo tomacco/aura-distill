@@ -85,6 +85,12 @@ Scan the entire conversation above and collect:
 - What domain(s) did it cover?
 - What was the outcome?
 
+**F) Timeline landmarks** (feeds Step 3d when the Time Index is enabled; harvest regardless — costs a few lines)
+- Events from this session a person would later use to date OTHER memories: launches, deliveries, incidents, bookings, major decisions, a project starting or ending
+- For each: the date, and the user's OWN words for the event, VERBATIM in quotes ("the masterclass", "the payments launch") — landmark names are retrieval keys; a paraphrase the user never says is a key that never matches
+- If the user never named the event, say so explicitly ("unnamed — describe by content") rather than inventing a name
+- Routine work is NOT a landmark; when in doubt, leave it out
+
 Write all of this down as a structured summary. Be thorough — anything you don't include here is LOST to the sub-agent.
 
 ### Step 2: Spawn the distillation agent
@@ -196,8 +202,21 @@ Update silently, then briefly confirm:
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill.md -o ~/.claude/commands/distill.md
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill-process.md -o {DISTILL_DIR}/distill-process.md
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill-monitor.md -o {DISTILL_DIR}/distill-monitor.md
+# Time Index scripts — only when the feature is enabled (they parse an upstream
+# format that can drift, so stale copies are worse than most stale files)
+# Download-to-temp + validate before touching the live scripts: a raw-GitHub
+# 404 exits 0 with body "404: Not Found" and would clobber a working copy.
+if [ "$(tr -d '\357\273\277' < {DISTILL_DIR}/.time-index 2>/dev/null | tr -d '[:space:]')" = "enabled" ]; then
+  for f in distill-recent.sh distill-recent.ps1; do
+    tmp=$(mktemp) && curl -sL "https://raw.githubusercontent.com/tomacco/aura-distill/main/bin/$f" -o "$tmp" \
+      && grep -q "aura-distill Time Index" "$tmp" && mv "$tmp" "{DISTILL_DIR}/bin/$f" || rm -f "$tmp"
+  done
+  chmod +x {DISTILL_DIR}/bin/distill-recent.sh
+fi
 echo "NEW_VERSION" > {DISTILL_DIR}/.version
 ```
+
+Note: this hot-update path does NOT refresh `rules/distill.md` (it may hold user preferences that need the installer's preserve-merge). If the changelog mentions rules changes, suggest a full installer re-run instead.
 
 After updating, inform the user what changed (fetch the commit log or just state the new version).
 

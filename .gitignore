@@ -16,3 +16,6 @@ dist/
 # `git clone`/checkout on NTFS. See issue #24.
 tests/results/
 tests/**/results/
+
+# Claude Code agent worktrees
+.claude/worktrees/

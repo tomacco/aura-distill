@@ -67,6 +67,20 @@ It is valid to conclude: "we don't know how to solve this yet." Incomplete under
 
 **The SPINE is your memory.** Treat it as authoritative. If you read a file and it says "user prefers X", do X without asking.
 
+<!-- TIME-INDEX:BEGIN — opt-in feature; the installer strips this block when disabled -->
+## Time Index (the "When" axis)
+
+When the user references past work BY TIME, resolve it in this order (pure recency with no named event — "yesterday", "last week" — skips straight to step 2):
+1. **Landmark references** — "when/before/after <event>", "the X we built/did/shipped": read `{DISTILL_DIR}/TIMELINE.md` if it exists. Named events and periods beat date math and outrank all numeric buckets.
+2. **Recency view:** run `{DISTILL_DIR}/bin/distill-recent.ps1` (Windows) or `distill-recent.sh` (elsewhere) — recent sessions bucketed on a human timeline, with session ids, transcript paths, where each session left off, and how many sessions are undistilled.
+3. **Raw transcripts** under the Claude config's `projects/` dir — ONLY after steps 1 and 2 miss (miss = no plausible topic match after one widening pass). NEVER start here: that's a 70-second grep for a 2-second lookup.
+
+Interpreting fuzzy time phrases (people compress the past; when two rules apply, take the WIDEST range, biased farther back):
+- "a couple of weeks ago" ≈ 1–3 wk · "a few/some weeks ago" ≈ 2–8 wk · "a month ago" ≈ 3–6 wk · "a couple of months ago" ≈ 6–14 wk
+- Numeric "N weeks/months ago" — also check ~40% farther back (telescoping: people date events as more recent than they are)
+- Weekday references ("last Tuesday") are trustworthy only ~2 weeks back; beyond that treat the weekday as a weak hint
+<!-- TIME-INDEX:END -->
+
 ## Always-On User Preferences
 
 <!-- Synced from {DISTILL_DIR}/profile/ by /distill. Max 15 lines. -->

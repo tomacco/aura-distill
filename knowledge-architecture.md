@@ -317,6 +317,7 @@ Never restructure without permission. Always show the proposed layout first.
 ```
 memory/
 ├── MEMORY.md                        ← THE SPINE (Tier 1, auto-loaded)
+├── TIMELINE.md                      ← Time Index landmark axis (when enabled)
 ├── craft/
 │   ├── review-principles.md         ← Tier 2
 │   ├── testing-philosophy.md        ← Tier 2

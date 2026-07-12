@@ -117,10 +117,12 @@ function Get-LeftOff([string]$home_, [string]$sid, [string]$project) {
         if ($c -is [string]) {
             $t = Clean-Text $c
         } elseif ($c -is [System.Array]) {
+            # text must BE a string: a non-string "text" (e.g. 42) is corrupt
+            # data, skipped identically by both twins (parity)
             $parts = foreach ($x in $c) {
                 if ($x -is [System.Management.Automation.PSCustomObject] -and
                     $x.PSObject.Properties['type'] -and $x.type -eq 'text' -and
-                    $x.PSObject.Properties['text'] -and $x.text) { [string]$x.text }
+                    $x.PSObject.Properties['text'] -and $x.text -is [string]) { $x.text }
             }
             $t = Clean-Text (@($parts) -join ' ')
         } else { continue }
@@ -168,7 +170,8 @@ foreach ($line in [System.IO.File]::ReadLines($hist)) {
     # timestamp must be numeric (parity with the python twin: strings are drift)
     $tsOk = $d.timestamp -is [int] -or $d.timestamp -is [long] -or $d.timestamp -is [double] -or $d.timestamp -is [decimal]
     if (-not $sid -or -not $tsOk) { continue }
-    $t = From-Ms ([long]$d.timestamp)
+    # numeric but out of range: corrupt line, skip not crash
+    try { $t = From-Ms ([long]$d.timestamp) } catch { continue }
     if (-not $sessions.ContainsKey($sid)) {
         $proj = if ($d.PSObject.Properties['project'] -and $d.project) { $d.project } else { '' }
         $sessions[$sid] = @{ start = $t; end = $t; project = $proj; prompts = [System.Collections.ArrayList]@() }

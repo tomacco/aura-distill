@@ -204,9 +204,14 @@ curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill-pro
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill-monitor.md -o {DISTILL_DIR}/distill-monitor.md
 # Time Index scripts — only when the feature is enabled (they parse an upstream
 # format that can drift, so stale copies are worse than most stale files)
+# Download-to-temp + validate before touching the live scripts: a raw-GitHub
+# 404 exits 0 with body "404: Not Found" and would clobber a working copy.
 if [ "$(tr -d '\357\273\277' < {DISTILL_DIR}/.time-index 2>/dev/null | tr -d '[:space:]')" = "enabled" ]; then
-  curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/bin/distill-recent.sh  -o {DISTILL_DIR}/bin/distill-recent.sh && chmod +x {DISTILL_DIR}/bin/distill-recent.sh
-  curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/bin/distill-recent.ps1 -o {DISTILL_DIR}/bin/distill-recent.ps1
+  for f in distill-recent.sh distill-recent.ps1; do
+    tmp=$(mktemp) && curl -sL "https://raw.githubusercontent.com/tomacco/aura-distill/main/bin/$f" -o "$tmp" \
+      && grep -q "aura-distill Time Index" "$tmp" && mv "$tmp" "{DISTILL_DIR}/bin/$f" || rm -f "$tmp"
+  done
+  chmod +x {DISTILL_DIR}/bin/distill-recent.sh
 fi
 echo "NEW_VERSION" > {DISTILL_DIR}/.version
 ```

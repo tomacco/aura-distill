@@ -123,8 +123,11 @@ def left_off(home, sid, project):
         if isinstance(c, str):
             t = clean(c)
         elif isinstance(c, list):
-            t = clean(" ".join(x.get("text") or "" for x in c
-                               if isinstance(x, dict) and x.get("type") == "text"))
+            # text must BE a string: a non-string "text" (e.g. 42) is corrupt
+            # data, skipped identically by both twins (parity)
+            t = clean(" ".join(x["text"] for x in c
+                               if isinstance(x, dict) and x.get("type") == "text"
+                               and isinstance(x.get("text"), str)))
         else:
             continue
         if t:  # tool-use-only records fall through to the previous text
@@ -179,7 +182,10 @@ def main():
             sid, ts = d.get("sessionId"), d.get("timestamp")
             if not sid or isinstance(ts, bool) or not isinstance(ts, (int, float)):
                 continue
-            t = datetime.fromtimestamp(ts / 1000)
+            try:
+                t = datetime.fromtimestamp(ts / 1000)
+            except (OverflowError, OSError, ValueError):
+                continue  # numeric but out of range: corrupt line, skip not crash
             s = sessions.setdefault(sid, {"start": t, "end": t, "project": d.get("project") or "", "prompts": []})
             s["start"] = min(s["start"], t)
             s["end"] = max(s["end"], t)

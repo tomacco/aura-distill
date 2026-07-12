@@ -55,7 +55,7 @@ check "snippet skips trivial openers" grep -q 'aaaa1111 · \[payments-api\] refa
 # 3b. "left off:" -- last assistant text from the transcript tail (status axis)
 check "left off joins multi-block text"        grep -q 'left off: Migration plan drafted; open decisions: cutover window and dual-write duration.' <<<"$out"
 check "left off handles legacy string content" grep -q 'left off: Root cause: expired registry token; rotation runbook updated.' <<<"$out"
-check "left off skips tool-use-only + garbage tail" grep -q 'left off: Exponential backoff shipped' <<<"$out"
+check "left off skips tool-use-only, non-string text, garbage tail" grep -q 'left off: Exponential backoff shipped' <<<"$out"
 lo_line=$(grep 'left off: Exponential backoff shipped' <<<"$out")
 check "left off truncates at 150 chars + ellipsis" test "${#lo_line}" = 169
 case "$lo_line" in *...) lo_ell=0 ;; *) lo_ell=1 ;; esac
@@ -76,6 +76,7 @@ check "+N more line on overflow" grep -q '+1 more sessions in this bucket' <<<"$
 #    [array]), sessionId-less, string-timestamp drift -> all skipped, 12 sessions
 check "hostile lines skipped, 12 sessions" grep -q 'DISTILL TIME INDEX -- 12 sessions' <<<"$out"
 check "string-timestamp drift line skipped"  test "$(grep -c 'drift-999' <<<"$out")" = 0
+check "out-of-range numeric timestamp skipped, not crashed" test "$(grep -c 'toolarge' <<<"$out")" = 0
 check "short sessionId displayed, no crash"  grep -q 'short1 · \[tooling\] session with a short id' <<<"$out"
 
 # 7. Missing history.jsonl -> exit 2

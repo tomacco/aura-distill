@@ -72,7 +72,7 @@ It is valid to conclude: "we don't know how to solve this yet." Incomplete under
 
 When the user references past work BY TIME, resolve it in this order (pure recency with no named event — "yesterday", "last week" — skips straight to step 2):
 1. **Landmark references** — "when/before/after <event>", "the X we built/did/shipped": read `{DISTILL_DIR}/TIMELINE.md` if it exists. Named events and periods beat date math and outrank all numeric buckets.
-2. **Recency view:** run `{DISTILL_DIR}/bin/distill-recent.ps1` (Windows) or `distill-recent.sh` (elsewhere) — recent sessions bucketed on a human timeline, with session ids and transcript paths.
+2. **Recency view:** run `{DISTILL_DIR}/bin/distill-recent.ps1` (Windows) or `distill-recent.sh` (elsewhere) — recent sessions bucketed on a human timeline, with session ids, transcript paths, where each session left off, and how many sessions are undistilled.
 3. **Raw transcripts** under the Claude config's `projects/` dir — ONLY after steps 1 and 2 miss (miss = no plausible topic match after one widening pass). NEVER start here: that's a 70-second grep for a 2-second lookup.
 
 Interpreting fuzzy time phrases (people compress the past; when two rules apply, take the WIDEST range, biased farther back):

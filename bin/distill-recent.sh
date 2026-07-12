@@ -7,6 +7,11 @@
 # compression, 5+2 weekday cycle, prototype heaping at 7/14/30/60/90 days) --
 # see research/2026-07-11-time-index/mental-timelines.md.
 #
+# Each listed session also gets a "left off:" line (last assistant text from
+# its transcript tail -- the status axis of a continue-where-we-left-off
+# query), and the header gets a "LAST /distill:" staleness line (SPINE
+# last_updated vs sessions since). Both derived, best-effort, read-only.
+#
 # Usage: distill-recent.sh [--home DIR] [--now-ms EPOCH_MS] [--per-bucket N]
 #   --home       Claude config dir (default: $CLAUDE_CONFIG_DIR or ~/.claude)
 #   --now-ms     Freeze "now" for tests (also env DISTILL_NOW_MS)
@@ -32,8 +37,12 @@ if [ -z "$PY" ]; then
 fi
 
 exec "$PY" - "$@" <<'PYEOF'
-import json, os, sys, argparse, time
+import json, os, re, sys, argparse, time
 from datetime import datetime, timedelta
+
+# Tail window for "left off:" extraction. Big enough to skip past trailing
+# tool-result records (100KB+ observed) and still find the last assistant text.
+TAIL_BYTES = 262144
 
 # Locale-independent names: output must be byte-identical to distill-recent.ps1
 WD = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -79,6 +88,58 @@ def bucket_key(end, now):
     # beyond ~6 months only period-level precision survives: calendar months
     rank = 8 + (now.year * 12 + now.month) - (end.year * 12 + end.month)
     return (rank, f"{MONTH_FULL[end.month - 1]} {end.year}")
+
+def left_off(home, sid, project):
+    """Last assistant text of the session transcript -- how the session ENDED
+    (the status half of a "continue where we left off" query; the snippet only
+    shows how it STARTED). Same transcript-dir munging as Claude Code:
+    every non-alphanumeric cwd char becomes '-'."""
+    if not project:
+        return ""
+    path = os.path.join(home, "projects", re.sub(r"[^A-Za-z0-9]", "-", project), sid + ".jsonl")
+    try:
+        size = os.path.getsize(path)
+        with open(path, "rb") as f:
+            if size > TAIL_BYTES:
+                f.seek(size - TAIL_BYTES)
+            data = f.read()
+    except OSError:
+        return ""  # transcript rotated/cleaned up -- the field is best-effort
+    lines = data.decode("utf-8", errors="replace").split("\n")
+    if size > TAIL_BYTES:
+        lines = lines[1:]  # first line of a mid-file window is cut mid-record
+    for line in reversed(lines):
+        # cheap pre-filter before JSON-parsing potentially huge tool-result lines
+        if '"type":"assistant"' not in line:
+            continue
+        try:
+            d = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(d, dict) or d.get("type") != "assistant":
+            continue
+        msg = d.get("message")
+        c = msg.get("content") if isinstance(msg, dict) else None
+        if isinstance(c, str):
+            t = clean(c)
+        elif isinstance(c, list):
+            t = clean(" ".join(x.get("text") or "" for x in c
+                               if isinstance(x, dict) and x.get("type") == "text"))
+        else:
+            continue
+        if t:  # tool-use-only records fall through to the previous text
+            return t[:150] + "..." if len(t) > 150 else t
+    return ""
+
+def last_distill_date(home):
+    """last_updated stamp from the SPINE -- /distill rewrites it on every run,
+    so it doubles as a capture-lag marker for the staleness header."""
+    try:
+        with open(os.path.join(home, "distill", "SPINE.md"), encoding="utf-8", errors="replace") as f:
+            m = re.search(r"last_updated:\s*(\d{4}-\d{2}-\d{2})", f.read())
+    except OSError:
+        return None
+    return m.group(1) if m else None
 
 def main():
     try:
@@ -139,6 +200,13 @@ def main():
 
     print(f"DISTILL TIME INDEX -- {len(sessions)} sessions (newest first)")
     print(f"NOW: {fmt_dt(now)}")
+    ld = last_distill_date(home)
+    if ld:
+        # strictly-after: same-day-as-distill sessions are ambiguous, undercount
+        # rather than cry wolf
+        d0 = datetime.strptime(ld, "%Y-%m-%d").date()
+        n = sum(1 for s in sessions.values() if s["end"].date() > d0)
+        print(f"LAST /distill: {ld} -- {n} undistilled {'session' if n == 1 else 'sessions'} since")
     for key in sorted(buckets):
         entries = sorted(buckets[key], key=lambda e: (e[0], e[1]), reverse=True)
         print(f"\n== {key[1]} ==")
@@ -146,6 +214,9 @@ def main():
             leaf = os.path.basename(os.path.normpath(s["project"])) if s["project"] else ""
             proj = "" if (not leaf or leaf == home_leaf) else f"[{leaf}] "
             print(f"  {fmt_dt(end)} · {len(s['prompts']):>3} msgs · {sid[:8]} · {proj}{snippet(s['prompts'])}")
+            lo = left_off(home, sid, s["project"])
+            if lo:
+                print(f"      left off: {lo}")
         extra = len(entries) - args.per_bucket
         if extra > 0:
             print(f"  ... +{extra} more sessions in this bucket")

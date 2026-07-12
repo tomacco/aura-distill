@@ -52,6 +52,19 @@ check "old session under calendar month"       grep -q 'q1 architecture review' 
 # 3. Snippet picks first substantive prompt (skips "yes", "ok go")
 check "snippet skips trivial openers" grep -q 'aaaa1111 · \[payments-api\] refactor the payments-api' <<<"$out"
 
+# 3b. "left off:" -- last assistant text from the transcript tail (status axis)
+check "left off joins multi-block text"        grep -q 'left off: Migration plan drafted; open decisions: cutover window and dual-write duration.' <<<"$out"
+check "left off handles legacy string content" grep -q 'left off: Root cause: expired registry token; rotation runbook updated.' <<<"$out"
+check "left off skips tool-use-only + garbage tail" grep -q 'left off: Exponential backoff shipped' <<<"$out"
+lo_line=$(grep 'left off: Exponential backoff shipped' <<<"$out")
+check "left off truncates at 150 chars + ellipsis" test "${#lo_line}" = 169
+case "$lo_line" in *...) lo_ell=0 ;; *) lo_ell=1 ;; esac
+check "truncated left off ends with ..."       test "$lo_ell" = 0
+check "no transcript -> no left off line"      test "$(section 'EARLIER THIS WEEK' | grep -c 'left off:')" = 0
+
+# 3c. Staleness header: sessions ending strictly after SPINE last_updated
+check "staleness header counts undistilled sessions" grep -q 'LAST /distill: 2026-07-04 -- 4 undistilled sessions since' <<<"$out"
+
 # 4. Newest-first inside a bucket (span session ended 11:00Z > 10:00Z)
 check "newest first within bucket" test "$(section 'YESTERDAY' | head -1 | grep -c 'audit-log')" = 1
 
@@ -82,12 +95,29 @@ if command -v pwsh >/dev/null 2>&1; then
 fi
 rm -rf "$tmp"
 
-# 7c. Empty history file -> valid empty index, exit 0
+# 7c. Empty history file -> valid empty index, exit 0; no SPINE -> no staleness line
 tmp=$(mktemp -d)
 : > "$tmp/history.jsonl"
-rc=0; bash "$SH" --home "$tmp" --now-ms "$NOW_MS" >/dev/null 2>&1 || rc=$?
+rc=0; out3=$(bash "$SH" --home "$tmp" --now-ms "$NOW_MS" 2>/dev/null) || rc=$?
 rm -rf "$tmp"
 check "empty history exits 0" test "$rc" = 0
+check "no SPINE -> no LAST /distill line" test "$(grep -c 'LAST /distill' <<<"$out3")" = 0
+
+# 7d. Tail window: assistant text found past >256KB of trailing-noise records,
+#     with the window's cut-mid-record first line dropped, not parsed
+tmpbig=$(mktemp -d)
+mkdir -p "$tmpbig/projects/-big-proj"
+printf '{"display":"big session with a huge tool-result tail","pastedContents":{},"timestamp":1783764000000,"project":"/big/proj","sessionId":"bigbig11-0000-4000-8000-00000000000d"}\n' > "$tmpbig/history.jsonl"
+{
+    filler=$(printf 'x%.0s' $(seq 1 1000))
+    printf '{"type":"assistant","message":{"content":[{"type":"text","text":"Wrong answer: outside the tail window."}]}}\n'
+    for _ in $(seq 1 300); do
+        printf '{"type":"user","message":{"content":[{"type":"tool_result","content":"%s"}]}}\n' "$filler"
+    done
+    printf '{"type":"assistant","message":{"content":[{"type":"text","text":"Found it past the noise."}]}}\n'
+} > "$tmpbig/projects/-big-proj/bigbig11-0000-4000-8000-00000000000d.jsonl"
+out4=$(bash "$SH" --home "$tmpbig" --now-ms "$NOW_MS")
+check "left off found past 256KB of tool noise" grep -q 'left off: Found it past the noise.' <<<"$out4"
 
 # 8. Byte parity with the PowerShell implementation (skipped if no PS host)
 PS_BIN=""
@@ -101,9 +131,17 @@ if [ -n "$PS_BIN" ]; then
         FAIL=$((FAIL+1)); echo "  FAIL: bash/PowerShell outputs differ ($PS_BIN):"
         diff --strip-trailing-cr <(printf '%s\n' "$out") <(printf '%s\n' "$ps_out") | head -20 || true
     fi
+    ps_out4=$("$PS_BIN" -NoProfile -ExecutionPolicy Bypass -File "$PS1" -ClaudeHome "$tmpbig" -NowMs "$NOW_MS")
+    if diff --strip-trailing-cr <(printf '%s\n' "$out4") <(printf '%s\n' "$ps_out4") >/dev/null 2>&1; then
+        PASS=$((PASS+1)); echo "  ok: tail-window byte parity ($PS_BIN)"
+    else
+        FAIL=$((FAIL+1)); echo "  FAIL: tail-window outputs differ ($PS_BIN):"
+        diff --strip-trailing-cr <(printf '%s\n' "$out4") <(printf '%s\n' "$ps_out4") | head -20 || true
+    fi
 else
     echo "  skip: no PowerShell host found (parity not checked)"
 fi
+rm -rf "$tmpbig"
 
 echo
 echo "timeline tests: $PASS passed, $FAIL failed"

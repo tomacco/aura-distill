@@ -1,0 +1,2 @@
+{"type":"user","message":{"content":"continue where we left off with the audit-log migration"}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"Migration plan drafted;"},{"type":"text","text":"open decisions: cutover window and dual-write duration."}]}}

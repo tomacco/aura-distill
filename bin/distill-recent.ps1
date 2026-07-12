@@ -4,6 +4,8 @@
 # (tests/timeline/run-parity-test.sh enforces it). Aggregates history.jsonl
 # into sessions bucketed on a human mental timeline; boundaries follow the
 # temporal-memory literature -- see research/2026-07-11-time-index/mental-timelines.md.
+# Per-session "left off:" (transcript-tail last assistant text) and header
+# "LAST /distill:" staleness line are derived, best-effort, read-only.
 #
 # Usage: distill-recent.ps1 [-ClaudeHome DIR] [-NowMs EPOCH_MS] [-PerBucket N]
 # Exit codes: 0 ok, 2 history.jsonl not found,
@@ -71,6 +73,75 @@ function From-Ms([long]$ms) {
     [DateTimeOffset]::FromUnixTimeMilliseconds($ms).LocalDateTime
 }
 
+# Tail window for "left off:" extraction; must equal TAIL_BYTES in the sh twin.
+$TAIL_BYTES = 262144
+
+function Get-LeftOff([string]$home_, [string]$sid, [string]$project) {
+    # Last assistant text of the session transcript -- how the session ENDED
+    # (the status half of a "continue where we left off" query). Same
+    # transcript-dir munging as Claude Code: non-alphanumerics become '-'.
+    if (-not $project) { return '' }
+    $dir = [regex]::Replace($project, '[^A-Za-z0-9]', '-')
+    $path = Join-Path (Join-Path (Join-Path $home_ 'projects') $dir) ($sid + '.jsonl')
+    $size = [long]0; $read = 0; $buf = $null
+    try {
+        $fs = [System.IO.File]::OpenRead($path)
+        try {
+            $size = $fs.Length
+            $take = [int][Math]::Min($size, $TAIL_BYTES)
+            [void]$fs.Seek($size - $take, [System.IO.SeekOrigin]::Begin)
+            $buf = New-Object byte[] $take
+            while ($read -lt $take) {
+                $n = $fs.Read($buf, $read, $take - $read)
+                if ($n -le 0) { break }
+                $read += $n
+            }
+        } finally { $fs.Dispose() }
+    } catch { return '' }  # transcript rotated/cleaned up -- best-effort field
+    if ($read -le 0) { return '' }
+    $lines = [System.Text.Encoding]::UTF8.GetString($buf, 0, $read) -split "`n"
+    $stop = 0
+    if ($size -gt $TAIL_BYTES) { $stop = 1 }  # first line of a mid-file window is cut
+    for ($i = $lines.Count - 1; $i -ge $stop; $i--) {
+        $line = $lines[$i]
+        # cheap pre-filter before JSON-parsing potentially huge tool-result lines
+        if ($line.IndexOf('"type":"assistant"') -lt 0) { continue }
+        try { $d = $line | ConvertFrom-Json } catch { continue }
+        if ($d -isnot [System.Management.Automation.PSCustomObject]) { continue }
+        if (-not $d.PSObject.Properties['type'] -or $d.type -ne 'assistant') { continue }
+        if (-not $d.PSObject.Properties['message'] -or -not $d.message) { continue }
+        if ($d.message -isnot [System.Management.Automation.PSCustomObject]) { continue }
+        if (-not $d.message.PSObject.Properties['content']) { continue }
+        $c = $d.message.content
+        $t = ''
+        if ($c -is [string]) {
+            $t = Clean-Text $c
+        } elseif ($c -is [System.Array]) {
+            $parts = foreach ($x in $c) {
+                if ($x -is [System.Management.Automation.PSCustomObject] -and
+                    $x.PSObject.Properties['type'] -and $x.type -eq 'text' -and
+                    $x.PSObject.Properties['text'] -and $x.text) { [string]$x.text }
+            }
+            $t = Clean-Text (@($parts) -join ' ')
+        } else { continue }
+        if ($t) {  # tool-use-only records fall through to the previous text
+            if ($t.Length -gt 150) { return $t.Substring(0, 150) + '...' }
+            return $t
+        }
+    }
+    return ''
+}
+
+function Get-LastDistillDate([string]$home_) {
+    # last_updated stamp from the SPINE -- /distill rewrites it on every run,
+    # so it doubles as a capture-lag marker for the staleness header.
+    $spine = Join-Path (Join-Path $home_ 'distill') 'SPINE.md'
+    try { $txt = [System.IO.File]::ReadAllText($spine) } catch { return $null }
+    $m = [regex]::Match($txt, 'last_updated:\s*(\d{4}-\d{2}-\d{2})')
+    if ($m.Success) { return $m.Groups[1].Value }
+    return $null
+}
+
 if (-not $ClaudeHome) {
     $ClaudeHome = if ($env:CLAUDE_CONFIG_DIR) { $env:CLAUDE_CONFIG_DIR } else { Join-Path $HOME '.claude' }
 }
@@ -128,6 +199,17 @@ foreach ($kv in $sessions.GetEnumerator()) {
 $out = New-Object System.Text.StringBuilder
 [void]$out.AppendLine(('DISTILL TIME INDEX -- {0} sessions (newest first)' -f $sessions.Count))
 [void]$out.Append(('NOW: {0}' -f (Format-Dt $now)))
+$ld = Get-LastDistillDate $ClaudeHome
+if ($ld) {
+    # strictly-after: same-day-as-distill sessions are ambiguous, undercount
+    # rather than cry wolf
+    $d0 = [datetime]::ParseExact($ld, 'yyyy-MM-dd', [System.Globalization.CultureInfo]::InvariantCulture).Date
+    $n = 0
+    foreach ($kv in $sessions.GetEnumerator()) { if ($kv.Value.end.Date -gt $d0) { $n++ } }
+    $word = if ($n -eq 1) { 'session' } else { 'sessions' }
+    [void]$out.AppendLine('')
+    [void]$out.Append(('LAST /distill: {0} -- {1} undistilled {2} since' -f $ld, $n, $word))
+}
 foreach ($bk in ($buckets.Keys | Sort-Object)) {
     $label = $bk.Substring(5)
     $entries = @($buckets[$bk] | Sort-Object -Property @{ Expression = { $_[0] } }, @{ Expression = { $_[1] } } -Descending)
@@ -144,6 +226,11 @@ foreach ($bk in ($buckets.Keys | Sort-Object)) {
         [void]$out.AppendLine('')
         $sid8 = if ($e[1].Length -gt 8) { $e[1].Substring(0, 8) } else { $e[1] }
         [void]$out.Append(('  {0} {5} {1,3} msgs {5} {2} {5} {3}{4}' -f (Format-Dt $e[0]), $s.prompts.Count, $sid8, $proj, (Get-Snippet $s.prompts), $SEP))
+        $lo = Get-LeftOff $ClaudeHome $e[1] $s.project
+        if ($lo) {
+            [void]$out.AppendLine('')
+            [void]$out.Append(('      left off: {0}' -f $lo))
+        }
     }
     $extra = $entries.Count - $PerBucket
     if ($extra -gt 0) {

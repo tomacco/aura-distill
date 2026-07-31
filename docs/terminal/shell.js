@@ -9,9 +9,10 @@ export function createShell({ body, addLine, killCursors, startClaude }) {
     const cmds = {
         ls: (a) => {
             const fs = {
-                '~': ['projects', '.claude', 'Documents'],
-                '~/.claude': ['CLAUDE.md', 'distill', 'commands', 'rules'],
-                '~/.claude/distill': ['SPINE.md', 'craft', 'ops', 'profile'],
+                '~': ['projects', '.aura-distill', '.claude', '.codex', 'Documents'],
+                '~/.aura-distill': ['SPINE.md', 'craft', 'ops', 'profile'],
+                '~/.claude': ['CLAUDE.md', 'commands', 'rules'],
+                '~/.codex': ['AGENTS.md'],
             };
             return (fs[a] || fs['~']).map(f => f.includes('.') ? f : `<span style="color:#7aa2f7">${f}/</span>`).join('  ');
         },

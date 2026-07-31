@@ -76,7 +76,7 @@ fetch_file() {
 # ═══ HEADER ANIMATION ═══
 
 show_header() {
-  clear
+  clear 2>/dev/null || true
   echo ""
   printf "${PURPLE}"
   echo "        ╭──────────────────────────────────────╮"

@@ -11,7 +11,7 @@
 
   <g fill="#171717" font-family="Arial, Helvetica, sans-serif">
     <text x="292" y="66" font-size="16" font-weight="700" letter-spacing="4">AURA DISTILL · PR #42 · MERGED</text>
-    <text x="288" y="132" font-size="52" font-weight="800">AUTHOR ENGAGEMENT RECORD</text>
+    <text x="288" y="132" font-size="42" font-weight="800" letter-spacing="1">AUTHOR ENGAGEMENT RECORD</text>
     <rect x="292" y="155" width="820" height="5" fill="#171717"/>
 
     <text x="292" y="202" font-size="18" font-weight="700">BUILT BY</text>

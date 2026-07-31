@@ -2,13 +2,13 @@
 
 ## What this is
 
-A first-principles memory system for Claude Code. Users install it via `install.sh`, which places files into `~/.claude/distill/`. The `/distill` slash command triggers retrospective distillation of conversation signals into tiered knowledge files.
+A first-principles memory system shared by Claude Code and Codex. Users install it via `install.sh` or `install.ps1`, which places knowledge in `~/.aura-distill/` and adds client adapters. Claude can trigger it with `/distill`; Codex users ask it to distill.
 
 ## Architecture
 
 - `distill.md` — Dispatcher (runs in main context, harvests signals, spawns sub-agent)
 - `distill-process.md` — Sub-agent instructions (the full distillation pipeline)
-- `distill-monitor.md` — Session-start monitor (minimal, loaded via `rules/distill.md`)
+- `distill-monitor.md` — Session-start monitor (minimal, loaded via the client integration)
 - `knowledge-architecture.md` — Tier system design doc
 - `install.sh` / `install.ps1` — User-facing installers
 - `tests/` — A/B test scenarios, cognitive bias tests, persona-based methodology tests
@@ -17,7 +17,7 @@ A first-principles memory system for Claude Code. Users install it via `install.
 
 ## CRITICAL: Never touch real user data
 
-**NEVER read, write, or test against real Claude profile directories on this machine.**
+**NEVER read, write, or test against real Claude/Codex profile directories or `~/.aura-distill` on this machine.**
 
 These directories contain the developer's real distilled knowledge. An errant write, backup, or test run against them risks data loss (this has already happened once — see the `_distill_isolation_bak` incident).
 
@@ -55,6 +55,8 @@ When developing or testing:
 - Test personas: Sofia (senior backend engineer) and Marcus (product manager)
 - Run persona tests: `./tests/scenarios/methodology/run-persona-test.sh`
 - Run integration tests: `./test-sandbox.sh`
+- Run deterministic Claude/Codex installer tests: `pwsh tests/test-codex.ps1`
+- Run a real isolated Codex retrieval test: `pwsh tests/test-codex.ps1 -LiveRetrieval`
 
 ## PR reviews
 

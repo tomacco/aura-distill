@@ -8,22 +8,24 @@ $ErrorActionPreference = 'Stop'
 
 $Version  = '1.1.10'
 $Build    = '20260515-01'
-$Repo     = 'https://raw.githubusercontent.com/tomacco/aura-distill/main'
+$Repo     = if ($env:AURA_DISTILL_REPO) { $env:AURA_DISTILL_REPO } else { 'https://raw.githubusercontent.com/tomacco/aura-distill/main' }
 
 # Resolve home (works on PS 5.1 and PS 7+, Windows and cross-platform)
 $ClaudeHome  = if ($env:USERPROFILE) { Join-Path $env:USERPROFILE '.claude' } else { Join-Path $HOME '.claude' }
+$UserHome    = if ($env:USERPROFILE) { $env:USERPROFILE } else { $HOME }
+$AuraHome    = if ($env:AURA_DISTILL_HOME) { $env:AURA_DISTILL_HOME } else { Join-Path $UserHome '.aura-distill' }
+$CodexHome   = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $UserHome '.codex' }
 $CmdDir      = Join-Path $ClaudeHome 'commands'
-$DistillDir  = Join-Path $ClaudeHome 'distill'
+$DistillDir  = $AuraHome
+$LegacyDistillDir = Join-Path $ClaudeHome 'distill'
 $RulesDir    = Join-Path $ClaudeHome 'rules'
 $ClaudeMd    = Join-Path $ClaudeHome 'CLAUDE.md'
+$CodexAgents = Join-Path $CodexHome 'AGENTS.md'
 $SettingsJson = Join-Path $ClaudeHome 'settings.json'
 
 $EmDash = [char]0x2014
-$DistillLine = @"
-# Distill $EmDash knowledge system (github.com/tomacco/aura-distill)
-
-GATE: If ~/.claude/distill/.needs-migration exists AND its content does not start with "migrated", tell the user: "Run /distill to migrate existing memories." Do NOT proceed until addressed or declined.
-"@
+$ManagedStart = '<!-- aura-distill:start -->'
+$ManagedEnd = '<!-- aura-distill:end -->'
 
 # Enable ANSI escape sequences on Windows conhost when available
 try {
@@ -49,7 +51,7 @@ function Write-Fail  { param([string]$m) Write-Host "  ${RED}x${RESET}  $m" }
 function Write-Info  { param([string]$m) Write-Host "  ${CYAN}i${RESET}  $m" }
 
 function Write-Header {
-    Clear-Host
+    try { Clear-Host } catch { }
     Write-Host ''
     Write-Host "${PURPLE}        ,--------------------------------------."
     Write-Host '        |                                      |'
@@ -78,8 +80,12 @@ function Get-File {
     )
     $parent = Split-Path -Parent $Destination
     if (-not (Test-Path $parent)) { New-Item -ItemType Directory -Force -Path $parent | Out-Null }
-    # PS 5.1 requires -UseBasicParsing; harmless on PS 7+
-    Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing
+    if (Test-Path -LiteralPath $Url) {
+        Copy-Item -LiteralPath $Url -Destination $Destination -Force
+    } else {
+        # PS 5.1 requires -UseBasicParsing; harmless on PS 7+
+        Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing
+    }
 }
 
 # === MAIN ===
@@ -108,6 +114,17 @@ foreach ($d in @($CmdDir, $DistillDir,
     if (-not (Test-Path $d)) { New-Item -ItemType Directory -Force -Path $d | Out-Null }
 }
 
+# Seed the new client-neutral store from a legacy Claude installation. Copying
+# keeps existing users' files and configuration untouched.
+$legacyMarker = Join-Path $DistillDir '.legacy-imported'
+if ((Test-Path $LegacyDistillDir) -and ($LegacyDistillDir -ne $DistillDir) -and -not (Test-Path $legacyMarker)) {
+    Copy-Item -Path (Join-Path $LegacyDistillDir '*') -Destination $DistillDir -Recurse -Force -ErrorAction SilentlyContinue
+    "copied from $LegacyDistillDir on $((Get-Date).ToUniversalTime().ToString('s'))Z" | Set-Content $legacyMarker -NoNewline
+    Write-Info 'Existing Claude knowledge copied to shared store; legacy files preserved'
+} elseif ((Test-Path $LegacyDistillDir) -and (Test-Path $legacyMarker)) {
+    Write-Info "Shared store was already seeded; $LegacyDistillDir left untouched (set AURA_DISTILL_HOME for an isolated profile)"
+}
+
 Get-File "$Repo/distill.md"          (Join-Path $CmdDir 'distill.md')
 Write-Done "distill.md ${DIM}(command)${RESET}"
 
@@ -116,6 +133,13 @@ Write-Done "distill-process.md ${DIM}(process engine)${RESET}"
 
 Get-File "$Repo/distill-monitor.md"  (Join-Path $DistillDir 'distill-monitor.md')
 Write-Done "distill-monitor.md ${DIM}(session monitor)${RESET}"
+
+foreach ($resolvedFile in @((Join-Path $CmdDir 'distill.md'),
+                            (Join-Path $DistillDir 'distill-process.md'),
+                            (Join-Path $DistillDir 'distill-monitor.md'))) {
+    $resolved = (Get-Content $resolvedFile -Raw).Replace('{DISTILL_DIR}', $DistillDir)
+    [System.IO.File]::WriteAllText($resolvedFile, $resolved, (New-Object System.Text.UTF8Encoding($false)))
+}
 
 # Version
 Set-Content -Path $versionFile -Value $Version -Encoding utf8 -NoNewline
@@ -158,7 +182,7 @@ if (Test-Path $rulesTarget) {
 $rulesTmp = [System.IO.Path]::GetTempFileName()
 try {
     Get-File "$Repo/rules/distill.md" $rulesTmp
-    $fresh = Get-Content $rulesTmp -Raw
+    $fresh = (Get-Content $rulesTmp -Raw).Replace('{DISTILL_DIR}', $DistillDir)
     if ($fresh -match 'Distill') {
         if ($preservedPrefs) {
             $freshIdx = $fresh.IndexOf($prefsMark)
@@ -264,23 +288,37 @@ if (Test-Path $SettingsJson) {
     Write-Done 'Created settings.json with auto-memory disabled'
 }
 
-if (Test-Path $ClaudeMd) {
-    $claudeMdContent = Get-Content $ClaudeMd -Raw
-    if ($claudeMdContent -match 'aura-distill') {
-        Write-Done "CLAUDE.md ${DIM}(already configured)${RESET}"
-    } elseif ($claudeMdContent -match 'distill') {
-        # Older reference -- strip lines containing 'distill', then append fresh block
-        $cleaned = (Get-Content $ClaudeMd | Where-Object { $_ -notmatch 'distill' }) -join "`n"
-        Set-Content -Path $ClaudeMd -Value ($cleaned + "`n`n" + $DistillLine) -Encoding utf8
-        Write-Done "CLAUDE.md ${DIM}(upgraded)${RESET}"
-    } else {
-        Add-Content -Path $ClaudeMd -Value ("`n" + $DistillLine) -Encoding utf8
-        Write-Done 'CLAUDE.md configured'
+function Set-AuraIntegration {
+    param([string]$Path, [string]$Label, [ValidateSet('claude','codex')][string]$Client)
+    $parent = Split-Path -Parent $Path
+    if (-not (Test-Path $parent)) { New-Item -ItemType Directory -Force -Path $parent | Out-Null }
+    $existing = if (Test-Path $Path) { Get-Content $Path -Raw } else { '' }
+    $pattern = '(?s)\r?\n?' + [regex]::Escape($ManagedStart) + '.*?' + [regex]::Escape($ManagedEnd) + '\r?\n?'
+    $cleaned = [regex]::Replace($existing, $pattern, '').TrimEnd()
+    if ($Label -eq 'CLAUDE.md') {
+        $legacyPattern = '(?ms)\r?\n?# Distill . knowledge system \(github\.com/tomacco/aura-distill\)\r?\n\r?\nGATE:.*?(?=\r?\n#|\z)'
+        $cleaned = [regex]::Replace($cleaned, $legacyPattern, '').TrimEnd()
     }
-} else {
-    Set-Content -Path $ClaudeMd -Value $DistillLine -Encoding utf8
-    Write-Done 'Created CLAUDE.md'
+    $clientGuidance = if ($Client -eq 'codex') {
+        "Read $DistillDir/distill-monitor.md for the full retrieval and memory-pressure behavior. When the user asks to distill, read $DistillDir/distill-process.md and run that process in an isolated sub-agent when supported.`r`n"
+    } else { '' }
+    $block = @"
+$ManagedStart
+# Aura Distill shared knowledge
+
+Before doing any work, read $DistillDir/SPINE.md. When the request or an announced action matches a SPINE entry, read the linked file before responding and apply it.
+
+$clientGuidance
+If $DistillDir/.needs-migration exists and does not start with "migrated", tell the user to ask you to distill/migrate existing memories before proceeding.
+$ManagedEnd
+"@
+    $content = if ($cleaned) { "$cleaned`r`n`r`n$block" } else { $block }
+    Set-Content -Path $Path -Value $content -Encoding utf8
+    Write-Done "$Label configured"
 }
+
+Set-AuraIntegration $ClaudeMd 'CLAUDE.md' 'claude'
+Set-AuraIntegration $CodexAgents 'Codex AGENTS.md' 'codex'
 
 # === MEMORY MIGRATION CHECK ===
 
@@ -337,7 +375,7 @@ if ($existingVersion) {
     }
 }
 Write-Host "  ${DIM}Uninstall (keeps your learnings):${RESET}"
-Write-Host "    ${DIM}Remove-Item -Recurse -Force `$HOME\.claude\distill, `$HOME\.claude\commands\distill.md, `$HOME\.claude\rules\distill.md${RESET}"
+Write-Host "    ${DIM}Remove Claude adapters and the managed aura-distill blocks from CLAUDE.md and ~/.codex/AGENTS.md; keep ~/.aura-distill for your learnings.${RESET}"
 Write-Host ''
 Write-Host "  ${PURPLE}say what matters. it's listening.${RESET}"
 Write-Host ''

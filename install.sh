@@ -10,12 +10,13 @@ set -e
 VERSION="1.1.10"
 
 BUILD="20260518-01"
-REPO="https://raw.githubusercontent.com/tomacco/aura-distill/main"
+REPO="${AURA_DISTILL_REPO:-https://raw.githubusercontent.com/tomacco/aura-distill/main}"
 # Profile paths are set dynamically after profile detection (see below)
 PROFILE_DIR=""
-DISTILL_LINE='# Distill — knowledge system (github.com/tomacco/aura-distill)
-
-GATE: If ~/.claude/distill/.needs-migration exists AND its content does not start with "migrated", tell the user: "Run /distill to migrate existing memories." Do NOT proceed until addressed or declined.'
+AURA_DIR="${AURA_DISTILL_HOME:-$HOME/.aura-distill}"
+CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"
+MANAGED_START='<!-- aura-distill:start -->'
+MANAGED_END='<!-- aura-distill:end -->'
 
 # ═══ COLORS & FORMATTING ═══
 CYAN=$(printf '\033[0;36m')
@@ -67,10 +68,15 @@ info_msg() {
   echo "  ${CYAN}ℹ${RESET} $1"
 }
 
+fetch_file() {
+  local source="$1"
+  if [ -f "$source" ]; then cat "$source"; else curl -fsL "$source"; fi
+}
+
 # ═══ HEADER ANIMATION ═══
 
 show_header() {
-  clear
+  clear 2>/dev/null || true
   echo ""
   printf "${PURPLE}"
   echo "        ╭──────────────────────────────────────╮"
@@ -191,9 +197,11 @@ resolve_profile
 
 # Set paths based on resolved profile
 CMD_DIR="$PROFILE_DIR/commands"
-DISTILL_DIR="$PROFILE_DIR/distill"
+DISTILL_DIR="$AURA_DIR"
 RULES_DIR="$PROFILE_DIR/rules"
 CLAUDE_MD="$PROFILE_DIR/CLAUDE.md"
+CODEX_AGENTS="$CODEX_DIR/AGENTS.md"
+LEGACY_DISTILL_DIR="$PROFILE_DIR/distill"
 
 info_msg "Installing to: ${PROFILE_DIR}"
 echo ""
@@ -213,17 +221,28 @@ show_section "Core files"
 mkdir -p "$CMD_DIR"
 mkdir -p "$DISTILL_DIR"/{craft,ops,profile,projects,feedback,archive}
 
+# New installs use the client-neutral store. When an older Claude-only install
+# exists, seed the shared store without moving or modifying the legacy copy.
+if [ -d "$LEGACY_DISTILL_DIR" ] && [ "$LEGACY_DISTILL_DIR" != "$DISTILL_DIR" ] \
+   && [ ! -f "$DISTILL_DIR/.legacy-imported" ]; then
+    cp -R "$LEGACY_DISTILL_DIR"/. "$DISTILL_DIR"/ 2>/dev/null || true
+    printf 'copied from %s on %s\n' "$LEGACY_DISTILL_DIR" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$DISTILL_DIR/.legacy-imported"
+    info_msg "Existing Claude knowledge copied to shared store; legacy files preserved"
+elif [ -d "$LEGACY_DISTILL_DIR" ] && [ -f "$DISTILL_DIR/.legacy-imported" ]; then
+    info_msg "Shared store was already seeded; $LEGACY_DISTILL_DIR left untouched (use AURA_DISTILL_HOME for an isolated profile)"
+fi
+
 # Download core files and resolve {DISTILL_DIR} to actual path
 
-curl -sL "$REPO/distill.md" | sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" > "$CMD_DIR/distill.md"
+fetch_file "$REPO/distill.md" | sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" > "$CMD_DIR/distill.md"
 done_msg "distill.md ${DIM}(command)${RESET}"
 
 
-curl -sL "$REPO/distill-process.md" | sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" > "$DISTILL_DIR/distill-process.md"
+fetch_file "$REPO/distill-process.md" | sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" > "$DISTILL_DIR/distill-process.md"
 done_msg "distill-process.md ${DIM}(process engine)${RESET}"
 
 
-curl -sL "$REPO/distill-monitor.md" | sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" > "$DISTILL_DIR/distill-monitor.md"
+fetch_file "$REPO/distill-monitor.md" | sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" > "$DISTILL_DIR/distill-monitor.md"
 done_msg "distill-monitor.md ${DIM}(session monitor)${RESET}"
 
 # Version
@@ -257,7 +276,7 @@ if [ -f "$RULES_DIR/distill.md" ] && grep -q "^$PREFS_MARK" "$RULES_DIR/distill.
 fi
 
 RULES_TMP=$(mktemp)
-if curl -fsL "$REPO/rules/distill.md" | sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" > "$RULES_TMP" \
+if fetch_file "$REPO/rules/distill.md" | sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" > "$RULES_TMP" \
    && grep -q "Distill" "$RULES_TMP"; then
     if [ -n "$PREFS_TMP" ]; then
         # Build the merged file in a temp and move it into place atomically —
@@ -305,7 +324,7 @@ install_token_saver_agent() {
     # protected forever by the not-ours guard above.
     local tmp
     tmp=$(mktemp)
-    if curl -fsL "$REPO/agents/${name}.md" > "$tmp" 2>/dev/null \
+    if fetch_file "$REPO/agents/${name}.md" > "$tmp" 2>/dev/null \
        && grep -q "aura-distill" "$tmp" && grep -q "^name: ${name}" "$tmp"; then
         mv "$tmp" "$target"
         done_msg "agents/${name}.md ${DIM}(preset subagent)${RESET}"
@@ -337,7 +356,7 @@ case "$TOKEN_SAVER" in
         ;;
 esac
 
-# ═══ CLAUDE.md INTEGRATION ═══
+# ═══ CLAUDE + CODEX INTEGRATION ═══
 
 show_section "Session integration"
 
@@ -357,25 +376,64 @@ else
     done_msg "Created settings.json with auto-memory disabled"
 fi
 
-if [ -f "$CLAUDE_MD" ]; then
-    if grep -q "aura-distill" "$CLAUDE_MD" 2>/dev/null; then
-        done_msg "CLAUDE.md ${DIM}(already configured)${RESET}"
-    elif grep -q "distill" "$CLAUDE_MD" 2>/dev/null; then
-        # Older version reference — replace it
-        sed -i.bak '/distill/d' "$CLAUDE_MD"
-        rm -f "$CLAUDE_MD.bak"
-        echo "" >> "$CLAUDE_MD"
-        echo "$DISTILL_LINE" >> "$CLAUDE_MD"
-        done_msg "CLAUDE.md ${DIM}(upgraded)${RESET}"
-    else
-        echo "" >> "$CLAUDE_MD"
-        echo "$DISTILL_LINE" >> "$CLAUDE_MD"
-        done_msg "CLAUDE.md configured"
-    fi
-else
-    echo "$DISTILL_LINE" > "$CLAUDE_MD"
-    done_msg "Created CLAUDE.md"
+integration_block() {
+local client="$1"
+cat <<EOF
+$MANAGED_START
+# Aura Distill shared knowledge
+
+Before doing any work, read $DISTILL_DIR/SPINE.md. When the request or an announced action matches a SPINE entry, read the linked file before responding and apply it.
+EOF
+if [ "$client" = "codex" ]; then
+cat <<EOF
+Read $DISTILL_DIR/distill-monitor.md for the full retrieval and memory-pressure behavior. When the user asks to distill, read $DISTILL_DIR/distill-process.md and run that process in an isolated sub-agent when supported.
+EOF
 fi
+cat <<EOF
+If $DISTILL_DIR/.needs-migration exists and does not start with "migrated", tell the user to ask you to distill/migrate existing memories before proceeding.
+$MANAGED_END
+EOF
+}
+
+upsert_managed_block() {
+    local target="$1" label="$2" tmp
+    mkdir -p "$(dirname "$target")"
+    tmp=$(mktemp)
+    if [ -f "$target" ]; then
+        awk -v start="$MANAGED_START" -v end="$MANAGED_END" '
+          function emit(line) {
+            if (line == "") { blanks++; return }
+            while (blanks > 0) { print ""; blanks-- }
+            print line
+          }
+          function flush_legacy( i) {
+            for (i=1; i<=legacy_n; i++) emit(legacy_lines[i])
+            delete legacy_lines; legacy_n=0; legacy=0
+          }
+          $0 == start { skip=1; next }
+          $0 == end { skip=0; next }
+          skip { next }
+          /^# Distill .*knowledge system \(github.com\/tomacco\/aura-distill\)$/ {
+            legacy=1; legacy_lines[++legacy_n]=$0; next
+          }
+          legacy {
+            legacy_lines[++legacy_n]=$0
+            if (/^GATE:/) { delete legacy_lines; legacy_n=0; legacy=0; next }
+            if (/^#/ && legacy_n > 1) flush_legacy()
+            next
+          }
+          { emit($0) }
+          END { if (legacy) flush_legacy() }
+        ' "$target" > "$tmp"
+    fi
+    [ ! -s "$tmp" ] || printf '\n' >> "$tmp"
+    integration_block "$label" >> "$tmp"
+    mv "$tmp" "$target"
+    done_msg "$label configured"
+}
+
+upsert_managed_block "$CLAUDE_MD" "claude"
+upsert_managed_block "$CODEX_AGENTS" "codex"
 
 # ═══ MEMORY MIGRATION CHECK ═══
 
@@ -410,7 +468,7 @@ printf "  ${DIM}Zero dependencies. Just files.${RESET}\n"
 echo ""
 printf "  ${DIM}Version:  ${RESET}v${VERSION}\n"
 printf "  ${DIM}Command:  ${RESET}/distill\n"
-printf "  ${DIM}Knowledge:${RESET} ~/.claude/distill/\n"
+printf "  ${DIM}Knowledge:${RESET} ~/.aura-distill/\n"
 echo ""
 if [ -n "$EXISTING_VERSION" ]; then
     printf "  ${CYAN}Upgraded${RESET} v${EXISTING_VERSION} → v${VERSION}\n"
@@ -427,7 +485,7 @@ if [ -n "$EXISTING_VERSION" ]; then
     fi
 fi
 printf "  ${DIM}Uninstall (keeps your learnings):${RESET}\n"
-printf "    ${DIM}rm -rf ~/.claude/distill ~/.claude/commands/distill.md ~/.claude/rules/distill.md${RESET}\n"
+printf "    ${DIM}rm -f ~/.claude/commands/distill.md ~/.claude/rules/distill.md; remove aura-distill managed blocks from CLAUDE.md and ~/.codex/AGENTS.md${RESET}\n"
 echo ""
 printf "  ${PURPLE}say what matters. it's listening.${RESET}\n"
 echo ""

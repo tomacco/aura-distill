@@ -4,7 +4,7 @@
 
 <p align="center">
   <strong>Not what it remembers — how it learns.</strong><br>
-  <em>First-principles memory for Claude Code. A/B tested.</em>
+  <em>First-principles memory for Claude Code and Codex. A/B tested.</em>
 </p>
 
 <p align="center">
@@ -58,7 +58,7 @@ curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh 
 irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1 | iex
 ```
 
-<sub>No sudo, writes only to `~/.claude/` (`%USERPROFILE%\.claude\` on Windows). [Read install.sh](install.sh) / [install.ps1](install.ps1) first if you're the responsible kind.</sub>
+<sub>No sudo. Knowledge lives in `~/.aura-distill/`; small adapters are added to Claude and Codex configuration. [Read install.sh](install.sh) / [install.ps1](install.ps1) first if you're the responsible kind.</sub>
 
 This installs:
 
@@ -66,8 +66,10 @@ This installs:
 |------|----------|---------|
 | `distill.md` | `~/.claude/commands/` | The `/distill` slash command |
 | `distill.md` | `~/.claude/rules/` | Knowledge retrieval (18 lines, auto-loads every session) |
-| `distill-process.md` | `~/.claude/distill/` | Full process (read by sub-agent) |
-| `SPINE.md` | `~/.claude/distill/` | Knowledge index |
+| `distill-process.md` | `~/.aura-distill/` | Full process (read by sub-agent) |
+| `SPINE.md` | `~/.aura-distill/` | Shared Claude/Codex knowledge index |
+| managed pointer | `~/.claude/CLAUDE.md` | Makes Claude load the shared SPINE |
+| managed pointer | `~/.codex/AGENTS.md` | Makes Codex load the shared SPINE |
 
 Zero dependencies. No Node.js. No MCP server. No database. Just files.
 
@@ -80,7 +82,7 @@ you type /distill
     → harvests signals from the conversation (corrections, preferences, surprises)
     → spawns an isolated sub-agent (your context stays clean)
     → sub-agent traces each signal to a first principle
-    → encodes in ~/.claude/distill/ with markers: [UPDATED], [CONTEXT], [NON-NEGOTIABLE]
+    → encodes in ~/.aura-distill/ with markers: [UPDATED], [CONTEXT], [NON-NEGOTIABLE]
     → every future session retrieves relevant knowledge before responding
 ```
 
@@ -109,11 +111,10 @@ you type /distill
 ## Architecture
 
 ```
-~/.claude/
-├── CLAUDE.md                        ← one line added (gate for migration)
-├── rules/
-│   └── distill.md                   ← retrieval engine (18 lines, auto-loaded)
-└── distill/
+~/
+├── .claude/CLAUDE.md               ← managed pointer for Claude
+├── .codex/AGENTS.md                ← managed pointer for Codex
+└── .aura-distill/                  ← shared, client-neutral knowledge
     ├── SPINE.md                     ← tier 1: index (max 80 lines)
     ├── distill-process.md           ← the distillation process
     ├── craft/                       ← tier 2: discipline knowledge
@@ -156,19 +157,21 @@ brew uninstall aura-distill
 **macOS / Linux / WSL:**
 ```bash
 rm -f ~/.claude/commands/distill.md ~/.claude/rules/distill.md
-rm -f ~/.claude/distill/distill-process.md ~/.claude/distill/distill-monitor.md ~/.claude/distill/.version
+# Remove the managed aura-distill blocks from ~/.claude/CLAUDE.md and ~/.codex/AGENTS.md.
+# Keep ~/.aura-distill/ unless you intentionally want to delete your knowledge.
 ```
 
 **Windows** (PowerShell):
 ```powershell
 Remove-Item -Force $HOME\.claude\commands\distill.md, $HOME\.claude\rules\distill.md
-Remove-Item -Force $HOME\.claude\distill\distill-process.md, $HOME\.claude\distill\distill-monitor.md, $HOME\.claude\distill\.version
+# Remove the managed aura-distill blocks from CLAUDE.md and AGENTS.md.
+# Keep $HOME\.aura-distill unless you intentionally want to delete your knowledge.
 ```
 
-Your knowledge files in `~/.claude/distill/` are preserved. They're yours.
+Your knowledge files in `~/.aura-distill/` are preserved. They're yours.
 
 ---
 
 <p align="center">
-  <sub>v1.1.10 · MIT · Built for <a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code</a></sub>
+  <sub>v1.1.10 · MIT · Built for Claude Code and Codex</sub>
 </p>

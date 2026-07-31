@@ -60,6 +60,7 @@ For security-conscious users who don't pipe curl to bash.
 DISTILL_DIR="$HOME/.aura-distill"
 # Claude adapter directory
 PROFILE="$HOME/.claude"
+mkdir -p "$DISTILL_DIR" "$PROFILE/commands" "$PROFILE/rules"
 
 # Core command (the /distill slash command)
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill.md \
@@ -76,6 +77,13 @@ curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill-mon
 # Retrieval rules (auto-loads, tells Claude how to use knowledge)
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/rules/distill.md \
   -o "$PROFILE/rules/distill.md"
+
+# Resolve the shared-store placeholder in every installed adapter/process file.
+sed -i "s|{DISTILL_DIR}|$DISTILL_DIR|g" \
+  "$PROFILE/commands/distill.md" \
+  "$PROFILE/rules/distill.md" \
+  "$DISTILL_DIR/distill-process.md" \
+  "$DISTILL_DIR/distill-monitor.md"
 ```
 
 ### Step 2: Create the directory structure
@@ -122,15 +130,33 @@ Add this managed guidance to both `$PROFILE/CLAUDE.md` and `$HOME/.codex/AGENTS.
 ```markdown
 <!-- aura-distill:start -->
 # Aura Distill shared knowledge
-Before doing any work, read ~/.aura-distill/distill-monitor.md and ~/.aura-distill/SPINE.md. If the task matches a SPINE entry, read the linked file before responding and apply it.
+Before doing any work, read ~/.aura-distill/SPINE.md. If the task matches a SPINE entry, read the linked file before responding and apply it.
 <!-- aura-distill:end -->
 ```
+
+In Codex's `AGENTS.md`, also tell Codex to read
+`~/.aura-distill/distill-monitor.md` for the complete retrieval and
+memory-pressure behavior.
+
+Because the shared store sits outside a repository workspace, sandboxed Codex
+sessions may request permission before writing distilled knowledge. In the CLI,
+you can grant that directory explicitly with
+`codex --sandbox workspace-write --add-dir ~/.aura-distill`. Retrieval remains
+read-only; the extra writable root is needed only when Codex runs distillation.
 
 ---
 
 ## Multi-profile support
 
-Claude Code supports multiple config profiles at `~/.claude-<name>/`. Each profile is independent — its own rules, commands, knowledge, and settings.
+Claude Code supports multiple config profiles at `~/.claude-<name>/`. Their
+Claude rules, commands, and settings remain independent, but by default they
+share the client-neutral knowledge in `~/.aura-distill/` with Codex. To retain
+an isolated knowledge base for a profile, set `AURA_DISTILL_HOME` before
+installing that profile (for example, `~/.aura-distill-work`).
+
+Only the first legacy profile is automatically copied into a new shared store.
+Later legacy stores are left untouched and reported by the installer so they
+can be merged deliberately instead of silently overwriting shared knowledge.
 
 **Detecting profiles:**
 ```bash

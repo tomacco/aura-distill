@@ -50,6 +50,9 @@ try {
     Assert-True (($codexText.Split('<!-- aura-distill:start -->').Count - 1) -eq 1) 'Codex managed block is idempotent'
     Assert-True ($claudeText.Contains('# user-owned Claude guidance')) 'Claude user guidance is preserved'
     Assert-True ($codexText.Contains('# user-owned Codex guidance')) 'Codex user guidance is preserved'
+    Invoke-TestInstall $fresh
+    Assert-True ((Get-Content $claudeMd -Raw) -eq $claudeText) 'Claude integration is byte-stable on repeated install'
+    Assert-True ((Get-Content $codexAgents -Raw) -eq $codexText) 'Codex integration is byte-stable on repeated install'
 
     # A legacy Claude-only installation seeds the shared store without mutation.
     $legacy = New-TestHome; $homes.Add($legacy)
@@ -72,6 +75,20 @@ GATE: If ~/.claude/distill/.needs-migration exists, run /distill.
     Assert-True ($legacyClaudeMd.Contains('# user-owned preface')) 'legacy Claude user guidance is preserved'
     Assert-True (-not $legacyClaudeMd.Contains('~/.claude/distill/.needs-migration')) 'legacy Claude pointer is replaced by shared integration'
 
+    # A partial legacy heading must never consume later user-owned content.
+    $partial = New-TestHome; $homes.Add($partial)
+    New-Item -ItemType Directory -Path (Join-Path $partial '.claude') -Force | Out-Null
+    @'
+# Distill — knowledge system (github.com/tomacco/aura-distill)
+
+partial block with no gate
+
+# My important section
+DO-NOT-DELETE
+'@ | Set-Content (Join-Path $partial '.claude/CLAUDE.md')
+    Invoke-TestInstall $partial
+    Assert-True ((Get-Content (Join-Path $partial '.claude/CLAUDE.md') -Raw).Contains('DO-NOT-DELETE')) 'partial legacy block cannot delete later user content'
+
     if ($LiveRetrieval) {
         $live = New-TestHome; $homes.Add($live); Invoke-TestInstall $live
         $liveAura = Join-Path $live '.aura-distill'
@@ -88,7 +105,12 @@ GATE: If ~/.claude/distill/.needs-migration exists, run /distill.
         Copy-Item $auth (Join-Path $live '.codex/auth.json')
         $workspace = Join-Path $live 'workspace'; New-Item -ItemType Directory $workspace | Out-Null
         $env:USERPROFILE = $live; $env:CODEX_HOME = Join-Path $live '.codex'
-        $output = & codex exec --skip-git-repo-check --sandbox read-only -C $workspace 'Choose a message broker for a new service handling five events per day. Answer in one sentence.' 2>&1 | Out-String
+        # The shared store is outside the project workspace, so grant it as an
+        # additional writable root exactly as an interactive distillation run
+        # would require under Codex's workspace-write sandbox.
+        $output = & codex --sandbox workspace-write --add-dir $liveAura exec --skip-git-repo-check -C $workspace 'Choose a message broker for a new service handling five events per day. Answer in one sentence.' 2>&1 | Out-String
+        Remove-Item (Join-Path $live '.codex/auth.json') -Force
+        if ($output -notmatch 'QUARTZ-BUS') { Write-Host "Live Codex output: $($output.Trim())" -ForegroundColor Yellow }
         Assert-True ($output -match 'QUARTZ-BUS') 'live Codex session retrieves matching shared knowledge'
     }
 } finally {
@@ -97,7 +119,10 @@ GATE: If ~/.claude/distill/.needs-migration exists, run /distill.
     $env:AURA_DISTILL_HOME = $null
     $env:AURA_DISTILL_REPO = $null
     $env:DISTILL_TOKEN_SAVER = $null
-    foreach ($testPath in $homes) { Remove-Item -LiteralPath $testPath -Recurse -Force -ErrorAction SilentlyContinue }
+    foreach ($testPath in $homes) {
+        Remove-Item -LiteralPath $testPath -Recurse -Force -ErrorAction SilentlyContinue
+        if (Test-Path -LiteralPath $testPath) { Write-Warning "Could not remove isolated test directory: $testPath" }
+    }
 }
 
 Write-Host "`n$Passed passed, $Failed failed"

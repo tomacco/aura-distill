@@ -121,6 +121,8 @@ if ((Test-Path $LegacyDistillDir) -and ($LegacyDistillDir -ne $DistillDir) -and 
     Copy-Item -Path (Join-Path $LegacyDistillDir '*') -Destination $DistillDir -Recurse -Force -ErrorAction SilentlyContinue
     "copied from $LegacyDistillDir on $((Get-Date).ToUniversalTime().ToString('s'))Z" | Set-Content $legacyMarker -NoNewline
     Write-Info 'Existing Claude knowledge copied to shared store; legacy files preserved'
+} elseif ((Test-Path $LegacyDistillDir) -and (Test-Path $legacyMarker)) {
+    Write-Info "Shared store was already seeded; $LegacyDistillDir left untouched (set AURA_DISTILL_HOME for an isolated profile)"
 }
 
 Get-File "$Repo/distill.md"          (Join-Path $CmdDir 'distill.md')
@@ -287,7 +289,7 @@ if (Test-Path $SettingsJson) {
 }
 
 function Set-AuraIntegration {
-    param([string]$Path, [string]$Label)
+    param([string]$Path, [string]$Label, [ValidateSet('claude','codex')][string]$Client)
     $parent = Split-Path -Parent $Path
     if (-not (Test-Path $parent)) { New-Item -ItemType Directory -Force -Path $parent | Out-Null }
     $existing = if (Test-Path $Path) { Get-Content $Path -Raw } else { '' }
@@ -297,13 +299,17 @@ function Set-AuraIntegration {
         $legacyPattern = '(?ms)\r?\n?# Distill . knowledge system \(github\.com/tomacco/aura-distill\)\r?\n\r?\nGATE:.*?(?=\r?\n#|\z)'
         $cleaned = [regex]::Replace($cleaned, $legacyPattern, '').TrimEnd()
     }
+    $clientGuidance = if ($Client -eq 'codex') {
+        "Read $DistillDir/distill-monitor.md for the full retrieval and memory-pressure behavior. When the user asks to distill, read $DistillDir/distill-process.md and run that process in an isolated sub-agent when supported.`r`n"
+    } else { '' }
     $block = @"
 $ManagedStart
 # Aura Distill shared knowledge
 
-Before doing any work, read $DistillDir/distill-monitor.md and $DistillDir/SPINE.md. When the request or an announced action matches a SPINE entry, read the linked file before responding and apply it.
+Before doing any work, read $DistillDir/SPINE.md. When the request or an announced action matches a SPINE entry, read the linked file before responding and apply it.
 
-If $DistillDir/.needs-migration exists and does not start with "migrated", tell the user to ask you to distill/migrate existing memories before proceeding. When the user asks to distill, read $DistillDir/distill-process.md and run that process in an isolated sub-agent when supported.
+$clientGuidance
+If $DistillDir/.needs-migration exists and does not start with "migrated", tell the user to ask you to distill/migrate existing memories before proceeding.
 $ManagedEnd
 "@
     $content = if ($cleaned) { "$cleaned`r`n`r`n$block" } else { $block }
@@ -311,8 +317,8 @@ $ManagedEnd
     Write-Done "$Label configured"
 }
 
-Set-AuraIntegration $ClaudeMd 'CLAUDE.md'
-Set-AuraIntegration $CodexAgents 'Codex AGENTS.md'
+Set-AuraIntegration $ClaudeMd 'CLAUDE.md' 'claude'
+Set-AuraIntegration $CodexAgents 'Codex AGENTS.md' 'codex'
 
 # === MEMORY MIGRATION CHECK ===
 

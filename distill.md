@@ -91,7 +91,7 @@ Write all of this down as a structured summary. Be thorough — anything you don
 
 Use the client's sub-agent/delegation tool (Claude's Agent tool or Codex sub-agents). The sub-agent receives the FULL distillation process plus your harvested signals.
 
-**IMPORTANT:** Keep the distillation agent attached until it completes. It must have write access to `{DISTILL_DIR}/`; do not use a mode that suppresses required write permissions.
+**IMPORTANT:** Keep the distillation agent attached until it completes. It must have write access to `{DISTILL_DIR}/`; do not use a mode that suppresses required write permissions. In Claude Code specifically, never use `run_in_background: true`: background agents cannot obtain the write permissions this workflow requires.
 
 ```
 Agent({

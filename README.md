@@ -112,7 +112,7 @@ you type /distill
 
 ```
 ~/
-├── .claude/CLAUDE.md              ← managed pointer for Claude
+├── .claude/CLAUDE.md               ← managed pointer for Claude
 ├── .codex/AGENTS.md                ← managed pointer for Codex
 └── .aura-distill/                  ← shared, client-neutral knowledge
     ├── SPINE.md                     ← tier 1: index (max 80 lines)

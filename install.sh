@@ -228,6 +228,8 @@ if [ -d "$LEGACY_DISTILL_DIR" ] && [ "$LEGACY_DISTILL_DIR" != "$DISTILL_DIR" ] \
     cp -R "$LEGACY_DISTILL_DIR"/. "$DISTILL_DIR"/ 2>/dev/null || true
     printf 'copied from %s on %s\n' "$LEGACY_DISTILL_DIR" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$DISTILL_DIR/.legacy-imported"
     info_msg "Existing Claude knowledge copied to shared store; legacy files preserved"
+elif [ -d "$LEGACY_DISTILL_DIR" ] && [ -f "$DISTILL_DIR/.legacy-imported" ]; then
+    info_msg "Shared store was already seeded; $LEGACY_DISTILL_DIR left untouched (use AURA_DISTILL_HOME for an isolated profile)"
 fi
 
 # Download core files and resolve {DISTILL_DIR} to actual path
@@ -375,13 +377,20 @@ else
 fi
 
 integration_block() {
+local client="$1"
 cat <<EOF
 $MANAGED_START
 # Aura Distill shared knowledge
 
-Before doing any work, read $DISTILL_DIR/distill-monitor.md and $DISTILL_DIR/SPINE.md. When the request or an announced action matches a SPINE entry, read the linked file before responding and apply it.
-
-If $DISTILL_DIR/.needs-migration exists and does not start with "migrated", tell the user to ask you to distill/migrate existing memories before proceeding. When the user asks to distill, read $DISTILL_DIR/distill-process.md and run that process in an isolated sub-agent when supported.
+Before doing any work, read $DISTILL_DIR/SPINE.md. When the request or an announced action matches a SPINE entry, read the linked file before responding and apply it.
+EOF
+if [ "$client" = "codex" ]; then
+cat <<EOF
+Read $DISTILL_DIR/distill-monitor.md for the full retrieval and memory-pressure behavior. When the user asks to distill, read $DISTILL_DIR/distill-process.md and run that process in an isolated sub-agent when supported.
+EOF
+fi
+cat <<EOF
+If $DISTILL_DIR/.needs-migration exists and does not start with "migrated", tell the user to ask you to distill/migrate existing memories before proceeding.
 $MANAGED_END
 EOF
 }
@@ -392,22 +401,39 @@ upsert_managed_block() {
     tmp=$(mktemp)
     if [ -f "$target" ]; then
         awk -v start="$MANAGED_START" -v end="$MANAGED_END" '
+          function emit(line) {
+            if (line == "") { blanks++; return }
+            while (blanks > 0) { print ""; blanks-- }
+            print line
+          }
+          function flush_legacy( i) {
+            for (i=1; i<=legacy_n; i++) emit(legacy_lines[i])
+            delete legacy_lines; legacy_n=0; legacy=0
+          }
           $0 == start { skip=1; next }
           $0 == end { skip=0; next }
-          /^# Distill .*knowledge system \(github.com\/tomacco\/aura-distill\)$/ { legacy=1; next }
-          legacy && /^GATE:/ { legacy=0; next }
-          legacy { next }
-          !skip { print }
+          skip { next }
+          /^# Distill .*knowledge system \(github.com\/tomacco\/aura-distill\)$/ {
+            legacy=1; legacy_lines[++legacy_n]=$0; next
+          }
+          legacy {
+            legacy_lines[++legacy_n]=$0
+            if (/^GATE:/) { delete legacy_lines; legacy_n=0; legacy=0; next }
+            if (/^#/ && legacy_n > 1) flush_legacy()
+            next
+          }
+          { emit($0) }
+          END { if (legacy) flush_legacy() }
         ' "$target" > "$tmp"
     fi
     [ ! -s "$tmp" ] || printf '\n' >> "$tmp"
-    integration_block >> "$tmp"
+    integration_block "$label" >> "$tmp"
     mv "$tmp" "$target"
     done_msg "$label configured"
 }
 
-upsert_managed_block "$CLAUDE_MD" "CLAUDE.md"
-upsert_managed_block "$CODEX_AGENTS" "Codex AGENTS.md"
+upsert_managed_block "$CLAUDE_MD" "claude"
+upsert_managed_block "$CODEX_AGENTS" "codex"
 
 # ═══ MEMORY MIGRATION CHECK ═══
 

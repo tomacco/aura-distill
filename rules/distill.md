@@ -1,6 +1,6 @@
 # Distill Knowledge System
 
-**{DISTILL_DIR}** = the shared Aura Distill directory, normally `~/.aura-distill/`. The installer resolves this placeholder to an absolute path so Claude and Codex retrieve the same knowledge.
+**{DISTILL_DIR}** = the shared Aura Distill directory, normally `~/.aura-distill/`. Automated installers resolve this placeholder to an absolute path. If it is still literal (for example after a manual install), treat `{DISTILL_DIR}` as `~/.aura-distill`.
 
 You have accumulated knowledge from past sessions stored in `{DISTILL_DIR}/`.
 

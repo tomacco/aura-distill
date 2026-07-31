@@ -3,7 +3,9 @@ param([switch]$LiveRetrieval)
 $ErrorActionPreference = 'Stop'
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $OriginalUserProfile = $env:USERPROFILE
-$OriginalCodexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $OriginalUserProfile '.codex' }
+$OriginalHome = $HOME
+$OriginalUserHome = if ($OriginalUserProfile) { $OriginalUserProfile } else { $OriginalHome }
+$OriginalCodexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $OriginalUserHome '.codex' }
 $Passed = 0
 $Failed = 0
 

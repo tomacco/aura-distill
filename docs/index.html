@@ -1836,9 +1836,9 @@
     <div class="title-group">
         <h1 class="title">aura-<span>distill</span></h1>
         <p class="tagline">not what it remembers &mdash; how it learns</p>
-        <p class="tagline" style="margin-top: 0.5rem; opacity: 0.7; font-size: clamp(0.6rem, 1.2vw, 0.8rem);">Claude Code remembers facts. <code style="font-family: 'JetBrains Mono', 'Fira Code', monospace; background: rgba(255,255,255,0.08); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.95em;">/distill</code> teaches it principles.</p>
+        <p class="tagline" style="margin-top: 0.5rem; opacity: 0.7; font-size: clamp(0.6rem, 1.2vw, 0.8rem);">Shared first-principles memory for Claude Code and Codex.</p>
     </div>
-    <p class="hero-pitch">You correct Claude once. It should never make that mistake again &mdash; in any project, any session, forever.<br>That&rsquo;s what this does. One slash command: <code style="color:var(--synapse)">/distill</code></p>
+    <p class="hero-pitch">You correct your coding agent once. It should never make that mistake again &mdash; in any project, any session, forever.<br>Claude: <code style="color:var(--synapse)">/distill</code> &middot; Codex: <code style="color:var(--synapse)">Distill this session</code></p>
     <div class="install-tabs">
         <button class="install-tab active" onclick="switchTab('mac')">macOS</button>
         <button class="install-tab" onclick="switchTab('linux')">Linux</button>
@@ -1850,11 +1850,11 @@
     </div>
     <div class="install-panel" id="panel-linux">
         <div class="install-cmd" onclick="copyCmd(event, 'curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh | bash')">curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh | bash</div>
-        <p class="install-note">also works via <span style="color:var(--synapse);cursor:pointer" onclick="copyCmd(event, 'brew install tomacco/aura-distill/aura-distill && aura-distill install')">Homebrew on Linux</span>. no sudo, writes only to ~/.claude/.</p>
+        <p class="install-note">also works via <span style="color:var(--synapse);cursor:pointer" onclick="copyCmd(event, 'brew install tomacco/aura-distill/aura-distill && aura-distill install')">Homebrew on Linux</span>. no sudo; shared knowledge lives in ~/.aura-distill/.</p>
     </div>
     <div class="install-panel" id="panel-windows">
         <div class="install-cmd" onclick="copyCmd(event, 'irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1 | iex')">irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1 | iex</div>
-        <p class="install-note">PowerShell. no admin required, writes only to %USERPROFILE%\.claude\.</p>
+        <p class="install-note">PowerShell. no admin required; shared knowledge lives in %USERPROFILE%\.aura-distill\.</p>
     </div>
     <div class="star-row">
         <a class="github-button" href="https://github.com/tomacco/aura-distill" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star tomacco/aura-distill on GitHub">Star</a>
@@ -1909,21 +1909,21 @@
             <div class="how-num">1</div>
             <div class="how-icon">&#x1F4AC;</div>
             <h3>Work normally</h3>
-            <p>Express preferences, correct mistakes, teach things. Claude's built-in memory saves facts &mdash; distill watches for the deeper patterns behind them.</p>
+            <p>Express preferences, correct mistakes, teach things. Distill watches for the deeper patterns behind them, whichever supported coding agent you use.</p>
         </div>
         <div class="how-arrow">&rarr;</div>
         <div class="how-step">
             <div class="how-num">2</div>
             <div class="how-icon">&#x2F;</div>
-            <h3>Type <code>/distill</code></h3>
-            <p>It traces corrections to first principles, not surface observations. "Don't use the shared factory" becomes "blast radius awareness" &mdash; applicable everywhere.</p>
+            <h3>Invoke distill</h3>
+            <p>Type <code>/distill</code> in Claude Code or ask Codex to <code>Distill this session</code>. It traces corrections to first principles, not surface observations.</p>
         </div>
         <div class="how-arrow">&rarr;</div>
         <div class="how-step">
             <div class="how-num">3</div>
             <div class="how-icon">&#x267B;</div>
             <h3>Principles compound</h3>
-            <p>Next session &mdash; any project, any repo &mdash; Claude retrieves by relevance, not recency. Tiered storage means the right knowledge at the right time. <a href="https://tomacco.github.io/aura-distill/research/confidence.html" style="color:var(--synapse);font-size:0.8em">How confidence works &rarr;</a></p>
+            <p>Next session &mdash; any project, any repo, Claude or Codex &mdash; your agent retrieves by relevance, not recency. One shared SPINE keeps both clients aligned. <a href="https://tomacco.github.io/aura-distill/research/confidence.html" style="color:var(--synapse);font-size:0.8em">How confidence works &rarr;</a></p>
         </div>
     </div>
 </div>
@@ -2144,7 +2144,7 @@
         </div>
         <div class="arch-prop">
             <span class="arch-prop-icon" style="color:var(--axon)">&#x25C8;</span>
-            <span>Uninstall = delete one folder</span>
+            <span>Uninstall preserves your knowledge</span>
         </div>
     </div>
 </div>
@@ -2179,6 +2179,10 @@
             <p>Claude's memory saves <strong>observations</strong> &mdash; flat facts in one file. Distill saves <strong>principles</strong> &mdash; structured knowledge retrieved by relevance. Think of it as the difference between writing notes and actually studying them.</p>
         </details>
         <details class="faq-item reveal">
+            <summary>How do I invoke it in Claude Code and Codex?</summary>
+            <p>In Claude Code, type <code>/distill</code>. In Codex, say <code>Distill this session</code> or <code>Run aura-distill</code>. Both clients read and update the shared knowledge in <code>~/.aura-distill/</code>.</p>
+        </details>
+        <details class="faq-item reveal">
             <summary>Does it replace Claude's built-in memory?</summary>
             <p><strong>Yes.</strong> Once installed, distill owns all persistent knowledge. It disables auto-memory and tells Claude to route everything through the distillation pipeline &mdash; where it gets anti-sycophancy checks, confidence tracking, proper categorization, and tiered storage. The built-in system saves flat observations. Distill saves validated principles.</p>
         </details>
@@ -2206,7 +2210,7 @@
         </details>
         <details class="faq-item reveal">
             <summary>How do I uninstall?</summary>
-            <p><code>rm -f ~/.claude/commands/distill.md ~/.claude/rules/distill.md ~/.claude/distill/distill-process.md ~/.claude/distill/distill-monitor.md ~/.claude/distill/.version</code><br>Your knowledge files in ~/.claude/distill/ are preserved &mdash; you only lose the engine, not what it learned.</p>
+            <p>Remove the Claude adapters and the managed <code>aura-distill</code> blocks from <code>~/.claude/CLAUDE.md</code> and <code>~/.codex/AGENTS.md</code>. Keep <code>~/.aura-distill/</code> unless you intentionally want to delete your knowledge. See the repository&rsquo;s <a href="https://github.com/tomacco/aura-distill#uninstall" style="color:var(--synapse)">platform-specific uninstall instructions</a>.</p>
         </details>
     </div>
 </div>
@@ -2219,7 +2223,7 @@
 </div>
 
 <footer>
-    MIT &middot; Built for Claude Code &middot; v1.1.11
+    MIT &middot; Built for Claude Code + Codex &middot; v1.1.11
 </footer>
 
 <script>

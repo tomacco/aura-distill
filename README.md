@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/header.svg?v=1.1.10" alt="aura-distill" width="800"/>
+  <img src="docs/header.svg?v=1.1.11" alt="aura-distill" width="800"/>
 </p>
 
 <p align="center">
@@ -173,5 +173,5 @@ Your knowledge files in `~/.aura-distill/` are preserved. They're yours.
 ---
 
 <p align="center">
-  <sub>v1.1.10 · MIT · Built for Claude Code and Codex</sub>
+  <sub>v1.1.11 · MIT · Built for Claude Code and Codex</sub>
 </p>

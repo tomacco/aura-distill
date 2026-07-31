@@ -1,0 +1,62 @@
+name: Installer tests
+
+# Deterministic CI for install.sh / install.ps1. The install-behavior job
+# depends on tests that install from the local checkout (AURA_DISTILL_REPO
+# override) into throwaway temp homes — no network, no real profile dirs.
+# It is guarded by file existence so this workflow is safe to merge before
+# the test suite lands (PR #42) and activates automatically once it does.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  syntax:
+    name: Syntax checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: bash -n install.sh
+        run: bash -n install.sh
+
+      - name: PowerShell parser on install.ps1
+        shell: pwsh
+        run: |
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Join-Path $PWD 'install.ps1'), [ref]$null, [ref]$errors) | Out-Null
+          if ($errors.Count) {
+            $errors | ForEach-Object { Write-Host "::error::$($_.Message)" }
+            exit 1
+          }
+          Write-Host 'install.ps1 parses cleanly.'
+
+  install-behavior:
+    name: Deterministic installer tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PowerShell installer suite
+        shell: pwsh
+        run: |
+          if (Test-Path tests/test-codex.ps1) {
+            pwsh -NoProfile -File tests/test-codex.ps1
+          } else {
+            Write-Host 'tests/test-codex.ps1 not on this branch yet; skipping.'
+          }
+
+      - name: Bash installer suite
+        if: runner.os == 'Linux'
+        run: |
+          if [ -f tests/test-install.sh ]; then
+            bash tests/test-install.sh
+          else
+            echo "tests/test-install.sh not on this branch yet; skipping."
+          fi

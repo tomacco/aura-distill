@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-REPO_ROOT="${1:?repo root required}"
+REPO_ROOT="${1:-$(cd "$(dirname "$0")/.." && pwd)}"
 INSTALLER="${2:-$REPO_ROOT/install.sh}"
 TEST_HOME=$(mktemp -d)
 trap 'rm -rf "$TEST_HOME"' EXIT

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">Author engagement record for aura-distill PR 42</title>
+  <desc id="desc">A minimal Bauhaus banner recording the author, independent reviewer, merged commit, and approximate cost.</desc>
+
+  <rect width="1200" height="360" fill="#f2eadf"/>
+  <rect width="30" height="360" fill="#171717"/>
+  <circle cx="155" cy="122" r="72" fill="#e43d30"/>
+  <rect x="92" y="204" width="126" height="126" fill="#175fa3"/>
+  <path d="M155 42 252 204H58Z" fill="#f2c230" opacity=".94"/>
+  <circle cx="155" cy="122" r="31" fill="#171717"/>
+
+  <g fill="#171717" font-family="Arial, Helvetica, sans-serif">
+    <text x="292" y="66" font-size="16" font-weight="700" letter-spacing="4">AURA DISTILL · PR #42 · MERGED</text>
+    <text x="288" y="132" font-size="42" font-weight="800" letter-spacing="1">AUTHOR ENGAGEMENT RECORD</text>
+    <rect x="292" y="155" width="820" height="5" fill="#171717"/>
+
+    <text x="292" y="202" font-size="18" font-weight="700">BUILT BY</text>
+    <text x="420" y="202" font-size="18">codex-gpt5-aura-tomacco</text>
+    <text x="292" y="234" font-size="18" font-weight="700">REVIEWED BY</text>
+    <text x="450" y="234" font-size="18">claude-fable-5-distill-tomacco · approved</text>
+    <text x="292" y="266" font-size="18" font-weight="700">MERGED</text>
+    <text x="395" y="266" font-size="18">39af4ec · Windows + Ubuntu · CI green</text>
+
+    <text x="292" y="305" font-size="14">≈3.0M input/context · ≈35K generated · ≈$2.50–$4.00 API equivalent*</text>
+    <text x="292" y="329" font-size="12">*Estimate only; repeated context assumed mostly cached. No authoritative billing meter was available.</text>
+  </g>
+
+  <text x="1090" y="292" text-anchor="end" fill="#175fa3" font-family="'Segoe Script', 'Brush Script MT', cursive" font-size="38" font-style="italic" transform="rotate(-5 1090 292)">codex</text>
+  <path d="M920 303c55 13 112 8 180-8" fill="none" stroke="#175fa3" stroke-width="3" stroke-linecap="round"/>
+</svg>

@@ -1,6 +1,6 @@
 # Distill: Session Monitor
 
-This file is loaded at the start of every Claude Code session. It is intentionally small to minimize context cost.
+This file is referenced by the Claude and Codex integration blocks. It is intentionally small to minimize context cost.
 
 ## MANDATORY: Knowledge retrieval
 
@@ -12,7 +12,7 @@ This file is loaded at the start of every Claude Code session. It is intentional
 
 ## Knowledge ownership (critical)
 
-**Distill owns ALL persistent knowledge management.** Do NOT use Claude Code's built-in auto-memory system (`memory/` files, `MEMORY.md`) for learnings, corrections, preferences, or user model observations.
+**Distill owns ALL persistent knowledge management.** Do NOT write competing persistent memories in a client's private memory store for learnings, corrections, preferences, or user model observations.
 
 When you detect something worth remembering (a correction, a preference, a frustration, a learning):
 - Do NOT write it to `memory/` files

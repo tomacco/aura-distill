@@ -2,6 +2,19 @@
 
 Three installation methods, from automated to fully manual.
 
+## Shared Claude + Codex layout
+
+New installations keep the knowledge base in `~/.aura-distill/`. Claude's
+`CLAUDE.md` and Codex's global `~/.codex/AGENTS.md` receive small managed
+pointers to the same `SPINE.md`, so both clients recall and update one source
+of truth.
+
+When the installer finds an older Claude-only knowledge base at
+`~/.claude/distill/`, it copies that knowledge into the shared directory and
+leaves the legacy directory untouched. Re-running the installer is idempotent:
+managed instruction blocks are replaced in place and unrelated user guidance
+is preserved.
+
 ---
 
 ## Method 1: Script (one command)
@@ -43,7 +56,9 @@ For security-conscious users who don't pipe curl to bash.
 ### Step 1: Download the files
 
 ```bash
-# Choose your profile directory (default: ~/.claude)
+# Shared knowledge directory (default for every client)
+DISTILL_DIR="$HOME/.aura-distill"
+# Claude adapter directory
 PROFILE="$HOME/.claude"
 
 # Core command (the /distill slash command)
@@ -52,11 +67,11 @@ curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill.md 
 
 # Process engine (how /distill works internally)
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill-process.md \
-  -o "$PROFILE/distill/distill-process.md"
+  -o "$DISTILL_DIR/distill-process.md"
 
 # Session monitor (loaded every session, tiny)
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill-monitor.md \
-  -o "$PROFILE/distill/distill-monitor.md"
+  -o "$DISTILL_DIR/distill-monitor.md"
 
 # Retrieval rules (auto-loads, tells Claude how to use knowledge)
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/rules/distill.md \
@@ -66,15 +81,16 @@ curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/rules/disti
 ### Step 2: Create the directory structure
 
 ```bash
-mkdir -p "$PROFILE/distill"/{craft,ops,profile,projects,feedback,archive}
+mkdir -p "$DISTILL_DIR"/{craft,ops,profile,projects,feedback,archive}
 mkdir -p "$PROFILE/commands"
 mkdir -p "$PROFILE/rules"
+mkdir -p "$HOME/.codex"
 ```
 
 ### Step 3: Initialize the SPINE
 
 ```bash
-cat > "$PROFILE/distill/SPINE.md" << 'EOF'
+cat > "$DISTILL_DIR/SPINE.md" << 'EOF'
 # Distill Knowledge Index
 
 <!-- This file is managed by aura-distill. Max 80 lines. -->
@@ -86,7 +102,7 @@ EOF
 
 ```bash
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/VERSION \
-  -o "$PROFILE/distill/.version"
+  -o "$DISTILL_DIR/.version"
 ```
 
 ### Step 5: (Optional) Disable built-in auto-memory
@@ -99,15 +115,15 @@ Distill owns knowledge management. To prevent Claude's built-in memory from conf
 echo '{ "autoMemoryEnabled": false }' > "$PROFILE/settings.json"
 ```
 
-### Step 6: (Optional) Add CLAUDE.md gate
+### Step 6: Add Claude and Codex integration pointers
 
-Add to your `$PROFILE/CLAUDE.md`:
+Add this managed guidance to both `$PROFILE/CLAUDE.md` and `$HOME/.codex/AGENTS.md`:
 
 ```markdown
-# Distill — knowledge system (github.com/tomacco/aura-distill)
-
-GATE: If ~/.claude/distill/.needs-migration exists AND its content does not start with "migrated",
-tell the user: "Run /distill to migrate existing memories." Do NOT proceed until addressed or declined.
+<!-- aura-distill:start -->
+# Aura Distill shared knowledge
+Before doing any work, read ~/.aura-distill/distill-monitor.md and ~/.aura-distill/SPINE.md. If the task matches a SPINE entry, read the linked file before responding and apply it.
+<!-- aura-distill:end -->
 ```
 
 ---
@@ -141,11 +157,13 @@ If only `~/.claude/` exists, the installer uses it automatically. No `--profile`
 | File | Location | Purpose |
 |------|----------|---------|
 | `distill.md` | `$PROFILE/commands/` | The `/distill` slash command |
-| `distill-process.md` | `$PROFILE/distill/` | How distillation works (sub-agent reads this) |
-| `distill-monitor.md` | `$PROFILE/distill/` | Session monitor (pressure tracking) |
+| `distill-process.md` | `~/.aura-distill/` | How distillation works (sub-agent reads this) |
+| `distill-monitor.md` | `~/.aura-distill/` | Session monitor (pressure tracking) |
 | `distill.md` (rules) | `$PROFILE/rules/` | Retrieval rules (auto-loaded every session) |
-| `SPINE.md` | `$PROFILE/distill/` | Knowledge index (you'll add entries here) |
-| `.version` | `$PROFILE/distill/` | Installed version (for update checks) |
+| `SPINE.md` | `~/.aura-distill/` | Shared knowledge index |
+| `.version` | `~/.aura-distill/` | Installed version (for update checks) |
+| managed pointer | `~/.claude/CLAUDE.md` | Claude integration |
+| managed pointer | `~/.codex/AGENTS.md` | Codex integration |
 
 **Total: 5 files + 1 index. No dependencies. No Node.js. No database.**
 
@@ -153,10 +171,10 @@ If only `~/.claude/` exists, the installer uses it automatically. No `--profile`
 
 ## Verifying installation
 
-After installing, start a new Claude Code session and say:
+After installing, start a new Claude Code or Codex session and say:
 
 ```
-Read ~/.claude/distill/SPINE.md
+Read ~/.aura-distill/SPINE.md
 ```
 
 If Claude reads it without error, the installation is working. The rules file will make Claude read the SPINE automatically at session start.
@@ -168,10 +186,8 @@ If Claude reads it without error, the installation is working. The rules file wi
 ```bash
 rm -f "$PROFILE/commands/distill.md"
 rm -f "$PROFILE/rules/distill.md"
-rm -f "$PROFILE/distill/distill-process.md"
-rm -f "$PROFILE/distill/distill-monitor.md"
-rm -f "$PROFILE/distill/.version"
-# Your knowledge files in $PROFILE/distill/ are preserved
+# Remove the managed aura-distill blocks from CLAUDE.md and ~/.codex/AGENTS.md.
+# Keep ~/.aura-distill/ unless you intentionally want to delete your knowledge.
 ```
 
 ---

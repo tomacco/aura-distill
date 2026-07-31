@@ -1,6 +1,6 @@
 # Retrospective Distillation
 
-> **MANDATORY**: This command MUST execute via a spawned sub-agent. NEVER run the distillation process in the main conversation context. The main context is precious — distillation would consume it and defeat the purpose.
+> **MANDATORY**: This workflow MUST execute via an isolated sub-agent when the client supports sub-agents. NEVER run the distillation process in the main conversation context unless isolation is unavailable and the user explicitly accepts the context cost.
 
 ## What you MUST do (exactly in this order)
 
@@ -89,9 +89,9 @@ Write all of this down as a structured summary. Be thorough — anything you don
 
 ### Step 2: Spawn the distillation agent
 
-Use the Agent tool. The sub-agent receives the FULL distillation process plus your harvested signals.
+Use the client's sub-agent/delegation tool (Claude's Agent tool or Codex sub-agents). The sub-agent receives the FULL distillation process plus your harvested signals.
 
-**IMPORTANT: The distillation agent MUST be spawned in FOREGROUND (do NOT use `run_in_background: true`).** Background agents cannot write files because permission prompts are suppressed. The distillation agent's sole purpose is writing files — it MUST run in foreground so that Edit/Write permissions from settings.local.json are honored.
+**IMPORTANT:** Keep the distillation agent attached until it completes. It must have write access to `{DISTILL_DIR}/`; do not use a mode that suppresses required write permissions.
 
 ```
 Agent({

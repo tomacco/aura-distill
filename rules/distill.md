@@ -1,6 +1,6 @@
 # Distill Knowledge System
 
-**{DISTILL_DIR}** = the `distill/` directory inside your active Claude config. Resolve it by finding where THIS rules file lives — go up one level, then into `distill/`. Typically `~/.claude/distill/` for the default profile, or `~/.claude-<name>/distill/` for named profiles.
+**{DISTILL_DIR}** = the shared Aura Distill directory, normally `~/.aura-distill/`. The installer resolves this placeholder to an absolute path so Claude and Codex retrieve the same knowledge.
 
 You have accumulated knowledge from past sessions stored in `{DISTILL_DIR}/`.
 

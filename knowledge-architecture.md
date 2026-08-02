@@ -165,6 +165,8 @@ Tier 2 (active): Full detail for currently relevant knowledge
 Tier 3 (archive): Full detail for rarely needed knowledge, more densely expressed
 ```
 
+Alongside the tiers, two non-tier directories exist: `inbox/` (a pre-tier queue — items explicitly saved mid-session, consumed into the pipeline by the next distillation) and `data/` (local diagnostic ledgers — economics and distillation coverage — never part of the synced knowledge set).
+
 **Promotion back to Tier 2:** If a Tier 3 file gets accessed 3+ times (`recall_count`), that's a signal it should be promoted back to Tier 2 — it's clearly still relevant.
 
 ---

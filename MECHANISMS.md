@@ -7,6 +7,7 @@ Living document of the mechanisms in aura-distill, their current state, and impr
 | Mechanism | Status | How it works | Known gaps |
 |-----------|--------|--------------|------------|
 | Distillation ledger | next release | Beacon nonce written into the live transcript (Step 1F) + one JSONL line appended to `data/distill-ledger.jsonl` after each run (session id, transcript path, line count, signals) | Identity `unresolved` when the client's transcript root is unknown; dedupe is recorded here but only ENFORCED by the auto-distiller (#51); Codex transcript layout assumed, not yet live-verified |
+| INBOX | next release | `inbox/` folder-of-files queue: explicit user saves written mid-session (one file per item, collision-proof names), consumed + deleted by the next distill only after verified encoding | `session-signal` origin reserved for pre-distill marks (#48, gated on benchmark #49); no dedup of semantically identical items queued twice |
 
 ### Future improvements
 - [ ] Auto-distiller discovery: diff transcript roots against the ledger (#51)

@@ -41,6 +41,10 @@ try {
     Assert-True ((Get-Content $claudeMd -Raw) -match [regex]::Escape($aura)) 'Claude points to shared SPINE'
     Assert-True ((Get-Content $codexAgents -Raw) -match [regex]::Escape($aura)) 'Codex points to shared SPINE'
     Assert-True (-not ((Get-Content (Join-Path $aura 'distill-process.md') -Raw) -match '\{DISTILL_DIR\}')) 'installer resolves shared path placeholders'
+    Assert-True (Test-Path (Join-Path $aura 'inbox')) 'fresh install creates the inbox queue'
+    Assert-True (Test-Path (Join-Path $aura 'data')) 'fresh install creates the data dir'
+    Assert-True ((Get-Content (Join-Path $aura 'distill-process.md') -Raw).Contains('Step 0b: Consume the INBOX')) 'process engine carries inbox consumption'
+    Assert-True ((Get-Content (Join-Path $aura 'distill-monitor.md') -Raw).Contains('user-explicit')) 'monitor carries explicit-save instructions'
 
     # Idempotence and preservation of unrelated client guidance.
     Add-Content $claudeMd "`n# user-owned Claude guidance"

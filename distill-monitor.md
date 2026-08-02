@@ -8,7 +8,7 @@ This file is referenced by the Claude and Codex integration blocks. It is intent
 
 **During the session:** Use the SPINE to identify relevant files and Read them before the FIRST major action in a new domain (first time writing code, first PR review, first architecture call). You don't need to re-read for every subsequent action in the same domain — once loaded, the knowledge is in your context.
 
-**When user says "remember X":** Offer `/distill` — do NOT save to memory/.
+**When the user EXPLICITLY asks to save/remember something:** Write an INBOX item (see below) — do NOT save to memory/. (Passive signals you merely notice are NOT inbox items — they stay mental notes that raise memory pressure.)
 
 ## Knowledge ownership (critical)
 
@@ -18,11 +18,32 @@ When you detect something worth remembering (a correction, a preference, a frust
 - Do NOT write it to `memory/` files
 - Do NOT create feedback/user/project memory files via the built-in system
 - Instead: **note it mentally as a signal for the next `/distill` run** (this increases memory pressure)
-- If it's urgent and the user explicitly says "remember this": tell them `/distill` will capture it properly, or offer to run it now
+- **If the user explicitly asks to save something** ("remember this", "save this for the next distill", "make sure distill captures this"): write it to the INBOX now (see below), then confirm.
 
 **Why:** Distill has anti-sycophancy checks, frustration escalation, tiered storage, compaction, and observability. The built-in memory system has none of these. Bypassing distill means bypassing quality control.
 
 **Exception:** If distill is NOT installed (no `{DISTILL_DIR}/` directory exists), fall back to the built-in memory system normally.
+
+## The INBOX (explicit saves)
+
+`{DISTILL_DIR}/inbox/` queues items for the next distillation run. When the user explicitly asks to save/remember something:
+
+1. Write ONE file per item: `{DISTILL_DIR}/inbox/<UTC yyyymmddTHHMMSSZ>-<4 random hex>-<short-slug>.md`. Generate the 4-hex suffix with a tool call — bash `printf '%04x\n' $RANDOM`, `openssl rand -hex 2`, or PowerShell `'{0:x4}' -f (Get-Random -Maximum 65536)` — never invent it mentally; a real RNG is what keeps concurrent sessions from colliding. The slug: lowercase `a-z0-9` and hyphens ONLY — never path separators, dots, spaces, or characters taken verbatim from content. The file must land inside `inbox/`, nowhere else.
+2. Content:
+
+```markdown
+---
+origin: user-explicit
+created: <ISO-8601 UTC>
+session: <session id if you know it — otherwise omit the line>
+domain_hint: <craft|ops|profile|projects|feedback — optional, omit if unsure>
+---
+<the thing to remember, in enough context that a future distillation agent who never saw this conversation can encode it correctly>
+```
+
+3. Confirm briefly with the file path: "Saved to inbox — the next distill will encode it."
+
+Rules: one item per file; NEVER edit or delete existing inbox items (the distiller owns consumption); if the write fails, fall back to offering `/distill` now. Writing an inbox item does NOT reset memory pressure — it queues one signal, it doesn't consolidate.
 
 ## What to do at session start
 

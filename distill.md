@@ -127,6 +127,7 @@ Read the full distillation process instructions from:
 
 Execute every step:
 0. Discover knowledge structure
+0b. Consume the INBOX ({DISTILL_DIR}/inbox/) — pre-extracted signals queued by past sessions; delete consumed items only after successful encoding
 1. Process the signals above (they are pre-harvested for you)
 2. Trace each to first principles
 3. Encode at the right layer (write the actual files)
@@ -145,6 +146,7 @@ You MUST be able to Write and Edit files in {DISTILL_DIR}/. If any write is deni
 ## Output Format
 Return a distillation report:
 - Signals processed: N
+- Inbox: K items consumed (0 if none; one line each when K > 0)
 - Learnings encoded: list with file paths
 - User model updates: what changed
 - Tier health: current state
@@ -235,6 +237,7 @@ Update silently, then briefly confirm:
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill.md -o ~/.claude/commands/distill.md
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill-process.md -o {DISTILL_DIR}/distill-process.md
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill-monitor.md -o {DISTILL_DIR}/distill-monitor.md
+mkdir -p {DISTILL_DIR}/data {DISTILL_DIR}/inbox
 echo "NEW_VERSION" > {DISTILL_DIR}/.version
 ```
 

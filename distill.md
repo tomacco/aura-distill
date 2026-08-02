@@ -87,6 +87,16 @@ Scan the entire conversation above and collect:
 
 Write all of this down as a structured summary. Be thorough — anything you don't include here is LOST to the sub-agent.
 
+**F) Identity beacon (for the distillation ledger)**
+
+Before spawning, run this shell command (any shell tool works — the point is that executing it writes the beacon into this conversation's transcript on disk):
+
+```bash
+echo "aura-distill-beacon $(date -u +%Y%m%dT%H%M%SZ)-$RANDOM"
+```
+
+Keep the full beacon string from the output — Step 3 uses it to identify WHICH conversation was distilled. If the command fails, continue anyway; the ledger entry will simply record an unresolved identity.
+
 ### Step 2: Spawn the distillation agent
 
 Use the client's sub-agent/delegation tool (Claude's Agent tool or Codex sub-agents). The sub-agent receives the FULL distillation process plus your harvested signals.
@@ -153,7 +163,26 @@ When the sub-agent completes:
 
    Rules: append-only, one JSON object per line, no rewriting past lines. If a value is unknown, use `null` — never invent numbers. This file is local diagnostic data, not part of the synced knowledge set; distill itself never transmits it.
 
-3. **Relay the report** to the user concisely. Only surface:
+3. **Record the distillation ledger** — append ONE line to `{DISTILL_DIR}/data/distill-ledger.jsonl` (create the `data/` directory if missing). The ledger records WHICH conversations have been distilled, so automation can find undistilled ones and never process the same conversation twice.
+
+   First, resolve which conversation this is using the beacon from Step 1F — search the newest transcript files under the client's transcript roots (Claude Code: `~/.claude/projects/*/*.jsonl`; Codex: `~/.codex/sessions/*/*/*/*.jsonl`; adjust if this client stores transcripts elsewhere). Example:
+
+```bash
+grep -l "aura-distill-beacon <beacon>" $(ls -t ~/.claude/projects/*/*.jsonl ~/.codex/sessions/*/*/*/*.jsonl 2>/dev/null | head -30) 2>/dev/null | head -1
+```
+
+   - **Match found:** `transcript_path` = that file; `session_id` = its basename without extension; `transcript_lines` = its current line count (`wc -l`); `identity` = `"resolved"`.
+   - **No match** (transcripts unavailable, beacon not yet flushed, or unknown client layout): set all three to `null` and `identity` = `"unresolved"` — never guess a path or id.
+
+   The line:
+
+```json
+{"ts":"<ISO-8601 UTC>","session_id":"<id or null>","transcript_path":"<path or null>","transcript_lines":<n or null>,"identity":"resolved|unresolved","trigger":"manual","mode":"full","signals":<N>,"distiller_version":"<contents of {DISTILL_DIR}/.version>"}
+```
+
+   Rules: append-only, one JSON object per line, no rewriting past lines, `null` over invented values. Like the economics ledger, this is local diagnostic data — never synced, never transmitted. Distilling the SAME session again later in the conversation is legitimate: append a second record; the growing `transcript_lines` tells automation what has already been covered.
+
+4. **Relay the report** to the user concisely. Only surface:
    - What was learned (the principles, not the raw signals)
    - Where it was saved
    - One economics line (cost of this distillation + current KB footprint — from the ledger entry)

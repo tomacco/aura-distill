@@ -110,7 +110,8 @@ foreach ($d in @($CmdDir, $DistillDir,
                  (Join-Path $DistillDir 'profile'),
                  (Join-Path $DistillDir 'projects'),
                  (Join-Path $DistillDir 'feedback'),
-                 (Join-Path $DistillDir 'archive'))) {
+                 (Join-Path $DistillDir 'archive'),
+                 (Join-Path $DistillDir 'data'))) {
     if (-not (Test-Path $d)) { New-Item -ItemType Directory -Force -Path $d | Out-Null }
 }
 

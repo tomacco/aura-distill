@@ -219,7 +219,7 @@ show_section "Core files"
 
 # Ensure directories exist
 mkdir -p "$CMD_DIR"
-mkdir -p "$DISTILL_DIR"/{craft,ops,profile,projects,feedback,archive}
+mkdir -p "$DISTILL_DIR"/{craft,ops,profile,projects,feedback,archive,data}
 
 # New installs use the client-neutral store. When an older Claude-only install
 # exists, seed the shared store without moving or modifying the legacy copy.

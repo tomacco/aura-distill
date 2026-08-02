@@ -35,6 +35,16 @@ test -f "$TEST_HOME/.codex/AGENTS.md"
 grep -q 'DO-NOT-DELETE' "$TEST_HOME/.claude/CLAUDE.md"
 grep -q 'LEGACY-KNOWLEDGE' "$TEST_HOME/.aura-distill/craft/legacy.md"
 
+# Distillation ledger (#46): data/ dir exists and the installed dispatcher
+# carries the ledger instructions with {DISTILL_DIR} resolved
+test -d "$TEST_HOME/.aura-distill/data"
+grep -q 'distill-ledger.jsonl' "$TEST_HOME/.claude/commands/distill.md"
+grep -q 'aura-distill-beacon' "$TEST_HOME/.claude/commands/distill.md"
+if grep -q '{DISTILL_DIR}' "$TEST_HOME/.claude/commands/distill.md"; then
+  echo "FAIL unresolved {DISTILL_DIR} placeholder in installed distill.md" >&2
+  exit 1
+fi
+
 before_claude=$(sha256sum "$TEST_HOME/.claude/CLAUDE.md")
 before_codex=$(sha256sum "$TEST_HOME/.codex/AGENTS.md")
 run_install

@@ -2,6 +2,17 @@
 
 Living document of the mechanisms in aura-distill, their current state, and improvement ideas.
 
+## Coverage & Automation
+
+| Mechanism | Status | How it works | Known gaps |
+|-----------|--------|--------------|------------|
+| Distillation ledger | next release | Beacon nonce written into the live transcript (Step 1F) + one JSONL line appended to `data/distill-ledger.jsonl` after each run (session id, transcript path, line count, signals) | Identity `unresolved` when the client's transcript root is unknown; dedupe is recorded here but only ENFORCED by the auto-distiller (#51); Codex transcript layout assumed, not yet live-verified |
+
+### Future improvements
+- [ ] Auto-distiller discovery: diff transcript roots against the ledger (#51)
+- [ ] `marks` mode entries once pre-distill marks ship (#48, gated on #49)
+- [ ] Hook-based session identity fast-path (SessionStart hook writes id/path directly; needs a safe settings.json JSON-merge design)
+
 ## Concurrency & Reliability
 
 | Mechanism | Status | How it works | Known gaps |

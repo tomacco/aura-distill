@@ -35,6 +35,16 @@ test -f "$TEST_HOME/.codex/AGENTS.md"
 grep -q 'DO-NOT-DELETE' "$TEST_HOME/.claude/CLAUDE.md"
 grep -q 'LEGACY-KNOWLEDGE' "$TEST_HOME/.aura-distill/craft/legacy.md"
 
+# Distillation ledger (#46): data/ dir exists and the installed dispatcher
+# carries the ledger instructions with {DISTILL_DIR} resolved
+test -d "$TEST_HOME/.aura-distill/data"
+grep -q 'distill-ledger.jsonl' "$TEST_HOME/.claude/commands/distill.md"
+grep -q 'aura-distill-beacon' "$TEST_HOME/.claude/commands/distill.md"
+if grep -q '{DISTILL_DIR}' "$TEST_HOME/.claude/commands/distill.md"; then
+  echo "FAIL unresolved {DISTILL_DIR} placeholder in installed distill.md" >&2
+  exit 1
+fi
+
 before_claude=$(sha256sum "$TEST_HOME/.claude/CLAUDE.md")
 before_codex=$(sha256sum "$TEST_HOME/.codex/AGENTS.md")
 run_install
@@ -45,3 +55,19 @@ test "$before_claude" = "$after_claude"
 test "$before_codex" = "$after_codex"
 
 printf 'PASS bash installer preserves partial legacy content and is byte-stable\n'
+
+# Ledger beacon resolution (#46): exercise the documented grep pipeline shape
+# against fixture transcripts — both the match case and the empty-glob case
+# (a bare grep with no file operands would hang on stdin; </dev/null guards it).
+beacon="aura-distill-beacon 20260802T000000Z-12345"
+mkdir -p "$TEST_HOME/.claude/projects/fixture"
+printf 'other line\n%s\n' "$beacon" > "$TEST_HOME/.claude/projects/fixture/session-abc.jsonl"
+printf 'no beacon here\n' > "$TEST_HOME/.claude/projects/fixture/session-def.jsonl"
+
+found=$(grep -l "$beacon" $(ls -t "$TEST_HOME"/.claude/projects/*/*.jsonl "$TEST_HOME"/.codex/sessions/*/*/*/*.jsonl 2>/dev/null | head -30) </dev/null 2>/dev/null | head -1)
+test "$(basename "$found" .jsonl)" = "session-abc"
+
+empty=$(grep -l "$beacon" $(ls -t "$TEST_HOME"/nonexistent/*/*.jsonl 2>/dev/null | head -30) </dev/null 2>/dev/null | head -1 || true)
+test -z "$empty"
+
+printf 'PASS ledger beacon grep resolves fixtures and survives empty transcript roots\n'

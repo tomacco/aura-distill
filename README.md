@@ -86,6 +86,8 @@ you type /distill
     → every future session retrieves relevant knowledge before responding
 ```
 
+Mid-session, say **"remember this"** and the item is saved immediately to `~/.aura-distill/inbox/` — it survives even if you never run `/distill` in that session; the next distillation encodes it properly.
+
 ### What makes it different from memory.md
 
 | memory.md | distill |

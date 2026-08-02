@@ -89,7 +89,7 @@ sed -i "s|{DISTILL_DIR}|$DISTILL_DIR|g" \
 ### Step 2: Create the directory structure
 
 ```bash
-mkdir -p "$DISTILL_DIR"/{craft,ops,profile,projects,feedback,archive}
+mkdir -p "$DISTILL_DIR"/{craft,ops,profile,projects,feedback,archive,data,inbox}
 mkdir -p "$PROFILE/commands"
 mkdir -p "$PROFILE/rules"
 mkdir -p "$HOME/.codex"
@@ -190,6 +190,8 @@ If only `~/.claude/` exists, the installer uses it automatically. No `--profile`
 | `.version` | `~/.aura-distill/` | Installed version (for update checks) |
 | managed pointer | `~/.claude/CLAUDE.md` | Claude integration |
 | managed pointer | `~/.codex/AGENTS.md` | Codex integration |
+| `inbox/` | `~/.aura-distill/` | Queue: explicit "remember this" saves for the next distill |
+| `data/` | `~/.aura-distill/` | Local diagnostic ledgers (economics, distillation coverage) |
 
 **Total: 5 files + 1 index. No dependencies. No Node.js. No database.**
 

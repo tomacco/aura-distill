@@ -62,3 +62,19 @@ test "$before_claude" = "$after_claude"
 test "$before_codex" = "$after_codex"
 
 printf 'PASS bash installer preserves partial legacy content and is byte-stable\n'
+
+# Ledger beacon resolution (#46): exercise the documented grep pipeline shape
+# against fixture transcripts — both the match case and the empty-glob case
+# (a bare grep with no file operands would hang on stdin; </dev/null guards it).
+beacon="aura-distill-beacon 20260802T000000Z-12345"
+mkdir -p "$TEST_HOME/.claude/projects/fixture"
+printf 'other line\n%s\n' "$beacon" > "$TEST_HOME/.claude/projects/fixture/session-abc.jsonl"
+printf 'no beacon here\n' > "$TEST_HOME/.claude/projects/fixture/session-def.jsonl"
+
+found=$(grep -l "$beacon" $(ls -t "$TEST_HOME"/.claude/projects/*/*.jsonl "$TEST_HOME"/.codex/sessions/*/*/*/*.jsonl 2>/dev/null | head -30) </dev/null 2>/dev/null | head -1)
+test "$(basename "$found" .jsonl)" = "session-abc"
+
+empty=$(grep -l "$beacon" $(ls -t "$TEST_HOME"/nonexistent/*/*.jsonl 2>/dev/null | head -30) </dev/null 2>/dev/null | head -1 || true)
+test -z "$empty"
+
+printf 'PASS ledger beacon grep resolves fixtures and survives empty transcript roots\n'

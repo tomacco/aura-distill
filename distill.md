@@ -95,6 +95,12 @@ Before spawning, run this shell command (any shell tool works — the point is t
 echo "aura-distill-beacon $(date -u +%Y%m%dT%H%M%SZ)-$RANDOM"
 ```
 
+PowerShell equivalent if no bash-like shell is available:
+
+```powershell
+Write-Output "aura-distill-beacon $((Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ'))-$(Get-Random -Maximum 65536)"
+```
+
 Keep the full beacon string from the output — Step 3 uses it to identify WHICH conversation was distilled. If the command fails, continue anyway; the ledger entry will simply record an unresolved identity.
 
 ### Step 2: Spawn the distillation agent
@@ -170,8 +176,10 @@ When the sub-agent completes:
    First, resolve which conversation this is using the beacon from Step 1F — search the newest transcript files under the client's transcript roots (Claude Code: `~/.claude/projects/*/*.jsonl`; Codex: `~/.codex/sessions/*/*/*/*.jsonl`; adjust if this client stores transcripts elsewhere). Example:
 
 ```bash
-grep -l "aura-distill-beacon <beacon>" $(ls -t ~/.claude/projects/*/*.jsonl ~/.codex/sessions/*/*/*/*.jsonl 2>/dev/null | head -30) 2>/dev/null | head -1
+grep -l "aura-distill-beacon <beacon>" $(ls -t ~/.claude/projects/*/*.jsonl ~/.codex/sessions/*/*/*/*.jsonl 2>/dev/null | head -30) </dev/null 2>/dev/null | head -1
 ```
+
+(The `</dev/null` matters: if no transcript files exist, the file list is empty and a bare `grep` would wait on stdin instead of exiting.)
 
    - **Match found:** `transcript_path` = that file; `session_id` = its basename without extension; `transcript_lines` = its current line count (`wc -l`); `identity` = `"resolved"`.
    - **No match** (transcripts unavailable, beacon not yet flushed, or unknown client layout): set all three to `null` and `identity` = `"unresolved"` — never guess a path or id.
@@ -181,6 +189,8 @@ grep -l "aura-distill-beacon <beacon>" $(ls -t ~/.claude/projects/*/*.jsonl ~/.c
 ```json
 {"ts":"<ISO-8601 UTC>","session_id":"<id or null>","transcript_path":"<path or null>","transcript_lines":<n or null>,"identity":"resolved|unresolved","trigger":"manual","mode":"full","signals":<N>,"distiller_version":"<contents of {DISTILL_DIR}/.version>"}
 ```
+
+   Enums: `trigger` = `manual` | `auto` (auto arrives with the auto-distiller, #51); `mode` = `full` | `marks` | `skipped` (`marks` ships with #48 if approved; `skipped` is written by automation for trivial sessions). Today the dispatcher always writes `manual`/`full`.
 
    Rules: append-only, one JSON object per line, no rewriting past lines, `null` over invented values. Like the economics ledger, this is local diagnostic data — never synced, never transmitted. Distilling the SAME session again later in the conversation is legitimate: append a second record; the growing `transcript_lines` tells automation what has already been covered.
 

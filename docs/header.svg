@@ -98,5 +98,5 @@
   <text x="400" y="158" font-family="monospace" font-size="11" fill="#6a6a9a" text-anchor="middle">first-principles memory for Claude Code</text>
 
   <!-- Version -->
-  <text x="400" y="180" font-family="monospace" font-size="10" fill="#4a4a6a" text-anchor="middle">v1.1.12</text>
+  <text x="400" y="180" font-family="monospace" font-size="10" fill="#4a4a6a" text-anchor="middle">v1.1.14</text>
 </svg>

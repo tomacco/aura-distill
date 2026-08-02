@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pre-Distill Marks — aura-distill Research</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,400;0,7..72,600;1,7..72,300;1,7..72,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="research-style.css">
+</head>
+<body>
+    <button class="mode-toggle" onclick="toggleMode()" aria-label="Toggle dark mode">
+        <span class="icon-sun">☀</span>
+        <span class="icon-moon">☽</span>
+    </button>
+    <nav class="toc">
+        <a href="#idea">The idea</a>
+        <a href="#attack">The attack</a>
+        <a href="#reframe">The reframe</a>
+        <a href="#precheck">The arithmetic</a>
+        <a href="#verdict">Verdict</a>
+        <a href="#limits">Limitations</a>
+    </nav>
+    <div class="container">
+        <header>
+            <a href="./" class="back">&larr; All research</a>
+            <h1>The Benchmark We Refused to Run: Pre-Distill Marks</h1>
+            <div class="meta">August 2026 &middot; adversarial design review + analytic pre-check on 33 real sessions &middot; 0 benchmark tokens spent</div>
+            <p class="abstract">If every session wrote small "signal marks" as the conversation happened, later distillation could process cheap marks instead of full transcripts. We designed a benchmark to test it, let an adversarial reviewer attack the design before spending a token, and then let free arithmetic on 40 days of real usage answer the question the benchmark was going to ask. The feature's token case died twice — first methodologically, then numerically. This page documents both deaths, because a rejected experiment that cost nothing is a better artifact than a confident wrong answer that cost millions of tokens.</p>
+        </header>
+
+        <section id="idea">
+            <h2>The idea, and why it sounded right</h2>
+            <p>Distillation reads conversations and encodes durable knowledge. Conversations are big; distilling them wholesale risks context limits and re-reads everything to find the few signals that matter. So: inject an always-on instruction that makes the session drop a mark — one small file in the <a href="https://github.com/tomacco/aura-distill/blob/main/CHANGELOG.md">newly shipped INBOX</a> — each time a correction, preference, surprise, or failure happens. The later distillation run consumes pre-extracted marks instead of a transcript. Intuition says: big saving.</p>
+            <p>Per the project's release rule, anything that trades tokens against something else needs proof before it ships. A benchmark was designed: replay real sessions with marking instructions injected, compare marks-based distillation against full-transcript distillation on tokens and knowledge quality, with a pre-registered approve-or-discard threshold.</p>
+        </section>
+
+        <section id="attack">
+            <h2>The adversarial attack: four fatal flaws</h2>
+            <p>Following the project's standing methodology, a clean-context agent attacked the design before any run. Verdict: <strong>redesign, not fix-then-run</strong>. Four independent fatal findings:</p>
+            <table>
+                <thead><tr><th>#</th><th>Flaw</th><th>Why it's fatal</th></tr></thead>
+                <tbody>
+                    <tr><td>1</td><td>Wrong baseline</td><td>Live <code>/distill</code> harvests from the main context, where the conversation is <em>already resident and cache-paid</em>. Measuring the full arm as a fresh transcript ingest manufactures a ~90% "saving" the product never pays.</td></tr>
+                    <tr><td>2</td><td>Missing dominant cost term</td><td>A mark written at request 5 of a 120-request session rides along as cache reads on requests 6&ndash;120. Our own <a href="token-economics.html">token-economics study</a> found ~85% of spend is context movement — the tax formula ignored exactly that channel.</td></tr>
+                    <tr><td>3</td><td>Replay destroys the signal class</td><td>Replaying only user turns against a fresh agent produces a non-sequitur by turn 4 — corrections and surprises are responses to specific assistant behavior that won't recur. (Fix, had we continued: teacher-forced replay.)</td></tr>
+                    <tr><td>4</td><td>Wrong control arm</td><td>The real shipping alternative isn't "full-transcript ingest" — it's a cheap-tier summary of the transcript generated at distill time, which costs nothing on sessions that never get distilled. The design never tested the alternative the decision was actually between.</td></tr>
+                </tbody>
+            </table>
+            <div class="insight">
+                <div class="insight-label">The meta-finding</div>
+                <p>Every identified bias in the cost measurement pointed the same direction — toward APPROVE. That is the signature of an experiment design that will produce a confident wrong answer. It is also invisible from inside the design: it took a reviewer with zero authorship context to see it.</p>
+            </div>
+        </section>
+
+        <section id="reframe">
+            <h2>The reframe that survived</h2>
+            <p>Accepting fatal flaw #1 relocates the feature's value. Marks are nearly worthless for manual distillation (warm context). Their honest value proposition is the planned <em>auto-distiller</em>: a background process that must cold-read transcripts it never saw. The question becomes an expected-value inequality:</p>
+            <p style="text-align:center"><code>p<sub>auto</sub> &times; (cold-read cost avoided) &minus; (marking tax, carry included) &gt; 0 &nbsp;?</code></p>
+            <p>And that question doesn't need a benchmark. It needs arithmetic on data we already had.</p>
+        </section>
+
+        <section id="precheck">
+            <h2>The arithmetic: free, and decisive</h2>
+            <p>The attack's own recommendation: before redesigning anything, compute the ceiling from the mined 40-day dataset (33 sessions, 3,360 requests, price-weighted with cache reads at 0.1&times; and output at 5&times;). Selected rows (mid-tier-input-token-equivalents per session; k = marks per session):</p>
+            <table>
+                <thead><tr><th>Scenario</th><th>Marking tax m</th><th>Avoided (p-weighted)</th><th>EV / session</th><th>Sessions losing</th></tr></thead>
+                <tbody>
+                    <tr><td>k=3, batch cold read, measured p</td><td>~5.2k</td><td>~27k &times; p</td><td><strong>+12.3k</strong></td><td>9 / 33</td></tr>
+                    <tr><td>k=10, batch, measured p</td><td>~13.6k</td><td>~27k &times; p</td><td>+3.8k</td><td>18 / 33 (median negative)</td></tr>
+                    <tr><td>k=20, batch, measured p</td><td>~25.7k</td><td>~27k &times; p</td><td><strong>&minus;8.3k</strong></td><td>25 / 33</td></tr>
+                </tbody>
+            </table>
+            <p>Two corrections to our own published numbers surfaced on the way: "12 sessions manually distilled" was actually 12 <em>invocations</em> across <strong>7 unique sessions</strong>; and those 7 hold <strong>59% of transcript volume</strong> — the sessions most worth auto-distilling are the ones already distilled by hand.</p>
+            <div class="insight">
+                <div class="insight-label">The number that decides it</div>
+                <p>A cheap-tier <em>batch</em> cold read of a whole transcript costs only ~27&ndash;43k equivalents per session. Against a measured ~3.58M equivalents of total session burn, the best defensible marks scenario saves <strong>~0.34% of session cost</strong>; the most favorable assumption stack reaches ~2.2%. Marks aren't dominated by their own overhead at low volume — they're dominated by how cheap the alternative already is.</p>
+            </div>
+        </section>
+
+        <section id="verdict">
+            <h2>Verdict</h2>
+            <p><strong>Discarded on token grounds, zero benchmark tokens spent.</strong> Under the project's pre-registered approve-or-discard rule ("significant gain or it doesn't ship"), a 0.3&ndash;2.2% ceiling is a discard — no measurement needed beyond the arithmetic.</p>
+            <p>What survives is a <em>quality</em> question, not a cost one: does cheap cold-read summarization miss signals that in-the-moment marking would catch? And do signals deserve to outlive transcripts that rot before any distill runs? Those belong to the auto-distiller research line, framed as a quality gate on its summarization step — not as a marking tax on every session.</p>
+            <div class="insight">
+                <div class="insight-label">Process lesson</div>
+                <p>Run the free arithmetic <em>before</em> designing the experiment. The pre-check took a fraction of the tokens the benchmark's first session would have burned, and it answered the question with higher confidence than the flawed benchmark could have.</p>
+            </div>
+        </section>
+
+        <section id="limits">
+            <h2>Limitations</h2>
+            <p>One user, one machine, 33 sessions, one usage style (long, dense, frontier-model sessions). Transcript sizes were bounded, not directly measured (the pre-check reports low/mid/high brackets; the verdict holds across all three). Mark volume and mark size are modeled, not observed — but the conclusion is robust across a 3&ndash;20 marks/session sweep, which brackets any plausible shipping behavior. The quality question is explicitly NOT answered here: this page kills a cost claim, nothing more.</p>
+            <p>Raw computation and both design documents (the rejected v1 and the attack verdict) live on the research branch: <code>research/2026-08-02-pre-distill-marks/</code>.</p>
+        </section>
+
+        <footer>
+            <a href="https://github.com/tomacco/aura-distill/tree/research/2026-08-02-pre-distill-marks/research/2026-08-02-pre-distill-marks">Rejected design, attack verdict &amp; pre-check arithmetic</a> &middot; <a href="./">Back to research index</a>
+        </footer>
+    </div>
+
+    <script src="research-theme.js"></script>
+    <script src="research-tracker.js"></script>
+</body>
+</html>

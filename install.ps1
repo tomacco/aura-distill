@@ -6,7 +6,7 @@
 
 $ErrorActionPreference = 'Stop'
 
-$Version  = '1.1.15'
+$Version  = '1.1.16'
 $Build    = '20260515-01'
 $Repo     = if ($env:AURA_DISTILL_REPO) { $env:AURA_DISTILL_REPO } else { 'https://raw.githubusercontent.com/tomacco/aura-distill/main' }
 

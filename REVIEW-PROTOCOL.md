@@ -51,9 +51,9 @@ You are reviewing PR #{PR_NUMBER} on an open-source project you have never seen 
 
 ## Product context
 
-aura-distill is a first-principles memory system for Claude Code. Users install it via a shell script. It places markdown files into ~/.claude/distill/. A /distill slash command triggers retrospective distillation of conversation signals into tiered knowledge files. The system runs entirely inside Claude Code — no server, no dependencies, just markdown files and prompts.
+aura-distill is a first-principles memory system shared by Claude Code and Codex. Users install it via install.sh or install.ps1, which places knowledge in ~/.aura-distill/ and adds client adapters. Claude can trigger distillation with the /distill slash command; Codex users ask it to distill. The distillation turns conversation signals into tiered knowledge files. The system runs entirely inside the client — no server, no dependencies, just markdown files and prompts.
 
-Target users: developers using Claude Code who want persistent, structured memory across sessions.
+Target users: developers using Claude Code or Codex who want persistent, structured memory across sessions.
 
 ## Your task
 
@@ -61,7 +61,7 @@ Review this PR thoroughly. You are the only quality gate before this ships to us
 
 ### Step 0: Understand the project
 
-Read CLAUDE.md, README.md, and the architecture files listed in CLAUDE.md's Architecture section (distill.md, distill-process.md, distill-monitor.md, knowledge-architecture.md, install.sh). Do NOT skip this — you need project context to evaluate whether changes are correct and coherent.
+Read AGENTS.md, README.md, and the architecture files listed in AGENTS.md's Architecture section (distill.md, distill-process.md, distill-monitor.md, knowledge-architecture.md, install.sh). Do NOT skip this — you need project context to evaluate whether changes are correct and coherent.
 
 ### Step 1: Understand the PR
 
@@ -98,7 +98,7 @@ For each area, report PASS, FLAG (concern but not blocking), or BLOCK (must fix 
 
 **Documentation**
 - Do user-facing docs (README, landing page, install output) match the new behavior?
-- Are internal docs (CLAUDE.md, architecture docs) updated?
+- Are internal docs (AGENTS.md, architecture docs) updated?
 
 **Prompt quality** (specific to this project — the "code" is largely LLM prompts)
 - Are instructions to Claude clear and unambiguous?

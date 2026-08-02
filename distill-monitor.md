@@ -8,7 +8,7 @@ This file is referenced by the Claude and Codex integration blocks. It is intent
 
 **During the session:** Use the SPINE to identify relevant files and Read them before the FIRST major action in a new domain (first time writing code, first PR review, first architecture call). You don't need to re-read for every subsequent action in the same domain — once loaded, the knowledge is in your context.
 
-**When user says "remember X":** Write an INBOX item (see below) — do NOT save to memory/.
+**When the user EXPLICITLY asks to save/remember something:** Write an INBOX item (see below) — do NOT save to memory/. (Passive signals you merely notice are NOT inbox items — they stay mental notes that raise memory pressure.)
 
 ## Knowledge ownership (critical)
 
@@ -28,7 +28,7 @@ When you detect something worth remembering (a correction, a preference, a frust
 
 `{DISTILL_DIR}/inbox/` queues items for the next distillation run. When the user explicitly asks to save/remember something:
 
-1. Write ONE file per item: `{DISTILL_DIR}/inbox/<UTC yyyymmddTHHMMSSZ>-<4 random hex>-<short-slug>.md`. Generate the 4-hex suffix with a tool call — bash `printf '%04x\n' $RANDOM`, `openssl rand -hex 2`, or PowerShell `'{0:x4}' -f (Get-Random -Maximum 65536)` — never invent it mentally; a real RNG is what keeps concurrent sessions from colliding.
+1. Write ONE file per item: `{DISTILL_DIR}/inbox/<UTC yyyymmddTHHMMSSZ>-<4 random hex>-<short-slug>.md`. Generate the 4-hex suffix with a tool call — bash `printf '%04x\n' $RANDOM`, `openssl rand -hex 2`, or PowerShell `'{0:x4}' -f (Get-Random -Maximum 65536)` — never invent it mentally; a real RNG is what keeps concurrent sessions from colliding. The slug: lowercase `a-z0-9` and hyphens ONLY — never path separators, dots, spaces, or characters taken verbatim from content. The file must land inside `inbox/`, nowhere else.
 2. Content:
 
 ```markdown

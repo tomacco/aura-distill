@@ -100,7 +100,7 @@ Read the workspace to understand context:
 After reading SPINE.md, verify the knowledge base is intact:
 
 1. **Validate SPINE pointers:** For every file referenced in SPINE.md, confirm it exists on disk (`ls {DISTILL_DIR}/path/file.md`). Collect any missing files.
-2. **Scan for orphaned knowledge:** Glob `{DISTILL_DIR}/*/*.md` and compare against SPINE entries. Files that exist but aren't referenced are orphaned — they should be added to the spine or flagged.
+2. **Scan for orphaned knowledge:** Glob the TIER directories only — `{DISTILL_DIR}/{craft,ops,profile,projects,feedback}/*.md` — and compare against SPINE entries. Files that exist but aren't referenced are orphaned — they should be added to the spine or flagged. Do NOT include `inbox/` (pre-tier queue items awaiting consumption — Step 0b handles them, they never get SPINE entries), `data/` (diagnostic ledgers), or `archive/` (Tier 3 is intentionally out of the SPINE).
 3. **Detect backup/prior installs:** If the knowledge directories are empty or missing but a backup exists, check for:
    - `{DISTILL_DIR}/../_distill_isolation_bak/` or similar `*_bak*` directories alongside `{DISTILL_DIR}/`
    - `{DISTILL_DIR}/.migrated` marker (indicates a prior migration occurred)

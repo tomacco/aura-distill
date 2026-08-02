@@ -47,7 +47,7 @@ Origin is NOT judgment. A directive is not "wrong" — it's properly sourced. Th
 
 These are signals.
 
-**Explicit saves → INBOX.** When the user explicitly asks to remember/save something for later ("remember this", "save this for the next distill"), write it NOW as one file: `{DISTILL_DIR}/inbox/<UTC yyyymmddTHHMMSSZ>-<4 random hex>-<slug>.md` (hex suffix from a shell RNG — e.g. `printf '%04x' $RANDOM` — not invented), front-matter `origin: user-explicit` + `created: <ISO-8601 UTC>`, body = the content with enough context to encode later. Confirm with the path. One item per file; never modify existing inbox items — the next `/distill` consumes and deletes them.
+**Explicit saves → INBOX.** When the user explicitly asks to remember/save something for later ("remember this", "save this for the next distill"), write it NOW as one file: `{DISTILL_DIR}/inbox/<UTC yyyymmddTHHMMSSZ>-<4 random hex>-<slug>.md` (hex suffix from a shell RNG — e.g. `printf '%04x' $RANDOM` — not invented; slug = lowercase a-z0-9/hyphens only, never path characters), front-matter `origin: user-explicit` + `created: <ISO-8601 UTC>`, body = the content with enough context to encode later. Confirm with the path. One item per file; never modify existing inbox items — the next `/distill` consumes and deletes them.
 
 **Memory pressure (ACTIVE — do this continuously):**
 Count signals as the session progresses. After every user message, briefly ask yourself: did a signal just happen? When count reaches 5+, mention casually: "We've got some learnings building up — want to /distill?" When count reaches 8+, be direct: "Strongly recommend /distill — a lot to capture here." Do NOT wait until session end. Do NOT forget to count. This is continuous, not a one-time check.

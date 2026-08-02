@@ -153,7 +153,7 @@ TIER 3 — ARCHIVE (no size limit, rarely read)
 2. **Read each item.** Front-matter tells you who queued it and when: `origin: user-explicit` means the user's own words — treat as a high-priority signal; `origin: session-signal` means agent-noticed. `domain_hint` is a routing suggestion, not a decision.
 3. **Merge them into the signal set for Steps 1–3.** Inbox items are pre-extracted signals, NOT pre-approved knowledge: they go through classification, first-principles tracing, routing, confidence metadata, and the anti-sycophancy check like every other signal.
 4. **Delete consumed items only AFTER Step 4 verification confirms the encoding is on disk** — then delete exactly the files in your consumption set, nothing else. If encoding failed or was interrupted, leave the inbox untouched so nothing is lost.
-5. **Report them**: consumed count + a one-line summary each, in the Inbox section of your output.
+5. **Report them**: consumed count + a one-line summary each, in the `## Inbox consumed` section of the output template.
 
 ## Step 1: Identify signals
 
@@ -595,6 +595,11 @@ Summarize what was distilled:
 | # | Signal | Type | Principle Extracted |
 |---|---|---|---|
 | 1 | "quote from user" | ⟨correction⟩ | **Name:** description |
+
+## Inbox consumed
+(items queued by past sessions — omit the list when none)
+- `<filename>` (origin) — one-line summary → encoded to `path`
+- (none this run)
 
 ───────────────────────────────────────────────
 

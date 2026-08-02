@@ -122,7 +122,9 @@ you type /distill
     ├── profile/                     ← tier 2: user model
     ├── projects/                    ← tier 2: project context
     ├── feedback/                    ← tier 2: preferences
-    └── archive/                     ← tier 3: compressed history
+    ├── archive/                     ← tier 3: compressed history
+    ├── inbox/                       ← queue: explicit saves for the next distill
+    └── data/                        ← local diagnostics (economics + distill ledgers)
 ```
 
 **Three tiers** — inspired by biological memory:

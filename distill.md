@@ -227,6 +227,7 @@ Update silently, then briefly confirm:
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill.md -o ~/.claude/commands/distill.md
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill-process.md -o {DISTILL_DIR}/distill-process.md
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill-monitor.md -o {DISTILL_DIR}/distill-monitor.md
+mkdir -p {DISTILL_DIR}/data {DISTILL_DIR}/inbox
 echo "NEW_VERSION" > {DISTILL_DIR}/.version
 ```
 

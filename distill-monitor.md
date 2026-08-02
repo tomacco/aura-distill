@@ -28,7 +28,7 @@ When you detect something worth remembering (a correction, a preference, a frust
 
 `{DISTILL_DIR}/inbox/` queues items for the next distillation run. When the user explicitly asks to save/remember something:
 
-1. Write ONE file per item: `{DISTILL_DIR}/inbox/<UTC yyyymmddTHHMMSSZ>-<4 random hex>-<short-slug>.md` (the random suffix keeps concurrent sessions from colliding)
+1. Write ONE file per item: `{DISTILL_DIR}/inbox/<UTC yyyymmddTHHMMSSZ>-<4 random hex>-<short-slug>.md`. Generate the 4-hex suffix with a tool call — bash `printf '%04x\n' $RANDOM`, `openssl rand -hex 2`, or PowerShell `'{0:x4}' -f (Get-Random -Maximum 65536)` — never invent it mentally; a real RNG is what keeps concurrent sessions from colliding.
 2. Content:
 
 ```markdown

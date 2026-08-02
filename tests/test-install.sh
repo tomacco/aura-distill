@@ -45,6 +45,13 @@ if grep -q '{DISTILL_DIR}' "$TEST_HOME/.claude/commands/distill.md"; then
   exit 1
 fi
 
+# INBOX (#47): inbox/ dir exists; consume instructions in the process engine;
+# explicit-save instructions in the monitor and the always-on rules file
+test -d "$TEST_HOME/.aura-distill/inbox"
+grep -q 'Step 0b: Consume the INBOX' "$TEST_HOME/.aura-distill/distill-process.md"
+grep -q 'user-explicit' "$TEST_HOME/.aura-distill/distill-monitor.md"
+grep -q 'INBOX' "$TEST_HOME/.claude/rules/distill.md"
+
 before_claude=$(sha256sum "$TEST_HOME/.claude/CLAUDE.md")
 before_codex=$(sha256sum "$TEST_HOME/.codex/AGENTS.md")
 run_install

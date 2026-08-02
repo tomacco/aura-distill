@@ -145,6 +145,16 @@ TIER 3 — ARCHIVE (no size limit, rarely read)
 - Check any Tier 2 files you'll be writing to. If > 45 lines, flag for compaction.
 - Note any Tier 2 files with `last_updated` older than their `staleness_threshold`.
 
+## Step 0b: Consume the INBOX
+
+`{DISTILL_DIR}/inbox/` holds items explicitly queued for this distillation — written by sessions when the user said "remember/save this". If the directory is missing or empty, skip this step silently.
+
+1. **List `{DISTILL_DIR}/inbox/*.md` and record the exact filenames.** This is your consumption set. Items that appear after this listing belong to the NEXT run — leave them alone.
+2. **Read each item.** Front-matter tells you who queued it and when: `origin: user-explicit` means the user's own words — treat as a high-priority signal; `origin: session-signal` means agent-noticed. `domain_hint` is a routing suggestion, not a decision.
+3. **Merge them into the signal set for Steps 1–3.** Inbox items are pre-extracted signals, NOT pre-approved knowledge: they go through classification, first-principles tracing, routing, confidence metadata, and the anti-sycophancy check like every other signal.
+4. **Delete consumed items only AFTER Step 4 verification confirms the encoding is on disk** — then delete exactly the files in your consumption set, nothing else. If encoding failed or was interrupted, leave the inbox untouched so nothing is lost.
+5. **Report them**: consumed count + a one-line summary each, in the Inbox section of your output.
+
 ## Step 1: Identify signals
 
 Scan the conversation for:

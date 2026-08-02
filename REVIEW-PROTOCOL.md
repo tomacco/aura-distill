@@ -61,7 +61,7 @@ Review this PR thoroughly. You are the only quality gate before this ships to us
 
 ### Step 0: Understand the project
 
-Read CLAUDE.md, README.md, and the architecture files listed in CLAUDE.md's Architecture section (distill.md, distill-process.md, distill-monitor.md, knowledge-architecture.md, install.sh). Do NOT skip this — you need project context to evaluate whether changes are correct and coherent.
+Read AGENTS.md, README.md, and the architecture files listed in AGENTS.md's Architecture section (distill.md, distill-process.md, distill-monitor.md, knowledge-architecture.md, install.sh). Do NOT skip this — you need project context to evaluate whether changes are correct and coherent.
 
 ### Step 1: Understand the PR
 
@@ -98,7 +98,7 @@ For each area, report PASS, FLAG (concern but not blocking), or BLOCK (must fix 
 
 **Documentation**
 - Do user-facing docs (README, landing page, install output) match the new behavior?
-- Are internal docs (CLAUDE.md, architecture docs) updated?
+- Are internal docs (AGENTS.md, architecture docs) updated?
 
 **Prompt quality** (specific to this project — the "code" is largely LLM prompts)
 - Are instructions to Claude clear and unambiguous?

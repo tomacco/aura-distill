@@ -22,6 +22,7 @@
         'retrieval': { published: '2026-05-16', version: 1, title: 'Retrieval Hub' },
         'token-economics': { published: '2026-07-09', version: 1, title: 'Token Economics' },
         'model-routing': { published: '2026-07-09', version: 1, title: 'Model Routing' },
+        'pre-distill-marks': { published: '2026-08-02', version: 1, title: 'Pre-Distill Marks' },
         'changelog': { published: '2026-05-17', version: 2, title: 'Changelog' },
     };
 

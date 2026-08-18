@@ -1,9 +1,13 @@
 # distill-recent-agy -- aura-distill Time Index ("When" axis) for Antigravity (agy) sessions.
 #
-# Scans Antigravity brain transcripts (~/.gemini/antigravity-cli/brain/*/logs/transcript.jsonl)
+# Scans Antigravity brain transcripts
+# (~/.gemini/antigravity-cli/brain/<conversation-id>/.system_generated/logs/transcript.jsonl)
 # and buckets sessions on human mental timelines matching distill-recent conventions.
+# Output is byte-identical to bin/distill-recent-agy.sh (parity enforced by
+# tests/antigravity/run-parity-test.sh).
 #
 # Usage: distill-recent-agy.ps1 [-BrainDir DIR] [-NowMs EPOCH_MS] [-PerBucket N]
+# Exit codes: 0 ok (including no transcripts), 2 brain dir not found.
 [CmdletBinding()]
 param(
     [string]$BrainDir = $null,
@@ -38,6 +42,15 @@ function Clean-Text([string]$s) {
     ([regex]::Replace($cleaned, '[\x00-\x1F]', ' ') -split '\s+' | Where-Object { $_ }) -join ' '
 }
 
+function Convert-ToLocalDt([System.DateTimeOffset]$dto) {
+    # Mirror the bash twin (python astimezone): a local-clock value outside the
+    # representable range skips the FIELD instead of clamping to MaxValue.
+    $offset = [System.TimeZoneInfo]::Local.GetUtcOffset($dto)
+    $ticks = $dto.UtcTicks + $offset.Ticks
+    if ($ticks -lt [datetime]::MinValue.Ticks -or $ticks -gt [datetime]::MaxValue.Ticks) { return $null }
+    [datetime]::new($ticks, [System.DateTimeKind]::Unspecified)
+}
+
 function Get-BucketKey([datetime]$end, [datetime]$now) {
     $days = ($now.Date - $end.Date).Days
     if ($days -le 0) { return @(0, 'TODAY') }
@@ -60,7 +73,7 @@ if (-not $BrainDir) {
 }
 
 if (-not (Test-Path $BrainDir)) {
-    Write-Host "Antigravity brain directory not found at $BrainDir"
+    [Console]::Error.WriteLine("Antigravity brain directory not found at $BrainDir")
     exit 2
 }
 
@@ -77,34 +90,59 @@ foreach ($d in $dirs) {
     $transPath = Join-Path $d.FullName ".system_generated\logs\transcript.jsonl"
     if (-not (Test-Path $transPath)) { continue }
 
+    # Fallback timeline when no step carries a parseable created_at
     $firstDt = $d.LastWriteTime
     $lastDt = $d.LastWriteTime
+    $sawTs = $false
     $firstPrompt = ''
     $lastAssistant = ''
     $turnCount = 0
 
     try {
         $lines = Get-Content $transPath -ErrorAction Stop
-        foreach ($line in $lines) {
-            if (-not $line) { continue }
-            try {
-                $step = $line | ConvertFrom-Json
-                if ($step.created_at) {
-                    $dt = [DateTimeOffset]::Parse($step.created_at).LocalDateTime
-                    if ($turnCount -eq 0) { $firstDt = $dt }
-                    $lastDt = $dt
-                }
-                if ($step.type -eq 'USER_INPUT' -and -not $firstPrompt -and $step.content) {
-                    $firstPrompt = Clean-Text $step.content
-                }
-                if ($step.type -eq 'PLANNER_RESPONSE' -and $step.content) {
-                    $lastAssistant = Clean-Text $step.content
-                }
-                $turnCount++
-            } catch {}
-        }
     } catch {
         continue
+    }
+    foreach ($line in $lines) {
+        if (-not $line) { continue }
+        # This file is owned by Antigravity, not us: a malformed line, a
+        # non-object record, or a missing/garbage field is skipped -- one field
+        # skips the FIELD, never the whole record (twin contract: both
+        # implementations skip identically, see distill-recent-agy.sh).
+        $step = $null
+        try { $step = $line | ConvertFrom-Json } catch { continue }
+        if ($step -isnot [System.Management.Automation.PSCustomObject]) { continue }
+        $turnCount++
+        $props = $step.PSObject.Properties
+        $createdAt = if ($props['created_at']) { $props['created_at'].Value } else { $null }
+        # pwsh 7 ConvertFrom-Json pre-parses ISO strings into [datetime];
+        # Windows PowerShell 5.1 leaves them as strings -- handle both.
+        $dtVal = $null
+        if ($createdAt -is [datetime]) {
+            if ($createdAt.Kind -eq [System.DateTimeKind]::Utc) {
+                $dtVal = Convert-ToLocalDt ([System.DateTimeOffset]::new($createdAt))
+            } else {
+                $dtVal = $createdAt
+            }
+        } elseif ($createdAt -is [System.DateTimeOffset]) {
+            $dtVal = Convert-ToLocalDt $createdAt
+        } elseif ($createdAt -is [string] -and $createdAt) {
+            try {
+                $dtVal = Convert-ToLocalDt ([System.DateTimeOffset]::Parse($createdAt, [System.Globalization.CultureInfo]::InvariantCulture))
+            } catch { $dtVal = $null }
+        }
+        if ($null -ne $dtVal) {
+            if (-not $sawTs) { $firstDt = $dtVal; $sawTs = $true }
+            $lastDt = $dtVal
+        }
+        $type = if ($props['type']) { [string]$props['type'].Value } else { '' }
+        $content = if ($props['content']) { $props['content'].Value } else { $null }
+        if ($type -eq 'USER_INPUT' -and -not $firstPrompt -and $content -is [string] -and $content) {
+            $firstPrompt = Clean-Text $content
+        }
+        if ($type -eq 'PLANNER_RESPONSE' -and $content -is [string] -and $content) {
+            $lastAssistant = Clean-Text $content
+        }
     }
 
     if (-not $firstPrompt) { $firstPrompt = "(No user input recorded)" }
@@ -126,8 +164,8 @@ if ($sessions.Count -eq 0) {
     exit 0
 }
 
-# Sort descending by End time
-$sorted = $sessions | Sort-Object -Property End -Descending
+# Sort descending by End time, Id as deterministic tie-break (twin parity)
+$sorted = $sessions | Sort-Object -Property End, Id -Descending
 
 # Group into buckets
 $bucketGroups = [System.Collections.Generic.Dictionary[string, System.Collections.Generic.List[PSCustomObject]]]::new()
@@ -152,7 +190,8 @@ foreach ($label in $bucketOrder) {
     Write-Host "## $label"
     foreach ($s in $bucketGroups[$label]) {
         $timeStr = Format-Dt $s.End
-        Write-Host ("- [{0}] {1} {2} {3}" -f $s.Id.Substring(0, 8), $timeStr, $SEP, $s.Prompt)
+        $idShort = if ($s.Id.Length -gt 8) { $s.Id.Substring(0, 8) } else { $s.Id }
+        Write-Host ("- [{0}] {1} {2} {3}" -f $idShort, $timeStr, $SEP, $s.Prompt)
         if ($s.LeftOff) {
             Write-Host ("    left off: {0}" -f $s.LeftOff)
         }

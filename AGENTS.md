@@ -4,13 +4,17 @@ This is the canonical guide for anyone — human or AI agent, whatever the tool 
 
 ## What this is
 
-A first-principles memory system shared by Claude Code and Codex. Users install it via `install.sh` or `install.ps1`, which places knowledge in `~/.aura-distill/` and adds client adapters. Claude can trigger it with `/distill`; Codex users ask it to distill.
+A first-principles memory system shared by Claude Code, Codex, and Google Antigravity (agy). Users install it via `install.sh` or `install.ps1`, which places knowledge in `~/.aura-distill/` and adds client adapters. Claude can trigger it with `/distill`; Codex users ask it to distill; Antigravity loads it as a skill (installer wiring pending — see #67).
 
 ## Architecture
 
 - `distill.md` — Dispatcher (runs in main context, harvests signals, spawns sub-agent)
 - `distill-process.md` — Sub-agent instructions (the full distillation pipeline)
 - `distill-monitor.md` — Session-start monitor (minimal, loaded via the client integration)
+- `skills/distill/SKILL.md` — Antigravity (agy) skill: the /distill workflow for Antigravity sessions
+- `rules/distill-agy.md` — Antigravity session rules (SPINE retrieval, markers, memory pressure)
+- `bin/distill-recent-agy.sh` / `.ps1` — Antigravity Time Index over brain transcripts (output-identical twins; parity enforced by `tests/antigravity/run-parity-test.sh`)
+- `plugins/aura-distill/plugin.json` — Antigravity declarative plugin manifest
 - `knowledge-architecture.md` — Tier system design doc
 - `install.sh` / `install.ps1` — User-facing installers
 - `tests/` — A/B test scenarios, cognitive bias tests, persona-based methodology tests
@@ -57,6 +61,7 @@ When developing or testing:
 - Test personas: Sofia (senior backend engineer) and Marcus (product manager)
 - Run persona tests: `./tests/scenarios/methodology/run-persona-test.sh`
 - Run integration tests: `./test-sandbox.sh`
+- Run Antigravity Time Index parity + hostile-input tests: `./tests/antigravity/run-parity-test.sh` (and the connector runners `run-antigravity-connector-tests.sh` / `.ps1`)
 - Run deterministic Claude/Codex installer tests: `pwsh tests/test-codex.ps1`
 - Run a real isolated Codex retrieval test: `pwsh tests/test-codex.ps1 -LiveRetrieval`
 

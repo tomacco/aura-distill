@@ -1,0 +1,17 @@
+{
+  "name": "aura-distill",
+  "version": "1.1.10",
+  "description": "First-principles persistent memory and context distillation system for Antigravity (agy).",
+  "author": {
+    "name": "Ivan Gonzalez",
+    "url": "https://github.com/tomacco"
+  },
+  "repository": "https://github.com/tomacco/aura-distill",
+  "license": "MIT",
+  "skills": [
+    "skills/distill"
+  ],
+  "rules": [
+    "rules/distill-agy.md"
+  ]
+}

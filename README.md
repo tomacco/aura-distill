@@ -58,18 +58,26 @@ curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh 
 irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1 | iex
 ```
 
-<sub>No sudo, writes only to `~/.claude/` (`%USERPROFILE%\.claude\` on Windows). [Read install.sh](install.sh) / [install.ps1](install.ps1) first if you're the responsible kind.</sub>
+### Google Antigravity (`agy`) Native Connector
+
+aura-distill includes native integration for **Google Antigravity**:
+* **Skill**: `/distill` available via `.agents/skills/distill/` or global skills.
+* **Rules**: Automated retrieval from `rules/distill-agy.md` (`SPINE.md` loading, cognitive markers, memory pressure monitoring).
+* **Time Index**: `distill-recent-agy.ps1` / `.sh` parsing Antigravity's session brain transcripts.
+* **Plugin**: Bundled under `plugins/aura-distill/` for declarative installation.
 
 This installs:
 
 | File | Location | Purpose |
 |------|----------|---------|
-| `distill.md` | `~/.claude/commands/` | The `/distill` slash command |
-| `distill.md` | `~/.claude/rules/` | Knowledge retrieval (18 lines, auto-loads every session) |
-| `distill-process.md` | `~/.claude/distill/` | Full process (read by sub-agent) |
-| `SPINE.md` | `~/.claude/distill/` | Knowledge index |
+| `distill.md` | `~/.claude/commands/` | The `/distill` slash command (Claude) |
+| `skills/distill/SKILL.md` | `.agents/skills/distill/` | The `/distill` skill (Antigravity) |
+| `distill.md` / `distill-agy.md` | `~/.claude/rules/` / `.agents/rules/` | Knowledge retrieval & memory rules |
+| `distill-process.md` | `{DISTILL_DIR}/` | Full process (read by sub-agent) |
+| `SPINE.md` | `{DISTILL_DIR}/` | Master knowledge index |
+| `distill-recent-agy.ps1` | `{DISTILL_DIR}/bin/` | Time index for Antigravity sessions |
 
-Zero dependencies. No Node.js. No MCP server. No database. Just files.
+Zero dependencies. No heavy servers. Just files.
 
 ---
 

@@ -11,10 +11,8 @@ A first-principles memory system shared by Claude Code, Codex, and Google Antigr
 - `distill.md` — Dispatcher (runs in main context, harvests signals, spawns sub-agent)
 - `distill-process.md` — Sub-agent instructions (the full distillation pipeline)
 - `distill-monitor.md` — Session-start monitor (minimal, loaded via the client integration)
-- `skills/distill/SKILL.md` — Antigravity (agy) skill: the /distill workflow for Antigravity sessions
-- `rules/distill-agy.md` — Antigravity session rules (SPINE retrieval, markers, memory pressure)
+- `plugins/aura-distill/` — Antigravity (agy) plugin, laid out per Antigravity's discovery contract: `plugin.json` (marker), `skills/distill/SKILL.md` (the distill workflow), `rules/AGENTS.md` (thin pointer to the canonical `distill-monitor.md` + Antigravity-specific Time Index)
 - `bin/distill-recent-agy.sh` / `.ps1` — Antigravity Time Index over brain transcripts (output-identical twins; parity enforced by `tests/antigravity/run-parity-test.sh`)
-- `plugins/aura-distill/plugin.json` — Antigravity declarative plugin manifest
 - `knowledge-architecture.md` — Tier system design doc
 - `install.sh` / `install.ps1` — User-facing installers
 - `tests/` — A/B test scenarios, cognitive bias tests, persona-based methodology tests

@@ -73,7 +73,7 @@ This installs:
 
 Zero dependencies. No Node.js. No MCP server. No database. Just files.
 
-**Google Antigravity (agy)** support ships in-repo (not yet wired into the installers — tracked in [#67](https://github.com/tomacco/aura-distill/issues/67)): `skills/distill/SKILL.md` (the distill workflow as a native skill), `rules/distill-agy.md` (session rules), `plugins/aura-distill/plugin.json` (declarative manifest), and `bin/distill-recent-agy.sh`/`.ps1` — a Time Index over Antigravity brain transcripts. Knowledge lives in the same shared `~/.aura-distill/`.
+**Google Antigravity (agy)** support ships in-repo as a plugin (not yet wired into the installers — tracked in [#67](https://github.com/tomacco/aura-distill/issues/67)): copy `plugins/aura-distill/` into an Antigravity customization root's `plugins/` folder and it is discovered automatically — `skills/distill/SKILL.md` (the distill workflow), `rules/AGENTS.md` (session rules deferring to the canonical monitor), plus `bin/distill-recent-agy.sh`/`.ps1`, a Time Index over Antigravity brain transcripts. Knowledge lives in the same shared `~/.aura-distill/`. One dependency note: the POSIX Time Index twin is Python-backed (the PowerShell twin needs nothing); the core system stays dependency-free.
 
 ---
 

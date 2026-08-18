@@ -22,15 +22,21 @@ description: Retrospective memory and context distillation for Antigravity sessi
      1. Environment variable `$AURA_DISTILL_HOME` / `$env:AURA_DISTILL_HOME` (the same override the installers honor)
      2. User home directory: `~/.aura-distill` (Windows: `$env:USERPROFILE\.aura-distill`, POSIX: `$HOME/.aura-distill`)
    - There is ONE shared store per user — the same SPINE serves Claude Code, Codex, and Antigravity. Never create a workspace-local or client-local knowledge directory.
-2. **Check Lock / Status (`{DISTILL_DIR}/.status`):**
+2. **Migration gate (`{DISTILL_DIR}/.needs-migration`):**
+   - If this file exists and does not start with `migrated`, existing memories are waiting to be
+     ingested. Do NOT run a normal distillation over them silently — tell the user and run the
+     migration ingestion defined in `{DISTILL_DIR}/distill-process.md` first.
+3. **Check Lock / Status (`{DISTILL_DIR}/.status`):**
    - The `.status` file format is OWNED by `distill-process.md` — write exactly its forms
      (`running <ISO_TIMESTAMP>`, `running step:[N] signals:[count] <ISO_TIMESTAMP>`, `idle <ISO_TIMESTAMP>`);
      this file is shared with the Claude Code and Codex clients.
    - If `.status` begins with `running` and its timestamp is < 5 minutes old:
      Notify user: *"Another distillation is in progress. Would you like to wait or proceed later?"*
    - If `.status` indicates an interrupted run (`running step:[N] ...` with a stale timestamp):
-     Offer checkpoint resumption.
-   - Otherwise, set `{DISTILL_DIR}/.status` to `running <ISO_TIMESTAMP>`.
+     Offer checkpoint resumption. Resuming SKIPS Step 1 (harvest) — pass the recorded step and
+     signal count from `.status` to the sub-agent so it continues where the interrupted run stopped.
+   - Otherwise, set `{DISTILL_DIR}/.status` to `running <ISO_TIMESTAMP>` — but only immediately
+     before spawning in Step 2, never earlier.
 
 ---
 
@@ -71,6 +77,12 @@ The sub-agent executes the phases exactly as defined in `{DISTILL_DIR}/distill-p
 (ingestion & deduplication, Tier 2 knowledge updates, SPINE index update, always-on
 preferences sync, status reset). That file — not this skill — is the source of truth for
 phase mechanics, file layouts, and line caps; do not re-specify them here.
+
+**Failure policy (never leave the lock stuck):** if the spawn fails, or the sub-agent errors or
+returns without confirming completion, reset `{DISTILL_DIR}/.status` to `idle <ISO_TIMESTAMP>`
+and report the failure to the user. A stale `running` entry blocks every client sharing the
+store for 5 minutes. The only writes before a successful spawn are the `.status` line itself —
+fail BEFORE writing knowledge, never after a partial write.
 
 ---
 

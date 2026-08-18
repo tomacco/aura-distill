@@ -136,14 +136,17 @@ PS_BIN=""
 command -v pwsh >/dev/null 2>&1 && PS_BIN=pwsh
 [ -z "$PS_BIN" ] && command -v powershell.exe >/dev/null 2>&1 && PS_BIN=powershell.exe
 if [ -n "$PS_BIN" ]; then
-    ps_out=$("$PS_BIN" -NoProfile -ExecutionPolicy Bypass -File "$PS1" -BrainDir "$FIX" -NowMs "$NOW_MS")
+    # A POSIX-style mktemp path confuses the PS host outside git-bash; hand it a native path
+    PS_FIX="$FIX"
+    command -v cygpath >/dev/null 2>&1 && PS_FIX=$(cygpath -w "$FIX")
+    ps_out=$("$PS_BIN" -NoProfile -ExecutionPolicy Bypass -File "$PS1" -BrainDir "$PS_FIX" -NowMs "$NOW_MS")
     if diff --strip-trailing-cr <(printf '%s\n' "$out") <(printf '%s\n' "$ps_out") >/dev/null 2>&1; then
         PASS=$((PASS+1)); echo "  ok: bash/PowerShell byte parity ($PS_BIN)"
     else
         FAIL=$((FAIL+1)); echo "  FAIL: bash/PowerShell outputs differ ($PS_BIN):"
         diff --strip-trailing-cr <(printf '%s\n' "$out") <(printf '%s\n' "$ps_out") | head -20 || true
     fi
-    ps_out2=$("$PS_BIN" -NoProfile -ExecutionPolicy Bypass -File "$PS1" -BrainDir "$FIX" -NowMs "$NOW_MS" -PerBucket 1)
+    ps_out2=$("$PS_BIN" -NoProfile -ExecutionPolicy Bypass -File "$PS1" -BrainDir "$PS_FIX" -NowMs "$NOW_MS" -PerBucket 1)
     if diff --strip-trailing-cr <(printf '%s\n' "$out2") <(printf '%s\n' "$ps_out2") >/dev/null 2>&1; then
         PASS=$((PASS+1)); echo "  ok: per-bucket byte parity ($PS_BIN)"
     else

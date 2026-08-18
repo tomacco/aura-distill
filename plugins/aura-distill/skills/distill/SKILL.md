@@ -23,9 +23,14 @@ description: Retrospective memory and context distillation for Antigravity sessi
      2. User home directory: `~/.aura-distill` (Windows: `$env:USERPROFILE\.aura-distill`, POSIX: `$HOME/.aura-distill`)
    - There is ONE shared store per user — the same SPINE serves Claude Code, Codex, and Antigravity. Never create a workspace-local or client-local knowledge directory.
 2. **Migration gate (`{DISTILL_DIR}/.needs-migration`):**
-   - If this file exists and does not start with `migrated`, existing memories are waiting to be
-     ingested. Do NOT run a normal distillation over them silently — tell the user and run the
-     migration ingestion defined in `{DISTILL_DIR}/distill-process.md` first.
+   - If this file exists and does not start with `migrated`, this is the first distillation after
+     installation. Tell the user, and in ADDITION to normal signal harvesting instruct the
+     sub-agent to: (a) find pre-existing memory files (e.g. `~/.claude/**/memory/*.md` outside
+     the distill tree, and any prior client memory stores), (b) ingest their content into the
+     appropriate tiers, (c) write `migrated <ISO_TIMESTAMP>` to `{DISTILL_DIR}/.migrated`,
+     (d) DELETE `{DISTILL_DIR}/.needs-migration` (existence-only gates treat its presence as
+     "migration pending"), and (e) report what was migrated. The old memory files are NOT
+     deleted — they remain as backup.
 3. **Check Lock / Status (`{DISTILL_DIR}/.status`):**
    - The `.status` file format is OWNED by `distill-process.md` — write exactly its forms
      (`running <ISO_TIMESTAMP>`, `running step:[N] signals:[count] <ISO_TIMESTAMP>`, `idle <ISO_TIMESTAMP>`);
@@ -78,11 +83,15 @@ The sub-agent executes the phases exactly as defined in `{DISTILL_DIR}/distill-p
 preferences sync, status reset). That file — not this skill — is the source of truth for
 phase mechanics, file layouts, and line caps; do not re-specify them here.
 
-**Failure policy (never leave the lock stuck):** if the spawn fails, or the sub-agent errors or
-returns without confirming completion, reset `{DISTILL_DIR}/.status` to `idle <ISO_TIMESTAMP>`
-and report the failure to the user. A stale `running` entry blocks every client sharing the
-store for 5 minutes. The only writes before a successful spawn are the `.status` line itself —
-fail BEFORE writing knowledge, never after a partial write.
+**Failure policy (never leave the lock stuck, never destroy a checkpoint):**
+- If the SPAWN ITSELF fails (the sub-agent never started): reset `{DISTILL_DIR}/.status` to
+  `idle <ISO_TIMESTAMP>` and report — nothing ran, there is no checkpoint to keep, and a stale
+  `running` entry would block every client sharing the store for 5 minutes.
+- If the sub-agent STARTED and then errored or returned without confirming completion: do NOT
+  blanket-reset. `.status` may hold a `running step:[N] signals:[count]` checkpoint that the
+  process writes precisely so the next run can resume — leave it in place, report the failure,
+  and offer checkpoint resumption (Step 0.3) on the next invocation.
+- The only pre-spawn write is the `.status` line itself — fail BEFORE writing knowledge.
 
 ---
 

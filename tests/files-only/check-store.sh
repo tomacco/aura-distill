@@ -65,6 +65,15 @@ newest_stamp() { nocr < "$1" | grep -oE 'last_(validated|updated): *[0-9]{4}-[0-
 catalog_row() { grep -F -- "- $2 |" "$1" | head -1 | nocr; }
 is_legacy() { catalog_row "$CAT" "$1" | grep -q '| legacy'; }
 field() { printf '%s' "$1" | sed "s/.*| $2: //; s/ |.*//" | sed 's/[[:space:]]*$//'; }   # field <line> <name>
+# ledger_last_events: "<path> <archive|restore>" for the newest event per path
+# (a top-level function: bash 3.2 cannot parse a case statement inside a process substitution)
+ledger_last_events() {
+  nocr < "$LEDGER" | grep -E '^- [0-9-]+ (archive|restore)' | while IFS= read -r l; do
+    e=$(printf '%s' "$l" | awk '{print $3}'); to=$(field "$l" to)
+    if [ "$e" = "archive" ]; then printf '%s %s\n' "${to#archive/}" archive
+    elif [ "$e" = "restore" ]; then printf '%s %s\n' "$to" restore; fi
+  done | awk '{last[$1]=$2} END{for (k in last) print k, last[k]}'
+}
 hook_of_entry() { printf '%s' "$1" | sed 's/^- \[[^]]*\]([^)]*)//' | sed 's/^ *— *//; s/^ *-- *//'; }
 
 # ── C1: SPINE budgets ────────────────────────────────────────────────────────
@@ -135,10 +144,7 @@ if [ -f "$LEDGER" ]; then
       restore) { [ -f "$STORE/$x" ] && [ ! -f "$STORE/archive/$x" ]; } || fail "ledger says restored but tree disagrees: $x" ;;
       *) fail "unknown ledger event '$ev' for $x" ;;
     esac
-  done < <(nocr < "$LEDGER" | grep -E '^- [0-9-]+ (archive|restore)' | while IFS= read -r l; do
-      e=$(printf '%s' "$l" | awk '{print $3}'); to=$(field "$l" to)
-      case "$e" in archive) printf '%s %s\n' "${to#archive/}" archive ;; restore) printf '%s %s\n' "$to" restore ;; esac
-    done | awk '{last[$1]=$2} END{for (k in last) print k, last[k]}' | sort)
+  done < <(ledger_last_events | sort)
 fi
 # collisions: a path may not be both active and archived
 while IFS= read -r p; do [ -f "$STORE/archive/$p" ] && fail "path exists both active and archived: $p"; done < <(tier_files "$STORE")

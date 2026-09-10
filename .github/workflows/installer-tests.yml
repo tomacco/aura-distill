@@ -60,3 +60,23 @@ jobs:
           else
             echo "tests/test-install.sh not on this branch yet; skipping."
           fi
+
+  files-only-store:
+    # Files-only memory redesign invariants (#75): synthetic store fixture, no
+    # network, no profile dirs. Runs on GNU and BSD toolchains on purpose.
+    name: Files-only store checks (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Files-only suite
+        run: |
+          if [ -f tests/files-only/run-files-only-tests.sh ]; then
+            bash tests/files-only/run-files-only-tests.sh
+          else
+            echo "tests/files-only not on this branch; skipping."
+          fi

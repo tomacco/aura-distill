@@ -33,4 +33,3 @@ evidence_for: craft/testing.md
 - 2026-08-09 observe: two tests named by method were renamed to behaviour phrasing in review
 - 2026-08-16 observe: the contract refresh procedure was written down in the repo README
 - 2026-08-23 observe: builder pattern reduced fixture JSON by roughly two thirds in the billing module
-- 2026-09-11 spine-detail: contract tests over mocks (validated 9x, hardened after the 2026-06 incident where a mocked payment client hid a schema change for three weeks); every bug gets a failing test BEFORE the fix, verified to fail without the fix; flaky = hypothesis not verdict; no sleep-based waits; test names describe behaviour not method; fixtures are builders not JSON blobs; the persona rule (generic test personas, never colleagues' names); coverage thresholds are per-module not global; CI must run the shipped script not a copy. Read before writing or reviewing any test.

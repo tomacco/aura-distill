@@ -28,3 +28,7 @@ staleness_threshold: 120
 - Delegates freely: test scaffolding, migration scripts, documentation drafts.
 - Verifies before approving: anything that touches billing or retention (legal exposure).
 - Retains completely: public communication about incidents.
+
+## Index detail (moved from SPINE 2026-09-11)
+
+platform engineer at a fictional logistics company; owns the Atlas, Beacon and Comet services; terse in ops mode, discursive when changing process; wants pushback on architecture calls; identifies things by content quotes not paths; expects evidence for "done?" questions (show the curl, show the test output); dislikes preamble; Spanish/English mixed; reads side notes. Read at session start.

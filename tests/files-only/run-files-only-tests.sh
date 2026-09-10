@@ -5,8 +5,8 @@
 #    evidence inflating a tier file) reproduced on a synthetic store.
 # 2. store-after --before store-before MUST pass everything: the redesign fixes the
 #    diagnosis without losing a line, a checksum, a protected block, a hook or a pin.
-# 3. Twelve tamper cases MUST be caught, each with a non-zero exit, and one
-#    exemption case (oversize:) MUST pass.
+# 3. Thirteen tamper cases MUST be caught, each with a non-zero exit; one exemption
+#    case (oversize:) and two restore cases (D7 restore obeying D1) MUST pass.
 set -u
 cd "$(dirname "$0")"
 CHECK=./check-store.sh
@@ -85,6 +85,27 @@ echo "== exemption case (must pass) =="
 expect_pass "oversize: exemption honoured for a 7 KB pinned file" \
   'sed -i.bak "s/^lifecycle: pinned$/lifecycle: pinned\noversize: legal wording stays in one file/" "$s/projects/comet.md"; rm -f "$s/projects/comet.md.bak";
    { printf -- "\n- [NON-NEGOTIABLE] "; head -c 7000 /dev/zero | tr "\\0" "x"; printf "\n"; } >> "$s/projects/comet.md"'
+
+# restore_case <name> <event-text>: atlas comes back per D7 Restore (ledger line, move back,
+# saved entry trimmed to the cap with the cut wording under "Index detail", catalog rebuilt)
+restore_case() {
+  expect_pass "$1" '
+    ev="'"$2"'"
+    printf -- "- 2026-09-12 %s | from: archive/projects/atlas.md | to: projects/atlas.md | sha256: 12c18385e88e5c0d0ebb9607f23ee8da4f5bb6fe96970f3f56a1ecf5fc84f98f | reason: user request\n" "$ev" >> "$s/archive/LEDGER.md";
+    mv "$s/archive/projects/atlas.md" "$s/projects/atlas.md";
+    hook=$(sed -n "s/.*| spine-entry: - \[Atlas\](projects\/atlas.md) — //p" "$s/archive/LEDGER.md" | head -1);
+    printf -- "\n## Index detail (moved from SPINE 2026-09-12)\n\n%s\n" "$hook" >> "$s/projects/atlas.md";
+    printf -- "- [Atlas](projects/atlas.md) — Atlas data-platform migration to the lakehouse; parquet, ingest_date partitions, schema registry directive; open items. Read when working in the atlas-* repos.\n" >> "$s/SPINE.md";
+    sed -i.bak "/^- archive\/projects\/atlas.md |/d; s/^<!-- Complete inventory.*rebuilt: 2026-09-11 -->/<!-- Complete inventory, rebuilt by \/distill. Not loaded at session start. rebuilt: 2026-09-12 -->/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak";
+    printf -- "- projects/atlas.md | Atlas data-platform migration — legacy warehouse to lakehouse | validated 2026-04-02\n" >> "$s/CATALOG.md"'
+}
+echo "== restore cases (must pass: D7 restore obeys D1) =="
+restore_case "restore: atlas back, saved entry trimmed to cap, cut wording under Index detail" "restore"
+restore_case "restore (modified) event parses the same way" "restore (modified)"
+
+echo "== tamper: catalog older than the newest ledger event =="
+tamper "stale catalog rebuilt stamp" "catalog stale: rebuilt" \
+  'sed -i.bak "s/rebuilt: 2026-09-11/rebuilt: 2026-01-01/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
 
 echo
 echo "files-only suite: $PASS passed, $FAIL failed"

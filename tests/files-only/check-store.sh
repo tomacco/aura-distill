@@ -146,6 +146,13 @@ if [ -f "$LEDGER" ]; then
     esac
   done < <(ledger_last_events | sort)
 fi
+# catalog rebuilt stamp must not predate the newest ledger event
+if [ -f "$LEDGER" ] && [ -f "$CAT" ]; then
+  rebuilt=$(nocr < "$CAT" | grep -oE 'rebuilt: [0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1 | sed 's/rebuilt: //')
+  newest=$(nocr < "$LEDGER" | grep -oE '^- [0-9]{4}-[0-9]{2}-[0-9]{2}' | sed 's/^- //' | sort | tail -1)
+  if [ -z "$rebuilt" ]; then fail "catalog has no rebuilt: stamp"
+  elif [ -n "$newest" ] && [ "$newest" \> "$rebuilt" ]; then fail "catalog stale: rebuilt $rebuilt but newest ledger event is $newest"; fi
+fi
 # collisions: a path may not be both active and archived
 while IFS= read -r p; do [ -f "$STORE/archive/$p" ] && fail "path exists both active and archived: $p"; done < <(tier_files "$STORE")
 report C2
@@ -197,6 +204,7 @@ if [ -n "$BEFORE" ]; then
       [ "$have" -ge "$k" ] || fail "line lost from $p (before x$k, after x$have): ${line:0:70}"
     done < <(trim < "$BEFORE/$p" | grep -v '^$' | sort | uniq -c | sed 's/^ *//')
     if grep -q '^lifecycle: pinned' "$BEFORE/$p" && [ ! -f "$STORE/$p" ]; then fail "pinned file was moved: $p"; fi
+    if grep -q '\[NON-NEGOTIABLE\]' "$BEFORE/$p" && [ -f "$STORE/archive/$p" ]; then fail "file carrying [NON-NEGOTIABLE] was archived: $p"; fi
   done < <(tier_files "$BEFORE")
   # archived files: non-legacy must equal the original tier file; legacy must equal its own before copy
   while IFS= read -r a; do

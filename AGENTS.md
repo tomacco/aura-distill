@@ -60,6 +60,7 @@ When developing or testing:
 - Run persona tests: `./tests/scenarios/methodology/run-persona-test.sh`
 - Run integration tests: `./test-sandbox.sh`
 - Run Antigravity Time Index parity + hostile-input tests: `./tests/antigravity/run-parity-test.sh` (and the connector runners `run-antigravity-connector-tests.sh` / `.ps1`)
+- Run the files-only store invariants (thin SPINE, catalog completeness, lossless migration; #75): `bash tests/files-only/run-files-only-tests.sh` — design in `docs/design-files-only-memory.md`
 - Run deterministic Claude/Codex installer tests: `pwsh tests/test-codex.ps1`
 - Run a real isolated Codex retrieval test: `pwsh tests/test-codex.ps1 -LiveRetrieval`
 

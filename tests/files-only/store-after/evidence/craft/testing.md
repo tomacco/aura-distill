@@ -1,0 +1,36 @@
+---
+evidence_for: craft/testing.md
+---
+## Evidence log
+
+- 2026-04-18 directive: "Never our colleagues' names in fixtures. Generic personas only." (recorded as NON-NEGOTIABLE)
+- 2026-04-22 confirm: contract test caught a renamed field in the carrier API before deploy
+- 2026-05-03 confirm: "exactly, contract tests" after the mock-vs-contract discussion on the rates client
+- 2026-05-11 observe: Noor rewrote a sleep(2) into a poll with a 5 s timeout without being asked
+- 2026-05-19 confirm: failing-test-first caught that the proposed fix for the duplicate-invoice bug did not address the race
+- 2026-05-27 confirm: contract test flagged the payment client's new required header
+- 2026-06-04 observe: the payment client mock hid a schema change for three weeks; incident review named mocks as the cause
+- 2026-06-05 confirm: "this is exactly why I want contract tests" during the incident review
+- 2026-06-12 correct: I called a test flaky; Noor reproduced it deterministically (order dependence on a shared fixture)
+- 2026-06-18 confirm: fixture builders adopted for the shipment domain
+- 2026-06-25 confirm: per-module coverage threshold accepted after the global-threshold false alarm
+- 2026-07-02 confirm: no-sleep rule applied to the webhook tests; "good"
+- 2026-07-09 observe: Noor asked for the exact failing-test output before approving a merge
+- 2026-07-16 confirm: contract test for the address-validation service
+- 2026-07-23 observe: test names in the review used behaviour phrasing consistently
+- 2026-07-30 confirm: flakiness hypothesis rule reinforced ("flaky is not an answer, what is the cause")
+- 2026-08-06 confirm: contract test caught a timezone change in the tracking client
+- 2026-08-12 confirm: "verify it fails first" repeated on the retry-policy fix; CI-runs-shipped-script rule stated
+- 2026-08-19 observe: Noor removed a mock from the notifications suite and replaced it with a recorded contract
+- 2026-08-26 confirm: builder fixtures used for the new billing tests
+- 2026-08-30 confirm: contract-tests principle promoted to hardened after the ninth confirmation
+- 2026-08-30 confirm: persona rule reaffirmed during a fixture review
+- 2026-05-14 observe: coverage report misread because the global threshold masked a 12% module
+- 2026-06-20 observe: a shared in-memory database between test classes was the real cause of "flakiness" in the carrier suite
+- 2026-07-11 observe: first use of the framework clock for the SLA timer tests
+- 2026-07-25 observe: the recorded-contract approach needs a refresh procedure; noted as an open item
+- 2026-08-02 observe: review comment asked why a test used sleep; the author fixed it in the same PR
+- 2026-08-09 observe: two tests named by method were renamed to behaviour phrasing in review
+- 2026-08-16 observe: the contract refresh procedure was written down in the repo README
+- 2026-08-23 observe: builder pattern reduced fixture JSON by roughly two thirds in the billing module
+- 2026-09-11 spine-detail: contract tests over mocks (validated 9x, hardened after the 2026-06 incident where a mocked payment client hid a schema change for three weeks); every bug gets a failing test BEFORE the fix, verified to fail without the fix; flaky = hypothesis not verdict; no sleep-based waits; test names describe behaviour not method; fixtures are builders not JSON blobs; the persona rule (generic test personas, never colleagues' names); coverage thresholds are per-module not global; CI must run the shipped script not a copy. Read before writing or reviewing any test.

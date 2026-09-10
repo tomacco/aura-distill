@@ -60,6 +60,7 @@ When developing or testing:
 - Run persona tests: `./tests/scenarios/methodology/run-persona-test.sh`
 - Run integration tests: `./test-sandbox.sh`
 - Run Antigravity Time Index parity + hostile-input tests: `./tests/antigravity/run-parity-test.sh` (and the connector runners `run-antigravity-connector-tests.sh` / `.ps1`)
+- Run legacy updater compatibility reproductions (captured shipped curl blocks against a local fixture endpoint; no network, no real profiles): `bash tests/updater-compat/run.sh` — decisions they back live in `docs/adr/`
 - Run deterministic Claude/Codex installer tests: `pwsh tests/test-codex.ps1`
 - Run a real isolated Codex retrieval test: `pwsh tests/test-codex.ps1 -LiveRetrieval`
 

@@ -16,6 +16,10 @@
 
 ---
 
+## Roadmap
+
+See [the execution roadmap](ROADMAP.md) for the files-only redesign, the later opt-in software major, upgrade protection, dependencies and measurement gates. These are planned changes; the installation instructions below describe the existing release.
+
 ## The problem
 
 Claude Code has memory. But it remembers *facts*, not *principles*.

@@ -33,7 +33,7 @@ Everything in this section was verified in the repository on 2026-09-11 at `orig
 ### Release mechanics
 
 - **Every content merge to `main` is live immediately.** `.github/workflows/bump-version.yml` runs on push to `main`, bumps the patch number, rewrites `VERSION`, `install.sh`, `install.ps1`, `README.md`, `docs/header.svg`, `docs/index.html`, and pushes a `[version-bump]` commit. Content therefore reaches the raw URLs before `VERSION` changes, in two commits a few seconds apart. There is no staging branch, no release approval step, and no way to hold content back from the raw URLs once merged.
-- **Tags and releases.** There is exactly one tag, `v1.0.0` (commit `7dcbd7f`, 2026-05-17, whose `VERSION` file reads `1.0.1`), and one GitHub release with the same name and no assets. Seventy-six commits and seventeen patch bumps have shipped since without a tag. `CHANGELOG.md` has carried an `[Unreleased]` section for the entire 1.x line; the auto-update mechanism itself is listed under 0.5.0.
+- **Tags and releases.** There is exactly one tag, `v1.0.0` (commit `7dcbd7f`, 2026-05-17, whose `VERSION` file reads `1.0.1`), and one GitHub release with the same name and no assets. Seventy-six commits and nineteen `[version-bump]` commits have shipped since without a tag. `CHANGELOG.md` has carried an `[Unreleased]` section for the entire 1.x line; the auto-update mechanism itself is listed under 0.5.0.
 - **Raw caching.** `raw.githubusercontent.com` answered `Cache-Control: max-age=300` for `main/VERSION` on 2026-09-11. Each file is cached independently, so a client can observe a fresh `VERSION` with stale content files, or the reverse.
 - **The pre-rename URL still works.** `https://raw.githubusercontent.com/tomacco/claude-distill/main/VERSION` returned HTTP 200 on 2026-09-11. Clients installed before the rename (commit `0292f23`, 2026-05-17) keep using that host path.
 
@@ -45,7 +45,7 @@ Built from `git log -p -- distill.md` (VERSION read from the same commit):
 |---|---|---|
 | `7603b2a` 2026-05-06 | 0.1.0 | First version check. Fetches `tomacco/claude-distill/main/VERSION`; on "auto-update" the agent is told to "fetch and overwrite `~/.claude/commands/distill.md` and `distill-process.md` from the repo" with no URL given. Persistent auto-update preference introduced. |
 | `476b093` 2026-05-07 | 0.3.1 | Explicit curl block: `claude-distill/main/{distill.md,distill-process.md,distill-monitor.md}` written to `~/.claude/commands/` and `~/.claude/distill/`. Silent update when preference is on. |
-| `012baaa` 2026-05-17 | 1.0.0 (pre-rename) | Store paths become `{DISTILL_DIR}` (resolved by `install.sh` at install time). Dispatcher path stays hardcoded `~/.claude/commands/distill.md`. |
+| `012baaa` 2026-05-17 | 0.9.14 | Store paths become `{DISTILL_DIR}` (resolved by `install.sh` at install time). Dispatcher path stays hardcoded `~/.claude/commands/distill.md`. |
 | `0292f23` 2026-05-17 | 1.0.0 | URLs move to `tomacco/aura-distill/main/...`. This is the block in tag `v1.0.0`. |
 | `6797a19` 2026-07-31 | 1.1.10 | Store default moves to `~/.aura-distill`; block unchanged. Installers gain `AURA_DISTILL_REPO` and local-path fetch. |
 | `87a6b64` 2026-08-02 | 1.1.14 | Adds `mkdir -p {DISTILL_DIR}/data {DISTILL_DIR}/inbox`. Current block (1.1.17). |
@@ -55,8 +55,8 @@ Across every version, the client's decision is "is `main/VERSION` different from
 ### Latent defects observed (facts, not decisions)
 
 - The dispatcher block writes `curl -sL ... -o <live file>` with no download-to-temp and no content validation, so a 404 body or a truncated response overwrites the live file (the installers fixed this for `rules/distill.md` and agents in 1.1.8; the dispatcher block was left as is, recorded as an open follow-up on PR #39).
-- The block downloads `distill.md` raw, so the 21 `{DISTILL_DIR}` placeholders in it are never resolved on an auto-update (`install.sh:237` resolves them with `sed`; `distill.md:237` does not). Whether the agent resolves them is left to the model.
-- The block writes `~/.claude/commands/distill.md` regardless of a `--profile` install (`install.sh:136-138` supports `~/.claude-<name>`).
+- The block downloads `distill.md` raw, so the 24 `{DISTILL_DIR}` occurrences in it are never resolved on an auto-update (`install.sh:237` resolves them with `sed`; `distill.md:237` does not). Whether the agent resolves them is left to the model.
+- The block writes `~/.claude/commands/distill.md` regardless of a `--profile` install (`install.sh:144-155` resolves `~/.claude-<name>`).
 
 These do not change the decision below; they are listed because #79 will touch the same lines.
 
@@ -126,7 +126,7 @@ A separate branch whose raw base no shipped client references (name provisional:
 ### Required publication order
 
 1. Merge this ADR, the reproductions, and the CI guard (guard implementation in #79).
-2. Ship the bridge release on `main` (files-only): dispatcher reads the manifest for the notice only, never fetches a software base regardless of the auto-update preference, resolves `{DISTILL_DIR}`, downloads to temp and validates before replacing live files (closing the latent defects above). Manifest has no `software` entry yet, or `status: unpublished`. Run `tests/updater-compat/run.sh` against the real bridge files.
+2. Ship the bridge release on `main` (files-only): dispatcher reads the manifest for the notice only, never fetches a software base regardless of the auto-update preference, resolves `{DISTILL_DIR}`, downloads to temp and validates before replacing live files (closing the latent defects above). Because the bridge is prose executed by a model, and the manifest hands it `software.base` and a guide URL, the bridge text must carry an explicit negative instruction: do not fetch, run, install or follow anything under `software.base`; quote the guide URL as text only. The 0.1.0 dispatcher already showed what a model does with a vague fetch instruction (it improvises URLs), so #79 must state the prohibition, not imply it, and the reproductions must be re-run against the real bridge text rather than the synthetic fixture. Manifest has no `software` entry yet, or `status: unpublished`. Run `tests/updater-compat/run.sh` against the real bridge files.
 3. Create the software branch and publish its payload, installer and guide there with `status: prerelease`.
 4. Flip the manifest entry on `main` to `status: stable`. This is the announcement moment: clients that already hold the bridge start showing the notice; clients that do not remain silent and safe.
 5. Update README, landing page and Homebrew for the software edition, pointing only at the channel.
@@ -154,7 +154,7 @@ Software installer, before the consent boundary:
 
 ### Non-interactive rule
 
-If stdin or stdout is not a terminal, the input is empty, the read times out, or the answer is anything other than the exact phrase naming the version: print "Kept files-only. Nothing was installed or changed.", write nothing, exit with code 2. Piped input (including a piped "yes" or a piped "adopt 2.0.0") is not a terminal and is refused. There is no flag, environment variable or preference file that substitutes for the interactive answer in this ADR; see open questions for provisioning. No response means files-only, never consent.
+If stdin or stdout is not a terminal, the input is empty, the read times out, or the answer is anything other than the exact phrase naming the version: print "Kept files-only. Nothing was installed or changed.", write nothing, exit with code 2. Piped input (including a piped "yes" or a piped "adopt 2.0.0") is not a terminal and is refused. Both stdin and stdout must be terminals, so `installer | tee log` is refused as well; this is deliberate (a redirected run is a scripted run) and #79 should document it rather than relax it. There is no flag, environment variable or preference file that substitutes for the interactive answer in this ADR; see open questions for provisioning. No response means files-only, never consent.
 
 Company approval processes are respected by construction: the installer states what it will do and stops; it never asserts that anything is approved, never installs silently, and never retries on its own.
 
@@ -178,4 +178,5 @@ Company approval processes are respected by construction: the installer states w
 | Does the files-only redesign (#75/#78) change the store layout incompatibly? If yes, the bridge prompt must carry legacy-layout handling with a consent step | #75 owner | before step 2 |
 | Prerelease notices: opt-in preference key name and wording | #79 | step 3 |
 | Fix the three latent dispatcher defects (unvalidated overwrite, unresolved `{DISTILL_DIR}`, hardcoded `~/.claude/commands`) in the bridge; one issue per defect or one bridge issue | Ivan | step 2 |
-| Independent review of this ADR and the reproductions (acceptance criterion 5 of #76) | reviewer agent per REVIEW-PROTOCOL.md, result recorded on the PR | before #79 starts |
+| Independent review of this ADR and the reproductions (acceptance criterion 5 of #76): done on PR #94 per REVIEW-PROTOCOL.md (verdict REQUEST CHANGES; one isolation defect in the runner and four factual corrections, all addressed in the same PR; the decision itself was upheld). Remaining: Ivan's acceptance of the decision before #79 starts | Ivan | before #79 starts |
+| This ADR is published with the GitHub Pages site (`docs/` is the Pages root); confirm that is intended or move `docs/adr/` out of the published tree | Ivan | before merge |

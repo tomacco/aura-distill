@@ -16,7 +16,7 @@ A first-principles memory system shared by Claude Code, Codex, and Google Antigr
 - `knowledge-architecture.md` — Tier system design doc
 - `install.sh` / `install.ps1` — User-facing installers
 - `tests/` — A/B test scenarios, cognitive bias tests, persona-based methodology tests
-- `docs/` — GitHub Pages site (landing, research)
+- `docs/` — GitHub Pages site (landing, research); `docs/adr/` — architecture decision records (published with the site)
 - `dashboard/` — Analytics dashboard
 
 ## CRITICAL: Never touch real user data

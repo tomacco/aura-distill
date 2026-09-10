@@ -40,6 +40,12 @@ section() { printf '\n== %s\n' "$1"; }
 
 WORK=$(mktemp -d)
 SERVE="$WORK/serve"
+# Isolation: install.sh honors AURA_DISTILL_HOME and CODEX_HOME. A developer shell
+# that exports them would otherwise receive the sandbox writes. Point both at a
+# canary inside the sandbox for the runner's own environment; every installer
+# invocation below overrides them explicitly, and the canary must stay absent.
+CANARY="$WORK/canary"
+export AURA_DISTILL_HOME="$CANARY/aura-distill" CODEX_HOME="$CANARY/codex"
 ACCESS_LOG="$WORK/access.log"
 SERVER_PID=""
 cleanup() {
@@ -120,7 +126,7 @@ requests_to() { grep -c "GET $1" "$ACCESS_LOG" 2>/dev/null || true; }
 mkdir -p "$WORK/clients"
 new_client() { # <installed-version> <layout: legacy|shared>  -> prints HOME
   local home store
-  home=$(mktemp -d -p "$WORK/clients")
+  home=$(mktemp -d "$WORK/clients/c.XXXXXX")
   if [ "$2" = legacy ]; then store="$home/.claude/distill"; else store="$home/.aura-distill"; fi
   mkdir -p "$home/.claude/commands" "$store/feedback"
   printf '%s\n' "$1" > "$store/.version"
@@ -143,7 +149,7 @@ run_dispatcher() { # <fixture> <client home>
   latest=$(curl -sL "$BASE/$repo/main/VERSION" | tr -d '[:space:]')
   installed=$(tr -d '[:space:]' < "$store/.version")
   if [ "$latest" = "$installed" ]; then printf 'no-update'; return 0; fi
-  script=$(mktemp -p "$WORK")
+  script=$(mktemp "$WORK/exec.XXXXXX")
   {
     echo 'set -u'
     grep -v '^#' "$fixture" \
@@ -158,7 +164,7 @@ run_dispatcher() { # <fixture> <client home>
 # Execute the captured v1.0.0 installer fetch block (the Homebrew path) into a sandbox.
 run_installer_v1_fetch() { # <client home>
   local home=$1 script
-  script=$(mktemp -p "$WORK")
+  script=$(mktemp "$WORK/exec.XXXXXX")
   mkdir -p "$home/.claude/commands" "$home/.claude/distill" "$home/.claude/rules"
   {
     echo 'set -u'
@@ -173,7 +179,9 @@ run_installer_v1_fetch() { # <client home>
 run_current_installer() { # <client home>
   local home=$1
   mkdir -p "$home"
-  HOME="$home" AURA_DISTILL_REPO="$BASE/tomacco/aura-distill/main" DISTILL_TOKEN_SAVER=off \
+  env -u AURA_DISTILL_HOME -u CODEX_HOME \
+    HOME="$home" AURA_DISTILL_HOME="$home/.aura-distill" CODEX_HOME="$home/.codex" \
+    AURA_DISTILL_REPO="$BASE/tomacco/aura-distill/main" DISTILL_TOKEN_SAVER=off \
     bash "$REPO_ROOT/install.sh" </dev/null >/dev/null 2>&1
 }
 
@@ -258,6 +266,9 @@ if run_current_installer "$c"; then
 else
   fail "current install.sh did not complete in the sandbox (see $WORK)"
 fi
+check "positive control: the log recorded the files-only fetches made after truncation" \
+  test "$(requests_to /tomacco/aura-distill/main/distill.md)" -ge 3 -a \
+       "$(requests_to /tomacco/claude-distill/main/distill.md)" -ge 1
 check "no request from any client or installer ever touched the software channel" \
   test "$(requests_to /tomacco/aura-distill/software-2.x/)" = 0
 check "no request touched the channel via the pre-rename repo path either" \
@@ -296,7 +307,7 @@ check "  therefore .version must never be the input to any channel or consent de
 # =====================================================================
 section "(d) Consent boundary: non-interactive input is never consent"
 gate="$HERE/fixtures/consent-gate.sh"
-g=$(mktemp -d -p "$WORK")
+g=$(mktemp -d "$WORK/gate.XXXXXX")
 set +e
 bash "$gate" 2.0.0 "start a local service; migrate the store" "https://example.invalid/guide" "$g/store" </dev/null >"$g/out1" 2>&1; rc1=$?
 printf 'adopt 2.0.0\n' | bash "$gate" 2.0.0 "start a local service" "https://example.invalid/guide" "$g/store" >"$g/out2" 2>&1; rc2=$?
@@ -307,7 +318,42 @@ check "piped 'adopt 2.0.0' is not a terminal: exit 2, nothing written" test "$rc
 check "piped 'yes': exit 2, nothing written" test "$rc3" = 2 -a ! -e "$g/store/.major-consent"
 check "notice names the version, the side effects and the guide before refusing" \
   bash -c "grep -q 'v2.0.0' '$g/out1' && grep -q 'start a local service' '$g/out1' && grep -q 'example.invalid/guide' '$g/out1' && grep -q 'Kept files-only' '$g/out1'"
+# Accept path needs a real terminal: drive the gate through a pty where Python offers one.
+if [ -n "$PY" ] && "$PY" -c 'import pty' >/dev/null 2>&1; then
+  set +e
+  "$PY" - "$gate" "$g/store-tty" >"$g/out4" 2>&1 <<'PYEOF'
+import os, pty, sys
+gate, store = sys.argv[1], sys.argv[2]
+pid, fd = pty.fork()
+if pid == 0:
+    os.execvp("bash", ["bash", gate, "2.0.0", "start a local service", "https://example.invalid/guide", store])
+out, sent = b"", False
+while True:
+    try:
+        chunk = os.read(fd, 4096)
+    except OSError:
+        break
+    if not chunk:
+        break
+    out += chunk
+    if not sent and b"keep files-only:" in out:
+        os.write(fd, b"adopt 2.0.0\n"); sent = True
+_, status = os.waitpid(pid, 0)
+sys.stdout.write(out.decode(errors="replace"))
+sys.exit(os.WEXITSTATUS(status) if os.WIFEXITED(status) else 1)
+PYEOF
+  rc4=$?
+  set -e
+  check "terminal + typed 'adopt 2.0.0': exit 0 and consent recorded before any side effect" \
+    test "$rc4" = 0 -a -f "$g/store-tty/.major-consent"
+else
+  printf '  SKIP  terminal accept path (no pty module on this platform; runs on Linux CI)\n'
+fi
 
 # =====================================================================
+section "Isolation: nothing escaped the sandbox"
+check "AURA_DISTILL_HOME/CODEX_HOME inherited from the environment were never written to" \
+  test ! -e "$CANARY"
+
 printf '\nRESULT: %d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

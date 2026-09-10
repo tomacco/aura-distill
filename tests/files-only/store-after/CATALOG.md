@@ -3,6 +3,7 @@
 <!-- Complete inventory, rebuilt by /distill. Not loaded at session start. rebuilt: 2026-09-11 -->
 
 ## active
+- craft/testing-2.md | Testing philosophy (continued) — CI script rule and index detail moved from the SPINE | validated 2026-08-30
 - craft/testing.md | Testing philosophy for Noor's services — contract tests, failing-test-first, flakiness discipline | validated 2026-08-30
 - feedback/preferences.md | Output and interaction preferences | validated 2026-08-28
 - ops/deploy.md | Deploy procedure for Noor's services — canary, staging, prod, rollback, paging | validated 2026-08-25

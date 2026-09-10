@@ -8,7 +8,8 @@
 - [Noor — core](profile/noor.md) — platform engineer (Atlas, Beacon, Comet); terse ops / discursive process; content quotes not paths; "done?" = show evidence. Read at session start.
 
 ## Craft
-- [Testing philosophy](craft/testing.md) — contract tests over mocks; failing test BEFORE the fix; flaky = hypothesis; no sleep waits; generic personas [NON-NEGOTIABLE]; CI runs the shipped script. Read before writing or reviewing any test.
+- [Testing philosophy](craft/testing.md) — contract tests over mocks; failing test BEFORE the fix; flaky = hypothesis; no sleep waits; generic personas [NON-NEGOTIABLE]. Read before writing or reviewing any test.
+- [Testing philosophy, continued](craft/testing-2.md) — CI runs the shipped script; index detail from the old SPINE entry (test names, builder fixtures, per-module coverage). Read with craft/testing.md.
 
 ## Ops
 - [Deploy procedure](ops/deploy.md) — canary → staging → prod with the 5/30 minute soak; rollback command; who to page. Read before shipping to production.

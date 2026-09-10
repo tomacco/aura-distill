@@ -5,12 +5,15 @@
 #
 # Prints one "C<n> PASS|FAIL" line per check group (with indented reasons) and
 # exits 0 only when every group passes. Offline, no profile access, no network,
-# carriage returns ignored, GNU and BSD toolchains. Caps come from the environment:
+# GNU and BSD toolchains. Line comparisons and line counts ignore carriage
+# returns; checksums and byte counts are over raw bytes (byte identity means bytes).
+# Caps come from the environment:
 #   SPINE_MAX_LINES (80) SPINE_MAX_BYTES (16000) ENTRY_MAX_BYTES (400)
 #   FILE_MAX_LINES (60)  FILE_MAX_BYTES (6000)
 #
 # C1 SPINE budgets
-# C2 pointers, catalog completeness and counts, evidence_for, collisions, ledger checksums
+# C2 pointers; catalog equals tree (presence, validated date, pinned, evidence counts,
+#    archived rows' from/hook); evidence_for; collisions; ledger last-event agreement + sha256
 # C3 tier-2 budgets, read_with (inline list, targets, no local/), split_from, oversize
 # C4 (--before only) multiset line conservation, protected blocks, archive identity,
 #    legacy identity, pins, SPINE-hook survival
@@ -58,8 +61,11 @@ archive_files() { [ -d "$1/archive" ] && find "$1/archive" -type f -name '*.md' 
 evidence_files() { [ -d "$1/evidence" ] && find "$1/evidence" -type f -name '*.md' | sed "s|^$1/||" | sort; return 0; }
 frontmatter() { nocr < "$1" | awk 'NR==1 && $0!="---"{exit} NR>1 && $0=="---"{exit} NR>1{print}'; }
 fm_value() { frontmatter "$1" | grep "^$2:" | head -1 | sed "s/^$2:[[:space:]]*//"; }
+newest_stamp() { nocr < "$1" | grep -oE 'last_(validated|updated): *[0-9]{4}-[0-9]{2}-[0-9]{2}' | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | sort | tail -1; }
 catalog_row() { grep -F -- "- $2 |" "$1" | head -1 | nocr; }
 is_legacy() { catalog_row "$CAT" "$1" | grep -q '| legacy'; }
+field() { printf '%s' "$1" | sed "s/.*| $2: //; s/ |.*//" | sed 's/[[:space:]]*$//'; }   # field <line> <name>
+hook_of_entry() { printf '%s' "$1" | sed 's/^- \[[^]]*\]([^)]*)//' | sed 's/^ *— *//; s/^ *-- *//'; }
 
 # ── C1: SPINE budgets ────────────────────────────────────────────────────────
 SPINE="$STORE/SPINE.md"
@@ -75,7 +81,7 @@ if [ ! -f "$SPINE" ]; then fail "SPINE.md missing"; else
 fi
 report C1
 
-# ── C2: pointers, catalog, evidence_for, collisions, ledger ──────────────────
+# ── C2: pointers, catalog equals tree, evidence_for, collisions, ledger ──────
 if [ -f "$SPINE" ]; then
   while IFS= read -r p; do [ -f "$STORE/$p" ] || fail "SPINE pointer to missing file: $p"; done \
     < <(nocr < "$SPINE" | grep '^- \[' | grep -o '](\([^)]*\.md\))' | sed 's/^](//;s/)$//' | sort -u)
@@ -88,6 +94,15 @@ if [ ! -f "$CAT" ]; then fail "CATALOG.md missing"; else
     < <({ tier_files "$STORE"; archive_files "$STORE"; evidence_files "$STORE"; } | sort)
   while IFS= read -r p; do [ -f "$STORE/$p" ] || fail "catalog line points at missing file: $p"; done \
     < <(nocr < "$CAT" | grep -o '^- [^|]* |' | sed 's/^- //;s/ |$//')
+  # active rows: validated date = newest stamp; pinned flag = lifecycle: pinned
+  while IFS= read -r p; do
+    row=$(catalog_row "$CAT" "$p"); [ -n "$row" ] || continue
+    stamp=$(newest_stamp "$STORE/$p")
+    if [ -n "$stamp" ]; then printf '%s' "$row" | grep -Fq -- "| validated $stamp" || fail "catalog validated date wrong for $p (newest stamp $stamp)"
+    else printf '%s' "$row" | grep -q '| validated ' && fail "catalog claims a validated date for undated file $p"; fi
+    if [ "$(fm_value "$STORE/$p" lifecycle)" = "pinned" ]; then printf '%s' "$row" | grep -q '| pinned' || fail "catalog row lacks pinned for $p"
+    else printf '%s' "$row" | grep -q '| pinned' && fail "catalog row says pinned but $p is not"; fi
+  done < <(tier_files "$STORE")
   # evidence counts and evidence_for
   while IFS= read -r e; do
     n=$(nocr < "$STORE/$e" | grep -c '^- ')
@@ -96,16 +111,34 @@ if [ ! -f "$CAT" ]; then fail "CATALOG.md missing"; else
     if [ -z "$target" ]; then fail "$e has no evidence_for"
     elif [ ! -f "$STORE/$target" ] && [ ! -f "$STORE/archive/$target" ]; then fail "orphan evidence: $e (evidence_for $target is neither active nor archived)"; fi
   done < <(evidence_files "$STORE")
-  # archived rows: ledger line with matching sha256, from + hook; legacy rows exempt
+  # archived rows: from + hook, hook equals the ledger's spine-entry hook, sha256 from the last archive event
   while IFS= read -r a; do
     if is_legacy "$a"; then continue; fi
-    catalog_row "$CAT" "$a" | grep -q '| from ' || fail "archived row lacks 'from': $a"
-    catalog_row "$CAT" "$a" | grep -q '| hook: ' || fail "archived row lacks 'hook': $a"
+    row=$(catalog_row "$CAT" "$a")
+    printf '%s' "$row" | grep -q '| from ' || fail "archived row lacks 'from': $a"
+    printf '%s' "$row" | grep -q '| hook: ' || fail "archived row lacks 'hook': $a"
     if [ ! -f "$LEDGER" ]; then fail "archive/LEDGER.md missing but $a is not legacy"; continue; fi
-    lsha=$(nocr < "$LEDGER" | grep -F -- "| to: $a |" | tail -1 | grep -o 'sha256: [0-9a-f]*' | sed 's/sha256: //')
-    if [ -z "$lsha" ]; then fail "no ledger line for archived file: $a"
-    elif [ "$lsha" != "$(sha "$STORE/$a")" ]; then fail "ledger sha256 does not match archived file: $a"; fi
+    ev=$(nocr < "$LEDGER" | grep -F -- "| to: $a |" | grep -E '^- [0-9-]+ archive ' | tail -1)
+    if [ -z "$ev" ]; then fail "no ledger archive event for: $a"; continue; fi
+    lsha=$(printf '%s' "$ev" | grep -o 'sha256: [0-9a-f]*' | sed 's/sha256: //')
+    [ "$lsha" = "$(sha "$STORE/$a")" ] || fail "ledger sha256 does not match archived file: $a"
+    lhook=$(hook_of_entry "$(printf '%s' "$ev" | sed 's/.*| spine-entry: //')" | sed 's/[[:space:]]*$//')
+    chook=$(printf '%s' "$row" | sed 's/.*| hook: //' | sed 's/[[:space:]]*$//')
+    [ "$lhook" = "$chook" ] || fail "catalog hook differs from ledger spine-entry hook: $a"
   done < <(archive_files "$STORE")
+fi
+# ledger last event per path must agree with the tree
+if [ -f "$LEDGER" ]; then
+  while read -r x ev; do
+    case "$ev" in
+      archive) { [ -f "$STORE/archive/$x" ] && [ ! -f "$STORE/$x" ]; } || fail "ledger says archived but tree disagrees: $x" ;;
+      restore) { [ -f "$STORE/$x" ] && [ ! -f "$STORE/archive/$x" ]; } || fail "ledger says restored but tree disagrees: $x" ;;
+      *) fail "unknown ledger event '$ev' for $x" ;;
+    esac
+  done < <(nocr < "$LEDGER" | grep -E '^- [0-9-]+ (archive|restore)' | while IFS= read -r l; do
+      e=$(printf '%s' "$l" | awk '{print $3}'); to=$(field "$l" to)
+      case "$e" in archive) printf '%s %s\n' "${to#archive/}" archive ;; restore) printf '%s %s\n' "$to" restore ;; esac
+    done | awk '{last[$1]=$2} END{for (k in last) print k, last[k]}' | sort)
 fi
 # collisions: a path may not be both active and archived
 while IFS= read -r p; do [ -f "$STORE/archive/$p" ] && fail "path exists both active and archived: $p"; done < <(tier_files "$STORE")
@@ -178,14 +211,15 @@ if [ -n "$BEFORE" ]; then
       inblock && /^[ \t]+[^ \t]/ {print; next}
       {inblock=0}' | trim)
   done < <(tier_files "$BEFORE")
-  # every original SPINE hook survives as a substring in SPINE, tier files, archive or catalog (never data/ or evidence)
+  # every original SPINE hook survives as a substring in SPINE, tier files, archived knowledge files or catalog
+  # (never data/, evidence, or the ledger — the ledger holds every hook by construction)
   if [ -f "$BEFORE/SPINE.md" ]; then
     scope=(); [ -f "$STORE/SPINE.md" ] && scope+=("$STORE/SPINE.md"); [ -f "$STORE/CATALOG.md" ] && scope+=("$STORE/CATALOG.md")
-    for d in $TIERS archive; do [ -d "$STORE/$d" ] && scope+=("$STORE/$d"); done
+    while IFS= read -r p; do scope+=("$STORE/$p"); done < <({ tier_files "$STORE"; archive_files "$STORE"; })
     while IFS= read -r line; do
-      hook=$(printf '%s' "$line" | sed 's/^- \[[^]]*\]([^)]*)//' | sed 's/^ *— *//; s/^ *-- *//')
+      hook=$(hook_of_entry "$line")
       [ -n "$hook" ] || continue
-      grep -rFq -- "$hook" "${scope[@]}" || fail "SPINE hook lost: ${hook:0:70}"
+      grep -Fq -- "$hook" "${scope[@]}" || fail "SPINE hook lost: ${hook:0:70}"
     done < <(nocr < "$BEFORE/SPINE.md" | grep '^- \[')
   fi
   rm -f "$cand" "$protected_pool"

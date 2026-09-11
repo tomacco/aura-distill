@@ -14,7 +14,7 @@
 - [Deploy procedure](ops/deploy.md) — canary → staging → prod with the 5/30 minute soak; rollback command; who to page. Read before shipping to production.
 
 ## Projects
-- [Beacon](projects/beacon.md) — Beacon notification service; current focus is the push-provider fallback chain. Read when working in the beacon repo.
+- [Beacon](projects/beacon.md) + [Delta](projects/delta.md) — Beacon notification service (push-provider fallback chain) and Delta webhook relay (retries, dead-letter). Read when working in the beacon or delta repos.
 - [Comet](projects/comet.md) — Comet billing reconciliation; on hold since 2026-05 but pinned: legal retention rules live here. Read before touching invoices or reconciliation.
 
 ## Feedback

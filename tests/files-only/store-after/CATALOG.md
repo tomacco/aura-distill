@@ -9,6 +9,7 @@
 - ops/deploy.md | Deploy procedure for Noor's services — canary, staging, prod, rollback, paging | validated 2026-08-25
 - profile/noor.md | Who Noor is and how they work | validated 2026-08-28
 - projects/beacon.md | Beacon notification service — push-provider fallback chain | validated 2026-08-27
+- projects/delta.md | Delta webhook relay — retries and dead-letter handling | validated 2026-08-14
 - projects/comet.md | Comet billing reconciliation — on hold, retention rules | validated 2026-05-06 | pinned
 
 ## archived

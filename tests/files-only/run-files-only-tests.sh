@@ -5,8 +5,9 @@
 #    evidence inflating a tier file) reproduced on a synthetic store.
 # 2. store-after --before store-before MUST pass everything: the redesign fixes the
 #    diagnosis without losing a line, a checksum, a protected block, a hook or a pin.
-# 3. Twenty-four tamper cases MUST be caught, each with a non-zero exit; one exemption
-#    case (oversize:) and two restore cases (D7 restore obeying D1) MUST pass.
+# 3. Twenty-six tamper cases MUST be caught, each with a non-zero exit; one exemption
+#    case (oversize:), two restore cases (D7 restore obeying D1) and one merged-line
+#    pointer-removal archive MUST pass.
 set -u
 cd "$(dirname "$0")"
 CHECK=./check-store.sh
@@ -145,6 +146,24 @@ sed -i.bak "s/| 30 entries/| 29 entries/" "$tmp/s/CATALOG.md"; rm -f "$tmp/s/CAT
 out=$(bash "$CHECK" "$tmp/s" --before store-after 2>&1); rc=$?
 { [ $rc -ne 0 ] && echo "$out" | grep -Fq -- "line lost from evidence/craft/testing.md"; } && ok "line dropped from a pre-existing evidence twin (repeated migration)" || { bad "evidence twin loss missed (rc=$rc)"; echo "$out" | sed 's/^/       /'; }
 rm -rf "$tmp"
+
+echo "== round-five cases =="
+tamper "heading-form [DIRECTIVE date] section demoted to evidence only" "protected block line not in active/archive (ops/deploy.md)" \
+  'mkdir -p "$s/evidence/ops"; sed -n "/^## \[DIRECTIVE 2026-07-20\]/,\$p" "$s/ops/deploy.md" > "$s/sec.tmp";
+   sed -i.bak "/^## \[DIRECTIVE 2026-07-20\]/,\$d" "$s/ops/deploy.md"; rm -f "$s/ops/deploy.md.bak";
+   { printf -- "---\nevidence_for: ops/deploy.md\n---\n"; cat "$s/sec.tmp"; } > "$s/evidence/ops/deploy.md"; rm -f "$s/sec.tmp";
+   printf -- "- evidence/ops/deploy.md | for ops/deploy.md | 2 entries\n" >> "$s/CATALOG.md"'
+tamper "evidence_for disagrees with the twin path" "evidence_for disagrees with the twin's path: evidence/craft/testing.md says ops/deploy.md" \
+  'sed -i.bak "s|^evidence_for: craft/testing.md|evidence_for: ops/deploy.md|" "$s/evidence/craft/testing.md"; rm -f "$s/evidence/craft/testing.md.bak"'
+expect_pass "archive one target of a merged line by pointer removal (derived ledger entry)" \
+  'mkdir -p "$s/archive/projects";
+   if command -v sha256sum >/dev/null 2>&1; then h=$(sha256sum "$s/projects/delta.md" | cut -d" " -f1); else h=$(shasum -a 256 "$s/projects/delta.md" | cut -d" " -f1); fi;
+   hook="Beacon notification service (push-provider fallback chain) and Delta webhook relay (retries, dead-letter). Read when working in the beacon or delta repos.";
+   printf -- "- 2026-09-12 archive | from: projects/delta.md | to: archive/projects/delta.md | sha256: %s | reason: past threshold, no validation observed | spine-entry: - [Delta](projects/delta.md) — %s\n" "$h" "$hook" >> "$s/archive/LEDGER.md";
+   mv "$s/projects/delta.md" "$s/archive/projects/delta.md";
+   sed -i.bak "s| + \[Delta\](projects/delta.md)||" "$s/SPINE.md"; rm -f "$s/SPINE.md.bak";
+   sed -i.bak "/^- projects\/delta.md |/d; s/rebuilt: 2026-09-11/rebuilt: 2026-09-12/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak";
+   printf -- "- archive/projects/delta.md | Delta webhook relay — retries and dead-letter handling | archived 2026-09-12 | reason: past threshold, no validation observed | from projects/delta.md | hook: %s\n" "$hook" >> "$s/CATALOG.md"'
 
 echo
 echo "files-only suite: $PASS passed, $FAIL failed"

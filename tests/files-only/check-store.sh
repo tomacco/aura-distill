@@ -16,7 +16,7 @@
 #    archived rows' from/hook); evidence_for; collisions; ledger last-event agreement + sha256
 # C3 tier-2 budgets, read_with (inline list, targets, no local/), split_from, oversize
 # C4 (--before only) multiset line conservation, protected blocks, archive identity,
-#    legacy identity, pins, SPINE-hook survival
+#    legacy identity, pins, SPINE-hook survival; protected = bullet+block or heading section
 set -u
 export LC_ALL=C
 
@@ -74,7 +74,7 @@ ledger_last_events() {
     elif [ "$e" = "restore" ]; then printf '%s %s\n' "$to" restore; fi
   done | awk '{last[$1]=$2} END{for (k in last) print k, last[k]}'
 }
-hook_of_entry() { printf '%s' "$1" | sed 's/^- \[[^]]*\]([^)]*)//' | sed 's/^ *— *//; s/^ *-- *//'; }
+hook_of_entry() { printf '%s' "$1" | sed -E 's/^- \[[^]]*\]\([^)]*\)( *\+ *\[[^]]*\]\([^)]*\))*//' | sed 's/^ *— *//; s/^ *-- *//'; }
 
 # ── C1: SPINE budgets ────────────────────────────────────────────────────────
 SPINE="$STORE/SPINE.md"
@@ -118,6 +118,7 @@ if [ ! -f "$CAT" ]; then fail "CATALOG.md missing"; else
     catalog_row "$CAT" "$e" | grep -Fq -- "| $n entries" || fail "catalog count wrong for $e (file has $n entries)"
     target=$(fm_value "$STORE/$e" evidence_for)
     if [ -z "$target" ]; then fail "$e has no evidence_for"
+    elif [ "$target" != "${e#evidence/}" ]; then fail "evidence_for disagrees with the twin's path: $e says $target"
     elif [ ! -f "$STORE/$target" ] && [ ! -f "$STORE/archive/$target" ]; then fail "orphan evidence: $e (evidence_for $target is neither active nor archived)"; fi
   done < <(evidence_files "$STORE")
   # archived rows: from + hook, hook equals the ledger's spine-entry hook, sha256 from the last archive event
@@ -196,8 +197,9 @@ if [ -n "$BEFORE" ]; then
     for c in "$STORE/$p" "$STORE/evidence/$p" "$STORE/archive/$p"; do [ -f "$c" ] && trim < "$c" >> "$cand"; done
     while IFS= read -r child; do
       [ "$(fm_value "$STORE/$child" split_from)" = "$p" ] || continue
-      trim < "$STORE/$child" >> "$cand"; [ -f "$STORE/evidence/$child" ] && trim < "$STORE/evidence/$child" >> "$cand"
-    done < <(tier_files "$STORE")
+      trim < "$STORE/$child" >> "$cand"
+      rel=${child#archive/}; [ -f "$STORE/evidence/$rel" ] && trim < "$STORE/evidence/$rel" >> "$cand"
+    done < <({ tier_files "$STORE"; archive_files "$STORE"; })
   }
   while IFS= read -r p; do
     candidates_for "$p"
@@ -228,7 +230,12 @@ if [ -n "$BEFORE" ]; then
     if [ -f "$BEFORE/$a" ]; then
       [ "$(sha "$STORE/$a")" = "$(sha "$BEFORE/$a")" ] || fail "legacy archive file changed: $a"
     elif [ ! -f "$BEFORE/$rel" ]; then fail "archived file has no original: $a"
-    elif [ "$(sha "$STORE/$a")" != "$(sha "$BEFORE/$rel")" ]; then fail "archived file differs from original: $a"; fi
+    elif [ "$(sha "$STORE/$a")" != "$(sha "$BEFORE/$rel")" ]; then
+      # edited after migration and before the move is legitimate ONLY if the ledger checksum matches the file
+      # (its original lines are then covered by the conservation check above)
+      lsha=$([ -f "$LEDGER" ] && nocr < "$LEDGER" | grep -F -- "| to: $a |" | grep -E '^- [0-9-]+ archive ' | tail -1 | grep -o 'sha256: [0-9a-f]*' | sed 's/sha256: //')
+      [ -n "$lsha" ] && [ "$lsha" = "$(sha "$STORE/$a")" ] || fail "archived file differs from original and from its ledger checksum: $a"
+    fi
   done < <(archive_files "$STORE")
   # protected bullet + its indented block must survive in an ACTIVE or ARCHIVED file (evidence does not count)
   { tier_files "$STORE"; archive_files "$STORE"; } | while IFS= read -r p; do trim < "$STORE/$p"; done > "$protected_pool"
@@ -237,6 +244,9 @@ if [ -n "$BEFORE" ]; then
       [ -z "$line" ] && continue
       grep -Fxq -- "$line" "$protected_pool" || fail "protected block line not in active/archive ($p): ${line:0:70}"
     done < <(nocr < "$BEFORE/$p" | awk '
+      /^#+ / { match($0, /^#+/); lvl=RLENGTH; if (insec && lvl<=seclvl) insec=0 }
+      /^#+ .*\[(NON-NEGOTIABLE|DIRECTIVE)[^]]*\]/ {insec=1; seclvl=lvl; print; next}
+      insec {print; next}
       /^- .*\[(NON-NEGOTIABLE|DIRECTIVE)[^]]*\]/ {inblock=1; print; next}
       inblock && /^[ \t]+[^ \t]/ {print; next}
       {inblock=0}' | trim)

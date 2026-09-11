@@ -25,3 +25,8 @@ staleness_threshold: 180
 ## Notes
 
 - [UPDATED 2026-07-20] Previously staging soak was 10 minutes. NOW 30 minutes. Reason: the 2026-07-08 incident (DB migration locked a table for 4 minutes and only showed at minute 12).
+
+## [DIRECTIVE 2026-07-20] Soak times are set by the platform lead
+confidence: validated · origin: directive (platform lead, 2026-07-20)
+- Canary 5 minutes and staging 30 minutes are not tunable per service.
+- Evidence says 20 minutes would have caught the 2026-07-08 incident too; the directive stands until the lead revisits it.

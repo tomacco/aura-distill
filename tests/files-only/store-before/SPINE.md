@@ -14,6 +14,7 @@
 ## Projects
 - [Atlas](projects/atlas.md) — Atlas data-platform migration from the legacy warehouse to the lakehouse; phase 2 (dual-write) done 2026-03, phase 3 (cutover) planned then paused when the vendor contract moved to Q4; decisions: parquet over ORC (evidence: 30% smaller at our row width), partition by ingest_date not event_date (constraint: late events), schema registry mandatory (directive from the data lead 2026-02); open items: backfill of the 2024 partitions, the two dashboards still reading the warehouse, the cost alert threshold. Read when working in the atlas-* repos.
 - [Beacon](projects/beacon.md) — Beacon notification service; current focus is the push-provider fallback chain. Read when working in the beacon repo.
+- [Delta](projects/delta.md) — Delta webhook relay; retries and dead-letter handling. Read when working in the delta repo.
 - [Comet](projects/comet.md) — Comet billing reconciliation; on hold since 2026-05 but pinned: legal retention rules live here. Read before touching invoices or reconciliation.
 
 ## Feedback

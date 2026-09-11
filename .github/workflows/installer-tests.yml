@@ -1,6 +1,7 @@
 name: Installer tests
 
-# Deterministic CI for install.sh / install.ps1. The install-behavior job
+# Deterministic CI for install.sh / install.ps1 plus the files-only store
+# invariants (tests/files-only). The install-behavior job
 # depends on tests that install from the local checkout (AURA_DISTILL_REPO
 # override) into throwaway temp homes — no network, no real profile dirs.
 # It is guarded by file existence so this workflow is safe to merge before

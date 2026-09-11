@@ -5,7 +5,7 @@
 #    evidence inflating a tier file) reproduced on a synthetic store.
 # 2. store-after --before store-before MUST pass everything: the redesign fixes the
 #    diagnosis without losing a line, a checksum, a protected block, a hook or a pin.
-# 3. Thirteen tamper cases MUST be caught, each with a non-zero exit; one exemption
+# 3. Twenty tamper cases MUST be caught, each with a non-zero exit; one exemption
 #    case (oversize:) and two restore cases (D7 restore obeying D1) MUST pass.
 set -u
 cd "$(dirname "$0")"
@@ -87,7 +87,7 @@ expect_pass "oversize: exemption honoured for a 7 KB pinned file" \
    { printf -- "\n- [NON-NEGOTIABLE] "; head -c 7000 /dev/zero | tr "\\0" "x"; printf "\n"; } >> "$s/projects/comet.md"'
 
 # restore_case <name> <event-text>: atlas comes back per D7 Restore (ledger line, move back,
-# saved entry trimmed to the cap with the cut wording under "Index detail", catalog rebuilt)
+# short entry rewritten within the cap, entire saved hook under "Index detail", catalog rebuilt)
 restore_case() {
   expect_pass "$1" '
     ev="'"$2"'"
@@ -100,12 +100,33 @@ restore_case() {
     printf -- "- projects/atlas.md | Atlas data-platform migration — legacy warehouse to lakehouse | validated 2026-04-02\n" >> "$s/CATALOG.md"'
 }
 echo "== restore cases (must pass: D7 restore obeys D1) =="
-restore_case "restore: atlas back, saved entry trimmed to cap, cut wording under Index detail" "restore"
+restore_case "restore: atlas back, short entry rewritten, entire saved hook under Index detail" "restore"
 restore_case "restore (modified) event parses the same way" "restore (modified)"
 
 echo "== tamper: catalog older than the newest ledger event =="
 tamper "stale catalog rebuilt stamp" "catalog stale: rebuilt" \
   'sed -i.bak "s/rebuilt: 2026-09-11/rebuilt: 2026-01-01/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+
+echo "== tamper cases added for every checker branch the suite did not exercise =="
+tamper "Index detail holds only the tail of the hook" "SPINE hook lost" \
+  'sed -i.bak "s/^platform engineer at a fictional logistics company; owns the Atlas, Beacon and Comet services; //" "$s/profile/noor.md"; rm -f "$s/profile/noor.md.bak"'
+tamper "[NON-NEGOTIABLE] file archived" "file carrying [NON-NEGOTIABLE] was archived: feedback/preferences.md" \
+  'mkdir -p "$s/archive/feedback"; h=$(sha256sum "$s/feedback/preferences.md" 2>/dev/null | cut -d" " -f1 || shasum -a 256 "$s/feedback/preferences.md" | cut -d" " -f1);
+   printf -- "- 2026-09-12 archive | from: feedback/preferences.md | to: archive/feedback/preferences.md | sha256: %s | reason: test | spine-entry: - [Preferences](feedback/preferences.md) — output and interaction rules incl. the non-negotiables. Read when shaping output for Noor.\n" "$h" >> "$s/archive/LEDGER.md";
+   mv "$s/feedback/preferences.md" "$s/archive/feedback/preferences.md";
+   sed -i.bak "/feedback\/preferences.md/d" "$s/SPINE.md" "$s/CATALOG.md"; rm -f "$s/SPINE.md.bak" "$s/CATALOG.md.bak";
+   sed -i.bak "s/rebuilt: 2026-09-11/rebuilt: 2026-09-12/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak";
+   printf -- "- archive/feedback/preferences.md | Output and interaction preferences | archived 2026-09-12 | reason: test | from feedback/preferences.md | hook: output and interaction rules incl. the non-negotiables. Read when shaping output for Noor.\n" >> "$s/CATALOG.md"'
+tamper "catalog pinned flag disagrees with the file" "catalog row says pinned but projects/beacon.md is not" \
+  'sed -i.bak "s/^\(- projects\/beacon.md .*\)$/\1 | pinned/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+tamper "catalog validated date disagrees with the file" "catalog validated date wrong for projects/comet.md" \
+  'sed -i.bak "s/| validated 2026-05-06 | pinned/| validated 1999-01-01 | pinned/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+tamper "dangling split_from" "split_from target missing: craft/ghost.md" \
+  'sed -i.bak "s|^split_from: craft/testing.md|split_from: craft/ghost.md|" "$s/craft/testing-2.md"; rm -f "$s/craft/testing-2.md.bak"'
+tamper "read_with into the local/ overlay" "read_with into local/ overlay: local/ops/vpn.md" \
+  'sed -i.bak "s|^read_with: \[ops/deploy.md\]|read_with: [ops/deploy.md, local/ops/vpn.md]|" "$s/projects/beacon.md"; rm -f "$s/projects/beacon.md.bak"'
+tamper "after-shaped store with one entry over the cap" "entry over 400 bytes" \
+  '{ printf -- "- [Fat](ops/deploy.md) — "; head -c 420 /dev/zero | tr "\0" "y"; printf "\n"; } >> "$s/SPINE.md"'
 
 echo
 echo "files-only suite: $PASS passed, $FAIL failed"

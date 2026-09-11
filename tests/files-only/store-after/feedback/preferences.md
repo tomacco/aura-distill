@@ -15,7 +15,7 @@ staleness_threshold: 180
 
 ## Interaction rules
 
-- [NON-NEGOTIABLE] Never claim "done" without showing the evidence (command output, test run, screenshot).
+- [NON-NEGOTIABLE 2026-05-02] Never claim "done" without showing the evidence (command output, test run, screenshot).
   confidence: hardened
   origin: directive (Noor, 2026-05-02)
 - Confirm structure before starting work; Noor sets conventions up front.

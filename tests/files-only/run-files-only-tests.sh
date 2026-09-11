@@ -5,7 +5,7 @@
 #    evidence inflating a tier file) reproduced on a synthetic store.
 # 2. store-after --before store-before MUST pass everything: the redesign fixes the
 #    diagnosis without losing a line, a checksum, a protected block, a hook or a pin.
-# 3. Twenty tamper cases MUST be caught, each with a non-zero exit; one exemption
+# 3. Twenty-four tamper cases MUST be caught, each with a non-zero exit; one exemption
 #    case (oversize:) and two restore cases (D7 restore obeying D1) MUST pass.
 set -u
 cd "$(dirname "$0")"
@@ -57,7 +57,7 @@ tamper "ledger checksum mismatch" "ledger sha256 does not match" \
 tamper "ledger archive event for a file that is still active" "ledger says archived but tree disagrees: projects/beacon.md" \
   'printf -- "- 2026-09-12 archive | from: projects/beacon.md | to: archive/projects/beacon.md | sha256: 0 | reason: crash test | spine-entry: - [Beacon](projects/beacon.md) — Beacon.\n" >> "$s/archive/LEDGER.md"'
 tamper "dropped protected line" "line lost from feedback/preferences.md" \
-  'sed -i.bak "/NON-NEGOTIABLE\] Never claim/d" "$s/feedback/preferences.md"; rm -f "$s/feedback/preferences.md.bak"'
+  'sed -i.bak "/NON-NEGOTIABLE 2026-05-02\] Never claim/d" "$s/feedback/preferences.md"; rm -f "$s/feedback/preferences.md.bak"'
 tamper "protected block demoted to evidence only" "protected block line not in active/archive" \
   'mkdir -p "$s/evidence/projects"; grep "NON-NEGOTIABLE\] Invoice records" "$s/projects/comet.md" > "$s/e.tmp";
    sed -i.bak "/NON-NEGOTIABLE\] Invoice records/d" "$s/projects/comet.md"; rm -f "$s/projects/comet.md.bak";
@@ -68,7 +68,7 @@ tamper "lost SPINE hook" "SPINE hook lost" \
 tamper "dropped one of two identical lines (multiset)" "line lost from craft/testing.md (before x2, after x1)" \
   'awk "/last_validated: 2026-08-12/ && !seen {seen=1; next} {print}" "$s/craft/testing-2.md" > "$s/t.tmp"; mv "$s/t.tmp" "$s/craft/testing-2.md"'
 tamper "lost split child" "line lost from craft/testing.md" \
-  'rm "$s/craft/testing-2.md"; sed -i.bak "/craft\/testing-2.md/d" "$s/SPINE.md" "$s/CATALOG.md"; rm -f "$s/SPINE.md.bak" "$s/CATALOG.md.bak"'
+  'rm "$s/craft/testing-2.md"; sed -i.bak "s| + \[continued\](craft/testing-2.md)||" "$s/SPINE.md"; sed -i.bak "/craft\/testing-2.md/d" "$s/CATALOG.md"; rm -f "$s/SPINE.md.bak" "$s/CATALOG.md.bak"'
 tamper "dangling read_with target" "read_with target missing: ops/missing.md" \
   'sed -i.bak "s|^read_with: \[ops/deploy.md\]|read_with: [ops/deploy.md, ops/missing.md]|" "$s/projects/beacon.md"; rm -f "$s/projects/beacon.md.bak"'
 tamper "block-list read_with" "read_with must be an inline list" \
@@ -111,7 +111,7 @@ echo "== tamper cases added for every checker branch the suite did not exercise 
 tamper "Index detail holds only the tail of the hook" "SPINE hook lost" \
   'sed -i.bak "s/^platform engineer at a fictional logistics company; owns the Atlas, Beacon and Comet services; //" "$s/profile/noor.md"; rm -f "$s/profile/noor.md.bak"'
 tamper "[NON-NEGOTIABLE] file archived" "file carrying [NON-NEGOTIABLE] was archived: feedback/preferences.md" \
-  'mkdir -p "$s/archive/feedback"; h=$(sha256sum "$s/feedback/preferences.md" 2>/dev/null | cut -d" " -f1 || shasum -a 256 "$s/feedback/preferences.md" | cut -d" " -f1);
+  'mkdir -p "$s/archive/feedback"; if command -v sha256sum >/dev/null 2>&1; then h=$(sha256sum "$s/feedback/preferences.md" | cut -d" " -f1); else h=$(shasum -a 256 "$s/feedback/preferences.md" | cut -d" " -f1); fi;
    printf -- "- 2026-09-12 archive | from: feedback/preferences.md | to: archive/feedback/preferences.md | sha256: %s | reason: test | spine-entry: - [Preferences](feedback/preferences.md) — output and interaction rules incl. the non-negotiables. Read when shaping output for Noor.\n" "$h" >> "$s/archive/LEDGER.md";
    mv "$s/feedback/preferences.md" "$s/archive/feedback/preferences.md";
    sed -i.bak "/feedback\/preferences.md/d" "$s/SPINE.md" "$s/CATALOG.md"; rm -f "$s/SPINE.md.bak" "$s/CATALOG.md.bak";
@@ -127,6 +127,24 @@ tamper "read_with into the local/ overlay" "read_with into local/ overlay: local
   'sed -i.bak "s|^read_with: \[ops/deploy.md\]|read_with: [ops/deploy.md, local/ops/vpn.md]|" "$s/projects/beacon.md"; rm -f "$s/projects/beacon.md.bak"'
 tamper "after-shaped store with one entry over the cap" "entry over 400 bytes" \
   '{ printf -- "- [Fat](ops/deploy.md) — "; head -c 420 /dev/zero | tr "\0" "y"; printf "\n"; } >> "$s/SPINE.md"'
+
+echo "== round-four cases =="
+tamper "deleted legacy archive file" "archive file deleted: archive/old-warehouse-notes.md" \
+  'rm "$s/archive/old-warehouse-notes.md"; sed -i.bak "/old-warehouse-notes.md/d" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+tamper "nested archive file labelled legacy with the ledger removed" "nested archive file labelled legacy: archive/projects/atlas.md" \
+  'rm "$s/archive/LEDGER.md"; sed -i.bak "s|^\(- archive/projects/atlas.md .*\)$|\1 \| legacy|" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+tamper "dated [NON-NEGOTIABLE date] block demoted to evidence only" "protected block line not in active/archive" \
+  'mkdir -p "$s/evidence/projects"; grep "NON-NEGOTIABLE 2026-01-15\] Reconciliation" "$s/projects/comet.md" > "$s/e.tmp";
+   sed -i.bak "/NON-NEGOTIABLE 2026-01-15\] Reconciliation/d" "$s/projects/comet.md"; rm -f "$s/projects/comet.md.bak";
+   { printf -- "---\nevidence_for: projects/comet.md\n---\n"; cat "$s/e.tmp"; } > "$s/evidence/projects/comet.md"; rm -f "$s/e.tmp";
+   printf -- "- evidence/projects/comet.md | for projects/comet.md | 1 entries\n" >> "$s/CATALOG.md"'
+# repeated migration: --before is itself a migrated store; a line dropped from an existing twin must be caught
+tmp=$(mktemp -d); cp -r store-after "$tmp/s"
+awk "/2026-05-11 observe/ {next} {print}" "$tmp/s/evidence/craft/testing.md" > "$tmp/e.tmp"; mv "$tmp/e.tmp" "$tmp/s/evidence/craft/testing.md"
+sed -i.bak "s/| 30 entries/| 29 entries/" "$tmp/s/CATALOG.md"; rm -f "$tmp/s/CATALOG.md.bak"
+out=$(bash "$CHECK" "$tmp/s" --before store-after 2>&1); rc=$?
+{ [ $rc -ne 0 ] && echo "$out" | grep -Fq -- "line lost from evidence/craft/testing.md"; } && ok "line dropped from a pre-existing evidence twin (repeated migration)" || { bad "evidence twin loss missed (rc=$rc)"; echo "$out" | sed 's/^/       /'; }
+rm -rf "$tmp"
 
 echo
 echo "files-only suite: $PASS passed, $FAIL failed"

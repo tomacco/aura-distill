@@ -14,4 +14,4 @@ lifecycle: pinned
 ## Rules that outlive the project
 
 - [NON-NEGOTIABLE] Invoice records are retained 10 years. Never delete, only tombstone. origin: constraint (legal, 2026-01).
-- [NON-NEGOTIABLE] Reconciliation runs are idempotent; a re-run must produce byte-identical output for the same input.
+- [NON-NEGOTIABLE 2026-01-15] Reconciliation runs are idempotent; a re-run must produce byte-identical output for the same input.

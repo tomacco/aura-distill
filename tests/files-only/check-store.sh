@@ -63,7 +63,7 @@ frontmatter() { nocr < "$1" | awk 'NR==1 && $0!="---"{exit} NR>1 && $0=="---"{ex
 fm_value() { frontmatter "$1" | grep "^$2:" | head -1 | sed "s/^$2:[[:space:]]*//"; }
 newest_stamp() { nocr < "$1" | grep -oE 'last_(validated|updated): *[0-9]{4}-[0-9]{2}-[0-9]{2}' | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | sort | tail -1; }
 catalog_row() { grep -F -- "- $2 |" "$1" | head -1 | nocr; }
-is_legacy() { catalog_row "$CAT" "$1" | grep -q '| legacy'; }
+is_legacy() { case "${1#archive/}" in */*) return 1 ;; *) return 0 ;; esac; }   # structural: flat under archive/ = legacy
 field() { printf '%s' "$1" | sed "s/.*| $2: //; s/ |.*//" | sed 's/[[:space:]]*$//'; }   # field <line> <name>
 # ledger_last_events: "<path> <archive|restore>" for the newest event per path
 # (a top-level function: bash 3.2 cannot parse a case statement inside a process substitution)
@@ -122,8 +122,12 @@ if [ ! -f "$CAT" ]; then fail "CATALOG.md missing"; else
   done < <(evidence_files "$STORE")
   # archived rows: from + hook, hook equals the ledger's spine-entry hook, sha256 from the last archive event
   while IFS= read -r a; do
-    if is_legacy "$a"; then continue; fi
     row=$(catalog_row "$CAT" "$a")
+    if is_legacy "$a"; then
+      printf '%s' "$row" | grep -q '| legacy' || fail "flat archive file must be labelled legacy in the catalog: $a"
+      continue
+    fi
+    printf '%s' "$row" | grep -q '| legacy' && fail "nested archive file labelled legacy: $a"
     printf '%s' "$row" | grep -q '| from ' || fail "archived row lacks 'from': $a"
     printf '%s' "$row" | grep -q '| hook: ' || fail "archived row lacks 'hook': $a"
     if [ ! -f "$LEDGER" ]; then fail "archive/LEDGER.md missing but $a is not legacy"; continue; fi
@@ -204,8 +208,20 @@ if [ -n "$BEFORE" ]; then
       [ "$have" -ge "$k" ] || fail "line lost from $p (before x$k, after x$have): ${line:0:70}"
     done < <(trim < "$BEFORE/$p" | grep -v '^$' | sort | uniq -c | sed 's/^ *//')
     if grep -q '^lifecycle: pinned' "$BEFORE/$p" && [ ! -f "$STORE/$p" ]; then fail "pinned file was moved: $p"; fi
-    if grep -q '\[NON-NEGOTIABLE\]' "$BEFORE/$p" && [ -f "$STORE/archive/$p" ]; then fail "file carrying [NON-NEGOTIABLE] was archived: $p"; fi
+    if grep -qE '\[NON-NEGOTIABLE[^]]*\]' "$BEFORE/$p" && [ -f "$STORE/archive/$p" ]; then fail "file carrying [NON-NEGOTIABLE] was archived: $p"; fi
   done < <(tier_files "$BEFORE")
+  # evidence twins are append-only: every line of a pre-existing twin survives in the same twin
+  while IFS= read -r e; do
+    if [ ! -f "$STORE/$e" ]; then fail "evidence twin deleted: $e"; continue; fi
+    trim < "$STORE/$e" > "$cand"
+    while read -r k line; do
+      [ -z "$line" ] && continue
+      have=$(grep -Fxc -- "$line" "$cand")
+      [ "$have" -ge "$k" ] || fail "line lost from $e (before x$k, after x$have): ${line:0:70}"
+    done < <(trim < "$BEFORE/$e" | grep -v '^$' | sort | uniq -c | sed 's/^ *//')
+  done < <(evidence_files "$BEFORE")
+  # nothing leaves the archive: every pre-existing archive file still exists
+  while IFS= read -r a; do [ -f "$STORE/$a" ] || fail "archive file deleted: $a"; done < <(archive_files "$BEFORE")
   # archived files: non-legacy must equal the original tier file; legacy must equal its own before copy
   while IFS= read -r a; do
     rel=${a#archive/}
@@ -221,7 +237,7 @@ if [ -n "$BEFORE" ]; then
       [ -z "$line" ] && continue
       grep -Fxq -- "$line" "$protected_pool" || fail "protected block line not in active/archive ($p): ${line:0:70}"
     done < <(nocr < "$BEFORE/$p" | awk '
-      /^- .*\[(NON-NEGOTIABLE|DIRECTIVE)\]/ {inblock=1; print; next}
+      /^- .*\[(NON-NEGOTIABLE|DIRECTIVE)[^]]*\]/ {inblock=1; print; next}
       inblock && /^[ \t]+[^ \t]/ {print; next}
       {inblock=0}' | trim)
   done < <(tier_files "$BEFORE")

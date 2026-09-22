@@ -1,0 +1,31 @@
+{
+ "n_claims_pooled": 43,
+ "labels_changed": 10,
+ "per_candidate": {
+  "qwen38-27b-8bit-think": {
+   "n": 7,
+   "changed": 2,
+   "to_FABRICATED": 2,
+   "to_DISTORTED": 0
+  },
+  "opus-2": {
+   "n": 3,
+   "changed": 0,
+   "to_FABRICATED": 0,
+   "to_DISTORTED": 0
+  },
+  "haiku-1": {
+   "n": 26,
+   "changed": 7,
+   "to_FABRICATED": 1,
+   "to_DISTORTED": 6
+  },
+  "sonnet-1": {
+   "n": 7,
+   "changed": 1,
+   "to_FABRICATED": 1,
+   "to_DISTORTED": 0
+  }
+ },
+ "method": "All non-GROUNDED claims from every candidate pooled into ONE blind, shuffled call with a pinned rubric and worked examples, so a single DISTORTED/FABRICATED boundary applies to all candidates. Pool text withheld (raw session content); regenerate with tools/adjudicate.py."
+}

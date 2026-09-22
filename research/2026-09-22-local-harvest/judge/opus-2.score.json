@@ -1,0 +1,676 @@
+{
+ "summary": {
+  "candidate": "opus-2",
+  "reference": "opus-1",
+  "judge_model": "opus",
+  "n_ref_claims": 116,
+  "present": 100,
+  "partial": 13,
+  "absent": 3,
+  "recall": 0.918,
+  "n_cand_claims": 53,
+  "grounded": 50,
+  "distorted": 3,
+  "fabricated": 0,
+  "grounding": 0.943,
+  "fabrication": 0.0,
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate is strong on the failure ledger (Section A) and decision table (Section D): it reproduces nearly every tool-level failure with exact error strings, IDs, token counts and dollar figures, and its D origins match the reference almost row-for-row, including the 41%/59% split, $0.002/session, and the marks-case reframing. Relative to the reference it is weaker on a handful of specifics \u2014 it omits that ~/repos did not exist on the Mac, the <a prior project>/2026-09-09 provenance of the headless recipe, the user's \"free arithmetic before designing\" rule, the concrete cell-isolation flags (Read/Glob/Grep, --strict-mcp-config, --max-turns 8), and the enumerated 3-step plan \u2014 and it undercounts tool calls (~30 vs \u224837). Grounding is high; the only distortions are presenting the ~/repos path as a KB fact (the KB says <user-repos-root>), asserting the headless recipe was \"written on Windows\" (unstated), and the tool-call count. Section B is slightly diluted by mixing \"KB facts surfaced\" into a corrections section, but no fabricated claims were found.",
+  "judge_cost_usd": 0.77813,
+  "adjudicated": true
+ },
+ "detail": {
+  "recall": [
+   {
+    "id": 1,
+    "status": "PRESENT"
+   },
+   {
+    "id": 2,
+    "status": "PRESENT"
+   },
+   {
+    "id": 3,
+    "status": "PRESENT"
+   },
+   {
+    "id": 4,
+    "status": "PRESENT"
+   },
+   {
+    "id": 5,
+    "status": "PRESENT"
+   },
+   {
+    "id": 6,
+    "status": "PRESENT"
+   },
+   {
+    "id": 7,
+    "status": "PRESENT"
+   },
+   {
+    "id": 8,
+    "status": "PRESENT"
+   },
+   {
+    "id": 9,
+    "status": "PRESENT"
+   },
+   {
+    "id": 10,
+    "status": "PRESENT"
+   },
+   {
+    "id": 11,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 12,
+    "status": "PRESENT"
+   },
+   {
+    "id": 13,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 14,
+    "status": "PRESENT"
+   },
+   {
+    "id": 15,
+    "status": "PRESENT"
+   },
+   {
+    "id": 16,
+    "status": "PRESENT"
+   },
+   {
+    "id": 17,
+    "status": "PRESENT"
+   },
+   {
+    "id": 18,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 19,
+    "status": "PRESENT"
+   },
+   {
+    "id": 20,
+    "status": "PRESENT"
+   },
+   {
+    "id": 21,
+    "status": "PRESENT"
+   },
+   {
+    "id": 22,
+    "status": "PRESENT"
+   },
+   {
+    "id": 23,
+    "status": "PRESENT"
+   },
+   {
+    "id": 24,
+    "status": "PRESENT"
+   },
+   {
+    "id": 25,
+    "status": "PRESENT"
+   },
+   {
+    "id": 26,
+    "status": "PRESENT"
+   },
+   {
+    "id": 27,
+    "status": "PRESENT"
+   },
+   {
+    "id": 28,
+    "status": "PRESENT"
+   },
+   {
+    "id": 29,
+    "status": "PRESENT"
+   },
+   {
+    "id": 30,
+    "status": "PRESENT"
+   },
+   {
+    "id": 31,
+    "status": "ABSENT"
+   },
+   {
+    "id": 32,
+    "status": "PRESENT"
+   },
+   {
+    "id": 33,
+    "status": "PRESENT"
+   },
+   {
+    "id": 34,
+    "status": "PRESENT"
+   },
+   {
+    "id": 35,
+    "status": "PRESENT"
+   },
+   {
+    "id": 36,
+    "status": "PRESENT"
+   },
+   {
+    "id": 37,
+    "status": "PRESENT"
+   },
+   {
+    "id": 38,
+    "status": "PRESENT"
+   },
+   {
+    "id": 39,
+    "status": "PRESENT"
+   },
+   {
+    "id": 40,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 41,
+    "status": "PRESENT"
+   },
+   {
+    "id": 42,
+    "status": "PRESENT"
+   },
+   {
+    "id": 43,
+    "status": "PRESENT"
+   },
+   {
+    "id": 44,
+    "status": "PRESENT"
+   },
+   {
+    "id": 45,
+    "status": "PRESENT"
+   },
+   {
+    "id": 46,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 47,
+    "status": "PRESENT"
+   },
+   {
+    "id": 48,
+    "status": "PRESENT"
+   },
+   {
+    "id": 49,
+    "status": "PRESENT"
+   },
+   {
+    "id": 50,
+    "status": "PRESENT"
+   },
+   {
+    "id": 51,
+    "status": "PRESENT"
+   },
+   {
+    "id": 52,
+    "status": "PRESENT"
+   },
+   {
+    "id": 53,
+    "status": "PRESENT"
+   },
+   {
+    "id": 54,
+    "status": "PRESENT"
+   },
+   {
+    "id": 55,
+    "status": "PRESENT"
+   },
+   {
+    "id": 56,
+    "status": "PRESENT"
+   },
+   {
+    "id": 57,
+    "status": "PRESENT"
+   },
+   {
+    "id": 58,
+    "status": "PRESENT"
+   },
+   {
+    "id": 59,
+    "status": "PRESENT"
+   },
+   {
+    "id": 60,
+    "status": "PRESENT"
+   },
+   {
+    "id": 61,
+    "status": "PRESENT"
+   },
+   {
+    "id": 62,
+    "status": "PRESENT"
+   },
+   {
+    "id": 63,
+    "status": "PRESENT"
+   },
+   {
+    "id": 64,
+    "status": "PRESENT"
+   },
+   {
+    "id": 65,
+    "status": "PRESENT"
+   },
+   {
+    "id": 66,
+    "status": "PRESENT"
+   },
+   {
+    "id": 67,
+    "status": "PRESENT"
+   },
+   {
+    "id": 68,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 69,
+    "status": "PRESENT"
+   },
+   {
+    "id": 70,
+    "status": "PRESENT"
+   },
+   {
+    "id": 71,
+    "status": "PRESENT"
+   },
+   {
+    "id": 72,
+    "status": "PRESENT"
+   },
+   {
+    "id": 73,
+    "status": "PRESENT"
+   },
+   {
+    "id": 74,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 75,
+    "status": "ABSENT"
+   },
+   {
+    "id": 76,
+    "status": "PRESENT"
+   },
+   {
+    "id": 77,
+    "status": "PRESENT"
+   },
+   {
+    "id": 78,
+    "status": "PRESENT"
+   },
+   {
+    "id": 79,
+    "status": "PRESENT"
+   },
+   {
+    "id": 80,
+    "status": "PRESENT"
+   },
+   {
+    "id": 81,
+    "status": "PRESENT"
+   },
+   {
+    "id": 82,
+    "status": "PRESENT"
+   },
+   {
+    "id": 83,
+    "status": "PRESENT"
+   },
+   {
+    "id": 84,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 85,
+    "status": "PRESENT"
+   },
+   {
+    "id": 86,
+    "status": "PRESENT"
+   },
+   {
+    "id": 87,
+    "status": "PRESENT"
+   },
+   {
+    "id": 88,
+    "status": "PRESENT"
+   },
+   {
+    "id": 89,
+    "status": "PRESENT"
+   },
+   {
+    "id": 90,
+    "status": "ABSENT"
+   },
+   {
+    "id": 91,
+    "status": "PRESENT"
+   },
+   {
+    "id": 92,
+    "status": "PRESENT"
+   },
+   {
+    "id": 93,
+    "status": "PRESENT"
+   },
+   {
+    "id": 94,
+    "status": "PRESENT"
+   },
+   {
+    "id": 95,
+    "status": "PRESENT"
+   },
+   {
+    "id": 96,
+    "status": "PRESENT"
+   },
+   {
+    "id": 97,
+    "status": "PRESENT"
+   },
+   {
+    "id": 98,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 99,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 100,
+    "status": "PRESENT"
+   },
+   {
+    "id": 101,
+    "status": "PRESENT"
+   },
+   {
+    "id": 102,
+    "status": "PRESENT"
+   },
+   {
+    "id": 103,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 104,
+    "status": "PRESENT"
+   },
+   {
+    "id": 105,
+    "status": "PRESENT"
+   },
+   {
+    "id": 106,
+    "status": "PRESENT"
+   },
+   {
+    "id": 107,
+    "status": "PRESENT"
+   },
+   {
+    "id": 108,
+    "status": "PRESENT"
+   },
+   {
+    "id": 109,
+    "status": "PRESENT"
+   },
+   {
+    "id": 110,
+    "status": "PRESENT"
+   },
+   {
+    "id": 111,
+    "status": "PRESENT"
+   },
+   {
+    "id": 112,
+    "status": "PRESENT"
+   },
+   {
+    "id": 113,
+    "status": "PRESENT"
+   },
+   {
+    "id": 114,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 115,
+    "status": "PRESENT"
+   },
+   {
+    "id": 116,
+    "status": "PARTIAL"
+   }
+  ],
+  "candidate_claims": [
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Actual fix was echo \"=== README\"; described vaguely but correctly."
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Reasonable inference from the compound command; grep output visibly matched."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "'Every line' slightly over-stated \u2014 user lines printed 'str' \u2014 but the diagnosis is correct."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Assistant said <quote withheld>; recipe scope mentions budget-cap failure classes. Attribution to the recipe is inferential but supported."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Transcript never states where the recipe was written; only that it was built 2026-09-09/11 for <a prior project> experiments. Plausible inference presented as fact.",
+    "adjudicated": true,
+    "reason": "The headless-clean-agents recipe is real (built 2026-09-09/11 for <a prior project> experiments); its provenance 'written on Windows' is an inference presented as transcript fact. Over-claimed detail on a real item."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The KB rule is <user-repos-root>; the ~/repos mapping on Mac was the assistant's own extrapolation, not a KB fact.",
+    "adjudicated": true,
+    "reason": "The NON-NEGOTIABLE KB rule exists but specifies <user-repos-root>; presenting the ~/repos/<project> Mac mapping as KB fact is the wrong path attributed to a real rule."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "'didn't see them' is speculation about user visibility, minor."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Transcript contains \u224837 tool calls (5 + 10 + 15 + 4 + 3); ~30 undercounts.",
+    "adjudicated": true,
+    "reason": "Real quantity (tool calls occurred throughout), wrong number: ~37 actual vs ~30 claimed."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   }
+  ],
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate is strong on the failure ledger (Section A) and decision table (Section D): it reproduces nearly every tool-level failure with exact error strings, IDs, token counts and dollar figures, and its D origins match the reference almost row-for-row, including the 41%/59% split, $0.002/session, and the marks-case reframing. Relative to the reference it is weaker on a handful of specifics \u2014 it omits that ~/repos did not exist on the Mac, the <a prior project>/2026-09-09 provenance of the headless recipe, the user's \"free arithmetic before designing\" rule, the concrete cell-isolation flags (Read/Glob/Grep, --strict-mcp-config, --max-turns 8), and the enumerated 3-step plan \u2014 and it undercounts tool calls (~30 vs \u224837). Grounding is high; the only distortions are presenting the ~/repos path as a KB fact (the KB says <user-repos-root>), asserting the headless recipe was \"written on Windows\" (unstated), and the tool-call count. Section B is slightly diluted by mixing \"KB facts surfaced\" into a corrections section, but no fabricated claims were found."
+ },
+ "redaction": "Claim texts removed (they quote a real session). Verbatim user speech removed. Personal identifiers generalised. Evaluative notes kept: they are the finding. Regenerate the full artifacts with tools/judge.py."
+}

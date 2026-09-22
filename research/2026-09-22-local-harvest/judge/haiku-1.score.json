@@ -1,0 +1,701 @@
+{
+ "summary": {
+  "candidate": "haiku-1",
+  "reference": "opus-1",
+  "judge_model": "opus",
+  "n_ref_claims": 116,
+  "present": 45,
+  "partial": 34,
+  "absent": 37,
+  "recall": 0.534,
+  "n_cand_claims": 58,
+  "grounded": 32,
+  "distorted": 15,
+  "fabricated": 11,
+  "grounding": 0.552,
+  "fabrication": 0.19,
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate is strongest in section E and in the pivot design (exchanges, session-level pass, $0.002/session, cold-read target), where it matches the reference closely and stays grounded. It is much weaker in section A, omitting nearly all tool-level friction the reference captures (zsh `======`, transcript-parser rewrite, spine_entries patch and rubric sizing, Keychain/config-dir deviation, the chosen linux-ssh topic, the arm-B bar), and it never names the repo path. Section C is its biggest liability: several user attributions are invented or reversed (user 'cited' the repos convention, 'did mental math', 'invoked live data is sacred', 'understood TypeSafe immediately', 'accepted via follow-up' when no follow-up exists), and D introduces non-spec origins ('Pragmatism', 'Principle') and a fabricated security rationale. Net: decent structure and outcome fidelity, but recall of granular evidence is low and grounding in the user-model sections is unreliable.",
+  "judge_cost_usd": 0.83422
+ },
+ "detail": {
+  "recall": [
+   {
+    "id": 1,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 2,
+    "status": "ABSENT"
+   },
+   {
+    "id": 3,
+    "status": "ABSENT"
+   },
+   {
+    "id": 4,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 5,
+    "status": "ABSENT"
+   },
+   {
+    "id": 6,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 7,
+    "status": "ABSENT"
+   },
+   {
+    "id": 8,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 9,
+    "status": "ABSENT"
+   },
+   {
+    "id": 10,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 11,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 12,
+    "status": "ABSENT"
+   },
+   {
+    "id": 13,
+    "status": "ABSENT"
+   },
+   {
+    "id": 14,
+    "status": "PRESENT"
+   },
+   {
+    "id": 15,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 16,
+    "status": "ABSENT"
+   },
+   {
+    "id": 17,
+    "status": "ABSENT"
+   },
+   {
+    "id": 18,
+    "status": "ABSENT"
+   },
+   {
+    "id": 19,
+    "status": "ABSENT"
+   },
+   {
+    "id": 20,
+    "status": "ABSENT"
+   },
+   {
+    "id": 21,
+    "status": "ABSENT"
+   },
+   {
+    "id": 22,
+    "status": "ABSENT"
+   },
+   {
+    "id": 23,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 24,
+    "status": "ABSENT"
+   },
+   {
+    "id": 25,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 26,
+    "status": "PRESENT"
+   },
+   {
+    "id": 27,
+    "status": "PRESENT"
+   },
+   {
+    "id": 28,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 29,
+    "status": "ABSENT"
+   },
+   {
+    "id": 30,
+    "status": "ABSENT"
+   },
+   {
+    "id": 31,
+    "status": "ABSENT"
+   },
+   {
+    "id": 32,
+    "status": "ABSENT"
+   },
+   {
+    "id": 33,
+    "status": "PRESENT"
+   },
+   {
+    "id": 34,
+    "status": "PRESENT"
+   },
+   {
+    "id": 35,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 36,
+    "status": "ABSENT"
+   },
+   {
+    "id": 37,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 38,
+    "status": "PRESENT"
+   },
+   {
+    "id": 39,
+    "status": "PRESENT"
+   },
+   {
+    "id": 40,
+    "status": "PRESENT"
+   },
+   {
+    "id": 41,
+    "status": "PRESENT"
+   },
+   {
+    "id": 42,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 43,
+    "status": "PRESENT"
+   },
+   {
+    "id": 44,
+    "status": "PRESENT"
+   },
+   {
+    "id": 45,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 46,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 47,
+    "status": "PRESENT"
+   },
+   {
+    "id": 48,
+    "status": "PRESENT"
+   },
+   {
+    "id": 49,
+    "status": "ABSENT"
+   },
+   {
+    "id": 50,
+    "status": "ABSENT"
+   },
+   {
+    "id": 51,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 52,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 53,
+    "status": "ABSENT"
+   },
+   {
+    "id": 54,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 55,
+    "status": "PRESENT"
+   },
+   {
+    "id": 56,
+    "status": "PRESENT"
+   },
+   {
+    "id": 57,
+    "status": "ABSENT"
+   },
+   {
+    "id": 58,
+    "status": "ABSENT"
+   },
+   {
+    "id": 59,
+    "status": "PRESENT"
+   },
+   {
+    "id": 60,
+    "status": "PRESENT"
+   },
+   {
+    "id": 61,
+    "status": "ABSENT"
+   },
+   {
+    "id": 62,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 63,
+    "status": "PRESENT"
+   },
+   {
+    "id": 64,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 65,
+    "status": "PRESENT"
+   },
+   {
+    "id": 66,
+    "status": "ABSENT"
+   },
+   {
+    "id": 67,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 68,
+    "status": "PRESENT"
+   },
+   {
+    "id": 69,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 70,
+    "status": "PRESENT"
+   },
+   {
+    "id": 71,
+    "status": "ABSENT"
+   },
+   {
+    "id": 72,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 73,
+    "status": "ABSENT"
+   },
+   {
+    "id": 74,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 75,
+    "status": "ABSENT"
+   },
+   {
+    "id": 76,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 77,
+    "status": "ABSENT"
+   },
+   {
+    "id": 78,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 79,
+    "status": "ABSENT"
+   },
+   {
+    "id": 80,
+    "status": "ABSENT"
+   },
+   {
+    "id": 81,
+    "status": "PRESENT"
+   },
+   {
+    "id": 82,
+    "status": "ABSENT"
+   },
+   {
+    "id": 83,
+    "status": "PRESENT"
+   },
+   {
+    "id": 84,
+    "status": "PRESENT"
+   },
+   {
+    "id": 85,
+    "status": "PRESENT"
+   },
+   {
+    "id": 86,
+    "status": "PRESENT"
+   },
+   {
+    "id": 87,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 88,
+    "status": "ABSENT"
+   },
+   {
+    "id": 89,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 90,
+    "status": "ABSENT"
+   },
+   {
+    "id": 91,
+    "status": "PRESENT"
+   },
+   {
+    "id": 92,
+    "status": "ABSENT"
+   },
+   {
+    "id": 93,
+    "status": "PRESENT"
+   },
+   {
+    "id": 94,
+    "status": "PRESENT"
+   },
+   {
+    "id": 95,
+    "status": "PRESENT"
+   },
+   {
+    "id": 96,
+    "status": "PRESENT"
+   },
+   {
+    "id": 97,
+    "status": "PRESENT"
+   },
+   {
+    "id": 98,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 99,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 100,
+    "status": "PRESENT"
+   },
+   {
+    "id": 101,
+    "status": "PRESENT"
+   },
+   {
+    "id": 102,
+    "status": "PRESENT"
+   },
+   {
+    "id": 103,
+    "status": "PRESENT"
+   },
+   {
+    "id": 104,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 105,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 106,
+    "status": "PRESENT"
+   },
+   {
+    "id": 107,
+    "status": "PRESENT"
+   },
+   {
+    "id": 108,
+    "status": "PRESENT"
+   },
+   {
+    "id": 109,
+    "status": "PRESENT"
+   },
+   {
+    "id": 110,
+    "status": "PRESENT"
+   },
+   {
+    "id": 111,
+    "status": "PRESENT"
+   },
+   {
+    "id": 112,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 113,
+    "status": "PRESENT"
+   },
+   {
+    "id": 114,
+    "status": "PRESENT"
+   },
+   {
+    "id": 115,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 116,
+    "status": "PRESENT"
+   }
+  ],
+  "candidate_claims": [
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "FABRICATED",
+    "note": "No such friction; api.md/choice.md/python.md and models.md were fetched directly."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The user framed it as a bug; the assistant never assumed so."
+   },
+   {
+    "status": "FABRICATED",
+    "note": "Binary only says 'for security'."
+   },
+   {
+    "status": "FABRICATED",
+    "note": ""
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Assistant addressed cross-turn signals directly in its first reply on the pivot."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "FABRICATED",
+    "note": "Session ends on the assistant's turn; no user follow-up exists."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "User explicitly said 'I can fix that by copying sessions from my PC'; ledger existence is recorded knowledge (since v1.1.13)."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "$0.042/Mtok and $0.002/session grounded; '~2k tokens per session' is invented and inconsistent with the price math."
+   },
+   {
+    "status": "FABRICATED",
+    "note": "No user response after the pricing calculation."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "FABRICATED",
+    "note": "Convention came from the knowledge base; user never cited it."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "User asked for an executive summary of what the skill does."
+   },
+   {
+    "status": "FABRICATED",
+    "note": "User never commented on it."
+   },
+   {
+    "status": "FABRICATED",
+    "note": "All done by the assistant."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "pkill/systemd came from the assistant's synthetic query; only KB-supported, not demonstrated."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Assistant's assumption, misattributed as a user growth edge."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Assistant's proposal / KB open question, not a user statement."
+   },
+   {
+    "status": "FABRICATED",
+    "note": ""
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "It was item 2 of 3."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Only one replacement cell ran at $1.00; cells 2\u20133 ran under $0.50."
+   },
+   {
+    "status": "FABRICATED",
+    "note": "Never invoked; the basis was the recorded 'marks' case plus measured token arithmetic."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Assistant's stated reason: different question, both small; and it was a proposal pending user OK, not a decision."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "4 cells, 3 valid (cell 1 budget-exhausted)."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Transcript has 9 turns; ~40 min unverifiable; rest grounded."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Privilege escalation/sandboxing never discussed."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "User has not approved; assistant asked for repo-split decision."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "FABRICATED",
+    "note": "No count given; Jev is not trained."
+   }
+  ],
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate is strongest in section E and in the pivot design (exchanges, session-level pass, $0.002/session, cold-read target), where it matches the reference closely and stays grounded. It is much weaker in section A, omitting nearly all tool-level friction the reference captures (zsh `======`, transcript-parser rewrite, spine_entries patch and rubric sizing, Keychain/config-dir deviation, the chosen linux-ssh topic, the arm-B bar), and it never names the repo path. Section C is its biggest liability: several user attributions are invented or reversed (user 'cited' the repos convention, 'did mental math', 'invoked live data is sacred', 'understood TypeSafe immediately', 'accepted via follow-up' when no follow-up exists), and D introduces non-spec origins ('Pragmatism', 'Principle') and a fabricated security rationale. Net: decent structure and outcome fidelity, but recall of granular evidence is low and grounding in the user-model sections is unreliable."
+ }
+}

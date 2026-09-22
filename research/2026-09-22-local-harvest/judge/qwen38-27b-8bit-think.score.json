@@ -1,0 +1,682 @@
+{
+ "summary": {
+  "candidate": "qwen38-27b-8bit-think",
+  "reference": "opus-1",
+  "judge_model": "opus",
+  "n_ref_claims": 116,
+  "present": 76,
+  "partial": 20,
+  "absent": 20,
+  "recall": 0.741,
+  "n_cand_claims": 58,
+  "grounded": 51,
+  "distorted": 7,
+  "fabricated": 0,
+  "grounding": 0.879,
+  "fabrication": 0.0,
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate is structurally clean \u2014 all five sections in order, every section-D item carrying an explicit origin label (often with a secondary origin), no stray commentary \u2014 and its coverage of the narrative arc (bug-vs-by-design correction, \"your call\" delegation, gated execution, the post-baseline pivot, exchanges vs turns, cold-read targeting, ground truth from the ledger) is strong. It is materially weaker on numbers and mid-session engineering detail: it drops the 55,155 cache tokens/$0.576 cold-cell anatomy, the 22,585-char \u2264400-char rubric sizing and multi-file-bullet rule, the 41% never-distilled figure, ~$0.002/session, the ~10x projection cut, 11 transcripts, 114 files, 2 commits, the git-identity convention, the NAST provenance of the headless recipe, and \u2014 notably \u2014 the disclosed ~/.claude-home `-r`/`--continue` trade-off and the transcript-parser iteration. Its grounding is mostly solid, but it invents two assistant errors that never happened (an assumption that config editing would fix home trust; a pre-baseline hypothesis that routing was the expensive step) and inverts two user-behavior readings, recasting the \"is it installed / what does it do\" questions and the \"bug\" framing as demonstrated expertise where the reference treats them as growth edges. Net: better than the reference on origin labelling discipline and failure-by-failure command detail, weaker on quantitative fidelity and honest characterization of user knowledge gaps.",
+  "judge_cost_usd": 0.974185
+ },
+ "detail": {
+  "recall": [
+   {
+    "id": 1,
+    "status": "PRESENT"
+   },
+   {
+    "id": 2,
+    "status": "PRESENT"
+   },
+   {
+    "id": 3,
+    "status": "PRESENT"
+   },
+   {
+    "id": 4,
+    "status": "PRESENT"
+   },
+   {
+    "id": 5,
+    "status": "ABSENT"
+   },
+   {
+    "id": 6,
+    "status": "PRESENT"
+   },
+   {
+    "id": 7,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 8,
+    "status": "PRESENT"
+   },
+   {
+    "id": 9,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 10,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 11,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 12,
+    "status": "PRESENT"
+   },
+   {
+    "id": 13,
+    "status": "PRESENT"
+   },
+   {
+    "id": 14,
+    "status": "PRESENT"
+   },
+   {
+    "id": 15,
+    "status": "PRESENT"
+   },
+   {
+    "id": 16,
+    "status": "ABSENT"
+   },
+   {
+    "id": 17,
+    "status": "ABSENT"
+   },
+   {
+    "id": 18,
+    "status": "ABSENT"
+   },
+   {
+    "id": 19,
+    "status": "ABSENT"
+   },
+   {
+    "id": 20,
+    "status": "ABSENT"
+   },
+   {
+    "id": 21,
+    "status": "ABSENT"
+   },
+   {
+    "id": 22,
+    "status": "ABSENT"
+   },
+   {
+    "id": 23,
+    "status": "PRESENT"
+   },
+   {
+    "id": 24,
+    "status": "ABSENT"
+   },
+   {
+    "id": 25,
+    "status": "PRESENT"
+   },
+   {
+    "id": 26,
+    "status": "PRESENT"
+   },
+   {
+    "id": 27,
+    "status": "PRESENT"
+   },
+   {
+    "id": 28,
+    "status": "PRESENT"
+   },
+   {
+    "id": 29,
+    "status": "PRESENT"
+   },
+   {
+    "id": 30,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 31,
+    "status": "ABSENT"
+   },
+   {
+    "id": 32,
+    "status": "PRESENT"
+   },
+   {
+    "id": 33,
+    "status": "PRESENT"
+   },
+   {
+    "id": 34,
+    "status": "PRESENT"
+   },
+   {
+    "id": 35,
+    "status": "PRESENT"
+   },
+   {
+    "id": 36,
+    "status": "PRESENT"
+   },
+   {
+    "id": 37,
+    "status": "PRESENT"
+   },
+   {
+    "id": 38,
+    "status": "PRESENT"
+   },
+   {
+    "id": 39,
+    "status": "PRESENT"
+   },
+   {
+    "id": 40,
+    "status": "PRESENT"
+   },
+   {
+    "id": 41,
+    "status": "PRESENT"
+   },
+   {
+    "id": 42,
+    "status": "PRESENT"
+   },
+   {
+    "id": 43,
+    "status": "PRESENT"
+   },
+   {
+    "id": 44,
+    "status": "PRESENT"
+   },
+   {
+    "id": 45,
+    "status": "PRESENT"
+   },
+   {
+    "id": 46,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 47,
+    "status": "PRESENT"
+   },
+   {
+    "id": 48,
+    "status": "PRESENT"
+   },
+   {
+    "id": 49,
+    "status": "PRESENT"
+   },
+   {
+    "id": 50,
+    "status": "PRESENT"
+   },
+   {
+    "id": 51,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 52,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 53,
+    "status": "PRESENT"
+   },
+   {
+    "id": 54,
+    "status": "PRESENT"
+   },
+   {
+    "id": 55,
+    "status": "PRESENT"
+   },
+   {
+    "id": 56,
+    "status": "PRESENT"
+   },
+   {
+    "id": 57,
+    "status": "ABSENT"
+   },
+   {
+    "id": 58,
+    "status": "PRESENT"
+   },
+   {
+    "id": 59,
+    "status": "PRESENT"
+   },
+   {
+    "id": 60,
+    "status": "PRESENT"
+   },
+   {
+    "id": 61,
+    "status": "PRESENT"
+   },
+   {
+    "id": 62,
+    "status": "PRESENT"
+   },
+   {
+    "id": 63,
+    "status": "PRESENT"
+   },
+   {
+    "id": 64,
+    "status": "PRESENT"
+   },
+   {
+    "id": 65,
+    "status": "PRESENT"
+   },
+   {
+    "id": 66,
+    "status": "ABSENT"
+   },
+   {
+    "id": 67,
+    "status": "PRESENT"
+   },
+   {
+    "id": 68,
+    "status": "PRESENT"
+   },
+   {
+    "id": 69,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 70,
+    "status": "ABSENT"
+   },
+   {
+    "id": 71,
+    "status": "PRESENT"
+   },
+   {
+    "id": 72,
+    "status": "PRESENT"
+   },
+   {
+    "id": 73,
+    "status": "PRESENT"
+   },
+   {
+    "id": 74,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 75,
+    "status": "ABSENT"
+   },
+   {
+    "id": 76,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 77,
+    "status": "ABSENT"
+   },
+   {
+    "id": 78,
+    "status": "PRESENT"
+   },
+   {
+    "id": 79,
+    "status": "ABSENT"
+   },
+   {
+    "id": 80,
+    "status": "PRESENT"
+   },
+   {
+    "id": 81,
+    "status": "PRESENT"
+   },
+   {
+    "id": 82,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 83,
+    "status": "PRESENT"
+   },
+   {
+    "id": 84,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 85,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 86,
+    "status": "PRESENT"
+   },
+   {
+    "id": 87,
+    "status": "PRESENT"
+   },
+   {
+    "id": 88,
+    "status": "PRESENT"
+   },
+   {
+    "id": 89,
+    "status": "PRESENT"
+   },
+   {
+    "id": 90,
+    "status": "ABSENT"
+   },
+   {
+    "id": 91,
+    "status": "PRESENT"
+   },
+   {
+    "id": 92,
+    "status": "ABSENT"
+   },
+   {
+    "id": 93,
+    "status": "PRESENT"
+   },
+   {
+    "id": 94,
+    "status": "PRESENT"
+   },
+   {
+    "id": 95,
+    "status": "PRESENT"
+   },
+   {
+    "id": 96,
+    "status": "PRESENT"
+   },
+   {
+    "id": 97,
+    "status": "PRESENT"
+   },
+   {
+    "id": 98,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 99,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 100,
+    "status": "ABSENT"
+   },
+   {
+    "id": 101,
+    "status": "PRESENT"
+   },
+   {
+    "id": 102,
+    "status": "ABSENT"
+   },
+   {
+    "id": 103,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 104,
+    "status": "PRESENT"
+   },
+   {
+    "id": 105,
+    "status": "PRESENT"
+   },
+   {
+    "id": 106,
+    "status": "PRESENT"
+   },
+   {
+    "id": 107,
+    "status": "PRESENT"
+   },
+   {
+    "id": 108,
+    "status": "PRESENT"
+   },
+   {
+    "id": 109,
+    "status": "PRESENT"
+   },
+   {
+    "id": 110,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 111,
+    "status": "PRESENT"
+   },
+   {
+    "id": 112,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 113,
+    "status": "PRESENT"
+   },
+   {
+    "id": 114,
+    "status": "PRESENT"
+   },
+   {
+    "id": 115,
+    "status": "PRESENT"
+   },
+   {
+    "id": 116,
+    "status": "PARTIAL"
+   }
+  ],
+  "candidate_claims": [
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "No such assumption appears in the transcript; the assistant inspected ~/.claude.json as evidence gathering and concluded from the start that flipping the JSON does nothing. Invented assistant error."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The transcript says the SKILL is a design guide, not an SDK; Jev is the model. Subject is swapped."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "No such prior hypothesis is stated in the transcript \u2014 the assistant framed routing as a latency step to measure. The post-hoc finding (CLAUDE.md+SPINE floor is the cost) is grounded, the invented prior hypothesis is not."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The prompt is by-design behavior; the user calling it a \"bug\" is a mis-framing (a growth edge), not demonstrated expertise. Over-claimed."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The user asked what the skill does right after installing it, indicating unfamiliarity with Jev's primitives; candidate converts a knowledge gap into expertise."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The recall-over-precision preference was the assistant's proposal in turn 9, not something the user stated."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The recall rationale (Jev cheap, extractor costly, missing a correction costs the memory) is grounded, but tying it to the \"live data is sacred\" core value is the candidate's own inference, not stated in the transcript."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   }
+  ],
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate is structurally clean \u2014 all five sections in order, every section-D item carrying an explicit origin label (often with a secondary origin), no stray commentary \u2014 and its coverage of the narrative arc (bug-vs-by-design correction, \"your call\" delegation, gated execution, the post-baseline pivot, exchanges vs turns, cold-read targeting, ground truth from the ledger) is strong. It is materially weaker on numbers and mid-session engineering detail: it drops the 55,155 cache tokens/$0.576 cold-cell anatomy, the 22,585-char \u2264400-char rubric sizing and multi-file-bullet rule, the 41% never-distilled figure, ~$0.002/session, the ~10x projection cut, 11 transcripts, 114 files, 2 commits, the git-identity convention, the NAST provenance of the headless recipe, and \u2014 notably \u2014 the disclosed ~/.claude-home `-r`/`--continue` trade-off and the transcript-parser iteration. Its grounding is mostly solid, but it invents two assistant errors that never happened (an assumption that config editing would fix home trust; a pre-baseline hypothesis that routing was the expensive step) and inverts two user-behavior readings, recasting the \"is it installed / what does it do\" questions and the \"bug\" framing as demonstrated expertise where the reference treats them as growth edges. Net: better than the reference on origin labelling discipline and failure-by-failure command detail, weaker on quantitative fidelity and honest characterization of user knowledge gaps."
+ }
+}

@@ -1,0 +1,16 @@
+{
+ "label": "qwen38-27b-8bit-think",
+ "model": "lmstudio-community/Qwen3.8-27B-MLX-8bit",
+ "thinking": true,
+ "load_s": 4.0,
+ "wall_s": 1833.8,
+ "ttft_s": 43.0,
+ "prompt_tokens": 14273,
+ "generated_tokens": 15765,
+ "prompt_tps": 341.8,
+ "generation_tps": 8.8,
+ "peak_memory_gb": 32.3,
+ "thinking_chars": 42654,
+ "output_chars": 21480,
+ "finish_reason": "stop"
+}

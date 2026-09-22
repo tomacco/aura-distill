@@ -130,9 +130,52 @@ index costs **$0.21 to write and $0.011 per subsequent turn to re-read** — abo
 that is real for a heavy user and rounding error for a light one. **The latency is the better argument
 than the dollars.**
 
-## E3 — Laya as router (BLOCKED on resources, harness ready)
+## E2b — the zero-model router cannot tell when it is wrong
 
-Two arms in `jev-distill-routing/tools/route_local.py`:
+This is the result that changed what E3 is for.
+
+A router is only safely cheap if it knows when to abstain: on a request the index does not cover, a
+confident wrong route costs more than the full SPINE read it saved. So: does the winning router's
+score separate its right answers from its wrong ones?
+
+| signal | correct top-1 (median) | wrong top-1 (median) | separable? |
+| --- | --- | --- | --- |
+| fused RRF score | 0.03279 | 0.03252 | **no** — wrong max == correct max |
+| rank1 − rank2 gap | 0.00079 | 0.00177 | **inverted** — the gap is *larger* when it is wrong |
+| raw BM25 (best surface) | 18.1 | 11.4 | partly — ranges overlap (3.3–…, …–12.1) |
+
+The first row is structural, not bad luck. RRF gives anything ranked first by both rankers exactly
+`1/(k+1) + 1/(k+1)`, so the top of the scale is a **constant**. Rank fusion buys ordering and throws
+away magnitude — which is precisely what a confidence signal is made of.
+
+The raw BM25 score is a weak but usable **out-of-scope** detector. Calibrated against the 30 in-scope
+queries plus 10 deliberately out-of-scope ones ("what's the weather", "write me a haiku", "hello"):
+
+| threshold | keeps in-scope | rejects out-of-scope |
+| --- | --- | --- |
+| 6.0 | 30/30 | 6/10 |
+| **7.5** | **28/30** | **10/10** |
+| 9.0 | 26/30 | 10/10 |
+
+7.5 is the knee, and the two in-scope queries it drops fall back to the full SPINE read — expensive,
+never wrong. That asymmetry is what makes the whole mechanism safe.
+
+**What no threshold here can do is catch a wrong pick on an in-scope request.** BM25 has no calibrated
+notion of "this is probably not it". Laya does: it returns a calibrated probability and a separate
+confidence per question, and it was trained for exactly that judgment.
+
+So E3's question is no longer "can a 421M model beat BM25 on accuracy" — on this evidence it probably
+cannot, and that would be a fine result. The question is now:
+
+> **Can Laya supply the abstention signal that BM25 structurally lacks — at a cost worth paying?**
+
+A model that routes no better but *knows when it is unsure* would let the shortlist mechanism fall
+back exactly when it should, which is worth more than a few points of top-1.
+
+## E3 — Laya as router and abstention oracle (BLOCKED on resources, harness ready)
+
+Two arms in `jev-distill-routing/tools/route_local.py`, both scored on accuracy **and** on whether
+their probabilities separate right from wrong (the E2b question):
 
 - `laya-yn` — one yes/no `choice` per SPINE entry, all 65 in **one** forward pass, rank by P(yes).
 - `laya-hier` — `choice` over SPINE sections, then `choice` within the winning section.
@@ -174,3 +217,13 @@ python3 tools/mechanisms.py             # E2 — expected cost per candidate mec
 
 Raw results: `jev-distill-routing/runs/<stamp>-e1*/`. Harness and eval set live in that repo; this
 folder holds the write-up and the decision record.
+
+`prototype/spine_router.py` is the E1 winner packaged as a shippable, stdlib-only module: a CLI and a
+`--hook` mode for `UserPromptSubmit` that injects the top-3 candidates and abstains below MIN_SCORE.
+It is a prototype for measurement, not a merge candidate — `AGENTS.md` requires an issue and an
+independent review first.
+
+```bash
+python3 prototype/spine_router.py "I'm about to ssh into the pi and pkill a stuck process"
+echo '{"prompt":"..."}' | python3 prototype/spine_router.py --hook
+```

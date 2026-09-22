@@ -179,10 +179,35 @@ The prediction that thinking-off was the biggest available speed lever held (4.8
 was run to settle — whether less deliberation would worsen or improve the user-model errors — came
 back neutral, and is now closed.
 
+## Experiment 2, runs 2–4 — the 16 GB candidates
+
+| candidate | peak RAM | wall | recall | % of Opus | grounding | distorted | fabricated |
+|---|---|---|---|---|---|---|---|
+| Qwen3.8-9B, 4-bit | 7.1 GB | 54 s | 0.375 | 41 % | 0.594 | 13 | 0 |
+| gpt-oss-20b, MXFP4-Q8 | 13.2 GB | 83 s | 0.328 | 36 % | 0.600 | 15 | 1 |
+| Gemma 3 12B, 4-bit *(substitute)* | 10.0 GB | 52 s | 0.147 | 16 % | 0.645 | 11 | 0 |
+
+**No 16 GB configuration is usable for this stage today.** A 40-point gap to the 48 GB result, and
+grounding in the low 0.6s across three families. gpt-oss at 13.2 GB also exceeds the default macOS
+GPU wired limit (~10.6 GB on a 16 GB machine), so it needs an `iogpu.wired_limit_mb` change users
+will not make.
+
+**The failure is misattribution, not invention.** Outright fabrication is rare (0, 1, 0 claims); the
+damage is in DISTORTED — 13, 15 and 11 claims each, a real referent stated wrongly, overwhelmingly by
+swapping who did what. Sections C and D exist to record who decided what and why, so scrambled agency
+is the worst error this pipeline can receive.
+
+**Gemma 4 could not be run at all.** Neither size that fits 16 GB loads on any released mlx-lm: the
+12B declares `gemma4_unified` (unimplemented in 0.31.3, the newest on PyPI) and E4B fails with a
+126-parameter mismatch against the `gemma4` implementation. The 26B-A4B MoE that would load is
+15.6 GB. Gemma 3 12B stands in, labelled a substitute. Runtime support gates availability
+independently of capability — a first-class risk for a local strategy that does not exist for a
+hosted API.
+
 ## Conclusions
 
-1. **A local open-weights model can do this stage.** 81 % of Opus, a 3.4 % fabrication rate, full
-   spec compliance, $0.
+1. **A local open-weights model can do this stage — with 32 GB of headroom.** 81 % of Opus, a 3.4 %
+   fabrication rate, full spec compliance, $0. At 16 GB, nothing tested comes close.
 2. **It is not a drop-in for the hosted cheap tier — it is better than it.** On this transcript the
    local 27B dominates Haiku on every quality axis and edges Sonnet on recall while trailing it
    slightly on fabrication, at no cost. The trade is entirely latency.

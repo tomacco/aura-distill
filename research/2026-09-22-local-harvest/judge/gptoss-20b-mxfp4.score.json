@@ -1,0 +1,676 @@
+{
+ "summary": {
+  "candidate": "gptoss-20b-mxfp4",
+  "reference": "opus-1",
+  "judge_model": "opus",
+  "n_ref_claims": 116,
+  "present": 22,
+  "partial": 32,
+  "absent": 62,
+  "recall": 0.328,
+  "n_cand_claims": 40,
+  "grounded": 24,
+  "distorted": 15,
+  "fabricated": 1,
+  "grounding": 0.6,
+  "fabrication": 0.025,
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate gets the headline shape right \u2014 the by-design home-trust finding and zsh wrapper, the $0.50 budget-cap failure and $1.00 re-run, the ~2.7s/~13s/$0.38 baseline numbers, the pivot to Jev turn-filtering, and the Jev cost arithmetic ($0.042/Mtok \u2192 ~$0.002/session) \u2014 and it observes the five-section structure with origin labels in D. It is far weaker than the reference on process detail and provenance: essentially all of the debugging texture (ugrep complexity error, illegal byte sequence, ToolSearch\u2192curl fallback, script iterations), the knowledge-base grounding (working-conventions.md, headless-clean-agents.md, the 2026-08-02 \"marks\" case), the concrete design decisions (linux-ssh topic and #48/65 rationale, real config dir due to Keychain OAuth, \u2264400-char rubric / 22.6k chars, arm-B bar, cold-read retargeting), and the entire aura-distill status answer (v1.1.17, 114 files, 99k words, SPINE 79/80) are absent. Its most serious defect is systematic misattribution: sections B, C and D repeatedly credit the user with facts, explanations and directives that were the assistant's own (TypeSafe/SPINE details, repo layout, topic choice, \"update README\", the separate-repo preference), and it invents user emotions and a \"several hours\" duration. Net: a thin but mostly readable skeleton with low recall and several confidently wrong actor/origin assignments.",
+  "judge_cost_usd": 0.776975,
+  "adjudicated": true
+ },
+ "detail": {
+  "recall": [
+   {
+    "id": 1,
+    "status": "PRESENT"
+   },
+   {
+    "id": 2,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 3,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 4,
+    "status": "ABSENT"
+   },
+   {
+    "id": 5,
+    "status": "ABSENT"
+   },
+   {
+    "id": 6,
+    "status": "ABSENT"
+   },
+   {
+    "id": 7,
+    "status": "ABSENT"
+   },
+   {
+    "id": 8,
+    "status": "ABSENT"
+   },
+   {
+    "id": 9,
+    "status": "ABSENT"
+   },
+   {
+    "id": 10,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 11,
+    "status": "ABSENT"
+   },
+   {
+    "id": 12,
+    "status": "ABSENT"
+   },
+   {
+    "id": 13,
+    "status": "ABSENT"
+   },
+   {
+    "id": 14,
+    "status": "ABSENT"
+   },
+   {
+    "id": 15,
+    "status": "ABSENT"
+   },
+   {
+    "id": 16,
+    "status": "ABSENT"
+   },
+   {
+    "id": 17,
+    "status": "ABSENT"
+   },
+   {
+    "id": 18,
+    "status": "ABSENT"
+   },
+   {
+    "id": 19,
+    "status": "ABSENT"
+   },
+   {
+    "id": 20,
+    "status": "ABSENT"
+   },
+   {
+    "id": 21,
+    "status": "ABSENT"
+   },
+   {
+    "id": 22,
+    "status": "ABSENT"
+   },
+   {
+    "id": 23,
+    "status": "PRESENT"
+   },
+   {
+    "id": 24,
+    "status": "ABSENT"
+   },
+   {
+    "id": 25,
+    "status": "PRESENT"
+   },
+   {
+    "id": 26,
+    "status": "ABSENT"
+   },
+   {
+    "id": 27,
+    "status": "ABSENT"
+   },
+   {
+    "id": 28,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 29,
+    "status": "ABSENT"
+   },
+   {
+    "id": 30,
+    "status": "ABSENT"
+   },
+   {
+    "id": 31,
+    "status": "ABSENT"
+   },
+   {
+    "id": 32,
+    "status": "ABSENT"
+   },
+   {
+    "id": 33,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 34,
+    "status": "PRESENT"
+   },
+   {
+    "id": 35,
+    "status": "ABSENT"
+   },
+   {
+    "id": 36,
+    "status": "PRESENT"
+   },
+   {
+    "id": 37,
+    "status": "ABSENT"
+   },
+   {
+    "id": 38,
+    "status": "PRESENT"
+   },
+   {
+    "id": 39,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 40,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 41,
+    "status": "ABSENT"
+   },
+   {
+    "id": 42,
+    "status": "ABSENT"
+   },
+   {
+    "id": 43,
+    "status": "ABSENT"
+   },
+   {
+    "id": 44,
+    "status": "PRESENT"
+   },
+   {
+    "id": 45,
+    "status": "ABSENT"
+   },
+   {
+    "id": 46,
+    "status": "ABSENT"
+   },
+   {
+    "id": 47,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 48,
+    "status": "PRESENT"
+   },
+   {
+    "id": 49,
+    "status": "ABSENT"
+   },
+   {
+    "id": 50,
+    "status": "ABSENT"
+   },
+   {
+    "id": 51,
+    "status": "ABSENT"
+   },
+   {
+    "id": 52,
+    "status": "PRESENT"
+   },
+   {
+    "id": 53,
+    "status": "PRESENT"
+   },
+   {
+    "id": 54,
+    "status": "ABSENT"
+   },
+   {
+    "id": 55,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 56,
+    "status": "PRESENT"
+   },
+   {
+    "id": 57,
+    "status": "ABSENT"
+   },
+   {
+    "id": 58,
+    "status": "ABSENT"
+   },
+   {
+    "id": 59,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 60,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 61,
+    "status": "ABSENT"
+   },
+   {
+    "id": 62,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 63,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 64,
+    "status": "PRESENT"
+   },
+   {
+    "id": 65,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 66,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 67,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 68,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 69,
+    "status": "ABSENT"
+   },
+   {
+    "id": 70,
+    "status": "ABSENT"
+   },
+   {
+    "id": 71,
+    "status": "ABSENT"
+   },
+   {
+    "id": 72,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 73,
+    "status": "ABSENT"
+   },
+   {
+    "id": 74,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 75,
+    "status": "ABSENT"
+   },
+   {
+    "id": 76,
+    "status": "PRESENT"
+   },
+   {
+    "id": 77,
+    "status": "ABSENT"
+   },
+   {
+    "id": 78,
+    "status": "ABSENT"
+   },
+   {
+    "id": 79,
+    "status": "ABSENT"
+   },
+   {
+    "id": 80,
+    "status": "ABSENT"
+   },
+   {
+    "id": 81,
+    "status": "ABSENT"
+   },
+   {
+    "id": 82,
+    "status": "ABSENT"
+   },
+   {
+    "id": 83,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 84,
+    "status": "ABSENT"
+   },
+   {
+    "id": 85,
+    "status": "PRESENT"
+   },
+   {
+    "id": 86,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 87,
+    "status": "ABSENT"
+   },
+   {
+    "id": 88,
+    "status": "PRESENT"
+   },
+   {
+    "id": 89,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 90,
+    "status": "ABSENT"
+   },
+   {
+    "id": 91,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 92,
+    "status": "ABSENT"
+   },
+   {
+    "id": 93,
+    "status": "ABSENT"
+   },
+   {
+    "id": 94,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 95,
+    "status": "ABSENT"
+   },
+   {
+    "id": 96,
+    "status": "PRESENT"
+   },
+   {
+    "id": 97,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 98,
+    "status": "ABSENT"
+   },
+   {
+    "id": 99,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 100,
+    "status": "ABSENT"
+   },
+   {
+    "id": 101,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 102,
+    "status": "ABSENT"
+   },
+   {
+    "id": 103,
+    "status": "ABSENT"
+   },
+   {
+    "id": 104,
+    "status": "PRESENT"
+   },
+   {
+    "id": 105,
+    "status": "PRESENT"
+   },
+   {
+    "id": 106,
+    "status": "PRESENT"
+   },
+   {
+    "id": 107,
+    "status": "PRESENT"
+   },
+   {
+    "id": 108,
+    "status": "PRESENT"
+   },
+   {
+    "id": 109,
+    "status": "ABSENT"
+   },
+   {
+    "id": 110,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 111,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 112,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 113,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 114,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 115,
+    "status": "PRESENT"
+   },
+   {
+    "id": 116,
+    "status": "ABSENT"
+   }
+  ],
+  "candidate_claims": [
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Accurate but omits --add-dir $HOME and the pass-through branch."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Slightly loose: the backgrounded output was read and returned garbage, and further Python searches followed."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Garbled causality: the Jev arm is blocked on a missing TYPESAFE_API_KEY, not on the 'go' sequencing; 'go' triggered the baseline, which the assistant ran itself.",
+    "adjudicated": true,
+    "reason": "The unexecuted Jev arm and the 'go' go-ahead are both real; the causal link between them is garbled (the blocker is the missing API key)."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Cell-01 did not succeed \u2014 it was budget-exhausted and discarded; 3 valid cells plus 1 replacement.",
+    "adjudicated": true,
+    "reason": "The higher-budget replacement cell is real; 'all four succeeded' contradicts cell-01's budget exhaustion."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Replacement text is exact but the edit was done with a Python string replace, not sed.",
+    "adjudicated": true,
+    "reason": "The README edit and its exact replacement text are real; the mechanism (Python string replace, not sed) is wrong."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The budget failure and fix were entirely assistant-side; the user never mentioned it.",
+    "adjudicated": true,
+    "reason": "The budget-cap failure and $1 fix are real; classifying them as a user correction/teaching assigns the wrong actor."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Wrong actor \u2014 the assistant discovered all three; the user asked what TypeSafe does.",
+    "adjudicated": true,
+    "reason": "TypeSafe details, SPINE layout and the ledger all appear in the transcript; the assistant discovered them, so the actor is wrong."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Numbers are real (from docs/assistant arithmetic) but attributed to the user.",
+    "adjudicated": true,
+    "reason": "The $0.042/Mtok figure and the one-call-per-session reasoning are real; the actor is wrong (docs + assistant arithmetic)."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "distill-process.md has 'Step 1: Identify signals'; 'exchanges' is the assistant's newly proposed unit, not part of the existing process.",
+    "adjudicated": true,
+    "reason": "'Step 1: Identify signals' genuinely exists in distill-process.md; conflating it with the assistant's newly proposed 'exchanges' unit mis-states a real thing."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The assistant proposed the split and explicitly asked the user; nothing was drafted.",
+    "adjudicated": true,
+    "reason": "A real repo-split proposal exists; the claim wrongly assigns the preference to the user and over-states progress ('started drafting')."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The assistant chose the repo location and the linux-ssh topic; the user only asked for a measurement.",
+    "adjudicated": true,
+    "reason": "Repo layout, topic choice and timing design all happened; wrong actor \u2014 the assistant made those calls."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The cited commands were run by the assistant, not the user.",
+    "adjudicated": true,
+    "reason": "The cited commands genuinely occurred in the transcript; the actor is wrong (assistant ran them, not the user)."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "FABRICATED",
+    "note": "The user never reacted to the cell failure; his only reaction was measured pragmatism about the 13s result.",
+    "adjudicated": true,
+    "reason": "No user reaction to the priced-out cell or to results exists anywhere; both frustration and excitement are invented emotional states."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The cited explanations are the assistant's; the user's TypeSafe knowledge is contradicted by his request for a summary of what it does.",
+    "adjudicated": true,
+    "reason": "The detailed SPINE and distill-process explanations exist but are the assistant's; the attribution and the resulting expertise claim are wrong."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "The user asked for measurement but explicitly delegated the method ('your call'); the headless choice was the assistant's."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Origin is assistant preference, pending the user's answer \u2014 the user never expressed it.",
+    "adjudicated": true,
+    "reason": "The jev-distill-signals proposal is real; labelling it a decision with user-directive origin misattributes an assistant preference pending approval."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The user never issued any README instruction.",
+    "adjudicated": true,
+    "reason": "Committing baseline results to the README really happened; the origin (a user 'update README' instruction) misattributes a real decision."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Assistant-designed requirement from the TypeSafe docs; no user instruction.",
+    "adjudicated": true,
+    "reason": "The TYPESAFE_API_KEY requirement is real; its origin label (user directive) is wrong \u2014 it was assistant-designed from the docs."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "True but omits the three opening goals (distill status, trust prompt, TypeSafe summary)."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Transcript timestamps span roughly 19:17\u201319:41 \u2014 well under an hour.",
+    "adjudicated": true,
+    "reason": "Real session duration (~24 minutes of timestamps) stated with a grossly wrong magnitude."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Accurate; omits 4/4 hit rate and the $1.72 total."
+   }
+  ],
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate gets the headline shape right \u2014 the by-design home-trust finding and zsh wrapper, the $0.50 budget-cap failure and $1.00 re-run, the ~2.7s/~13s/$0.38 baseline numbers, the pivot to Jev turn-filtering, and the Jev cost arithmetic ($0.042/Mtok \u2192 ~$0.002/session) \u2014 and it observes the five-section structure with origin labels in D. It is far weaker than the reference on process detail and provenance: essentially all of the debugging texture (ugrep complexity error, illegal byte sequence, ToolSearch\u2192curl fallback, script iterations), the knowledge-base grounding (working-conventions.md, headless-clean-agents.md, the 2026-08-02 \"marks\" case), the concrete design decisions (linux-ssh topic and #48/65 rationale, real config dir due to Keychain OAuth, \u2264400-char rubric / 22.6k chars, arm-B bar, cold-read retargeting), and the entire aura-distill status answer (v1.1.17, 114 files, 99k words, SPINE 79/80) are absent. Its most serious defect is systematic misattribution: sections B, C and D repeatedly credit the user with facts, explanations and directives that were the assistant's own (TypeSafe/SPINE details, repo layout, topic choice, \"update README\", the separate-repo preference), and it invents user emotions and a \"several hours\" duration. Net: a thin but mostly readable skeleton with low recall and several confidently wrong actor/origin assignments."
+ },
+ "redaction": "Claim texts removed (raw session content). Verbatim user speech removed. Identifiers generalised. Evaluative notes kept: they are the finding."
+}

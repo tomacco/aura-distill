@@ -84,6 +84,7 @@
         <a href="#exp1">Exp 1 · 48 GB</a>
         <a href="#exp2">Exp 2 · 16 GB</a>
         <a href="#runlog">Run log</a>
+        <a href="#verdict">Verdict</a>
         <a href="#limits">Limitations</a>
     </nav>
     <div class="container">
@@ -91,13 +92,13 @@
             <a href="./" class="back">&larr; All research</a>
             <h1>Can a Local Model Do the Distilling?</h1>
             <div class="meta">September 2026 &middot; <strong>live study, updated as runs land</strong> &middot; Apple M5 Pro 48 GB &rarr; 16 GB targets</div>
-            <p class="abstract">Distillation's first stage reads a session transcript and extracts the signals worth remembering. The routing directive already forbids frontier models there. This study asks how much further down it goes — all the way to an open-weights model on the user's own machine, at zero API cost. Experiment 1 answers it for a 48 GB developer machine; experiment 2 asks the question that actually decides whether it ships, on the 16 GB most users have. Partial results are published here as they arrive, not held back until the end.</p>
+            <p class="abstract">Distillation's first stage reads a session transcript and extracts the signals worth remembering. The routing directive already forbids frontier models there. This study asks how much further down it goes — all the way to an open-weights model on the user's own machine, at zero API cost. The answer splits sharply on memory: at 48 GB a local model beats the hosted cheap tier outright; at 16 GB, the configuration most users actually have, nothing tested is usable. Results were published here as each run landed, not held back until the end.</p>
         </header>
 
         <section id="status">
             <div class="status-banner">
-                <div class="label">Current status &middot; updated 2026-09-22, 15:10</div>
-                <p><strong>Experiment 1 complete.</strong> A 27B open-weights model on a 48 GB Mac reached <strong>81% of the Opus reference</strong> at $0 and 30.6 minutes, outperforming both hosted cheap tiers on faithfulness. <strong>Experiment 2, run 1 complete:</strong> turning thinking off made the same model <strong>4.8&times; faster</strong> — 6.4 minutes — and cost <strong>9 points of recall</strong>, while leaving faithfulness essentially unchanged. The 16 GB candidates are next. Every figure here is single-run and provisional until replicated.</p>
+                <div class="label">Current status &middot; updated 2026-09-22, 16:05 &middot; both experiments complete</div>
+                <p><strong>The answer splits on memory.</strong> At 48 GB a local 27B reached <strong>81% of the Opus reference</strong> at $0 — better than both hosted cheap tiers on faithfulness. At <strong>16 GB nothing tested is usable</strong>: the best candidate reached 41% of the reference and grounded under 0.65 of its own claims, and the failure is misattribution — scrambling who did what — which is the one error class this pipeline cannot absorb. Every figure is single-run and provisional.</p>
             </div>
         </section>
 
@@ -197,18 +198,8 @@
         </section>
 
         <section id="exp2">
-            <h2>Experiment 2 &middot; 16 GB <span class="pill pill-running">1 of 4 done</span></h2>
+            <h2>Experiment 2 &middot; 16 GB <span class="pill pill-done">complete</span></h2>
             <p>Experiment 1 measured a ceiling on a developer machine. This one measures what users actually get. On 16 GB of unified memory the OS and open applications leave roughly 8–10 GB for weights <em>and</em> KV cache, which rules out everything tested above.</p>
-            <p>Candidates, through the identical harness and judge:</p>
-            <table>
-                <thead><tr><th>Candidate</th><th>Why it's here</th><th>Status</th></tr></thead>
-                <tbody>
-                    <tr><td>Qwen3.8-27B, thinking off</td><td>Isolates the single biggest lever on a model already characterised — before any other variable moves</td><td><span class="pill pill-done">complete</span></td></tr>
-                    <tr><td>Qwen 3.x 8–9B class, 4-bit</td><td>Same family as the 48 GB winner, sized for the target</td><td><span class="pill pill-queued">queued</span></td></tr>
-                    <tr><td>Gemma 4 small, 4-bit</td><td>Different family; strong prose, which section C rewards</td><td><span class="pill pill-queued">queued</span></td></tr>
-                    <tr><td>gpt-oss-20b, MXFP4</td><td>Heavier reasoner explicitly targeted at 16 GB — the "is the squeeze worth it" control</td><td><span class="pill pill-queued">queued</span></td></tr>
-                </tbody>
-            </table>
             <div class="insight">
                 <div class="insight-label">One variable at a time, deliberately</div>
                 <p>The obvious move is to change thinking, architecture and quantization together and jump straight to a 16 GB candidate. That would make the result uninterpretable: whichever changes first moves the number, and the others get measured against a different baseline. Thinking-off on the already-characterised 27B runs first for exactly that reason, even though it costs an extra run.</p>
@@ -232,7 +223,33 @@
             </div>
             <p>Both runs still generate at 8.8 tokens/s — the speedup is entirely fewer tokens, not faster ones, which confirms the bandwidth bound rather than working around it. Peak memory was unchanged at 32.3 GB, so this run does nothing for the 16 GB problem on its own; it isolates a lever before the memory-constrained candidates move three variables at once.</p>
             <p><strong>Against the prediction.</strong> Thinking-off was called as the biggest single speed lever available, and at 4.8&times; that held. The open question was whether removing deliberation would worsen the user-model errors or reduce them: the answer is neither to any meaningful degree. That question is now closed, and closing it cost one run.</p>
-            <p>Results land in the run log below as each finishes.</p>
+
+            <h3>The 16 GB candidates</h3>
+            <table>
+                <thead><tr><th>Candidate</th><th>Peak RAM</th><th>Wall</th><th>% of Opus</th><th>Grounding</th><th>Fits 16&nbsp;GB?</th></tr></thead>
+                <tbody>
+                    <tr><td>Qwen3.8-9B, 4-bit</td><td>7.1 GB</td><td>54 s</td><td><strong>41%</strong></td><td>0.594</td><td class="score-positive">yes</td></tr>
+                    <tr><td>gpt-oss-20b, MXFP4</td><td>13.2 GB</td><td>83 s</td><td>36%</td><td>0.600</td><td class="score-negative">no &mdash; exceeds the default GPU wired limit</td></tr>
+                    <tr><td>Gemma 3 12B, 4-bit <em>(substitute)</em></td><td>10.0 GB</td><td>52 s</td><td>16%</td><td>0.645</td><td>marginal</td></tr>
+                    <tr><td>Gemma 4 12B / E4B, 4-bit</td><td colspan="4"><em>Could not be run at all &mdash; see below</em></td><td class="score-negative">n/a</td></tr>
+                </tbody>
+            </table>
+
+            <div class="insight">
+                <div class="insight-label">The verdict at 16 GB</div>
+                <p>Every candidate that fits collapses to <strong>0.59&ndash;0.65 grounding</strong> &mdash; a third of what they assert does not survive a check against the transcript. The best of them recalls 41% of the reference against the 27B's 81%. Halving the memory did not halve the quality; it removed most of it. On this evidence there is <strong>no 16 GB configuration worth shipping</strong> for this stage today.</p>
+            </div>
+
+            <h3>The failure is misattribution, not invention</h3>
+            <p>The study-wide adjudication makes the shape precise. Outright fabrication is <em>rare</em> in the small models &mdash; 0, 1 and 0 claims. What they do instead is <strong>distort</strong>: 13, 15 and 11 claims each carry a real referent stated wrongly. Overwhelmingly, that means swapping who did what. The 9B credited the assistant's proposals to the user and read impatience into a go-ahead the assistant had itself requested. gpt-oss-20b, in the judge's words, <em>"repeatedly credit[s] the user with facts, explanations and directives that were the assistant's own"</em>, and invented user emotions and a session duration.</p>
+            <p>For most summarisation tasks that would be a small error. For this one it is the worst possible error: sections C and D exist precisely to record <em>who</em> decided <em>what</em> and <em>why</em>. A harvest that scrambles agency writes a false model of the user into a knowledge base that later sessions treat as settled fact.</p>
+
+            <h3>Gemma 4 could not be run at all</h3>
+            <p>Neither Gemma 4 size that fits 16 GB is loadable by any released mlx-lm. The 12B checkpoints declare model type <code>gemma4_unified</code>, which 0.31.3 &mdash; the newest on PyPI &mdash; does not implement; E4B fails with a 126-parameter mismatch against the <code>gemma4</code> implementation that does exist. The 26B-A4B MoE that <em>would</em> load is 15.6 GB, too large for the target. Gemma 3 12B stands in, and is labelled a substitute rather than a Gemma 4 result.</p>
+            <div class="insight">
+                <div class="insight-label">Tooling support gates availability, independently of capability</div>
+                <p>A model you cannot load is not a candidate, however good its benchmarks are. For a hosted API this failure mode does not exist. For a local-model strategy it is a first-class risk, and it argues for treating runtime support as a selection criterion rather than an implementation detail &mdash; especially for a feature shipped to users who will not debug a quantisation loader.</p>
+            </div>
         </section>
 
         <section id="runlog">
@@ -268,14 +285,58 @@
                     </tr>
                     <tr>
                         <td>2026-09-22</td>
+                        <td>Exp 2 — Qwen3.8-9B 4-bit · gpt-oss-20b MXFP4 · Gemma 3 12B 4-bit</td>
+                        <td>41% / 36% / 16% of the reference; grounding 0.594 / 0.600 / 0.645; 7.1 / 13.2 / 10.0 GB peak. No 16 GB candidate is usable.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>Harness bug — gpt-oss Harmony channel leaked into the scored answer</td>
+                        <td><strong>Caught before scoring.</strong> The runner stripped only <code>&lt;/think&gt;</code>, so 12,921 characters of analysis would have been judged as the harvest. Fixed to extract the <code>final</code> channel, plus a guard that aborts if any chat control token survives. Result re-derived from the saved raw output, not re-run.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>Gemma 4 12B and E4B — load failures</td>
+                        <td>Unrunnable on released mlx-lm (<code>gemma4_unified</code> unimplemented; E4B parameter mismatch). Gemma 3 12B substituted and labelled as such.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
                         <td>Study-wide adjudication re-run, all five candidates pooled</td>
                         <td>Reproduced all four original candidates' labels exactly on a different shuffle — the pinned rubric is stable. The new run scored 1 fabricated, not the 0 its own single-candidate pass reported.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>Study-wide adjudication, all eight candidates pooled</td>
+                        <td>Third consecutive exact reproduction of every prior label. It also <strong>corrected the small models downward on fabrication</strong>: single-candidate passes had called 2 and 3 invented claims where the study-wide boundary finds 0 and 1. Weak models are misattributing, not hallucinating.</td>
                     </tr>
                 </tbody>
             </table>
             <div class="insight">
                 <div class="insight-label">What the review cost, and what it bought</div>
                 <p>Two of the three blocking findings changed numbers that had already been published. The reviewer predicted the corrected fabrication rate — ~2 of 58 claims — before the adjudication pass was written, and the pass returned exactly that. The value of a reviewer with no authorship context is not that it finds typos; it is that it does not know which claims you are attached to.</p>
+            </div>
+        </section>
+
+        <section id="verdict">
+            <h2>Where this leaves the feature</h2>
+            <table>
+                <thead><tr><th>Model</th><th>Where</th><th>Peak RAM</th><th>Wall</th><th>% of Opus</th><th>Grounding</th></tr></thead>
+                <tbody>
+                    <tr><td>Opus 5 rerun <em>(ceiling)</em></td><td>API</td><td>—</td><td>81 s</td><td>100%</td><td>0.943</td></tr>
+                    <tr><td><strong>Qwen3.8-27B, thinking on</strong></td><td><strong>local</strong></td><td>32.3 GB</td><td>1,834 s</td><td><strong>81%</strong></td><td>0.879</td></tr>
+                    <tr><td>Sonnet 5</td><td>API</td><td>—</td><td>47 s</td><td>74%</td><td>0.863</td></tr>
+                    <tr><td>Qwen3.8-27B, thinking off</td><td>local</td><td>32.3 GB</td><td>382 s</td><td>72%</td><td>0.867</td></tr>
+                    <tr><td>Haiku 4.5</td><td>API</td><td>—</td><td>103 s</td><td>58%</td><td><span class="score-negative">0.552</span></td></tr>
+                    <tr><td>Qwen3.8-9B, 4-bit</td><td>local</td><td>7.1 GB</td><td>54 s</td><td>41%</td><td>0.594</td></tr>
+                    <tr><td>gpt-oss-20b, MXFP4</td><td>local</td><td>13.2 GB</td><td>83 s</td><td>36%</td><td>0.600</td></tr>
+                    <tr><td>Gemma 3 12B, 4-bit</td><td>local</td><td>10.0 GB</td><td>52 s</td><td>16%</td><td>0.645</td></tr>
+                </tbody>
+            </table>
+            <p><strong>There is a real local option, and it needs 32 GB of headroom.</strong> On a machine that has it, a 27B at 8-bit does this stage better than the cheap hosted tier, for nothing, in half an hour. That is a genuine result and it inverts the assumption the routing directive was written under.</p>
+            <p><strong>There is no 16 GB option today.</strong> Not a marginal one — a 40-point gap to the 48 GB result, and grounding in the low 0.6s across three different families. The honest recommendation for users on 16 GB is a hosted mid-tier model, not a local one.</p>
+            <p><strong>Haiku remains the most alarming row in the table</strong>, and it is hosted. Its 0.552 grounding and six invented claims are worse than every local model tested, including ones a third its likely size. Cheapness bought neither speed nor safety here.</p>
+            <div class="insight">
+                <div class="insight-label">What would change the answer</div>
+                <p>Not a better 9B. The gap is too large for a model of that size to close by being slightly better. What could close it is changing the <em>task</em>: chunking a transcript so a small model judges one exchange at a time, where misattribution has far less room to occur, and where a wrong answer is cheap to discard. That is a different experiment, and this study does not test it.</p>
             </div>
         </section>
 

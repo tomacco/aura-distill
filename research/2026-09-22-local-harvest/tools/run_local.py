@@ -5,7 +5,7 @@ usage: run_local.py <hf-repo-or-path> <run-label> [--no-think] [--max-tokens N]
 Writes runs/<label>.md (harvest text, thinking stripped), <label>.raw.md (untouched
 output) and <label>.meta.json (timing, token counts, peak memory).
 """
-import argparse, json, os, resource, sys, time
+import argparse, json, os, re, sys, time
 
 import mlx.core as mx
 from mlx_lm import load, stream_generate
@@ -56,9 +56,20 @@ raw = text
 if last is not None and last.finish_reason == "length":
     sys.exit(f"FATAL: {a.label} hit --max-tokens ({a.max_tokens}) and never finished. "
              f"Raise the budget or disable thinking; refusing to write a truncated harvest.")
-# Strip a leading <think>…</think> block if present.
+# Separate reasoning from the answer. Two formats in the wild: Qwen-style
+# <think>…</think>, and OpenAI Harmony channels, where the answer is the
+# content of the `final` channel and everything before it is analysis.
+# Scoring a reasoning trace as a harvest would silently corrupt a result.
 out = raw
-if "</think>" in out:
+if "<|channel|>" in raw:
+    m = re.search(r"<\|channel\|>final<\|message\|>(.*?)(?:<\|(?:end|return|start)\|>|$)",
+                  raw, re.S)
+    if not m:
+        sys.exit(f"FATAL: {a.label} emitted Harmony channels but no final channel; "
+                 f"refusing to score an analysis trace as a harvest.")
+    out = m.group(1).strip()
+    thinking_chars = len(raw) - len(out)
+elif "</think>" in out:
     out = out.split("</think>", 1)[1].strip()
     thinking_chars = len(raw) - len(out)
 elif not a.no_think and "<think>" in raw:
@@ -67,6 +78,10 @@ elif not a.no_think and "<think>" in raw:
              f"a reasoning trace as a harvest.")
 else:
     thinking_chars = 0
+
+if re.search(r"<\|[a-z_]+\|>", out):
+    sys.exit(f"FATAL: {a.label} left chat control tokens in its answer; the reasoning/answer "
+             f"split is wrong for this model's format.")
 
 os.makedirs(RUNS, exist_ok=True)
 open(f"{RUNS}/{a.label}.raw.md", "w").write(raw)

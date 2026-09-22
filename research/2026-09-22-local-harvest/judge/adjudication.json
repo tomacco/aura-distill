@@ -1,12 +1,18 @@
 {
- "n_claims_pooled": 49,
- "labels_changed": 11,
+ "n_claims_pooled": 89,
+ "labels_changed": 15,
  "per_candidate": {
-  "qwen38-27b-8bit-think": {
-   "n": 7,
-   "changed": 2,
-   "to_FABRICATED": 2,
+  "opus-2": {
+   "n": 3,
+   "changed": 0,
+   "to_FABRICATED": 0,
    "to_DISTORTED": 0
+  },
+  "gptoss-20b-mxfp4": {
+   "n": 16,
+   "changed": 2,
+   "to_FABRICATED": 0,
+   "to_DISTORTED": 2
   },
   "haiku-1": {
    "n": 26,
@@ -14,10 +20,22 @@
    "to_FABRICATED": 1,
    "to_DISTORTED": 6
   },
-  "qwen38-27b-8bit-nothink": {
-   "n": 6,
-   "changed": 1,
-   "to_FABRICATED": 1,
+  "qwen38-9b-4bit": {
+   "n": 13,
+   "changed": 2,
+   "to_FABRICATED": 0,
+   "to_DISTORTED": 2
+  },
+  "qwen38-27b-8bit-think": {
+   "n": 7,
+   "changed": 2,
+   "to_FABRICATED": 2,
+   "to_DISTORTED": 0
+  },
+  "gemma3-12b-4bit": {
+   "n": 11,
+   "changed": 0,
+   "to_FABRICATED": 0,
    "to_DISTORTED": 0
   },
   "sonnet-1": {
@@ -26,12 +44,12 @@
    "to_FABRICATED": 1,
    "to_DISTORTED": 0
   },
-  "opus-2": {
-   "n": 3,
-   "changed": 0,
-   "to_FABRICATED": 0,
+  "qwen38-27b-8bit-nothink": {
+   "n": 6,
+   "changed": 1,
+   "to_FABRICATED": 1,
    "to_DISTORTED": 0
   }
  },
- "method": "All non-GROUNDED claims from EVERY candidate in the study (both experiments) pooled into ONE blind, shuffled call with a pinned rubric and worked examples, so a single DISTORTED/FABRICATED boundary applies study-wide. Re-running with an extra candidate and a different shuffle reproduced all four original candidates\u2019 labels exactly. Pool text withheld; regenerate with tools/adjudicate.py."
+ "method": "All non-GROUNDED claims from EVERY candidate in the study pooled into ONE blind, shuffled call with a pinned rubric and worked examples, so a single DISTORTED/FABRICATED boundary applies study-wide. Re-run three times as candidates were added (4, then 5, then 8): every previously-adjudicated label was reproduced exactly each time. Single-candidate passes systematically OVER-call fabrication on weak models; the pooled boundary reclassifies most of it as DISTORTED (a real referent, wrongly stated). Pool text withheld; regenerate with tools/adjudicate.py."
 }

@@ -505,19 +505,19 @@
     "status": "DISTORTED",
     "note": "Both Python passes failed (one produced no output, one returned garbled minified bytes). The decisive string came from the earlier `strings | grep`, which the candidate demotes to 'only found the user-facing message'.",
     "adjudicated": true,
-    "reason": "The Python byte scans and the decisive string both exist, but the string came from the earlier strings|grep; wrong cause/source attribution."
+    "reason": "The decisive string and the Python scans are both real; the claim credits the wrong command with producing the evidence."
    },
    {
     "status": "DISTORTED",
     "note": "Confirmation came from reading ~/.claude.json (flag false) plus the string literal, not from the Python binary scan.",
     "adjudicated": true,
-    "reason": "The conclusion that home trust is never persisted is real, but it came from the JSON flag plus the string literal, not the Python binary scan; wrong source."
+    "reason": "The non-persistence conclusion is real; its source is wrong \u2014 it came from ~/.claude.json plus the binary string literal, not the Python scan."
    },
    {
     "status": "DISTORTED",
     "note": "Five attempts occurred and the final two (both Python) failed; the assistant concluded from string literals, not from locating the logic.",
     "adjudicated": true,
-    "reason": "Real investigation sequence; wrong count (five attempts) and wrong outcome (the final two Python passes failed)."
+    "reason": "The multi-attempt binary investigation is real; the count (five, not four) and the success of the final attempt are both wrong."
    },
    {
     "status": "GROUNDED"
@@ -557,7 +557,7 @@
     "status": "FABRICATED",
     "note": "No such assumption appears; the assistant inspected the JSON as evidence and reported from the outset that flipping it does nothing. Framing it as a revised wrong assumption invents an error arc.",
     "adjudicated": true,
-    "reason": "The assistant never held or expressed the assumption that editing ~/.claude.json would fix it; it said from the outset that flipping the JSON does nothing. Invented assumption and error arc."
+    "reason": "No assumption that editing ~/.claude.json would fix the prompt was ever held or expressed; the error arc is invented wholesale."
    },
    {
     "status": "GROUNDED"
@@ -566,7 +566,7 @@
     "status": "DISTORTED",
     "note": "Wrong actor: the SPINE-routing project was the user's own proposal in turn 4 ('Let's create a project with JEV for aura distill\u2026'), not an assistant assumption.",
     "adjudicated": true,
-    "reason": "The routing project and the later redirection are real, but the routing target was the user's own proposal; wrong actor for the 'assumption'."
+    "reason": "The routing project and the later pivot are both real; the routing focus was the user's own turn-4 proposal, so the actor is wrong."
    },
    {
     "status": "GROUNDED"
@@ -629,7 +629,7 @@
     "status": "DISTORTED",
     "note": "Five attempts, and the effort ended without locating the logic \u2014 the candidate implies a successful RE outcome.",
     "adjudicated": true,
-    "reason": "The binary investigation is real; wrong attempt count (five) and implied successful RE outcome that did not occur."
+    "reason": "The binary investigation is real; the attempt count is wrong (five) and the claim implies a successful RE outcome that never happened."
    },
    {
     "status": "GROUNDED"
@@ -654,5 +654,5 @@
   },
   "qualitative": "The candidate is structurally clean \u2014 all five sections in order, every D item tagged with an origin (often a defensible dual tag), and no stray commentary \u2014 and it is strong on the D/E material: the exchange-projection arithmetic, Jev cost, recall tuning, ground-truth ledger, headless-vs-Agent rationale and baseline outcome numbers are all faithfully reproduced. Its main weakness is a narrativized failure arc: it asserts the Python byte-scan succeeded and yielded the decisive trust string, when in fact both Python passes failed and the conclusion rested on the earlier `strings | grep`; it also miscounts the attempts (4 vs 5) and invents two \"wrong assumptions\" by the assistant (editing ~/.claude.json, and owning the routing target that was actually the user's idea). Recall is thin on knowledge-base provenance \u2014 the 2026-08-02 \"marks\" precedent, the cold-read/never-distilled reframing of the pivot target, the 41% figure, working-conventions.md, the NON-NEGOTIABLE repo convention, the headless-cell recipe deviation and the rubric-sizing decision are all missing \u2014 as are several smaller friction beats (ToolSearch/WebFetch fallback, transcript-parser iteration, PERMISSION_MODES fragment) and quantitative metadata (11 transcripts, 2 commits, turn/tool counts). Net: a well-formed, mostly grounded summary that over-smooths the debugging story and under-reports the knowledge-base reasoning that gave the reference its sharpest insights."
  },
- "redaction": "Claim texts removed (they quote a real session). Verbatim user speech removed. Identifiers generalised. Evaluative notes kept: they are the finding."
+ "redaction": "Claim texts removed (raw session content). Verbatim user speech removed. Identifiers generalised. Evaluative notes kept: they are the finding."
 }

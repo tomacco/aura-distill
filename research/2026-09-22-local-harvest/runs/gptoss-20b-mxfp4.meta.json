@@ -1,0 +1,17 @@
+{
+ "label": "gptoss-20b-mxfp4",
+ "model": "mlx-community/gpt-oss-20b-MXFP4-Q8",
+ "thinking": true,
+ "load_s": 1.1,
+ "wall_s": 82.8,
+ "ttft_s": 6.7,
+ "prompt_tokens": 13244,
+ "generated_tokens": 4674,
+ "prompt_tps": 2001.6,
+ "generation_tps": 61.4,
+ "peak_memory_gb": 13.22,
+ "thinking_chars": 12921,
+ "output_chars": 7351,
+ "finish_reason": "stop",
+ "format": "harmony"
+}

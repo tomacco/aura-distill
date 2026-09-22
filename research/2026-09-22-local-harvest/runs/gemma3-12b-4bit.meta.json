@@ -1,0 +1,16 @@
+{
+ "label": "gemma3-12b-4bit",
+ "model": "mlx-community/gemma-3-12b-it-4bit",
+ "thinking": true,
+ "load_s": 1.0,
+ "wall_s": 51.8,
+ "ttft_s": 18.9,
+ "prompt_tokens": 14880,
+ "generated_tokens": 997,
+ "prompt_tps": 793.1,
+ "generation_tps": 30.3,
+ "peak_memory_gb": 9.99,
+ "thinking_chars": 0,
+ "output_chars": 4845,
+ "finish_reason": "stop"
+}

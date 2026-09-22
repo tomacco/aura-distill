@@ -1,0 +1,640 @@
+{
+ "summary": {
+  "candidate": "qwen38-9b-4bit",
+  "reference": "opus-1",
+  "judge_model": "opus",
+  "n_ref_claims": 116,
+  "present": 25,
+  "partial": 37,
+  "absent": 54,
+  "recall": 0.375,
+  "n_cand_claims": 32,
+  "grounded": 19,
+  "distorted": 13,
+  "fabricated": 0,
+  "grounding": 0.594,
+  "fabrication": 0.0,
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate is well-formed structurally \u2014 all five sections in order, every D row tagged with an origin, no stray commentary \u2014 and it captures the session's spine (budget-cap failure and the $1 rerun, the by-design trust finding, the linux-ssh topic rationale, the cold-read reframe, the $1.72 / 2.7s numbers, the one-call session-level pass). But its recall is shallow: roughly two-thirds of the reference claims are absent or only partial, including the entire answer to the user's first question (v1.1.17, 114 files, ~99k words, SPINE at 79/80), the no-API-key state, the Keychain/config-dir constraint, the -r/--continue trade-off, the repo/commit conventions, the arm-B bar, the recall-tuning policy, the ledger ground truth, and every open decision awaiting the user. It also contains one outright fabrication \u2014 that the `answers.file.choice` field name was \"verified on first call\" and confirmed correct, when no Jev call was ever made \u2014 plus several actor inversions (the user, not the assistant, proposed per-turn filtering and raised the chunking worry) and an invented \"impatience\" read of a go-ahead the assistant itself solicited. Compared with the reference, section C is the weakest: it converts strengths into growth edges, misses all three real growth edges, and stretches \"live data is sacred\" into a benchmarking preference it elevates to the session's key insight.",
+  "judge_cost_usd": 0.752017,
+  "adjudicated": true
+ },
+ "detail": {
+  "recall": [
+   {
+    "id": 1,
+    "status": "ABSENT"
+   },
+   {
+    "id": 2,
+    "status": "ABSENT"
+   },
+   {
+    "id": 3,
+    "status": "ABSENT"
+   },
+   {
+    "id": 4,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 5,
+    "status": "ABSENT"
+   },
+   {
+    "id": 6,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 7,
+    "status": "ABSENT"
+   },
+   {
+    "id": 8,
+    "status": "ABSENT"
+   },
+   {
+    "id": 9,
+    "status": "ABSENT"
+   },
+   {
+    "id": 10,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 11,
+    "status": "ABSENT"
+   },
+   {
+    "id": 12,
+    "status": "ABSENT"
+   },
+   {
+    "id": 13,
+    "status": "ABSENT"
+   },
+   {
+    "id": 14,
+    "status": "ABSENT"
+   },
+   {
+    "id": 15,
+    "status": "ABSENT"
+   },
+   {
+    "id": 16,
+    "status": "ABSENT"
+   },
+   {
+    "id": 17,
+    "status": "ABSENT"
+   },
+   {
+    "id": 18,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 19,
+    "status": "ABSENT"
+   },
+   {
+    "id": 20,
+    "status": "ABSENT"
+   },
+   {
+    "id": 21,
+    "status": "ABSENT"
+   },
+   {
+    "id": 22,
+    "status": "ABSENT"
+   },
+   {
+    "id": 23,
+    "status": "PRESENT"
+   },
+   {
+    "id": 24,
+    "status": "ABSENT"
+   },
+   {
+    "id": 25,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 26,
+    "status": "ABSENT"
+   },
+   {
+    "id": 27,
+    "status": "PRESENT"
+   },
+   {
+    "id": 28,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 29,
+    "status": "ABSENT"
+   },
+   {
+    "id": 30,
+    "status": "ABSENT"
+   },
+   {
+    "id": 31,
+    "status": "ABSENT"
+   },
+   {
+    "id": 32,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 33,
+    "status": "PRESENT"
+   },
+   {
+    "id": 34,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 35,
+    "status": "ABSENT"
+   },
+   {
+    "id": 36,
+    "status": "ABSENT"
+   },
+   {
+    "id": 37,
+    "status": "ABSENT"
+   },
+   {
+    "id": 38,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 39,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 40,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 41,
+    "status": "ABSENT"
+   },
+   {
+    "id": 42,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 43,
+    "status": "PRESENT"
+   },
+   {
+    "id": 44,
+    "status": "PRESENT"
+   },
+   {
+    "id": 45,
+    "status": "ABSENT"
+   },
+   {
+    "id": 46,
+    "status": "ABSENT"
+   },
+   {
+    "id": 47,
+    "status": "PRESENT"
+   },
+   {
+    "id": 48,
+    "status": "PRESENT"
+   },
+   {
+    "id": 49,
+    "status": "ABSENT"
+   },
+   {
+    "id": 50,
+    "status": "ABSENT"
+   },
+   {
+    "id": 51,
+    "status": "ABSENT"
+   },
+   {
+    "id": 52,
+    "status": "PRESENT"
+   },
+   {
+    "id": 53,
+    "status": "ABSENT"
+   },
+   {
+    "id": 54,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 55,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 56,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 57,
+    "status": "ABSENT"
+   },
+   {
+    "id": 58,
+    "status": "ABSENT"
+   },
+   {
+    "id": 59,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 60,
+    "status": "PRESENT"
+   },
+   {
+    "id": 61,
+    "status": "ABSENT"
+   },
+   {
+    "id": 62,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 63,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 64,
+    "status": "ABSENT"
+   },
+   {
+    "id": 65,
+    "status": "PRESENT"
+   },
+   {
+    "id": 66,
+    "status": "ABSENT"
+   },
+   {
+    "id": 67,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 68,
+    "status": "PRESENT"
+   },
+   {
+    "id": 69,
+    "status": "ABSENT"
+   },
+   {
+    "id": 70,
+    "status": "ABSENT"
+   },
+   {
+    "id": 71,
+    "status": "PRESENT"
+   },
+   {
+    "id": 72,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 73,
+    "status": "ABSENT"
+   },
+   {
+    "id": 74,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 75,
+    "status": "ABSENT"
+   },
+   {
+    "id": 76,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 77,
+    "status": "ABSENT"
+   },
+   {
+    "id": 78,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 79,
+    "status": "ABSENT"
+   },
+   {
+    "id": 80,
+    "status": "ABSENT"
+   },
+   {
+    "id": 81,
+    "status": "PRESENT"
+   },
+   {
+    "id": 82,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 83,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 84,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 85,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 86,
+    "status": "PRESENT"
+   },
+   {
+    "id": 87,
+    "status": "PRESENT"
+   },
+   {
+    "id": 88,
+    "status": "ABSENT"
+   },
+   {
+    "id": 89,
+    "status": "ABSENT"
+   },
+   {
+    "id": 90,
+    "status": "ABSENT"
+   },
+   {
+    "id": 91,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 92,
+    "status": "ABSENT"
+   },
+   {
+    "id": 93,
+    "status": "PRESENT"
+   },
+   {
+    "id": 94,
+    "status": "PRESENT"
+   },
+   {
+    "id": 95,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 96,
+    "status": "PRESENT"
+   },
+   {
+    "id": 97,
+    "status": "PRESENT"
+   },
+   {
+    "id": 98,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 99,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 100,
+    "status": "ABSENT"
+   },
+   {
+    "id": 101,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 102,
+    "status": "PRESENT"
+   },
+   {
+    "id": 103,
+    "status": "ABSENT"
+   },
+   {
+    "id": 104,
+    "status": "PRESENT"
+   },
+   {
+    "id": 105,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 106,
+    "status": "PRESENT"
+   },
+   {
+    "id": 107,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 108,
+    "status": "PRESENT"
+   },
+   {
+    "id": 109,
+    "status": "ABSENT"
+   },
+   {
+    "id": 110,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 111,
+    "status": "ABSENT"
+   },
+   {
+    "id": 112,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 113,
+    "status": "PRESENT"
+   },
+   {
+    "id": 114,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 115,
+    "status": "ABSENT"
+   },
+   {
+    "id": 116,
+    "status": "PRESENT"
+   }
+  ],
+  "candidate_claims": [
+   {
+    "status": "DISTORTED",
+    "note": "Two distinct failures merged and misattributed: 'Illegal byte sequence' came from `cut` reading the backgrounded output, 'complexity limits' from ugrep; the grep itself timed out at 120s, which is not mentioned.",
+    "adjudicated": true,
+    "reason": "Both error strings genuinely occurred in the transcript but are merged onto the wrong commands, and the grep's 120s timeout is omitted."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The python fallbacks returned no output and then garbled minified context; the usable evidence came from the earlier `strings | grep`, and the assistant abandoned the search ('Enough evidence already').",
+    "adjudicated": true,
+    "reason": "The python3 - / re.finditer attempts are real events; the claim that they resolved the search is a wrong outcome."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "No Jev call was ever made \u2014 no TYPESAFE_API_KEY exists; the assistant twice flagged the field name as assumed and needing verification.",
+    "adjudicated": true,
+    "reason": "The assumed answers.file.choice field and the stated need to verify it are real; asserting the verification happened over-claims the status of a pending item."
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Matches the recorded 'marks' case in projects/aura-distill.md, though the candidate presents it as newly derived rather than recalled knowledge."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The user proposed per-turn Jev filtering; the assistant reframed it. Wrong actor, and no user correction occurred.",
+    "adjudicated": true,
+    "reason": "Per-turn Jev filtering is a real proposal in the transcript, but the user proposed it and no correction of the assistant occurred; wrong actor."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The user raised the concern unprompted; the candidate's table places it in the 'What I Did' column.",
+    "adjudicated": true,
+    "reason": "The multi-block chunking concern is real; the user raised it, so placing it in the assistant's column is a wrong-actor error."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The recipe lives in the user's knowledge base (ops/headless-clean-agents.md) and was applied by the assistant; the user only asked for a 'new, clean agent'. Over-claimed as demonstrated expertise.",
+    "adjudicated": true,
+    "reason": "The headless recipe is real in the user's KB and the user did request a clean agent; crediting him with knowing the recipe over-claims a real datum."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The user called the trust prompt a 'bug'; the transcript shows the opposite of mechanics knowledge.",
+    "adjudicated": true,
+    "reason": "Anchored to the real trust-prompt exchange but inverts its evidential direction: the user called by-design behavior a bug."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The 'go' was the staged go-ahead the assistant explicitly requested ('let me know when you are done'); nothing in the transcript indicates impatience.",
+    "adjudicated": true,
+    "reason": "The terse 'go' is real; reading impatience into a go-ahead the assistant explicitly requested mischaracterizes a genuine utterance."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Content is real but mis-slotted: this is a strength (empirical reframing), not a growth edge; actual growth edges (bug framing, Jev unfamiliarity, delegated design call) are missed.",
+    "adjudicated": true,
+    "reason": "The reframe from routing to cold-read filtering is real; classifying it as a growth edge rather than a strength mis-slots a real item."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "'Live data is sacred' is a real core value from profile/the-user.md, but it concerns not mutating/faking production data; the candidate repurposes it as a benchmarking preference, and elevates it to the session's 'Key insight'.",
+    "adjudicated": true,
+    "reason": "'Live data is sacred' is a genuine core value in the transcript; repurposing its meaning as a benchmarking preference distorts a real principle."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The driver is a vendor/platform constraint (Claude Code hardcodes non-persistence), not a user directive.",
+    "adjudicated": true,
+    "reason": "The zshrc wrapper decision is real; its origin label is wrong \u2014 a platform constraint, not a user directive."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Rationale is correct but the origin label 'Constraint' and the sourcing to headless-clean-agents.md are off: the reasoning was the assistant's evidence-based call under the user's 'your call', and the harness in fact *deviated* from that file's recipe.",
+    "adjudicated": true,
+    "reason": "The dirty-floor rationale genuinely appears in turn 5; only the origin label and sourcing to headless-clean-agents.md (which the harness actually deviated from) are wrong."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The assistant only proposed a split at the very end of the turn; the user has not yet responded, so 'didn't object' overstates settlement. The proposed name jev-distill-signals is also dropped.",
+    "adjudicated": true,
+    "reason": "The repo-split proposal is real; 'was decided' and 'the user didn't object' over-state the settlement of a still-pending question."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Accurate as a goal, but the candidate never reports the answer (v1.1.17, 114 files, SPINE 79/80, no API key)."
+   }
+  ],
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate is well-formed structurally \u2014 all five sections in order, every D row tagged with an origin, no stray commentary \u2014 and it captures the session's spine (budget-cap failure and the $1 rerun, the by-design trust finding, the linux-ssh topic rationale, the cold-read reframe, the $1.72 / 2.7s numbers, the one-call session-level pass). But its recall is shallow: roughly two-thirds of the reference claims are absent or only partial, including the entire answer to the user's first question (v1.1.17, 114 files, ~99k words, SPINE at 79/80), the no-API-key state, the Keychain/config-dir constraint, the -r/--continue trade-off, the repo/commit conventions, the arm-B bar, the recall-tuning policy, the ledger ground truth, and every open decision awaiting the user. It also contains one outright fabrication \u2014 that the `answers.file.choice` field name was \"verified on first call\" and confirmed correct, when no Jev call was ever made \u2014 plus several actor inversions (the user, not the assistant, proposed per-turn filtering and raised the chunking worry) and an invented \"impatience\" read of a go-ahead the assistant itself solicited. Compared with the reference, section C is the weakest: it converts strengths into growth edges, misses all three real growth edges, and stretches \"live data is sacred\" into a benchmarking preference it elevates to the session's key insight."
+ },
+ "redaction": "Claim texts removed (raw session content). Verbatim user speech removed. Identifiers generalised. Evaluative notes kept: they are the finding."
+}

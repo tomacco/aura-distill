@@ -1,0 +1,637 @@
+{
+ "summary": {
+  "candidate": "gemma3-12b-4bit",
+  "reference": "opus-1",
+  "judge_model": "opus",
+  "n_ref_claims": 116,
+  "present": 3,
+  "partial": 28,
+  "absent": 85,
+  "recall": 0.147,
+  "n_cand_claims": 31,
+  "grounded": 20,
+  "distorted": 11,
+  "fabricated": 0,
+  "grounding": 0.645,
+  "fabrication": 0.0,
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "Structurally the candidate is compliant \u2014 five labeled sections in order, each D item tagged with an origin, no stray commentary \u2014 but substantively it captures only the last two turns of a nine-turn session and almost nothing verifiable. Entire workstreams vanish: the ~/.claude-home zsh wrapper that actually resolved task 2, the whole TypeSafe skill summary, the jev-distill-routing repo, and every number the session produced (v1.1.17, 65 SPINE entries, 22,585 rubric chars, $0.50 cap blowout, $1.72 spend, 2.7s median choose, 4/4 hit rate, 41% never distilled, $0.002/session). Worse, it asserts the routing baseline as a future step when it had already run, and it invents rationales for two D-section decisions (the exchanges unit and the separate repo) while crediting the assistant's arithmetic to the user. Its genuine strengths are narrow: the cold-read pivot, the exchanges concept, Jev pricing, ground-truth need, and the recall-over-precision policy are all correctly reported \u2014 but section A is largely a vague paraphrase of failures whose diagnostic detail is the reference's main value, and section C is generic praise that would fit almost any session.",
+  "judge_cost_usd": 0.645667,
+  "adjudicated": true
+ },
+ "detail": {
+  "recall": [
+   {
+    "id": 1,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 2,
+    "status": "ABSENT"
+   },
+   {
+    "id": 3,
+    "status": "ABSENT"
+   },
+   {
+    "id": 4,
+    "status": "ABSENT"
+   },
+   {
+    "id": 5,
+    "status": "ABSENT"
+   },
+   {
+    "id": 6,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 7,
+    "status": "ABSENT"
+   },
+   {
+    "id": 8,
+    "status": "ABSENT"
+   },
+   {
+    "id": 9,
+    "status": "ABSENT"
+   },
+   {
+    "id": 10,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 11,
+    "status": "ABSENT"
+   },
+   {
+    "id": 12,
+    "status": "ABSENT"
+   },
+   {
+    "id": 13,
+    "status": "ABSENT"
+   },
+   {
+    "id": 14,
+    "status": "ABSENT"
+   },
+   {
+    "id": 15,
+    "status": "ABSENT"
+   },
+   {
+    "id": 16,
+    "status": "ABSENT"
+   },
+   {
+    "id": 17,
+    "status": "ABSENT"
+   },
+   {
+    "id": 18,
+    "status": "ABSENT"
+   },
+   {
+    "id": 19,
+    "status": "ABSENT"
+   },
+   {
+    "id": 20,
+    "status": "ABSENT"
+   },
+   {
+    "id": 21,
+    "status": "ABSENT"
+   },
+   {
+    "id": 22,
+    "status": "ABSENT"
+   },
+   {
+    "id": 23,
+    "status": "ABSENT"
+   },
+   {
+    "id": 24,
+    "status": "ABSENT"
+   },
+   {
+    "id": 25,
+    "status": "ABSENT"
+   },
+   {
+    "id": 26,
+    "status": "ABSENT"
+   },
+   {
+    "id": 27,
+    "status": "ABSENT"
+   },
+   {
+    "id": 28,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 29,
+    "status": "ABSENT"
+   },
+   {
+    "id": 30,
+    "status": "ABSENT"
+   },
+   {
+    "id": 31,
+    "status": "ABSENT"
+   },
+   {
+    "id": 32,
+    "status": "ABSENT"
+   },
+   {
+    "id": 33,
+    "status": "ABSENT"
+   },
+   {
+    "id": 34,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 35,
+    "status": "ABSENT"
+   },
+   {
+    "id": 36,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 37,
+    "status": "ABSENT"
+   },
+   {
+    "id": 38,
+    "status": "ABSENT"
+   },
+   {
+    "id": 39,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 40,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 41,
+    "status": "ABSENT"
+   },
+   {
+    "id": 42,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 43,
+    "status": "PRESENT"
+   },
+   {
+    "id": 44,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 45,
+    "status": "ABSENT"
+   },
+   {
+    "id": 46,
+    "status": "ABSENT"
+   },
+   {
+    "id": 47,
+    "status": "ABSENT"
+   },
+   {
+    "id": 48,
+    "status": "ABSENT"
+   },
+   {
+    "id": 49,
+    "status": "ABSENT"
+   },
+   {
+    "id": 50,
+    "status": "ABSENT"
+   },
+   {
+    "id": 51,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 52,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 53,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 54,
+    "status": "ABSENT"
+   },
+   {
+    "id": 55,
+    "status": "ABSENT"
+   },
+   {
+    "id": 56,
+    "status": "ABSENT"
+   },
+   {
+    "id": 57,
+    "status": "ABSENT"
+   },
+   {
+    "id": 58,
+    "status": "ABSENT"
+   },
+   {
+    "id": 59,
+    "status": "ABSENT"
+   },
+   {
+    "id": 60,
+    "status": "ABSENT"
+   },
+   {
+    "id": 61,
+    "status": "ABSENT"
+   },
+   {
+    "id": 62,
+    "status": "ABSENT"
+   },
+   {
+    "id": 63,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 64,
+    "status": "ABSENT"
+   },
+   {
+    "id": 65,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 66,
+    "status": "ABSENT"
+   },
+   {
+    "id": 67,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 68,
+    "status": "ABSENT"
+   },
+   {
+    "id": 69,
+    "status": "ABSENT"
+   },
+   {
+    "id": 70,
+    "status": "ABSENT"
+   },
+   {
+    "id": 71,
+    "status": "ABSENT"
+   },
+   {
+    "id": 72,
+    "status": "ABSENT"
+   },
+   {
+    "id": 73,
+    "status": "ABSENT"
+   },
+   {
+    "id": 74,
+    "status": "ABSENT"
+   },
+   {
+    "id": 75,
+    "status": "ABSENT"
+   },
+   {
+    "id": 76,
+    "status": "ABSENT"
+   },
+   {
+    "id": 77,
+    "status": "ABSENT"
+   },
+   {
+    "id": 78,
+    "status": "ABSENT"
+   },
+   {
+    "id": 79,
+    "status": "ABSENT"
+   },
+   {
+    "id": 80,
+    "status": "ABSENT"
+   },
+   {
+    "id": 81,
+    "status": "PRESENT"
+   },
+   {
+    "id": 82,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 83,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 84,
+    "status": "ABSENT"
+   },
+   {
+    "id": 85,
+    "status": "ABSENT"
+   },
+   {
+    "id": 86,
+    "status": "ABSENT"
+   },
+   {
+    "id": 87,
+    "status": "ABSENT"
+   },
+   {
+    "id": 88,
+    "status": "PRESENT"
+   },
+   {
+    "id": 89,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 90,
+    "status": "ABSENT"
+   },
+   {
+    "id": 91,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 92,
+    "status": "ABSENT"
+   },
+   {
+    "id": 93,
+    "status": "ABSENT"
+   },
+   {
+    "id": 94,
+    "status": "ABSENT"
+   },
+   {
+    "id": 95,
+    "status": "ABSENT"
+   },
+   {
+    "id": 96,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 97,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 98,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 99,
+    "status": "ABSENT"
+   },
+   {
+    "id": 100,
+    "status": "ABSENT"
+   },
+   {
+    "id": 101,
+    "status": "ABSENT"
+   },
+   {
+    "id": 102,
+    "status": "ABSENT"
+   },
+   {
+    "id": 103,
+    "status": "ABSENT"
+   },
+   {
+    "id": 104,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 105,
+    "status": "ABSENT"
+   },
+   {
+    "id": 106,
+    "status": "ABSENT"
+   },
+   {
+    "id": 107,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 108,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 109,
+    "status": "ABSENT"
+   },
+   {
+    "id": 110,
+    "status": "ABSENT"
+   },
+   {
+    "id": 111,
+    "status": "ABSENT"
+   },
+   {
+    "id": 112,
+    "status": "ABSENT"
+   },
+   {
+    "id": 113,
+    "status": "ABSENT"
+   },
+   {
+    "id": 114,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 115,
+    "status": "ABSENT"
+   },
+   {
+    "id": 116,
+    "status": "PARTIAL"
+   }
+  ],
+  "candidate_claims": [
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Binary string 'for security home-directory trust is never saved' / 'home trust is session-only'."
+   },
+   {
+    "status": "GROUNDED",
+    "note": "~/.claude.json shows ~ hasTrustDialogAccepted: False."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Wrong actor: the tool harness notified the assistant, not the user; the user was never involved in this.",
+    "adjudicated": true,
+    "reason": "The background-task notification is real; its recipient is wrong \u2014 the harness notified the assistant, not the user."
+   },
+   {
+    "status": "GROUNDED",
+    "note": "cut illegal byte sequence and ugrep complexity-limit errors."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Both Python passes failed \u2014 one produced no output, the other garbled minified text; the conclusion came from the earlier strings|grep literals, and no code was located.",
+    "adjudicated": true,
+    "reason": "The follow-up Python scripts genuinely ran; their outcome is wrong \u2014 both failed and no code was located."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "This was a previously recorded 'marks' case (2026-08-02) in projects/aura-distill.md, not an attempt in this session; and the reason was that the conversation is already in warm context, not that the process is costly.",
+    "adjudicated": true,
+    "reason": "The 'marks' case is real in projects/aura-distill.md; the claim mis-places it in this session and swaps its reason (warm context, not process cost)."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Proposed policy in turn 9."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The assistant produced all of that arithmetic; the user's input was qualitative ('gains are not that crazy'). 'Number of signals' data never existed in the session.",
+    "adjudicated": true,
+    "reason": "The transcript-volume and cost data are real but were produced by the assistant; 'number of signals' data additionally never existed."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Clearly true of turn 8; 'frequently' is a mild over-generalization across a mostly terse session."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Over-claimed: the user only ever said 'go' once; the final pre-filter proposal was never responded to \u2014 the session ended awaiting his decision.",
+    "adjudicated": true,
+    "reason": "The user's single 'go' and his engagement with the pivot are real; 'readily accepted suggestions and incorporated new ideas' over-claims their strength."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The user's opening directives were an install status check, the trust prompt, and a TypeSafe summary; the first Jev directive was a routing benchmark, not '/distill improvement'.",
+    "adjudicated": true,
+    "reason": "Real user directives exist, but the first Jev directive was a SPINE routing benchmark; '/distill improvement' mis-states the actual instruction."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The 59%/41% figure came from projects/aura-distill.md knowledge, not the ledger; the ledger was proposed as the future ground-truth source. Also drops the 41% number.",
+    "adjudicated": true,
+    "reason": "The never-processed-sessions target and the 59%/41% split are real; the source is wrong (project knowledge, not the ledger) and the 41% figure is dropped."
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Rationale correct; the 'Convention' origin label is questionable \u2014 the transcript derives it from cost evidence and a stated principle."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The actual reasoning was that transcripts are ~90% tool I/O and signals anchor on user text, giving a ~10x code-only cut; the exchange unit was chosen to answer the cross-block worry.",
+    "adjudicated": true,
+    "reason": "The exchange-unit decision and its reasoning are real (~90% tool I/O, signals anchor on user text, ~10x cut); the stated driver is a mis-rendering of it."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Rationale invented \u2014 the transcript says it is 'a different question than routing' and 'both are small'; and it was a proposal pending user approval, not a decision.",
+    "adjudicated": true,
+    "reason": "The repo-split proposal is real; the stated rationale (isolate functionality, avoid dependencies) replaces the actual one and 'was chosen' over-states a pending proposal."
+   },
+   {
+    "status": "GROUNDED",
+    "note": "True of turns 4\u20137, but presented as the whole session, omitting three other goals."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "'Natural language processing' has no basis; omits Claude Code internals, macOS/zsh, and benchmarking/cost economics.",
+    "adjudicated": true,
+    "reason": "Most listed domains are genuinely present; 'natural language processing' is an unsupported addition to an otherwise real list."
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Accurate but vague."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The routing baseline was already executed (4 headless cells, $1.72, ~2.7s median choose time); it ran against SPINE in clean cells, not 'a set of local transcripts'.",
+    "adjudicated": true,
+    "reason": "The routing baseline is a real event, but it was already executed and ran against SPINE in clean cells, not pending against local transcripts."
+   }
+  ],
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "Structurally the candidate is compliant \u2014 five labeled sections in order, each D item tagged with an origin, no stray commentary \u2014 but substantively it captures only the last two turns of a nine-turn session and almost nothing verifiable. Entire workstreams vanish: the ~/.claude-home zsh wrapper that actually resolved task 2, the whole TypeSafe skill summary, the jev-distill-routing repo, and every number the session produced (v1.1.17, 65 SPINE entries, 22,585 rubric chars, $0.50 cap blowout, $1.72 spend, 2.7s median choose, 4/4 hit rate, 41% never distilled, $0.002/session). Worse, it asserts the routing baseline as a future step when it had already run, and it invents rationales for two D-section decisions (the exchanges unit and the separate repo) while crediting the assistant's arithmetic to the user. Its genuine strengths are narrow: the cold-read pivot, the exchanges concept, Jev pricing, ground-truth need, and the recall-over-precision policy are all correctly reported \u2014 but section A is largely a vague paraphrase of failures whose diagnostic detail is the reference's main value, and section C is generic praise that would fit almost any session."
+ },
+ "redaction": "Claim texts removed (raw session content). Verbatim user speech removed. Identifiers generalised. Evaluative notes kept: they are the finding."
+}

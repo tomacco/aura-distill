@@ -185,16 +185,54 @@ resident) for a token-savings experiment. With 149 MB unused RAM and active page
 second model would corrupt their latency numbers and mine. Coordination is running in the PortCall
 `system-resources` channel. See *Resource protocol* below.
 
-## E4 — Laya as a distillation pre-filter (designed, not run)
+## E4 — the distillation pre-filter, killed by arithmetic and replaced
 
-Hypothesis: most transcript turns carry no durable signal, so a cheap local classifier could cut what
-the extraction stage reads. **Pre-registered decision rule:** this is worth shipping only if the filter
-holds ≥0.95 recall on signal-bearing turns at ≤0.5 of the turns kept. Below that it trades accuracy
-for tokens, which the release frame says must be an opt-in knob at best.
+The original hypothesis: most transcript turns carry no durable signal, so a cheap local classifier
+could cut what the extraction stage reads. Before building it, the free arithmetic — where does
+transcript volume actually live? Across the 10 real sessions on this machine (1,017,197 chars ≈ 446k
+tokens est.):
 
-Honest blocker: this Mac has **28 user turns across 9 sessions**. That is not enough to measure
-recall to two digits, and labelling them myself makes the eval circular. This experiment needs the
-Windows box's transcript history before it can produce a number.
+| component | chars | share | tokens (est) |
+| --- | --- | --- | --- |
+| tool results | 543,085 | **53.8%** | 238,091 |
+| tool_use inputs | 283,874 | **28.1%** | 124,452 |
+| user text | 131,195 | 12.9% | 57,516 |
+| assistant text | 47,118 | 4.7% | 20,657 |
+| assistant thinking | 4,275 | 0.4% | 1,874 |
+
+**82% of a transcript is tool traffic.** A classifier that judges *user turns* is aimed at 13% of the
+volume, so even a perfect one — never dropping a real signal, dropping every empty turn — cannot save
+more than 13%. The experiment is not worth its own design. **Killed.**
+
+This is the same lesson the knowledge base already records from the marks experiment ("run the free
+arithmetic BEFORE designing the experiment"), and it applied again here.
+
+### What replaces it: truncate tool traffic, no model involved
+
+Head-truncating every tool result and tool_use input, because the first lines carry the outcome and
+the tail is payload:
+
+| tool cap | tokens (est) | reduction |
+| --- | --- | --- |
+| uncapped | 445,943 | — |
+| 4,000 chars | 355,428 | 20% |
+| 1,000 chars | 248,802 | 44% |
+| **500 chars** | **194,323** | **56%** |
+| 200 chars | 139,378 | 69% |
+| dropped entirely | 80,047 | 82% |
+
+**This is a knob, not a free win, and it must not ship as one.** Tool results carry real signal — a
+command that failed with a specific error is exactly the kind of thing distillation should catch, and
+that error is often *not* in the first 500 chars. The honest open question, which this data cannot
+answer, is what fraction of durable knowledge entries trace back to tool output rather than to
+something the user said. Until that is measured, the release frame's rule applies: any
+token-vs-something trade is an explicit opt-in knob with documented consequences.
+
+**The measurable next step** (not run): take knowledge entries with `origin: evidence` and trace each
+back to its transcript turn. If they overwhelmingly cite user text and assistant text, truncation is
+nearly free and the cap can be aggressive. If a meaningful share cites tool output, the cap is a real
+accuracy trade and belongs behind a flag. That is an attribution study on existing data — no model,
+no runs, no GPU.
 
 ## Resource protocol (PortCall `system-resources`)
 
@@ -212,6 +250,7 @@ python3 tools/tokens.py                 # F1/F4/F5 — measured token accounting
 python3 tools/variants.py               # E1 — four zero-model arms + shortlist curve
 python3 tools/route_local.py lexical    # E1 single arm with latency reps
 python3 tools/mechanisms.py             # E2 — expected cost per candidate mechanism
+python3 tools/distill_cost.py           # E4 — where transcript volume lives + the cap curve
 ~/repos/laya-lab/.venv/bin/python tools/route_local.py laya-yn   # E3, when RAM allows
 ```
 

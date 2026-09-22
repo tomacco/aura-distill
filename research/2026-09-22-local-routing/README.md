@@ -1,28 +1,31 @@
 # Local models for aura-distill retrieval and distillation
 
-**Status:** E1–E4 run · started 2026-09-22 · machine: Mac M5 Pro (16 cores, 48 GB unified) · all
+**Status:** E1–E8 run · started 2026-09-22 · revised 2026-09-22 after independent review of PR #101 · machine: Mac M5 Pro (16 cores, 48 GB unified) · all
 runs local unless marked otherwise.
 
 ## Headline
 
-1. The SPINE index read costs **21,247 tokens per session**, 2.3× what this project documented. It is
-   the largest fixed cost of a distill session, paid before any work begins.
+1. **The turn that reads `SPINE.md` costs 21,247 tokens** (median of 4 real headless cells, spread 16).
+   That is the *turn*, not the file — see F1. It is the largest fixed cost of a session and it is
+   what the shortlist mechanism removes.
 2. A **zero-model** router (BM25 rank-fusion over the index line *and* the file body) routes at
    **0.87 top-1 in 4.85 ms and 29 MB**. Injecting its top-3 into a real headless cell **measured
-   −70% cache-creation tokens, −64% cost and one fewer round trip, at 3/3 correct** (E5).
-3. **Laya lost to it at routing** (best arm 0.67 vs 0.87) at 5.7 GB and 200× the latency. But given
-   the task it is actually shaped for — "does *this* file answer the request?", with a BM25-selected
-   passage — it reaches **0.73 balanced accuracy / 0.83 specificity** and its probabilities separate
-   right from wrong, which nothing else here does (E6). Narrow win, real trade-off.
-4. **The representation dominates the model.** Changing only how a candidate is described to Laya
-   swings it 0.600 → 0.750 balanced accuracy, more than the whole Laya-vs-BM25 gap. The SPINE line
-   is the most discriminative input there is — and the routing arms structurally never received it
-   (4–17 tokens per option). See E7.
-5. The distillation pre-filter idea **died to arithmetic**: 82% of a transcript is tool traffic, so a
-   user-turn classifier is aimed at 13% of the volume.
+   −70% cache-creation tokens, −64% cost and one fewer round trip, at 3/3 correct** (E5). That
+   measured figure is the headline; projections appear only with their assumptions attached.
+3. **Laya lost to it at routing** (best arm 0.67 vs 0.87) at 5.7 GB and 9–390× the latency. Given the
+   task it is actually shaped for — "does *this* file answer the request?", with a BM25-selected
+   passage — it reaches **0.73 balanced accuracy / 0.83 specificity** (E6).
+4. **The representation dominates the model.** Changing only how a candidate is described swings Laya
+   0.600 → 0.750 balanced accuracy, more than the whole Laya-vs-BM25 gap (E7).
+5. The distillation pre-filter **died to arithmetic**: ~93% of transcript volume is tool traffic.
 
 Nothing here is merged. The two shippable candidates — the router hook and the tool-traffic cap —
 need an issue, a held-out eval on mined queries, and an independent review first.
+
+> **Revision note.** An independent review of PR #101 found two blocking errors in the first version
+> of this document, both of which are corrected here and neither of which was caught by the author:
+> a token figure attributed to this project that this project never published, and a chars-per-token
+> constant derived by dividing file size by a turn cost. Both are described where they occur.
 
 ## The question
 
@@ -37,19 +40,46 @@ If a small local model (Laya, Jev, or a quantized LLM) can do either step at equ
 frontier model never pays for it. If it cannot, that is a result too — and the honest comparison
 needs a **zero-model control**, because "free" is a real competitor.
 
-## Foundations (measured, not estimated)
+## Foundations
 
-| # | Fact | Evidence | Holds |
+Separating what was **measured** from what is **estimated** matters here, because the first version
+of this document blurred the two and got a headline wrong.
+
+| # | Fact | Evidence | Kind |
 | --- | --- | --- | --- |
-| F1 | The SPINE read costs **21,247 tokens** (median of 4 cells: 21233 / 21242 / 21247 / 21249) | `cache_creation_input_tokens` on the message *after* the one that read `SPINE.md`, from 4 real headless baseline cells, `jev-distill-routing/tools/tokens.py` | YES |
-| F2 | The project's own docs estimated ~9k for that read | `jev-distill-routing/README.md` | YES — **the real cost is 2.3× the documented estimate** |
-| F3 | The routing decision itself takes **2.7 s median** (2.3–4.4) out of ~13 s end-to-end | arm-A baseline run 2026-09-21, `choose_s` | YES, n=4 |
-| F4 | SPINE is 48,461 chars / 65 bullets; **2.281 chars per token** for this content | F1 ÷ char count | YES |
-| F5 | The knowledge base is 97 files / 628k chars ≈ 275k tokens; median domain file ≈ 2.1k tokens | `tools/tokens.py` | YES |
-| F6 | Laya runs on this Mac on the MPS backend: 3 checkpoints loaded, **55 ms for 4 questions in one forward pass** | `~/repos/laya-lab/smoke.py`, 2026-09-22 | YES |
+| F1 | **The turn that reads `SPINE.md` costs 21,247 tokens** (21,233 / 21,242 / 21,247 / 21,249) | `cache_creation_input_tokens` on the message *after* the one that read `SPINE.md`, 4 headless cells, `tools/tokens.py` | measured |
+| F2 | That counter covers the **whole turn** — tool_use block, tool result, surrounding assistant content — not the file alone | definition of the counter; confirmed by F4 | measured |
+| F3 | `SPINE.md` **the file** is ≈13.8k–18.6k tokens | 48,461 chars ÷ a 2.6–3.5 chars/token band | **estimated** |
+| F4 | Two BPE tokenizers put `SPINE.md` at **~3.5 chars/token** (gpt2 14,017 tokens; ModernBERT-large 13,854), against **3.87** for a prose control | `transformers`, local | measured (proxy tokenizers, not Anthropic's) |
+| F5 | This project previously published **3.6k tokens for a 59-entry SPINE** | `docs/research/token-economics.html:94,95,135,143` | measured (prior work) |
+| F6 | The index is now **65 entries / 48,461 chars**, median bullet **133 tokens**, mean **191** | `tools/cardinality.py`, `tools/tokens.py` | measured |
+| F7 | The routing decision itself takes **2.7 s median** (2.3–4.4) of a ~13 s session | baseline run 2026-09-21, `choose_s` | measured, n=4 |
+| F8 | Laya runs on this Mac on MPS; ~50 s load, 5.7 GB peak RSS | `tools/gate.py` summaries | measured |
 
-F1 is the number the whole programme hangs on, and it was wrong in the repo before this run. **Read
-of the index, not the answer, is the single largest fixed cost of a distill session.**
+### What F5 and F6 mean together, and what the first draft got wrong
+
+The first version of this document said the index read was **"2.3× what this project documented"**,
+citing ~9k tokens. **That 9k figure does not exist in aura-distill.** It came from a different,
+private repository's README, written by the same author the day before. The review caught it; a grep
+of this repo confirms the only occurrence was the new page itself.
+
+What this project actually published is F5: **3.6k tokens for a 59-entry SPINE**. Against F3, the
+index file has grown roughly **4–5×** since that measurement. And the driver is *not* entry count —
+59 → 65 entries is +10%. It is **verbosity per entry**: 61 tokens/entry then, 191 now, with a p90 of
+474 and a maximum of 841.
+
+That is a better finding than the one it replaces, and an actionable one: **index cost scales with
+how much is written per line, and nobody was watching that number.** The `token-economics.html` page
+remains live with 3.6k and now needs a pointer to this one.
+
+### Why the "two independent measurements" claim was withdrawn
+
+The first draft observed that E5's cache-creation drop (21,232) matched F1 (21,247) to 15 tokens and
+called them "two independent measurements of the same quantity". **They are not independent.** Both
+are the same cache-block accounting of the same turn; removing the turn removes its framing along
+with the file, so close agreement is arithmetic, not corroboration. What E5 *does* establish is that
+the mechanism removes essentially all of the turn's cost and adds nothing unexpected — which is worth
+knowing, and is the claim now made.
 
 ## Eval set
 
@@ -100,56 +130,50 @@ Three findings:
 ### The shortlist mechanism (the actual candidate win)
 
 Rather than *replacing* the router, shrink its input: rank the 65 bullets, inject only the top N, and
-fall back to the full SPINE when the model reports none fit. Expected cost is
-`N·(mean bullet + framing) + (1 − recall@N)·(SPINE + shortlist)`:
+fall back to the full index when none fits. All projections below use **one** cost model, stated once:
+tokens = 3.5 chars/token (F4), index turn = 21,247 (F1), median knowledge file = 1,740 tokens (est),
+a miss pays the shortlist **and** the status quo after it. Earlier drafts quoted 74%, 85% and 90% for
+this same mechanism from three inconsistent models; that is fixed.
 
-| N | recall@N (`bm25-full`) | E[tokens] | saving | recall@N (`rrf-full+bodyfull`) | E[tokens] | saving |
-| --- | --- | --- | --- | --- | --- | --- |
-| 1 | 0.60 | 9,001 | 58% | 0.87 | 3,120 | 85% |
-| **3** | 0.77 | 6,186 | 71% | **0.90** | **3,232** | **85%** |
-| 5 | 0.87 | 4,684 | 78% | 0.90 | 3,875 | 82% |
-| 8 | 0.93 | 4,178 | 80% | 0.93 | 4,178 | 80% |
+| N | recall@N (`rrf-full+bodyfull`) | E[tokens] | saving |
+| --- | --- | --- | --- |
+| 1 | 0.87 | 5,123 | 78% |
+| **3** | **0.90** | **4,941** | **79%** |
+| 5 | 0.90 | 5,718 | 75% |
+| 8 | 0.93 | 5,787 | 75% |
 
-**This is the bar.** A local model must beat ~85% token saving at 0.87 top-1 accuracy, obtained for
-5 ms and 29 MB. A model that merely matches it has lost, because it costs RAM, load time, a model
-download and a dependency.
+**The bar for any model.** ~79% projected saving at 0.87 top-1, obtained for 4.85 ms and 29 MB. The
+*measured* end-to-end figure is −70% (E5); projections run a little optimistic, as projections do.
 
-> **Overfitting caveat, stated before the numbers are used.** Eight arms were scored on 30 queries the
-> same agent wrote. One topic is worth 3.3 points, so gaps under ~10 points are noise, and
-> `rrf-full+bodyfull` winning by 10 over `bm25-bodyfull` is at the edge of it. The winner is hereby
-> **pre-registered** for a held-out test against mined real queries; it is not to be re-tuned first.
+> **Overfitting caveat.** Eight arms were scored on 30 queries the same agent wrote. One topic is
+> worth 3.3 points, so gaps under ~10 points are noise, and `rrf-full+bodyfull` winning by 10 over
+> `bm25-bodyfull` is at the edge of it. The winner is **pre-registered** for a held-out test against
+> mined real queries; it is not to be re-tuned first.
 
 ## E2 — which mechanism, and what it is worth
 
-Same measured constants, applied to three candidate mechanisms. `status-quo` = read the SPINE, choose,
-read the file. `shortlist-N` = a hook injects the top-N SPINE *bullets*, the agent still chooses.
-`inject-files-N` = a hook injects the top-N *file bodies*, so there is no SPINE read and no routing
-turn at all. A miss (ground truth outside the top N) pays the shortlist **and** the status quo after it.
+Same cost model as above. `shortlist-N` injects the top-N *bullets* and the agent still chooses;
+`inject-files-N` injects the top-N *file bodies*, so there is no index read and no routing turn.
 
 | mechanism | recall | E[tokens] | saving | round-trips saved |
 | --- | --- | --- | --- | --- |
-| status-quo | 1.00 | 23,917 | — | — |
-| **shortlist-1** | 0.87 | **6,326** | **74%** | 0 |
-| shortlist-3 | 0.90 | 6,425 | 73% | 0 |
-| shortlist-8 | 0.93 | 8,102 | 66% | 0 |
-| **inject-files-1** | 0.87 | 7,689 | 68% | **1 (≈2.7 s)** |
-| inject-files-2 | 0.90 | 12,669 | 47% | 1 |
-| inject-files-3 | 0.90 | 18,106 | 24% | 1 |
+| status-quo | 1.00 | 22,987 | — | — |
+| **shortlist-3** | 0.90 | **4,941** | **79%** | 0 (predicted) |
+| shortlist-1 | 0.87 | 5,123 | 78% | 0 (predicted) |
+| shortlist-8 | 0.93 | 5,787 | 75% | 0 (predicted) |
+| **inject-files-1** | 0.87 | 6,012 | 74% | **1 (≈2.7 s)** |
+| inject-files-3 | 0.90 | 12,554 | 45% | 1 |
 
-Injecting whole files stops paying past N=1 because knowledge files are large (median 2,670 tokens,
-p90 8,182, max 15,897). So there are two different optima, and they are not the same mechanism:
-
-- **Cheapest tokens: `shortlist-1`** — 74% off, the agent still makes the final call.
-- **Lowest latency: `inject-files-1`** — 68% off *and* the routing decision and the file read both
-  disappear from the critical path (~2.7 s of a ~13 s session, plus one round trip).
+Injecting whole files stops paying past N=1 because knowledge files are large (median 1,740 tokens
+est., p90 5,332, max 10,360).
 
 ### What that is worth in money
 
-At Opus 5 rates ($5/MTok input) with Claude Code's 1-hour cache TTL (2× write, 0.1× read), the SPINE
-index costs **$0.21 to write and $0.011 per subsequent turn to re-read** — about **$0.41 for a
-20-turn session**, before the agent has answered anything. A 74% cut is ~$0.30/session. Honest framing:
-that is real for a heavy user and rounding error for a light one. **The latency is the better argument
-than the dollars.**
+At Opus 5 rates ($5/MTok input) with Claude Code's 1-hour cache TTL (2× write, 0.1× read), the index
+turn costs **$0.21 to write and $0.011 per subsequent turn to re-read** — about **$0.41 for a 20-turn
+session** before the agent has answered anything. A ~75% cut is ~$0.30/session. Honest framing: real
+for a heavy user, rounding error for a light one. **The latency is the better argument than the
+dollars.**
 
 ## E2b — the zero-model router cannot tell when it is wrong
 
@@ -246,20 +270,27 @@ section.** Read E6 before quoting E3's verdict.
 
 The original hypothesis: most transcript turns carry no durable signal, so a cheap local classifier
 could cut what the extraction stage reads. Before building it, the free arithmetic — where does
-transcript volume actually live? Across the 10 real sessions on this machine (1,017,197 chars ≈ 446k
-tokens est.):
+transcript volume actually live?
+
+> **Dataset caveat, and it is a real one.** `~/.claude/projects` is *live*: it grows while the
+> measurement runs, and the session running this analysis is one of the heaviest tool users in it.
+> Including it is circular and unstable — a first pass, taken mid-session, gave a materially
+> different split from a second pass two hours later. **The session doing the measuring is therefore
+> excluded** (`AURA_EXCLUDE_SESSION` in `tools/distill_cost.py`). Nine sessions, 1,903,214 chars,
+> snapshot 2026-09-22. Anyone re-running this will get different absolute numbers; the *shape* is
+> what transfers.
 
 | component | chars | share | tokens (est) |
 | --- | --- | --- | --- |
-| tool results | 543,085 | **53.8%** | 238,091 |
-| tool_use inputs | 283,874 | **28.1%** | 124,452 |
-| user text | 131,195 | 12.9% | 57,516 |
-| assistant text | 47,118 | 4.7% | 20,657 |
-| assistant thinking | 4,275 | 0.4% | 1,874 |
+| tool results | 1,435,564 | **75.4%** | 410,161 |
+| tool_use inputs | 332,745 | **17.5%** | 95,070 |
+| user text | 65,854 | 3.5% | 18,815 |
+| assistant text | 64,776 | 3.4% | 18,507 |
+| assistant thinking | 4,275 | 0.2% | 1,221 |
 
-**82% of a transcript is tool traffic.** A classifier that judges *user turns* is aimed at 13% of the
-volume, so even a perfect one — never dropping a real signal, dropping every empty turn — cannot save
-more than 13%. The experiment is not worth its own design. **Killed.**
+**~93% of a transcript is tool traffic.** A classifier that judges *user turns* is aimed at 3.5% of
+the volume, so even a perfect one — never dropping a real signal, dropping every empty turn — cannot
+save more than that. The experiment is not worth its own design. **Killed.**
 
 This is the same lesson the knowledge base already records from the marks experiment ("run the free
 arithmetic BEFORE designing the experiment"), and it applied again here.
@@ -271,22 +302,21 @@ the tail is payload:
 
 | tool cap | tokens (est) | reduction |
 | --- | --- | --- |
-| uncapped | 445,943 | — |
-| 4,000 chars | 355,428 | 20% |
-| 1,000 chars | 248,802 | 44% |
-| **500 chars** | **194,323** | **56%** |
-| 200 chars | 139,378 | 69% |
-| dropped entirely | 80,047 | 82% |
+| uncapped | 543,775 | — |
+| 4,000 chars | 224,698 | 59% |
+| 1,000 chars | 151,863 | 72% |
+| **500 chars** | **116,032** | **79%** |
+| 200 chars | 78,759 | 86% |
+| dropped entirely | 38,544 | 93% |
 
 **This is a knob, not a free win, and it must not ship as one.** Tool results carry real signal — a
-command that failed with a specific error is exactly the kind of thing distillation should catch, and
-that error is often *not* in the first 500 chars. The honest open question, which this data cannot
-answer, is what fraction of durable knowledge entries trace back to tool output rather than to
-something the user said. Until that is measured, the release frame's rule applies: any
-token-vs-something trade is an explicit opt-in knob with documented consequences.
+command that failed with a specific error is exactly what distillation should catch, and that error
+is often *not* in the first 500 characters. The honest open question, which this data cannot answer,
+is what fraction of durable knowledge entries trace back to tool output rather than to something the
+user said.
 
 **The measurable next step** (not run): take knowledge entries with `origin: evidence` and trace each
-back to its transcript turn. If they overwhelmingly cite user text and assistant text, truncation is
+back to its transcript turn. If they overwhelmingly cite user and assistant text, truncation is
 nearly free and the cap can be aggressive. If a meaningful share cites tool output, the cap is a real
 accuracy trade and belongs behind a flag. That is an attribution study on existing data — no model,
 no runs, no GPU.
@@ -305,13 +335,17 @@ CLAUDE.md floor to cache and is not comparable):
 | **C shortlist** (top-3 injected) | 2 | 10.3 s | 8.9 s | **3** | **$0.139** | **9,132** | 69,080 |
 | | | −24% | −28% | −1 round trip | **−64%** | **−70%** | −42% |
 
-**Hit rate 3/3**, no stray reads. Both arms read `ops/linux-shell-ssh.md` *and* `projects/homelab-pi.md`
-— identical retrieval, so the comparison is clean.
+**Hit rate 3/3 across all three arm-C cells**, no stray reads; the table counts 2 because only the
+two *warm* cells are token-comparable (a cold cell writes the whole CLAUDE.md floor to cache). Both
+arms read `ops/linux-shell-ssh.md` *and* `projects/homelab-pi.md` — identical retrieval, so the
+comparison is clean.
 
-The number that validates the whole chain: **cache_creation fell by 21,232 tokens**, against a
-separately measured SPINE read of **21,247**. Two independent measurements of the same quantity,
-agreeing to 15 tokens. The mechanism removes exactly the thing it was designed to remove and nothing
-else.
+**What this does and does not establish.** Cache creation fell by 21,232 tokens against a measured
+index-read turn of 21,247 (F1). These are **not** two independent measurements — both are the same
+cache-block accounting of the same turn, so their agreement is arithmetic, not corroboration (an
+earlier draft claimed otherwise and the review was right to reject it). What it *does* establish is
+that the mechanism removes essentially all of that turn's cost **and adds nothing unexpected** — no
+hidden re-read, no compensating growth elsewhere. That was worth checking and it held.
 
 **The round trip is the surprise.** Turns dropped 5 → 3 because the agent read both candidate files in
 one turn instead of SPINE-then-files. The arithmetic in E2 credited `shortlist-N` with *zero* saved
@@ -375,20 +409,22 @@ I nearly shipped E6a's number as the verdict. It was an artifact of feeding the 
 
 ### What the gate is actually worth
 
+**Same cost model as E2** — an earlier draft used a third, inconsistent one that omitted the cost of
+injecting the shortlist and so reported 90% where E2 reported 74% for the same mechanism.
+
 Given BM25 top-1 at 0.867 and a gate at recall 0.633 / specificity 0.833, a wrong gate verdict costs
-a fallback to the full SPINE (expensive, never wrong) and a missed one costs a wrong answer:
+a fallback to the full index (expensive, never wrong) and a missed one costs a wrong answer:
 
 | configuration | wrong-answer rate | falls back | E[tokens] | saving |
 | --- | --- | --- | --- | --- |
-| status quo (read the SPINE) | 0.0% | n/a | 23,554 | — |
-| shortlist, **no gate** | 13.3% | 0% | **2,307** | **90%** |
-| shortlist + gate (default threshold) | **2.2%** | 42.9% | 11,421 | 52% |
-| shortlist + gate (threshold 0.35) | 3.3% | 31.6% | 9,032 | 62% |
+| status quo (read the index) | 0.0% | — | 22,987 | — |
+| shortlist, **no gate** | 13.3% | 0% | **3,243** | **86%** |
+| shortlist + gate | **2.2%** | 42.9% | 13,104 | 43% |
 
-**The gate buys an 11-point drop in wrong answers for 38 points of token saving.** That is not a free
-win and must not ship as one — it is exactly the "token-vs-something trade" the release frame says is
-an opt-in knob with documented consequences. Whether it is worth 5.7 GB resident and ~88 ms is a
-product call, not a measurement.
+**The gate buys an 11-point drop in wrong answers for 43 points of token saving.** Not a free win and
+it must not ship as one — it is exactly the "token-vs-something trade" the release frame says is an
+opt-in knob with documented consequences. Whether it is worth 5.7 GB resident and ~88 ms is a product
+call, not a measurement.
 
 ### Corrected verdict on Laya
 
@@ -491,10 +527,14 @@ Projecting a two-level tree from the measured per-level accuracies above:
 
 | design | level 1 | level 2 | end-to-end |
 | --- | --- | --- | --- |
-| 8 groups × 9 members | 0.833 | 0.783 | **0.652** |
+| 8 groups × 9 members* | 0.833 | 0.783 | **0.652** |
 | 4 groups × 17 | 0.834 | 0.727 | 0.606 |
 | 5 groups × 13 | 0.800 | 0.713 | 0.571 |
 | 2 groups × 33 | 0.767 | 0.493 | 0.378 |
+
+*\* Group×member products exceed 65 because the per-level accuracies are read off the K-sweep,
+which uses equal-sized option sets; a real 65-file tree has ragged groups. The projection is an
+upper bound either way, which is all it needs to be to close the question.*
 | *flat K=65 (measured)* | — | — | *0.333* |
 | *real 2-level cascade (E3 `laya-hier`, measured)* | — | — | *0.400* |
 | *BM25 rank-fusion (zero model)* | — | — | **0.867** |
@@ -521,7 +561,8 @@ discriminative input available — beating the file's own content (probability g
 The two results reconcile through the token budget:
 
 > **When labels are compressed to fit, the model stops doing semantics and starts doing keyword
-> matching — which is what BM25 already does better, 1,000× faster and in 29 MB.**
+> matching — which is what BM25 already does better, in 29 MB and 9–390× faster depending on the arm
+> (`laya-rerank` 43.8 ms, `laya-hier` 238 ms, `laya-yn` 1,895 ms, against BM25 at 4.85 ms).**
 
 At 8–35 tokens a label there is no room for meaning, only for terms. The model degenerates into an
 expensive, worse BM25, and that is why every routing arm lost. It only earns its weights where it has
@@ -563,7 +604,7 @@ python3 tools/run.py shortlist --reps 3 # E5 — end-to-end arm C in a real head
 ~/repos/laya-lab/.venv/bin/python tools/gate.py --device mps              # E6a
 ~/repos/laya-lab/.venv/bin/python tools/gate_formulations.py             # E6b
 ~/repos/laya-lab/.venv/bin/python tools/gate_excerpt.py                  # E6c
-~/repos/laya-lab/.venv/bin/python tools/route_local.py laya-yn   # E3, when RAM allows
+~/repos/laya-lab/.venv/bin/python tools/route_local.py laya-yn   # E3
 ```
 
 Raw results: `jev-distill-routing/runs/<stamp>-e1*/`. Harness and eval set live in that repo; this

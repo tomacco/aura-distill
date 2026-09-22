@@ -29,11 +29,39 @@ import re
 import sys
 from pathlib import Path
 
-DISTILL = Path(os.environ.get("AURA_DISTILL_DIR", Path.home()/".claude"/"distill"))
+def _store() -> Path:
+    """Resolve the knowledge store the way install.sh does.
+
+    `AURA_DISTILL_HOME` is this project's env var (install.sh); `~/.aura-distill` is the current
+    store and `~/.claude/distill` is the LEGACY pre-migration location. An earlier version of this
+    file defaulted to the legacy path under a made-up env var name, which on a stock install died
+    with FileNotFoundError and on a half-migrated machine silently indexed the stale copy.
+    """
+    env = os.environ.get("AURA_DISTILL_HOME")
+    if env:
+        return Path(env).expanduser()
+    current = Path.home()/".aura-distill"
+    legacy = Path.home()/".claude"/"distill"
+    if current.exists():
+        return current
+    if legacy.exists():
+        print(f"warning: using legacy store {legacy}; the current location is {current}",
+              file=sys.stderr)
+        return legacy
+    return current
+
+
+DISTILL = _store()
 SPINE = DISTILL/"SPINE.md"
 RRF_K = 60
 DEFAULT_N = 3
 # Abstention threshold, on the RAW BM25 score of the best-matching entry — NOT on the fused score.
+#
+# PORTABILITY WARNING: this is an ABSOLUTE BM25 score, and BM25's IDF term scales with corpus size.
+# It was calibrated on ONE 65-entry index. On a small index the same correct answer scores lower —
+# verified on a 4-entry fixture, where a correctly-ranked top hit scored 5.2 and would be silently
+# suppressed. Anything shipping this must calibrate per store (or switch to a rank/relative
+# criterion); the number below is a research constant, not a portable default.
 #
 # Measured, and the measurement mattered: the fused RRF score does not separate right from wrong at
 # all (correct top-1 median 0.03279, wrong top-1 median 0.03252, wrong max == correct max). That is
@@ -116,7 +144,10 @@ class Router:
         for e in self.entries:
             body = []
             for p in e["paths"]:
-                f = DISTILL/p
+                f = (DISTILL/p).resolve()
+                # SPINE.md is user-editable; a link like ../../.ssh/id_rsa must not be followed.
+                if not f.is_relative_to(DISTILL.resolve()):
+                    continue
                 if f.exists():
                     body.append(f.read_text(errors="replace"))
             bodies.append(f"{e['title']} {words(e)} " + " ".join(body))
@@ -177,13 +208,23 @@ def main() -> int:
         return hook_main()
     n = DEFAULT_N
     if "--n" in args:
-        i = args.index("--n"); n = int(args[i+1]); del args[i:i+2]
+        i = args.index("--n")
+        if i + 1 >= len(args):
+            print("--n needs a number", file=sys.stderr); return 2
+        try:
+            n = int(args[i+1])
+        except ValueError:
+            print(f"--n needs a number, got {args[i+1]!r}", file=sys.stderr); return 2
+        del args[i:i+2]
     as_json = "--json" in args
     if as_json:
         args.remove("--json")
     if not args:
         print(__doc__.strip().splitlines()[0], file=sys.stderr)
         return 2
+    if not SPINE.exists():
+        print(f"no index at {SPINE} (set AURA_DISTILL_HOME)", file=sys.stderr)
+        return 1
     hits = Router().top(" ".join(args), n)
     if as_json:
         print(json.dumps(hits, indent=2))

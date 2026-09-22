@@ -1,5 +1,7 @@
 # Experiment 1 — can a local open-weights model do the signal harvest?
 
+**Write-up:** [docs/research/local-models.html](https://tomacco.github.io/aura-distill/research/local-models.html) — the live study page, updated as runs land. This folder is its raw measurement record.
+
 **Date:** 2026-09-22 · **Issue:** [#96](https://github.com/tomacco/aura-distill/issues/96) · Part of [#50](https://github.com/tomacco/aura-distill/issues/50) (model routing), feeds [#51](https://github.com/tomacco/aura-distill/issues/51) / [#53](https://github.com/tomacco/aura-distill/issues/53) (auto-distillation)
 
 ## The question

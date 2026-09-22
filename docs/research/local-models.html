@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Models for Distillation — aura-distill Research</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,400;0,7..72,600;1,7..72,300;1,7..72,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="research-style.css">
+    <style>
+        /* Live-study additions: a running log, status pills, and one magnitude chart. */
+        .status-banner {
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent-4);
+            background: var(--surface);
+            padding: 1rem 1.25rem;
+            margin: 2rem 0;
+            border-radius: 2px;
+        }
+        .status-banner .label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--accent-4);
+            margin-bottom: 0.4rem;
+        }
+        .status-banner p { margin: 0; }
+        .pill {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 0.15rem 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            color: var(--dim);
+            white-space: nowrap;
+        }
+        .pill-done { color: var(--positive); border-color: var(--positive); }
+        .pill-running { color: var(--accent-4); border-color: var(--accent-4); }
+        .pill-queued { color: var(--dim); }
+        .chart-figure { margin: 2rem 0; }
+        .chart-figure svg { width: 100%; height: auto; display: block; }
+        .chart-caption {
+            font-size: 0.85rem;
+            color: var(--dim);
+            margin-top: 0.75rem;
+            font-style: italic;
+        }
+        .c-bar { fill: var(--accent); }
+        .c-grid { stroke: var(--ornament-dim); stroke-width: 1; }
+        .c-axis { stroke: var(--ornament); stroke-width: 1; }
+        .c-ceiling { stroke: var(--accent-4); stroke-width: 2; stroke-dasharray: 4 4; }
+        .c-label { font-family: 'Inter', sans-serif; font-size: 14px; fill: var(--text); }
+        .c-value { font-family: 'JetBrains Mono', monospace; font-size: 14px; fill: var(--bright); }
+        .c-note  { font-family: 'JetBrains Mono', monospace; font-size: 11px; fill: var(--dim); }
+        .c-mark  { font-family: 'JetBrains Mono', monospace; font-size: 11px; fill: var(--accent-4); }
+        .runlog td:first-child { white-space: nowrap; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
+        .provisional {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--negative);
+            border: 1px solid var(--negative);
+            padding: 0.1rem 0.4rem;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <button class="mode-toggle" onclick="toggleMode()" aria-label="Toggle dark mode">
+        <span class="icon-sun">☀</span>
+        <span class="icon-moon">☽</span>
+    </button>
+    <nav class="toc">
+        <a href="#status">Status</a>
+        <a href="#question">The question</a>
+        <a href="#method">How it's scored</a>
+        <a href="#exp1">Exp 1 · 48 GB</a>
+        <a href="#exp2">Exp 2 · 16 GB</a>
+        <a href="#runlog">Run log</a>
+        <a href="#limits">Limitations</a>
+    </nav>
+    <div class="container">
+        <header>
+            <a href="./" class="back">&larr; All research</a>
+            <h1>Can a Local Model Do the Distilling?</h1>
+            <div class="meta">September 2026 &middot; <strong>live study, updated as runs land</strong> &middot; Apple M5 Pro 48 GB &rarr; 16 GB targets</div>
+            <p class="abstract">Distillation's first stage reads a session transcript and extracts the signals worth remembering. The routing directive already forbids frontier models there. This study asks how much further down it goes — all the way to an open-weights model on the user's own machine, at zero API cost. Experiment 1 answers it for a 48 GB developer machine; experiment 2 asks the question that actually decides whether it ships, on the 16 GB most users have. Partial results are published here as they arrive, not held back until the end.</p>
+        </header>
+
+        <section id="status">
+            <div class="status-banner">
+                <div class="label">Current status &middot; updated 2026-09-22</div>
+                <p><strong>Experiment 1 complete.</strong> A 27B open-weights model on a 48 GB Mac reached <strong>81% of the Opus reference</strong> on the harvest stage, at $0 and 30.6 minutes — outperforming both hosted cheap tiers on faithfulness. <strong>Experiment 2 is starting now:</strong> the same harness on 16 GB-class models. Every figure here is single-run and provisional until replicated.</p>
+            </div>
+        </section>
+
+        <section id="question">
+            <h2>The question, and why the cheap tier isn't obviously the answer</h2>
+            <p><span class="drop-cap">T</span>he <code>/distill</code> pipeline's Step 1 — <em>signal harvest</em> — reads a conversation and emits a five-part structured summary: failures and friction, corrections the user made, observations about how the user works, the origin of each decision, and session metadata. It is extraction, not judgment about code, so the <a href="model-routing.html">routing study</a> assigns it to the cheap tier.</p>
+            <p>Two things make that worth re-testing. First, the stage runs in the background for the planned auto-distiller, so latency barely matters and quality does. Second, a model that runs locally costs nothing per token — which makes it the true floor of the cheap tier, below Haiku, if its output is good enough.</p>
+            <p>"Good enough" is the hard part. A harvest that invents a fact does not merely score badly; it writes a false belief about the user into a knowledge base that later sessions treat as authoritative. So this study measures two different things and refuses to collapse them: how much the model <em>finds</em>, and how much of what it says is <em>true</em>.</p>
+        </section>
+
+        <section id="method">
+            <h2>How a model is scored against Opus</h2>
+            <p>One real Claude Code session is rendered to plain text, deterministically. Every model — hosted or local — receives byte-identical input and the same prompt, lifted from the shipped <code>distill.md</code>. Opus 5's harvest is the reference. Then a blind judge, never told which system produced which output, does two passes:</p>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <div class="detail-label">Recall</div>
+                    <div class="detail-value">The reference is decomposed into 116 atomic claims. Each is marked present, partial or absent in the candidate. <em>How much did it find?</em></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Grounding</div>
+                    <div class="detail-value">The candidate is decomposed into its <em>own</em> claims, each checked against the transcript: grounded, distorted, or fabricated. <em>Is what it says true?</em></div>
+                </div>
+            </div>
+            <div class="insight">
+                <div class="insight-label">The ceiling is not 100%</div>
+                <p>Opus re-run on the identical prompt recalls only <strong>91.8%</strong> of its own first answer. Two runs of the same frontier model disagree about one claim in twelve. So 0.918 — not 1.0 — is what "100% of Opus" means on this page; every percentage is normalised to it. Without that anchor, every model looks worse than it is, and the reader has no way to tell ordinary run-to-run variance from a real quality gap.</p>
+            </div>
+            <p>One correction is baked into the method. In the first pass each candidate was judged in a separate call, and the boundary between "distorted" and "fabricated" drifted between them — the same kind of note landed on different sides for different models. An independent reviewer caught it. A <a href="https://github.com/tomacco/aura-distill/blob/main/research/2026-09-22-local-harvest/tools/adjudicate.py">calibrated adjudication pass</a> now pools every non-grounded claim from every candidate into one blind, shuffled call with a pinned rubric, so a single boundary applies to all of them. It moved 10 of 43 labels, and it changed a headline figure. Numbers below are post-adjudication.</p>
+        </section>
+
+        <section id="exp1">
+            <h2>Experiment 1 &middot; 48 GB <span class="pill pill-done">complete</span></h2>
+            <p><strong>Candidate:</strong> Qwen3.8-27B, MLX 8-bit, on an Apple M5 Pro with 48 GB unified memory. <strong>Anchors:</strong> Opus 5 (reference and ceiling), Sonnet 5, Haiku 4.5.</p>
+
+            <div class="chart-figure">
+                <svg viewBox="0 0 720 300" role="img" aria-label="Harvest quality as a percentage of the Opus self-agreement ceiling: Opus 5 rerun 100%, Qwen3.8-27B local 81%, Sonnet 5 74%, Haiku 4.5 58%.">
+                    <line class="c-grid" x1="295" y1="34" x2="295" y2="246" />
+                    <line class="c-grid" x1="410" y1="34" x2="410" y2="246" />
+                    <line class="c-grid" x1="525" y1="34" x2="525" y2="246" />
+                    <line class="c-ceiling" x1="640" y1="26" x2="640" y2="246" />
+                    <text class="c-mark" x="640" y="18" text-anchor="middle">ceiling</text>
+                    <line class="c-axis" x1="180" y1="34" x2="180" y2="246" />
+
+                    <text class="c-label" x="170" y="62" text-anchor="end">Opus 5 rerun</text>
+                    <path class="c-bar" d="M180,44 H636 Q640,44 640,48 V68 Q640,72 636,72 H180 Z" />
+                    <text class="c-value" x="652" y="62">100%</text>
+
+                    <text class="c-label" x="170" y="114" text-anchor="end">Qwen3.8-27B</text>
+                    <text class="c-note" x="170" y="130" text-anchor="end">local · $0</text>
+                    <path class="c-bar" d="M180,96 H548.6 Q552.6,96 552.6,100 V120 Q552.6,124 548.6,124 H180 Z" />
+                    <text class="c-value" x="565" y="114">81%</text>
+
+                    <text class="c-label" x="170" y="166" text-anchor="end">Sonnet 5</text>
+                    <path class="c-bar" d="M180,148 H516.4 Q520.4,148 520.4,152 V172 Q520.4,176 516.4,176 H180 Z" />
+                    <text class="c-value" x="533" y="166">74%</text>
+
+                    <text class="c-label" x="170" y="218" text-anchor="end">Haiku 4.5</text>
+                    <path class="c-bar" d="M180,200 H442.8 Q446.8,200 446.8,204 V224 Q446.8,228 442.8,228 H180 Z" />
+                    <text class="c-value" x="459" y="218">58%</text>
+
+                    <line class="c-axis" x1="180" y1="246" x2="640" y2="246" />
+                    <text class="c-note" x="180" y="266" text-anchor="middle">0</text>
+                    <text class="c-note" x="410" y="266" text-anchor="middle">50</text>
+                    <text class="c-note" x="640" y="266" text-anchor="middle">100</text>
+                    <text class="c-note" x="410" y="288" text-anchor="middle">recall as % of the Opus self-agreement ceiling (0.918)</text>
+                </svg>
+                <div class="chart-caption">One transcript, one run per model. The dashed line is Opus re-run against itself — the highest score any model could honestly be expected to reach.</div>
+            </div>
+
+            <table>
+                <thead><tr><th>Model</th><th>% of Opus</th><th>Grounding</th><th>Fabricated</th><th>Wall clock</th><th>Cost</th></tr></thead>
+                <tbody>
+                    <tr><td>Opus 5 rerun <em>(ceiling)</em></td><td>100%</td><td>0.943</td><td>0</td><td>81 s</td><td>$0.396</td></tr>
+                    <tr><td><strong>Qwen3.8-27B — local</strong></td><td><strong>81%</strong></td><td>0.879</td><td>2 (3.4%)</td><td>1,834 s</td><td><strong>$0</strong></td></tr>
+                    <tr><td>Sonnet 5</td><td>74%</td><td>0.863</td><td>1 (2.0%)</td><td>47 s</td><td>$0.126</td></tr>
+                    <tr><td>Haiku 4.5</td><td>58%</td><td><span class="score-negative">0.552</span></td><td>6 (10.3%)</td><td>103 s</td><td>$0.076</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Finding 1 — the hosted cheap tier fails on truth, not on coverage</h3>
+            <p>Haiku's grounding of <strong>0.552</strong> means nearly half of everything it asserted was wrong in some way against the transcript, and one claim in ten had no referent there at all. The inventions were not random: they were attributions to the user. That the user knew a convention by heart. That the user accepted a proposal. That the user responded to something, when no such response exists in the session.</p>
+            <div class="insight">
+                <div class="insight-label">Why this is worse than a low score</div>
+                <p>The distillation process has an explicit anti-sycophancy rule — never encode comfort as truth. A model that invents user approval violates it in the one section where the error is unrecoverable: the user model. A wrong technical detail gets corrected the next time someone reads the file. A false belief about what the user knows and wants shapes every future session silently.</p>
+            </div>
+
+            <h3>Finding 2 — the local model beat both hosted cheap tiers, for nothing</h3>
+            <p>Qwen3.8-27B recalled more than Sonnet and far more than Haiku, with a grounding score above both, at zero marginal cost. It was not clean — it invented two assistant mental states, and it made the same <em>category</em> of error as the others, recasting the user's knowledge gaps as expertise. Sycophancy toward the user model is the shared weakness of every non-frontier model tested, local ones included. If a local model ships, that section needs a guard.</p>
+            <p>Where it loses ground is precision about numbers: it drops token counts, dollar figures and file counts, and is weakest exactly where the reference is densest. Structurally it was flawless — five sections in order, every decision carrying an origin label — and the judge rated its origin-labelling discipline <em>better than the reference's</em>.</p>
+
+            <h3>Finding 3 — the cost is entirely time, and thinking is most of it</h3>
+            <p>30.6 minutes against Opus's 71 seconds. Prompt processing was fine at 342 tokens/s; generation ran at 8.8 tokens/s because a dense 27B at 8-bit is memory-bandwidth bound. Two-thirds of everything it generated was reasoning the user never sees — 42,654 characters of thinking before the first line of the answer. That makes the thinking budget, not the model size, the first lever to pull.</p>
+            <p>At 30 minutes per transcript a nightly background pass over undistilled sessions is unremarkable. An interactive <code>/distill</code> at that latency is not shippable.</p>
+
+            <h3>A measurement worth stealing</h3>
+            <p>A two-character prompt through the same headless flags costs <strong>8,302 tokens</strong> — about 7.5k of which is pure harness floor carried into every call, before any content. <code>--tools ""</code> and <code>--tools none</code> measure identically. Any token accounting that ignores that floor is wrong by roughly the size of a small transcript.</p>
+        </section>
+
+        <section id="exp2">
+            <h2>Experiment 2 &middot; 16 GB <span class="pill pill-running">running</span></h2>
+            <p>Experiment 1 measured a ceiling on a developer machine. This one measures what users actually get. On 16 GB of unified memory the OS and open applications leave roughly 8–10 GB for weights <em>and</em> KV cache, which rules out everything tested above.</p>
+            <p>Candidates, through the identical harness and judge:</p>
+            <table>
+                <thead><tr><th>Candidate</th><th>Why it's here</th><th>Status</th></tr></thead>
+                <tbody>
+                    <tr><td>Qwen3.8-27B, thinking off</td><td>Isolates the single biggest lever on a model already characterised — before any other variable moves</td><td><span class="pill pill-running">running</span></td></tr>
+                    <tr><td>Qwen 3.x 8–9B class, 4-bit</td><td>Same family as the 48 GB winner, sized for the target</td><td><span class="pill pill-queued">queued</span></td></tr>
+                    <tr><td>Gemma 4 small, 4-bit</td><td>Different family; strong prose, which section C rewards</td><td><span class="pill pill-queued">queued</span></td></tr>
+                    <tr><td>gpt-oss-20b, MXFP4</td><td>Heavier reasoner explicitly targeted at 16 GB — the "is the squeeze worth it" control</td><td><span class="pill pill-queued">queued</span></td></tr>
+                </tbody>
+            </table>
+            <div class="insight">
+                <div class="insight-label">One variable at a time, deliberately</div>
+                <p>The obvious move is to change thinking, architecture and quantization together and jump straight to a 16 GB candidate. That would make the result uninterpretable: whichever changes first moves the number, and the others get measured against a different baseline. Thinking-off on the already-characterised 27B runs first for exactly that reason, even though it costs an extra run.</p>
+            </div>
+            <p>Results land in the run log below as each finishes.</p>
+        </section>
+
+        <section id="runlog">
+            <h2>Run log</h2>
+            <p>Every execution, in order, including the ones that changed an earlier answer.</p>
+            <table class="runlog">
+                <thead><tr><th>Date</th><th>What ran</th><th>Outcome</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>Exp 1 — Opus 5 reference + rerun, Sonnet 5, Haiku 4.5, Qwen3.8-27B MLX 8-bit</td>
+                        <td>Local model at 81% of ceiling, $0, 30.6 min. Haiku grounding 0.552.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>Independent review of the published result</td>
+                        <td><strong>Three findings, all upheld.</strong> The documented reproduction steps did not run at all; the "zero fabrications" headline was contradicted by the judge's own notes; a claimed token-floor figure was an unsound subtraction across two tokenizers. All three corrected.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>Calibrated adjudication pass over all 43 non-grounded claims</td>
+                        <td>Moved 10 of 43 labels. Qwen 0 &rarr; 2 fabricated, Haiku 11 &rarr; 6, Sonnet 0 &rarr; 1. Ranking survived; two published headline figures did not.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>Direct measurement of the headless prompt floor</td>
+                        <td>8,302 tokens, identical for <code>--tools ""</code> and <code>--tools none</code>. Replaced the inferred figure.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>Exp 2 — Qwen3.8-27B, thinking disabled</td>
+                        <td><span class="pill pill-running">running</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="insight">
+                <div class="insight-label">What the review cost, and what it bought</div>
+                <p>Two of the three blocking findings changed numbers that had already been published. The reviewer predicted the corrected fabrication rate — ~2 of 58 claims — before the adjudication pass was written, and the pass returned exactly that. The value of a reviewer with no authorship context is not that it finds typos; it is that it does not know which claims you are attached to.</p>
+            </div>
+        </section>
+
+        <section id="limits">
+            <h2>Limitations <span class="provisional">read before citing</span></h2>
+            <p><strong>One transcript, one run per model.</strong> There is no variance estimate anywhere on this page. The ceiling itself (0.918) is a single measurement. Any gap smaller than a few points is noise until replicated across roughly five sessions, and that replication has not happened.</p>
+            <p><strong>The judge and the reference are the same model family.</strong> Opus judges output that is scored against an Opus reference. Self-preference bias is plausible even with the judge blind to which system produced what, and it would inflate the ceiling row while deflating everyone else. The adjudication pass fixed the <em>consistency</em> of the fabrication boundary; it does nothing about this.</p>
+            <p><strong>A rendered transcript is a proxy.</strong> Today's <code>/distill</code> harvests from live conversation context. This study feeds a text rendering with tool results truncated. That proxy is right for the planned background auto-distiller, which will also cold-read transcripts from disk, and wrong for measuring the in-session command as it ships now.</p>
+            <p><strong>Only the harvest stage.</strong> Encoding — the step that actually writes to the knowledge base — is a harder, higher-stakes job, and nothing here says anything about running <em>that</em> locally.</p>
+            <p><strong>Long sessions are unaddressed.</strong> The test transcript is 13.6k tokens and fits trivially. A 100k-token session's KV cache will not fit on a 16 GB machine at all; chunking and merging is a separate design problem that has not been measured.</p>
+            <p><strong>This page does not update the routing playbook.</strong> The <a href="model-routing.html">model routing study</a> currently recommends Haiku-tier for extraction, which finding 1 is evidence against. One transcript is not enough to overturn a published recommendation, so the tension is <a href="https://github.com/tomacco/aura-distill/issues/99">tracked as an open issue</a> rather than acted on.</p>
+            <p><strong>What is not published.</strong> The session transcript, the five models' harvest outputs and the reference claim texts stay private — they are a real session and five models' written observations about a real person. All measurements, all tooling and the judges' evaluative notes are public, and the harness regenerates the rest from any local transcript.</p>
+        </section>
+
+        <footer>
+            <a href="https://github.com/tomacco/aura-distill/tree/main/research/2026-09-22-local-harvest">Measurements, harness &amp; judge artifacts</a> &middot; <a href="https://github.com/tomacco/aura-distill/issues/96">Issue #96</a> &middot; <a href="./">Back to research index</a>
+        </footer>
+    </div>
+
+    <script src="research-theme.js"></script>
+    <script src="research-tracker.js"></script>
+</body>
+</html>

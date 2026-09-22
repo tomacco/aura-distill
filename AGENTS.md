@@ -81,90 +81,61 @@ cd ../aura-distill-<topic>                                    # work here
 git worktree remove ../aura-distill-<topic>                   # when done
 ```
 
-`worktree remove` refuses if the directory has uncommitted changes, and `worktree add -b` refuses if
-the branch exists. Both are correct — they are telling you something. Commit or stash, or pick another
-name. **Do not reach for `--force`**: on `worktree remove` it discards those changes permanently.
+Leave the primary checkout parked on `main`. A separate clone works too; a worktree shares the object
+store. Both `worktree` commands above refuse rather than clobber — on a dirty directory or an existing
+branch. **Never answer that with `--force`**; `worktree remove --force` discards uncommitted work.
 
-Leave the primary checkout parked on `main`. A separate `git clone` works too; a worktree is cheaper
-because it shares the object store.
+**Why this is a rule.** A checkout changes `HEAD` for *every* process in that tree, and nothing tells
+the others. The moved agent sees a normal `git status` and keeps committing onto whatever branch it
+landed on. On 2026-09-22 that put nine commits on local `main` whose author believed they were on a
+feature branch, while the other agent pushed `main` twice from a different clone — from the shared
+tree, that push carries nine unreviewed commits into `main`, bypassing `REVIEW-PROTOCOL.md` with
+nothing looking wrong. Silent by construction, so care does not prevent it; only isolation does.
+(#102; reviewers already work this way — `REVIEW-PROTOCOL.md`.)
 
-**Why this is a rule and not a preference.** A checkout changes `HEAD` for *every* process in that
-working tree, and nothing tells the others. The agent that gets moved sees a normal `git status` and
-keeps committing — onto whatever branch it was moved to. On 2026-09-22 this put nine commits on local
-`main` that their author believed were on a feature branch, and the other agent pushed `main` twice
-during the same window from a different clone. Had it pushed from the shared tree, those nine
-unreviewed commits would have entered `main` inside an unrelated push, bypassing `REVIEW-PROTOCOL.md`
-with nothing looking wrong to anyone. The failure is silent by construction, so care does not prevent
-it — only isolation does. (See #102; reviewers already work this way, `REVIEW-PROTOCOL.md`.)
-
-**Never let message, issue or PR text reach a shell as an argument.** Pass it by file or stdin —
-`gh pr comment N --body-file body.md`, `gh issue create --body-file body.md`, or a quoted heredoc —
-never `--body "$text"` where `$text` came from somewhere else. The same incident included an agent
-quoting `git checkout` in backticks inside a chat message, passing the text as a shell argument, and
-having the backticks command-substituted: it executed a checkout in the shared tree, from a message
-warning against exactly that.
+**Never let message, issue or PR text reach a shell as an argument.** Use `--body-file` or a
+*quoted* heredoc; never `--body "$text"` when `$text` came from elsewhere. In the same incident an
+agent quoted `git checkout` in backticks inside a chat message, passed it as a shell argument, and the
+substitution executed a checkout in the shared tree — from a message warning against exactly that.
 
 ### If it already happened
 
-**Nothing is lost yet.** Commits made on the wrong branch are still reachable; the incident itself
-destroys nothing. Every destructive step below is one *you* would be running, so the rule is: capture
-first under a new name, restore second, and never force-update a ref you have not read.
+**Nothing is lost yet** — commits on the wrong branch stay reachable. Every destructive step is one
+*you* would run. Capture first; never force-update a ref you have not read.
 
-**1. Confirm it, and find your commits.** The immediate tell is the branch name; the reflog says when
-and from where.
-
-```bash
-git branch --show-current                 # not the branch you thought you were on
-git reflog --date=short | grep 'checkout: moving' | head
-git fetch origin                          # before any comparison against origin/*
-git log --oneline origin/main..HEAD       # your stranded commits, wherever HEAD now points
-```
-
-**2. Capture them under a new name.** Never `git branch -f`: the branch you would overwrite may hold
-your own pre-yank work, and force-updating it leaves those commits unreachable from any ref and
-subject to `git gc`.
+**Capture is safe and solo; restoring the shared tree is neither** — `git checkout main` there yanks
+the other agent exactly as you were yanked.
 
 ```bash
-git branch rescue/<topic>                 # no -f; fails loudly if the name exists, which is correct
+git fetch origin
+git branch --show-current                 # not the branch you expected (empty = detached HEAD)
+git reflog --date=short | grep -E 'checkout: moving|commit:' | head -20
 ```
 
-**3. Read what you captured before using it.**
+Read the reflog, not `HEAD`: after a second move your commits sit on a branch you are no longer on,
+and `origin/main..HEAD` then reports a confident all-clear. Reflog `commit:` lines survive any number
+of moves.
 
 ```bash
-git log --oneline origin/main..rescue/<topic>
+git branch rescue/<topic> <sha of your newest commit>   # plain branch, never -f; a name clash should fail
+git log --format='%h %an %s' origin/main..rescue/<topic>
 ```
 
-If you were moved onto another agent's branch, this list contains **their** commits as well as yours.
-Do not carry them into your PR — that recreates the review bypass in a new shape. Tell them, and keep
-only your own.
+Read that range first. If you were moved onto another agent's branch it holds **their** commits —
+carrying those into your PR recreates the review bypass in a new shape. Yours are likewise still on
+their branch, where they have no symptom and nobody will look: tell them.
 
-**4. Restore the shared tree.** `git reset --hard` moves *the branch that is currently checked out*,
-which may be theirs — so check out `main` explicitly first, and verify against `HEAD` rather than a
-branch you assume the reset touched.
-
-```bash
-git status --porcelain                    # MUST be empty; it is someone else's tree too
-git checkout main
-git reset --hard origin/main
-git rev-parse HEAD origin/main            # MUST match
-```
-
-**5. Continue in isolation.**
+**Then stop and coordinate.** Restoring `main` in a tree someone else is working in is a two-agent
+operation — `docs/runbooks/shared-clone-recovery.md`. You are not blocked meanwhile: work from
+`rescue/<topic>` in your own worktree, which is where you wanted to be.
 
 ```bash
 git worktree add ../aura-distill-<topic> rescue/<topic>
-cd ../aura-distill-<topic> && git rebase origin/main
 ```
 
-Tell the other agent before step 4: a `reset --hard` over uncommitted work is the one thing here that
-is not recoverable, which is why the `status` check precedes it. Re-check it immediately before
-running, not minutes earlier — the other agent is still working.
-
-This runbook is executed against synthetic reproductions rather than reasoned about, because an
-earlier draft of it was **more destructive than the incident it recovered from**: it used `branch -f`
-(orphaning pre-yank commits), reset whichever branch happened to be checked out (wiping the other
-agent's work), and verified the result by checking a branch the reset had not touched — so the check
-passed while the damage was done. All three were found by running the steps, none by reading them.
+**Any edit to this procedure must be re-run against throwaway repositories before it lands.** Three
+successive drafts were wrong in ways only execution revealed: one orphaned commits, one destroyed an
+uninvolved branch while printing a passing check, one reported all-clear after a second move.
 
 ## Branch conventions
 

@@ -183,6 +183,12 @@
                 <div class="paper-finding">Headline: a 27B local model reached 81% of the ceiling at $0, beating both hosted cheap tiers on faithfulness &mdash; while Haiku grounded only 55% of its claims and invented user approval that never happened. Cost is entirely latency: 30.6 minutes, two-thirds of it spent thinking.</div>
             </a>
 
+            <a href="local-decision-models.html" class="paper-card">
+                <div class="paper-status status-ongoing">8 experiments &middot; partial &middot; Retrieval &amp; cost</div>
+                <div class="paper-title">A 421M Model, and the 40 Lines of BM25 That Beat It</div>
+                <div class="paper-desc">Can a small local judgment model replace the frontier model&rsquo;s knowledge-index read? A zero-model control, three routing architectures, a relevance gate, and an option-budget sweep &mdash; plus the arithmetic that killed a distillation pre-filter before it was built.</div>
+                <div class="paper-finding">Headline: the index read costs 21,247 tokens, 2.3&times; what the project documented. A zero-model BM25 router beats the local model at routing and cuts 70% of those tokens end to end; the model wins only at judging one candidate at a time. Changing how a candidate is <em>described</em> moved the model more than swapping the model did.</div>            </a>
+
             <a href="model-routing.html" class="paper-card">
                 <div class="paper-status status-complete">6 archetypes &times; 3 tiers &middot; Cost economics</div>
                 <div class="paper-title">Best Model for Everything? Model Routing</div>

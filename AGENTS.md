@@ -71,15 +71,19 @@ When developing or testing:
 
 ## Working concurrently in this repo
 
-Ivan runs several agents at once, and more than one may be pointed at this clone.
+Several agents may run at once, and more than one may be pointed at this clone.
 
 **Never `git checkout` in a clone you do not exclusively own. Use `git worktree add`.**
 
 ```bash
-git worktree add ../aura-distill-<topic> -b feature/<topic>   # your own directory, your own HEAD
+git worktree add ../aura-distill-<topic> -b <feature|research>/<topic>   # your own dir, your own HEAD
 cd ../aura-distill-<topic>                                    # work here
 git worktree remove ../aura-distill-<topic>                   # when done
 ```
+
+`worktree remove` refuses if the directory has uncommitted changes, and `worktree add -b` refuses if
+the branch exists. Both are correct — they are telling you something. Commit or stash, or pick another
+name. **Do not reach for `--force`**: on `worktree remove` it discards those changes permanently.
 
 Leave the primary checkout parked on `main`. A separate `git clone` works too; a worktree is cheaper
 because it shares the object store.
@@ -93,49 +97,74 @@ unreviewed commits would have entered `main` inside an unrelated push, bypassing
 with nothing looking wrong to anyone. The failure is silent by construction, so care does not prevent
 it — only isolation does. (See #102; reviewers already work this way, `REVIEW-PROTOCOL.md`.)
 
-**Never let message or issue text reach a shell.** Read it from stdin or a file. The same incident
-included an agent quoting `git checkout` in backticks inside a chat message, passing the text as a
-shell argument, and having the backticks command-substituted — executing a checkout in the shared
-tree, from a message warning against exactly that.
+**Never let message, issue or PR text reach a shell as an argument.** Pass it by file or stdin —
+`gh pr comment N --body-file body.md`, `gh issue create --body-file body.md`, or a quoted heredoc —
+never `--body "$text"` where `$text` came from somewhere else. The same incident included an agent
+quoting `git checkout` in backticks inside a chat message, passing the text as a shell argument, and
+having the backticks command-substituted: it executed a checkout in the shared tree, from a message
+warning against exactly that.
 
 ### If it already happened
 
-The reflog is the only evidence, and it is per-tree, not per-branch:
+**Nothing is lost yet.** Commits made on the wrong branch are still reachable; the incident itself
+destroys nothing. Every destructive step below is one *you* would be running, so the rule is: capture
+first under a new name, restore second, and never force-update a ref you have not read.
+
+**1. Confirm it, and find your commits.** The immediate tell is the branch name; the reflog says when
+and from where.
 
 ```bash
-git reflog --date=short | head -20        # find 'checkout: moving from X to Y' you did not run
-git log --oneline origin/main..<branch>   # commits stranded on the branch you were moved to
+git branch --show-current                 # not the branch you thought you were on
+git reflog --date=short | grep 'checkout: moving' | head
+git fetch origin                          # before any comparison against origin/*
+git log --oneline origin/main..HEAD       # your stranded commits, wherever HEAD now points
 ```
 
-`<branch>` is whatever the reflog shows you were moved *to* — usually `main`, because the other agent
-returned the tree to it, but it can be that agent's own branch.
-
-Then rescue the commits and restore the shared branch. **`git fetch` first**: `origin/main` is a
-local ref, you have been committing rather than fetching, and the other agent has probably been
-pushing — so it is very likely stale, and `reset --hard` to a stale ref silently rewinds the shared
-tree with nothing looking wrong.
+**2. Capture them under a new name.** Never `git branch -f`: the branch you would overwrite may hold
+your own pre-yank work, and force-updating it leaves those commits unreachable from any ref and
+subject to `git gc`.
 
 ```bash
-git fetch origin                          # NOT optional — see above
+git branch rescue/<topic>                 # no -f; fails loudly if the name exists, which is correct
+```
+
+**3. Read what you captured before using it.**
+
+```bash
+git log --oneline origin/main..rescue/<topic>
+```
+
+If you were moved onto another agent's branch, this list contains **their** commits as well as yours.
+Do not carry them into your PR — that recreates the review bypass in a new shape. Tell them, and keep
+only your own.
+
+**4. Restore the shared tree.** `git reset --hard` moves *the branch that is currently checked out*,
+which may be theirs — so check out `main` explicitly first, and verify against `HEAD` rather than a
+branch you assume the reset touched.
+
+```bash
 git status --porcelain                    # MUST be empty; it is someone else's tree too
-git branch -f <your-branch> <branch>      # rescue the commits
+git checkout main
 git reset --hard origin/main
-git rev-parse main origin/main            # MUST match; this is the check that the reset was current
-git worktree add ../aura-distill-<topic> <your-branch>
+git rev-parse HEAD origin/main            # MUST match
+```
+
+**5. Continue in isolation.**
+
+```bash
+git worktree add ../aura-distill-<topic> rescue/<topic>
 cd ../aura-distill-<topic> && git rebase origin/main
 ```
 
-If `git branch -f` reports the branch is already checked out in another worktree, run the rescue from
-that worktree instead, or pick a new branch name.
+Tell the other agent before step 4: a `reset --hard` over uncommitted work is the one thing here that
+is not recoverable, which is why the `status` check precedes it. Re-check it immediately before
+running, not minutes earlier — the other agent is still working.
 
-Nothing is lost while the tree is clean and the commits are reachable, but a `reset --hard` over
-someone's uncommitted work is not recoverable — which is why `git status --porcelain` comes before it,
-and why you tell the other agent before running it.
-
-Both the recovery and its failure modes were verified against synthetic reproductions of the incident,
-not reasoned about: commits stranded by a second checkout are recovered intact, and the missing-`fetch`
-variant was caught that way — a first draft of this section omitted it, and restored a shared tree to
-a stale commit without any error.
+This runbook is executed against synthetic reproductions rather than reasoned about, because an
+earlier draft of it was **more destructive than the incident it recovered from**: it used `branch -f`
+(orphaning pre-yank commits), reset whichever branch happened to be checked out (wiping the other
+agent's work), and verified the result by checking a branch the reset had not touched — so the check
+passed while the damage was done. All three were found by running the steps, none by reading them.
 
 ## Branch conventions
 

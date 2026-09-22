@@ -1,7 +1,23 @@
 # Local models for aura-distill retrieval and distillation
 
-**Status:** in progress · started 2026-09-22 · machine: Mac M5 Pro (16 cores, 48 GB unified) · all
+**Status:** E1–E4 run · started 2026-09-22 · machine: Mac M5 Pro (16 cores, 48 GB unified) · all
 runs local unless marked otherwise.
+
+## Headline
+
+1. The SPINE index read costs **21,247 tokens per session**, 2.3× what this project documented. It is
+   the largest fixed cost of a distill session, paid before any work begins.
+2. A **zero-model** router (BM25 rank-fusion over the index line *and* the file body) routes at
+   **0.87 top-1 in 4.85 ms and 29 MB**, and a top-1 shortlist with full-index fallback cuts **74%** of
+   those tokens.
+3. **Laya lost to it on every arm** (best: 0.67) at 5.7 GB and 200× the latency — including on the
+   calibrated-uncertainty property it was brought in for. Clean negative; see the verdict for the
+   narrow claim that is actually supported.
+4. The distillation pre-filter idea **died to arithmetic**: 82% of a transcript is tool traffic, so a
+   user-turn classifier is aimed at 13% of the volume.
+
+Nothing here is merged. The two shippable candidates — the router hook and the tool-traffic cap —
+need an issue, a held-out eval on mined queries, and an independent review first.
 
 ## The question
 
@@ -172,18 +188,54 @@ cannot, and that would be a fine result. The question is now:
 A model that routes no better but *knows when it is unsure* would let the shortlist mechanism fall
 back exactly when it should, which is worth more than a few points of top-1.
 
-## E3 — Laya as router and abstention oracle (BLOCKED on resources, harness ready)
+**Answered, negatively.** Laya's probabilities do not separate its hits from its misses on any arm
+(E3). The abstention problem is still open, and no mechanism tried here solves it.
 
-Two arms in `jev-distill-routing/tools/route_local.py`, both scored on accuracy **and** on whether
-their probabilities separate right from wrong (the E2b question):
+## E3 — Laya as router and abstention oracle (RUN — clean negative)
 
-- `laya-yn` — one yes/no `choice` per SPINE entry, all 65 in **one** forward pass, rank by P(yes).
-- `laya-hier` — `choice` over SPINE sections, then `choice` within the winning section.
+Ran 2026-09-22 on MPS once the other agent freed the machine. Three arms, all scored on accuracy
+**and** on whether their probabilities separate hits from misses (the E2b question):
 
-Blocked deliberately: another agent on this machine is running `Qwen3.8-27B-MLX-8bit` (~29 GB
-resident) for a token-savings experiment. With 149 MB unused RAM and active pageouts, loading a
-second model would corrupt their latency numbers and mine. Coordination is running in the PortCall
-`system-resources` channel. See *Resource protocol* below.
+| arm | top-1 | easy | hard | top-3 | latency | peak RSS | probability separates hit/miss? |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| **zero-model BM25 rank-fusion** | **0.87** | 0.93 | **0.80** | 0.90 | **4.85 ms** | **29 MB** | no (structural, see E2b) |
+| `laya-rerank` (BM25 top-10 → Laya choice) | 0.67 | 0.93 | 0.40 | 0.87 | 43.8 ms | 5,655 MB | no — miss max 0.92 > hit min 0.44 |
+| `laya-hier` (section → file) | 0.40 | 0.60 | 0.20 | 0.60 | 238 ms | 5,653 MB | no — miss max 0.55 > hit min 0.19 |
+| `laya-yn` (65 yes/no, one forward pass) | 0.17 | 0.13 | 0.20 | 0.27 | 1,895 ms | 5,683 MB | no — miss max 0.98 > hit min 0.69 |
+
+**The 421M local model lost to 40 lines of BM25 on every arm, and lost on both properties.** It is not
+that it routes worse but abstains better — its probabilities are no more diagnostic of its own errors
+than the zero-model score is. Model load is ~50 s; peak RSS is ~5.7 GB, not the ~3 GB predicted from
+parameter count (PyTorch/MPS allocator overhead plus a 65-item batch — the estimate was wrong by ~2×
+and that error was reported to the agent whose memory it could have taken).
+
+Three things the failures teach, in increasing order of transferability:
+
+- **`laya-rerank` (best Laya arm) still destroys value.** BM25 hands it a top-10 containing the right
+  answer 90% of the time and Laya reorders it down to 0.67 top-1. A reranker that is worse than its
+  own input's ordering is worse than not reranking.
+- **`laya-hier` shows where the loss happens:** easy tier 0.60 but hard tier 0.20. Section labels
+  built from concatenated titles are exactly the "index text" surface E1 already showed is the weak
+  retrieval key — the hierarchy inherits that weakness at the top of the tree, and a wrong section
+  cannot be recovered from below.
+- **`laya-yn` is the most informative failure, and it generalises past this model.** 65 independent
+  yes/no questions produce 65 probabilities that were *never compared with each other*. They are not
+  on a common scale, so ranking by them is close to meaningless — hence 0.17, below what the easy
+  tier alone should give. Any pipeline that scores N candidates with N independent calls and then
+  sorts by the score has this bug, and it does not announce itself: the numbers look like confidences.
+
+### Verdict
+
+**For this task, on this evidence, a small local judgment model is not worth its overhead** — and that
+was a real possible outcome of the experiment, not a fallback. The honest statement is narrow: Laya
+loses *at ranking 65 knowledge files from a short request*. That is a high-cardinality retrieval
+problem, which is what BM25 was built for and not what a 421M classifier was built for. It says
+nothing about Laya on the tasks it is shaped for — few options, rich state, a genuine judgment call.
+
+**What would change this verdict:** an arm where the candidate set is already small and the decision
+is semantic rather than lexical. The natural one is E2b's fallback gate — given the *top-1 file's
+actual content* and the request, "does this file answer it?" — two options, real state, one call.
+That is the shape Laya is for, and it is the one question BM25 provably cannot answer. Not run.
 
 ## E4 — the distillation pre-filter, killed by arithmetic and replaced
 
@@ -236,11 +288,21 @@ no runs, no GPU.
 
 ## Resource protocol (PortCall `system-resources`)
 
-Created channel `system-resources`, invited every registered agent, and posted three messages: the
-plan, a re-post (PortCall has no history yet, so a peer that joins late sees nothing), and a
-measurement. Current standing: **the other agent has priority**; this session stays single-core, pure
-Python, ~15 MB RSS, no GPU, until it answers. The proposal on the table is to share *its* resident
-model rather than load a second one — it is already paying the 29 GB.
+Another agent (*Commodore Sparkling Wombat the Unmerged*) held this Mac's unified memory for a
+`Qwen3.8-27B-MLX-8bit` benchmark and had priority. Channel `system-resources` was created for the
+handover, every registered agent invited, and messages re-posted because PortCall has no history yet —
+a peer that joins late sees nothing, so anything that matters must be sent again.
+
+How it ran: this session stayed single-core / ~15 MB / no GPU for ~50 minutes of the work above while
+the peer ran, started only after observing its process exit at 84% free memory, announced start and
+finish in-channel, and released the box after 4.7 minutes. Two corrections were posted to the channel
+rather than quietly logged — an "active swapping" claim that was a misread of a cumulative counter,
+and a peak-RSS estimate that was wrong by ~2× (3 GB predicted, 5.68 GB measured) in the direction that
+would have hurt the peer.
+
+**Worth keeping:** the peak-RSS estimate was derived from parameter count. Framework allocator
+overhead and batch size roughly doubled it. Quote measured peak RSS to a peer, never a parameter-count
+estimate.
 
 ## Reproduce
 

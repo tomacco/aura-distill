@@ -19,8 +19,9 @@
    "decisions_have_origin": true,
    "commentary_outside_sections": false
   },
-  "qualitative": "The candidate is strong on the failure ledger (Section A) and decision table (Section D): it reproduces nearly every tool-level failure with exact error strings, IDs, token counts and dollar figures, and its D origins match the reference almost row-for-row, including the 41%/59% split, $0.002/session, and the marks-case reframing. Relative to the reference it is weaker on a handful of specifics \u2014 it omits that ~/repos did not exist on the Mac, the NAST/2026-09-09 provenance of the headless recipe, the user's \"free arithmetic before designing\" rule, the concrete cell-isolation flags (Read/Glob/Grep, --strict-mcp-config, --max-turns 8), and the enumerated 3-step plan \u2014 and it undercounts tool calls (~30 vs \u224837). Grounding is high; the only distortions are presenting the ~/repos path as a KB fact (the KB says <user-repos-root>), asserting the headless recipe was \"written on Windows\" (unstated), and the tool-call count. Section B is slightly diluted by mixing \"KB facts surfaced\" into a corrections section, but no fabricated claims were found.",
-  "judge_cost_usd": 0.77813
+  "qualitative": "The candidate is strong on the failure ledger (Section A) and decision table (Section D): it reproduces nearly every tool-level failure with exact error strings, IDs, token counts and dollar figures, and its D origins match the reference almost row-for-row, including the 41%/59% split, $0.002/session, and the marks-case reframing. Relative to the reference it is weaker on a handful of specifics \u2014 it omits that ~/repos did not exist on the Mac, the <a prior project>/2026-09-09 provenance of the headless recipe, the user's \"free arithmetic before designing\" rule, the concrete cell-isolation flags (Read/Glob/Grep, --strict-mcp-config, --max-turns 8), and the enumerated 3-step plan \u2014 and it undercounts tool calls (~30 vs \u224837). Grounding is high; the only distortions are presenting the ~/repos path as a KB fact (the KB says <user-repos-root>), asserting the headless recipe was \"written on Windows\" (unstated), and the tool-call count. Section B is slightly diluted by mixing \"KB facts surfaced\" into a corrections section, but no fabricated claims were found.",
+  "judge_cost_usd": 0.77813,
+  "adjudicated": true
  },
  "detail": {
   "recall": [
@@ -509,6 +510,122 @@
     "status": "GROUNDED"
    },
    {
+    "status": "GROUNDED",
+    "note": "Actual fix was echo \"=== README\"; described vaguely but correctly."
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Reasonable inference from the compound command; grep output visibly matched."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "'Every line' slightly over-stated \u2014 user lines printed 'str' \u2014 but the diagnosis is correct."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Assistant said <quote withheld>; recipe scope mentions budget-cap failure classes. Attribution to the recipe is inferential but supported."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Transcript never states where the recipe was written; only that it was built 2026-09-09/11 for <a prior project> experiments. Plausible inference presented as fact.",
+    "adjudicated": true,
+    "reason": "The headless-clean-agents recipe is real (built 2026-09-09/11 for <a prior project> experiments); its provenance 'written on Windows' is an inference presented as transcript fact. Over-claimed detail on a real item."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The KB rule is <user-repos-root>; the ~/repos mapping on Mac was the assistant's own extrapolation, not a KB fact.",
+    "adjudicated": true,
+    "reason": "The NON-NEGOTIABLE KB rule exists but specifies <user-repos-root>; presenting the ~/repos/<project> Mac mapping as KB fact is the wrong path attributed to a real rule."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "'didn't see them' is speculation about user visibility, minor."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
     "status": "GROUNDED"
    },
    {
@@ -537,114 +654,9 @@
    },
    {
     "status": "DISTORTED",
-    "note": "Transcript never states where the recipe was written; only that it was built 2026-09-09/11 for NAST experiments. Plausible inference presented as fact."
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "DISTORTED",
-    "note": "The KB rule is <user-repos-root>; the ~/repos mapping on Mac was the assistant's own extrapolation, not a KB fact."
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "DISTORTED",
-    "note": "Transcript contains \u224837 tool calls (5 + 10 + 15 + 4 + 3); ~30 undercounts."
+    "note": "Transcript contains \u224837 tool calls (5 + 10 + 15 + 4 + 3); ~30 undercounts.",
+    "adjudicated": true,
+    "reason": "Real quantity (tool calls occurred throughout), wrong number: ~37 actual vs ~30 claimed."
    },
    {
     "status": "GROUNDED"
@@ -658,6 +670,7 @@
    "decisions_have_origin": true,
    "commentary_outside_sections": false
   },
-  "qualitative": "The candidate is strong on the failure ledger (Section A) and decision table (Section D): it reproduces nearly every tool-level failure with exact error strings, IDs, token counts and dollar figures, and its D origins match the reference almost row-for-row, including the 41%/59% split, $0.002/session, and the marks-case reframing. Relative to the reference it is weaker on a handful of specifics \u2014 it omits that ~/repos did not exist on the Mac, the NAST/2026-09-09 provenance of the headless recipe, the user's \"free arithmetic before designing\" rule, the concrete cell-isolation flags (Read/Glob/Grep, --strict-mcp-config, --max-turns 8), and the enumerated 3-step plan \u2014 and it undercounts tool calls (~30 vs \u224837). Grounding is high; the only distortions are presenting the ~/repos path as a KB fact (the KB says <user-repos-root>), asserting the headless recipe was \"written on Windows\" (unstated), and the tool-call count. Section B is slightly diluted by mixing \"KB facts surfaced\" into a corrections section, but no fabricated claims were found."
- }
+  "qualitative": "The candidate is strong on the failure ledger (Section A) and decision table (Section D): it reproduces nearly every tool-level failure with exact error strings, IDs, token counts and dollar figures, and its D origins match the reference almost row-for-row, including the 41%/59% split, $0.002/session, and the marks-case reframing. Relative to the reference it is weaker on a handful of specifics \u2014 it omits that ~/repos did not exist on the Mac, the <a prior project>/2026-09-09 provenance of the headless recipe, the user's \"free arithmetic before designing\" rule, the concrete cell-isolation flags (Read/Glob/Grep, --strict-mcp-config, --max-turns 8), and the enumerated 3-step plan \u2014 and it undercounts tool calls (~30 vs \u224837). Grounding is high; the only distortions are presenting the ~/repos path as a KB fact (the KB says <user-repos-root>), asserting the headless recipe was \"written on Windows\" (unstated), and the tool-call count. Section B is slightly diluted by mixing \"KB facts surfaced\" into a corrections section, but no fabricated claims were found."
+ },
+ "redaction": "Claim texts removed (they quote a real session). Verbatim user speech removed. Personal identifiers generalised. Evaluative notes kept: they are the finding. Regenerate the full artifacts with tools/judge.py."
 }

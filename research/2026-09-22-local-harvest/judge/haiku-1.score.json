@@ -10,17 +10,18 @@
   "recall": 0.534,
   "n_cand_claims": 58,
   "grounded": 32,
-  "distorted": 15,
-  "fabricated": 11,
+  "distorted": 20,
+  "fabricated": 6,
   "grounding": 0.552,
-  "fabrication": 0.19,
+  "fabrication": 0.103,
   "spec": {
    "sections_present_in_order": true,
    "decisions_have_origin": true,
    "commentary_outside_sections": false
   },
   "qualitative": "The candidate is strongest in section E and in the pivot design (exchanges, session-level pass, $0.002/session, cold-read target), where it matches the reference closely and stays grounded. It is much weaker in section A, omitting nearly all tool-level friction the reference captures (zsh `======`, transcript-parser rewrite, spine_entries patch and rubric sizing, Keychain/config-dir deviation, the chosen linux-ssh topic, the arm-B bar), and it never names the repo path. Section C is its biggest liability: several user attributions are invented or reversed (user 'cited' the repos convention, 'did mental math', 'invoked live data is sacred', 'understood TypeSafe immediately', 'accepted via follow-up' when no follow-up exists), and D introduces non-spec origins ('Pragmatism', 'Principle') and a fabricated security rationale. Net: decent structure and outcome fidelity, but recall of granular evidence is low and grounding in the user-model sections is unreliable.",
-  "judge_cost_usd": 0.83422
+  "judge_cost_usd": 0.83422,
+  "adjudicated": true
  },
  "detail": {
   "recall": [
@@ -497,7 +498,8 @@
     "status": "GROUNDED"
    },
    {
-    "status": "GROUNDED"
+    "status": "GROUNDED",
+    "note": "Failures are real; omits that the Python passes also yielded nothing useful (five attempts total)."
    },
    {
     "status": "GROUNDED"
@@ -506,7 +508,8 @@
     "status": "GROUNDED"
    },
    {
-    "status": "GROUNDED"
+    "status": "GROUNDED",
+    "note": "Called 'Bash wrapper'; it is a zsh function \u2014 trivial."
    },
    {
     "status": "GROUNDED"
@@ -525,110 +528,191 @@
    },
    {
     "status": "FABRICATED",
-    "note": "No such friction; api.md/choice.md/python.md and models.md were fetched directly."
+    "note": "No such friction; api.md/choice.md/python.md and models.md were fetched directly.",
+    "adjudicated": true,
+    "reason": "No iteration or friction on TypeSafe API call format occurred anywhere; api.md, choice.md, python.md and models.md were curled directly and succeeded first time. The asserted iteration episode has no referent to distort."
    },
    {
     "status": "DISTORTED",
-    "note": "The user framed it as a bug; the assistant never assumed so."
+    "note": "The user framed it as a bug; the assistant never assumed so.",
+    "adjudicated": true,
+    "reason": "The 'bug' framing genuinely exists in the transcript \u2014 it is the user's \u2014 and the claim reassigns it to the assistant. Wrong actor on a real framing."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Binary only said <quote withheld>.",
+    "adjudicated": true,
+    "reason": "The binary's security rationale for never saving home trust is real; 'prevents privilege escalation in shared environments' embellishes an unstated specific onto it. Over-claimed detail."
    },
    {
     "status": "FABRICATED",
-    "note": "Binary only says 'for security'."
-   },
-   {
-    "status": "FABRICATED",
-    "note": ""
+    "adjudicated": true,
+    "reason": "The assistant never held or expressed any assumption of even cost distribution; it measured the transcripts and reported ~90% tool I/O. Invented assumption."
    },
    {
     "status": "GROUNDED"
    },
    {
-    "status": "GROUNDED"
+    "status": "GROUNDED",
+    "note": "Table showed three sessions; ranges extrapolated but consistent."
    },
    {
     "status": "GROUNDED"
    },
    {
     "status": "DISTORTED",
-    "note": "Assistant addressed cross-turn signals directly in its first reply on the pivot."
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "FABRICATED",
-    "note": "Session ends on the assistant's turn; no user follow-up exists."
-   },
-   {
-    "status": "DISTORTED",
-    "note": "User explicitly said 'I can fix that by copying sessions from my PC'; ledger existence is recorded knowledge (since v1.1.13)."
-   },
-   {
-    "status": "DISTORTED",
-    "note": "$0.042/Mtok and $0.002/session grounded; '~2k tokens per session' is invented and inconsistent with the price math."
-   },
-   {
-    "status": "FABRICATED",
-    "note": "No user response after the pricing calculation."
+    "note": "Assistant addressed cross-turn signals directly in its first reply on the pivot.",
+    "adjudicated": true,
+    "reason": "Cross-turn/multi-block signals were addressed directly in the assistant's first reply on the pivot; the claim reverses the direction of a real event."
    },
    {
     "status": "GROUNDED"
    },
    {
     "status": "FABRICATED",
-    "note": "Convention came from the knowledge base; user never cited it."
+    "note": "Session ends on the assistant's turn; no user follow-up exists.",
+    "adjudicated": true,
+    "reason": "The session ends on the assistant's turn; no user follow-up exists to signal acceptance. Invented event."
    },
    {
     "status": "DISTORTED",
-    "note": "User asked for an executive summary of what the skill does."
+    "note": "User explicitly said <quote withheld>; ledger existence is recorded knowledge (since v1.1.13).",
+    "adjudicated": true,
+    "reason": "The PC ground-truth/ledger topic is real, but the claim reverses the state: the user explicitly offered to copy sessions and the ledger is recorded knowledge. Wrong direction."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "$0.042/Mtok and $0.002/session grounded; '~2k tokens per session' is invented and inconsistent with the price math.",
+    "adjudicated": true,
+    "reason": "The pricing arithmetic ($0.042/Mtok, ~$0.002/session) is grounded; the '~2k tokens per session' figure is a wrong number inside the real calculation."
    },
    {
     "status": "FABRICATED",
-    "note": "User never commented on it."
+    "note": "No user response after the pricing calculation.",
+    "adjudicated": true,
+    "reason": "The pricing calculation is the assistant's final turn; no user response follows. The acceptance and shift of focus are invented events."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Convention came from the knowledge base; user never cited it.",
+    "adjudicated": true,
+    "reason": "The <user-repos-root><project> convention is real in the transcript but came from the knowledge base file, not from the user citing it. Wrong actor."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "User asked for an executive summary of what the skill does.",
+    "adjudicated": true,
+    "reason": "Same shape as other expertise claims: the user's real request for an explanation of the skill is inverted into immediate understanding of System One models. Over-claimed/reversed."
    },
    {
     "status": "FABRICATED",
-    "note": "All done by the assistant."
+    "note": "User never commented on it.",
+    "adjudicated": true,
+    "reason": "The user never responded to or acknowledged the trust findings at all. An acceptance/non-surprise reaction is invented, with no reaction in the transcript to be a distortion of."
    },
    {
     "status": "DISTORTED",
-    "note": "pkill/systemd came from the assistant's synthetic query; only KB-supported, not demonstrated."
+    "note": "All done by the assistant.",
+    "adjudicated": true,
+    "reason": "The doc reading, Mtok/Btok pricing comprehension and $0.002/session math all really happened \u2014 performed by the assistant, not the user. Wrong actor."
    },
    {
     "status": "DISTORTED",
-    "note": "Assistant's assumption, misattributed as a user growth edge."
+    "note": "pkill/systemd came from the assistant's synthetic query; only KB-supported, not demonstrated.",
+    "adjudicated": true,
+    "reason": "These topics really appear (PortCall hooks, MCP stripping, headless cells, and pkill/systemd in the assistant's synthetic query), but the claim over-attributes them as user-demonstrated expertise."
    },
    {
     "status": "DISTORTED",
-    "note": "Assistant's proposal / KB open question, not a user statement."
+    "note": "Assistant's assumption, misattributed as a user growth edge.",
+    "adjudicated": true,
+    "reason": "The uncertainty about the answers.file.choice field name is real \u2014 it is the assistant's flagged assumption, misattributed to the user. Wrong actor."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Assistant's proposal / KB open question, not a user statement.",
+    "adjudicated": true,
+    "reason": "The cold-read vs warm recall validation is real in the transcript, but it is the assistant's proposal/KB open question, not a user-stated want. Wrong actor."
+   },
+   {
+    "status": "DISTORTED",
+    "adjudicated": true,
+    "reason": "Both the principle ('live data is sacred', surfaced from the knowledge base) and the PC ground-truth collection are real in the transcript; the claim wrongly attributes the invocation to the user as explicit justification. Wrong actor/attribution."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "It was item 2 of 3.",
+    "adjudicated": true,
+    "reason": "The trust item is really in the user's request, but as item 2 of 3, not first. Wrong ordering detail."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Only one replacement cell ran at $1.00; cells 2\u20133 ran under $0.50.",
+    "adjudicated": true,
+    "reason": "A real $1.00-cap replacement cell ran; the claim inflates it to 3 cells completing under that cap. Wrong number."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Never invoked; the basis was the recorded 'marks' case plus measured token arithmetic.",
+    "adjudicated": true,
+    "reason": "The 'live data is sacred' principle exists in the transcript (KB core value) and the pivot is real; the claim mis-states the pivot's cause, which was the recorded 'marks' case plus token arithmetic. Wrong cause."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Assistant's stated reason: different question, both small; and it was a proposal pending user OK, not a decision.",
+    "adjudicated": true,
+    "reason": "The separate-repo proposal and the repos-under-parent-folder convention both exist; the claim mis-states the rationale (different question, both small) and treats a pending proposal as a decision. Wrong cause."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "4 cells, 3 valid (cell 1 budget-exhausted).",
+    "adjudicated": true,
+    "reason": "4 cells ran but only 3 were valid (cell 1 was budget-exhausted). Wrong number."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Transcript has 9 turns; ~40 min unverifiable; rest grounded.",
+    "adjudicated": true,
+    "reason": "Real session statistics with a wrong count (9 turns, not 8) and an unverifiable duration; the rest (commits, repo, tool count) is grounded."
+   },
+   {
+    "status": "GROUNDED"
    },
    {
     "status": "FABRICATED",
-    "note": ""
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "DISTORTED",
-    "note": "It was item 2 of 3."
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "DISTORTED",
-    "note": "Only one replacement cell ran at $1.00; cells 2\u20133 ran under $0.50."
-   },
-   {
-    "status": "FABRICATED",
-    "note": "Never invoked; the basis was the recorded 'marks' case plus measured token arithmetic."
+    "note": "Privilege escalation/sandboxing never discussed.",
+    "adjudicated": true,
+    "reason": "Privilege escalation, sandboxing and distributed systems are not discussed anywhere in the session; these domains are invented rather than mis-stated versions of real topics."
    },
    {
     "status": "GROUNDED"
@@ -641,28 +725,9 @@
    },
    {
     "status": "DISTORTED",
-    "note": "Assistant's stated reason: different question, both small; and it was a proposal pending user OK, not a decision."
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "DISTORTED",
-    "note": "4 cells, 3 valid (cell 1 budget-exhausted)."
-   },
-   {
-    "status": "DISTORTED",
-    "note": "Transcript has 9 turns; ~40 min unverifiable; rest grounded."
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "DISTORTED",
-    "note": "Privilege escalation/sandboxing never discussed."
+    "note": "User has not approved; assistant asked for repo-split decision.",
+    "adjudicated": true,
+    "reason": "project.py as a pending, not-yet-written step is real; the claim mis-states its status as 'design approved' when the assistant was still awaiting the user's repo-split decision. Over-claimed status of a real item."
    },
    {
     "status": "GROUNDED"
@@ -675,20 +740,9 @@
    },
    {
     "status": "DISTORTED",
-    "note": "User has not approved; assistant asked for repo-split decision."
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "FABRICATED",
-    "note": "No count given; Jev is not trained."
+    "note": "No count given; Jev is not trained.",
+    "adjudicated": true,
+    "reason": "The PC session copy is a real, user-proposed plan; the '~50+ sessions' count is invented and 'training' mischaracterizes Jev's use. Wrong number/characterization on a real referent."
    }
   ],
   "spec": {
@@ -697,5 +751,6 @@
    "commentary_outside_sections": false
   },
   "qualitative": "The candidate is strongest in section E and in the pivot design (exchanges, session-level pass, $0.002/session, cold-read target), where it matches the reference closely and stays grounded. It is much weaker in section A, omitting nearly all tool-level friction the reference captures (zsh `======`, transcript-parser rewrite, spine_entries patch and rubric sizing, Keychain/config-dir deviation, the chosen linux-ssh topic, the arm-B bar), and it never names the repo path. Section C is its biggest liability: several user attributions are invented or reversed (user 'cited' the repos convention, 'did mental math', 'invoked live data is sacred', 'understood TypeSafe immediately', 'accepted via follow-up' when no follow-up exists), and D introduces non-spec origins ('Pragmatism', 'Principle') and a fabricated security rationale. Net: decent structure and outcome fidelity, but recall of granular evidence is low and grounding in the user-model sections is unreliable."
- }
+ },
+ "redaction": "Claim texts removed (they quote a real session). Verbatim user speech removed. Personal identifiers generalised. Evaluative notes kept: they are the finding. Regenerate the full artifacts with tools/judge.py."
 }

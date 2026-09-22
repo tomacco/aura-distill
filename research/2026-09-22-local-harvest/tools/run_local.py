@@ -2,7 +2,7 @@
 """Run the harvest prompt through a local MLX model.
 
 usage: run_local.py <hf-repo-or-path> <run-label> [--no-think] [--max-tokens N]
-Writes exp1/runs/<label>.md (harvest text, thinking stripped), <label>.raw.md (untouched
+Writes runs/<label>.md (harvest text, thinking stripped), <label>.raw.md (untouched
 output) and <label>.meta.json (timing, token counts, peak memory).
 """
 import argparse, json, os, resource, sys, time
@@ -16,12 +16,13 @@ ap.add_argument("model")
 ap.add_argument("label")
 ap.add_argument("--no-think", action="store_true")
 ap.add_argument("--max-tokens", type=int, default=16000)
-ap.add_argument("--exp", default="exp1")
 a = ap.parse_args()
 
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
-system = open(f"{a.exp}/harvest_system_prompt.md").read()
-transcript = open(f"{a.exp}/transcript.txt").read()
+import os
+ROOT = os.environ.get("EXP") or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+RUNS, JUDGE = os.path.join(ROOT, "runs"), os.path.join(ROOT, "judge")
+system = open(f"{RUNS}/harvest_system_prompt.md").read()
+transcript = open(f"{RUNS}/transcript.txt").read()
 user = ("Here is the session transcript to harvest:\n\n<transcript>\n" + transcript +
         "\n</transcript>\n\nProduce the Step 1 structured summary now.\n")
 
@@ -51,17 +52,25 @@ for r in stream_generate(model, tokenizer, prompt, max_tokens=a.max_tokens, samp
 t_total = time.time() - t0
 
 raw = text
-# Strip a leading <think>…</think> block if present
+# A run that hit the token cap did not finish its answer; scoring it would be meaningless.
+if last is not None and last.finish_reason == "length":
+    sys.exit(f"FATAL: {a.label} hit --max-tokens ({a.max_tokens}) and never finished. "
+             f"Raise the budget or disable thinking; refusing to write a truncated harvest.")
+# Strip a leading <think>…</think> block if present.
 out = raw
 if "</think>" in out:
     out = out.split("</think>", 1)[1].strip()
     thinking_chars = len(raw) - len(out)
+elif not a.no_think and "<think>" in raw:
+    # Thinking opened but never closed -> what follows is reasoning, not the harvest.
+    sys.exit(f"FATAL: {a.label} produced an unterminated <think> block; refusing to score "
+             f"a reasoning trace as a harvest.")
 else:
     thinking_chars = 0
 
-os.makedirs(f"{a.exp}/runs", exist_ok=True)
-open(f"{a.exp}/runs/{a.label}.raw.md", "w").write(raw)
-open(f"{a.exp}/runs/{a.label}.md", "w").write(out)
+os.makedirs(RUNS, exist_ok=True)
+open(f"{RUNS}/{a.label}.raw.md", "w").write(raw)
+open(f"{RUNS}/{a.label}.md", "w").write(out)
 meta = {
     "label": a.label, "model": a.model, "thinking": not a.no_think,
     "load_s": round(t_load, 1), "wall_s": round(t_total, 1), "ttft_s": round(first_tok or 0, 1),
@@ -72,5 +81,5 @@ meta = {
     "thinking_chars": thinking_chars, "output_chars": len(out),
     "finish_reason": last.finish_reason if last else None,
 }
-json.dump(meta, open(f"{a.exp}/runs/{a.label}.meta.json", "w"), indent=1)
+json.dump(meta, open(f"{RUNS}/{a.label}.meta.json", "w"), indent=1)
 print(json.dumps(meta))

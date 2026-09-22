@@ -10,17 +10,18 @@
   "recall": 0.681,
   "n_cand_claims": 51,
   "grounded": 44,
-  "distorted": 7,
-  "fabricated": 0,
+  "distorted": 6,
+  "fabricated": 1,
   "grounding": 0.863,
-  "fabrication": 0.0,
+  "fabrication": 0.02,
   "spec": {
    "sections_present_in_order": true,
    "decisions_have_origin": true,
    "commentary_outside_sections": false
   },
   "qualitative": "The candidate is strong on sections B\u2013E: it captures the pivot, the marks-case redirect, the exchanges/session-pass design, the ground-truth plan, and the open asks with correct origins, and its D section is well-labelled. It is materially weaker on section A grounding: it inverts the outcome of the binary search (crediting Python re.finditer with the confirming evidence when the string literals came from the first strings|grep and both Python passes were empty/garbled), fabricates a \"user explicitly corrected task 2\" framing that it then retracts in the same bullet, over-claims the cold cell cost relative to three warm cells, and wrongly asserts the user has deep familiarity with Jev primitives when the user asked what the skill does. Recall gaps cluster around fine-grained harness details (rubric \u2264400 chars / 22.6k chars, spine_entries patch, arm-B bar, answers.file.choice verification, commit attribution, cell isolation flags, zsh ====== glitch, transcript-parser retry) and a few user-model growth edges.",
-  "judge_cost_usd": 0.7370950000000001
+  "judge_cost_usd": 0.7370950000000001,
+  "adjudicated": true
  },
  "detail": {
   "recall": [
@@ -492,7 +493,128 @@
   "candidate_claims": [
    {
     "status": "DISTORTED",
-    "note": "JSON was read once; the value was false"
+    "note": "JSON was read once; the value was false",
+    "adjudicated": true,
+    "reason": "~/.claude.json was read once and did show hasTrustDialogAccepted: false; 'repeated attempts' inflates the count. Wrong number."
+   },
+   {
+    "status": "GROUNDED",
+    "note": "assistant assertion in turn 3"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "first Python pass returned no output; second returned garbled minified context; confirming literals came from the initial strings|grep",
+    "adjudicated": true,
+    "reason": "The Python re.finditer byte search really happened; the confirming literals came from the earlier strings|grep, and the Python passes returned no output/garbled context. Wrong outcome attribution."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "$0.58 vs 3\u00d7$0.38=$1.14; transcript says it cost more than the warm cells' answers, not the combined cells",
+    "adjudicated": true,
+    "reason": "The transcript says the cold cell cost more than the three warm cells' answers; the claim inflates it to more than the combined cell costs ($0.58 vs $1.14). Over-claimed comparison."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "FABRICATED",
+    "note": "no user correction occurred; candidate itself hedges this; 'Enough evidence already' was said before switching to TypeSafe, not before committing to the wrapper",
+    "adjudicated": true,
+    "reason": "No user correction of the trust-JSON framing occurs anywhere; the user's only trust-related utterance was the original request. Invented user action."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "user asked for an executive summary of what the skill does; unfamiliarity is the evidence",
+    "adjudicated": true,
+    "reason": "Same shape as claims 19 and 25: real request for an executive summary inverted into deep prior familiarity. Over-claimed."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "the placement actually followed the repos rule more than this one, but both are in the same KB line"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
    },
    {
     "status": "GROUNDED"
@@ -517,120 +639,15 @@
    },
    {
     "status": "DISTORTED",
-    "note": "first Python pass returned no output; second returned garbled minified context; confirming literals came from the initial strings|grep"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
+    "note": "Python passes did not yield the evidence",
+    "adjudicated": true,
+    "reason": "Python byte-regex searches and multiple prior tool failures (timeout, ugrep error) genuinely occurred; the claim wrongly credits the Python pass with producing the confirming evidence. Wrong outcome."
    },
    {
     "status": "DISTORTED",
-    "note": "$0.58 vs 3\u00d7$0.38=$1.14; transcript says it cost more than the warm cells' answers, not the combined cells"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "DISTORTED",
-    "note": "no user correction occurred; candidate itself hedges this; 'Enough evidence already' was said before switching to TypeSafe, not before committing to the wrapper"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "DISTORTED",
-    "note": "user asked for an executive summary of what the skill does; unfamiliarity is the evidence"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "GROUNDED"
-   },
-   {
-    "status": "DISTORTED",
-    "note": "Python passes did not yield the evidence"
-   },
-   {
-    "status": "DISTORTED",
-    "note": "WebFetch was unavailable (ToolSearch empty); only curl was used"
+    "note": "WebFetch was unavailable (ToolSearch empty); only curl was used",
+    "adjudicated": true,
+    "reason": "Doc research really happened via curl; WebFetch was sought via ToolSearch and unavailable. Real activity, over-claimed toolset."
    },
    {
     "status": "GROUNDED"
@@ -657,5 +674,6 @@
    "commentary_outside_sections": false
   },
   "qualitative": "The candidate is strong on sections B\u2013E: it captures the pivot, the marks-case redirect, the exchanges/session-pass design, the ground-truth plan, and the open asks with correct origins, and its D section is well-labelled. It is materially weaker on section A grounding: it inverts the outcome of the binary search (crediting Python re.finditer with the confirming evidence when the string literals came from the first strings|grep and both Python passes were empty/garbled), fabricates a \"user explicitly corrected task 2\" framing that it then retracts in the same bullet, over-claims the cold cell cost relative to three warm cells, and wrongly asserts the user has deep familiarity with Jev primitives when the user asked what the skill does. Recall gaps cluster around fine-grained harness details (rubric \u2264400 chars / 22.6k chars, spine_entries patch, arm-B bar, answers.file.choice verification, commit attribution, cell isolation flags, zsh ====== glitch, transcript-parser retry) and a few user-model growth edges."
- }
+ },
+ "redaction": "Claim texts removed (they quote a real session). Verbatim user speech removed. Personal identifiers generalised. Evaluative notes kept: they are the finding. Regenerate the full artifacts with tools/judge.py."
 }

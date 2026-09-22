@@ -24,8 +24,9 @@ usage: judge.py extract <reference-label>
 """
 import json, subprocess, sys, os
 
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
-EXP = os.environ.get("EXP", "exp1")
+import os
+ROOT = os.environ.get("EXP") or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+RUNS, JUDGE = os.path.join(ROOT, "runs"), os.path.join(ROOT, "judge")
 
 
 def claude(system, user, schema, model="opus"):
@@ -73,16 +74,20 @@ def extract(ref):
               "(no pronouns referring to other claims). Tag it with the section letter it came "
               "from (A failures, B corrections, C user behavior, D decision origins, E metadata). "
               "Do not merge distinct items; do not add anything not in the summary.")
-    text = open(f"{EXP}/runs/{ref}.md").read()
+    text = open(f"{RUNS}/{ref}.md").read()
     so, meta = claude(system, f"<summary>\n{text}\n</summary>\n\nExtract the atomic claims.", EXTRACT_SCHEMA)
-    json.dump({"claims": so["claims"], "judge_meta": meta}, open(f"{EXP}/judge/{ref}.claims.json", "w"), indent=1)
+    json.dump({"claims": so["claims"], "judge_meta": meta}, open(f"{JUDGE}/{ref}.claims.json", "w"), indent=1)
     print(f"{len(so['claims'])} claims extracted from {ref}; cost ${meta['cost_usd']:.3f}")
 
 
 def score(ref, cand, model):
-    claims = json.load(open(f"{EXP}/judge/{ref}.claims.json"))["claims"]
-    transcript = open(f"{EXP}/transcript.txt").read()
-    candidate = open(f"{EXP}/runs/{cand}.md").read()
+    cf = json.load(open(f"{JUDGE}/{ref}.claims.json"))
+    if "claims" not in cf:
+        sys.exit(f"{JUDGE}/{ref}.claims.json holds no claim texts "
+                 f"({cf.get('note', 'redacted')}).\nRun: judge.py extract {ref}")
+    claims = cf["claims"]
+    transcript = open(f"{RUNS}/transcript.txt").read()
+    candidate = open(f"{RUNS}/{cand}.md").read()
     system = ("You are a strict, blind evaluator of session-summary quality. You are given: the "
               "original TRANSCRIPT (ground truth), a list of REFERENCE CLAIMS extracted from a "
               "high-quality summary, and one CANDIDATE summary produced by an unknown system.\n"
@@ -116,12 +121,12 @@ def score(ref, cand, model):
         "fabrication": round(cc.count("FABRICATED") / max(1, len(cc)), 3),
         "spec": so["spec"], "qualitative": so["qualitative"], "judge_cost_usd": meta["cost_usd"],
     }
-    json.dump({"summary": summary, "detail": so}, open(f"{EXP}/judge/{cand}.score.json", "w"), indent=1)
+    json.dump({"summary": summary, "detail": so}, open(f"{JUDGE}/{cand}.score.json", "w"), indent=1)
     print(json.dumps(summary, indent=1))
 
 
 if __name__ == "__main__":
-    os.makedirs(f"{EXP}/judge", exist_ok=True)
+    os.makedirs(JUDGE, exist_ok=True)
     if sys.argv[1] == "extract":
         extract(sys.argv[2])
     elif sys.argv[1] == "score":

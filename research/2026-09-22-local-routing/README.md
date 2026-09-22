@@ -8,8 +8,8 @@ runs local unless marked otherwise.
 1. The SPINE index read costs **21,247 tokens per session**, 2.3× what this project documented. It is
    the largest fixed cost of a distill session, paid before any work begins.
 2. A **zero-model** router (BM25 rank-fusion over the index line *and* the file body) routes at
-   **0.87 top-1 in 4.85 ms and 29 MB**, and a top-1 shortlist with full-index fallback cuts **74%** of
-   those tokens.
+   **0.87 top-1 in 4.85 ms and 29 MB**. Injecting its top-3 into a real headless cell **measured
+   −70% cache-creation tokens, −64% cost and one fewer round trip, at 3/3 correct** (E5).
 3. **Laya lost to it on every arm** (best: 0.67) at 5.7 GB and 200× the latency — including on the
    calibrated-uncertainty property it was brought in for. Clean negative; see the verdict for the
    narrow claim that is actually supported.
@@ -286,6 +286,38 @@ nearly free and the cap can be aggressive. If a meaningful share cites tool outp
 accuracy trade and belongs behind a flag. That is an attribution study on existing data — no model,
 no runs, no GPU.
 
+## E5 — end-to-end confirmation in the real harness (RUN)
+
+E1/E2 were expected-value arithmetic. This is the measurement. Arm C: the zero-model router's top-3
+SPINE bullets are injected into a real headless `claude -p` cell, `Read(SPINE.md)` is denied, and the
+agent still chooses and reads the file itself. Same topic, same model, same answer-format rule as the
+2026-09-21 baseline — only the index read differs. Warm cells only (a cold cell writes the whole
+CLAUDE.md floor to cache and is not comparable):
+
+| | cells | wall | api | turns | cost | cache_creation | cache_read |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| **A baseline** (reads SPINE) | 3 | 13.6 s | 12.4 s | **5** | $0.382 | 30,364 | 119,719 |
+| **C shortlist** (top-3 injected) | 2 | 10.3 s | 8.9 s | **3** | **$0.139** | **9,132** | 69,080 |
+| | | −24% | −28% | −1 round trip | **−64%** | **−70%** | −42% |
+
+**Hit rate 3/3**, no stray reads. Both arms read `ops/linux-shell-ssh.md` *and* `projects/homelab-pi.md`
+— identical retrieval, so the comparison is clean.
+
+The number that validates the whole chain: **cache_creation fell by 21,232 tokens**, against a
+separately measured SPINE read of **21,247**. Two independent measurements of the same quantity,
+agreeing to 15 tokens. The mechanism removes exactly the thing it was designed to remove and nothing
+else.
+
+**The round trip is the surprise.** Turns dropped 5 → 3 because the agent read both candidate files in
+one turn instead of SPINE-then-files. The arithmetic in E2 credited `shortlist-N` with *zero* saved
+round trips; it saved one anyway, and that is where most of the 24% wall-clock came from. Expected-value
+models of agent behaviour miss this class of effect — the agent reorganised its own tool use once the
+index read was gone.
+
+**Caveat: n=2 warm cells, one topic.** The token accounting is deterministic and trustworthy; the
+wall-clock is not (10.3 s median from cells of 7.8 s and 12.8 s). Read −70% tokens as measured and
+−24% wall as indicative. Cost for this run: $0.73 across 3 cells.
+
 ## Resource protocol (PortCall `system-resources`)
 
 Another agent (*Commodore Sparkling Wombat the Unmerged*) held this Mac's unified memory for a
@@ -313,6 +345,7 @@ python3 tools/variants.py               # E1 — four zero-model arms + shortlis
 python3 tools/route_local.py lexical    # E1 single arm with latency reps
 python3 tools/mechanisms.py             # E2 — expected cost per candidate mechanism
 python3 tools/distill_cost.py           # E4 — where transcript volume lives + the cap curve
+python3 tools/run.py shortlist --reps 3 # E5 — end-to-end arm C in a real headless cell (~$0.25/cell)
 ~/repos/laya-lab/.venv/bin/python tools/route_local.py laya-yn   # E3, when RAM allows
 ```
 

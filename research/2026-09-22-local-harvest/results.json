@@ -85,6 +85,35 @@
    "pct_of_opus": 100
   },
   {
+   "label": "qwen38-27b-8bit-nothink",
+   "where": "local",
+   "model": "lmstudio-community/Qwen3.8-27B-MLX-8bit",
+   "wall_s": 382.4,
+   "load_s": 4.8,
+   "input_tokens": 14237,
+   "output_tokens": 3007,
+   "gen_tps": 8.8,
+   "peak_memory_gb": 32.25,
+   "cost_usd": 0.0,
+   "output_chars": 11559,
+   "recall": 0.659,
+   "grounding": 0.867,
+   "fabrication": 0.022,
+   "present": 65,
+   "partial": 23,
+   "absent": 28,
+   "n_cand_claims": 45,
+   "distorted": 5,
+   "fabricated": 1,
+   "spec": {
+    "sections_present_in_order": true,
+    "decisions_have_origin": true,
+    "commentary_outside_sections": false
+   },
+   "qualitative": "The candidate is structurally clean \u2014 all five sections in order, every D item tagged with an origin (often a defensible dual tag), and no stray commentary \u2014 and it is strong on the D/E material: the exchange-projection arithmetic, Jev cost, recall tuning, ground-truth ledger, headless-vs-Agent rationale and baseline outcome numbers are all faithfully reproduced. Its main weakness is a narrativized failure arc: it asserts the Python byte-scan succeeded and yielded the decisive trust string, when in fact both Python passes failed and the conclusion rested on the earlier `strings | grep`; it also miscounts the attempts (4 vs 5) and invents two \"wrong assumptions\" by the assistant (editing ~/.claude.json, and owning the routing target that was actually the user's idea). Recall is thin on knowledge-base provenance \u2014 the 2026-08-02 \"marks\" precedent, the cold-read/never-distilled reframing of the pivot target, the 41% figure, working-conventions.md, the NON-NEGOTIABLE repo convention, the headless-cell recipe deviation and the rubric-sizing decision are all missing \u2014 as are several smaller friction beats (ToolSearch/WebFetch fallback, transcript-parser iteration, PERMISSION_MODES fragment) and quantitative metadata (11 transcripts, 2 commits, turn/tool counts). Net: a well-formed, mostly grounded summary that over-smooths the debugging story and under-reports the knowledge-base reasoning that gave the reference its sharpest insights.",
+   "pct_of_opus": 72
+  },
+  {
    "label": "qwen38-27b-8bit-think",
    "where": "local",
    "model": "lmstudio-community/Qwen3.8-27B-MLX-8bit",

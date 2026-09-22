@@ -66,7 +66,8 @@ grounding and fabrication sit next to it.
 | `opus-2` (ceiling) | API | 81 s | 26,884 | 5,794 | — | — | $0.158 † | 0.918 | **100 %** | 0.943 | 0 |
 | `sonnet-1` | API | 47 s | 20,667 | 4,381 | — | — | $0.126 | 0.681 | **74 %** | 0.863 | 1 (2.0 %) |
 | `haiku-1` | API | 103 s | 20,439 | 7,062 | — | — | $0.076 | 0.534 | **58 %** | 0.552 | 6 (10.3 %) |
-| **`qwen38-27b-8bit`** | **local** | **1,834 s** | 14,273 | 15,765 | 8.8 | 32.3 GB | **$0** | **0.741** | **81 %** | 0.879 | 2 (3.4 %) |
+| **`qwen38-27b-8bit`** *(thinking on)* | **local** | **1,834 s** | 14,273 | 15,765 | 8.8 | 32.3 GB | **$0** | **0.741** | **81 %** | 0.879 | 2 (3.4 %) |
+| `qwen38-27b-8bit-nothink` | local | 382 s | 14,237 | 3,007 | 8.8 | 32.3 GB | $0 | 0.659 | 72 % | 0.867 | 1 (2.2 %) |
 
 † **Not like-for-like.** `opus-2` read `opus-1`'s prompt cache (`cache_read: 26,882`), while Sonnet and
 Haiku each paid full cache-creation price. Uncached, Opus on this job costs **$0.396** — 3.1× Sonnet,
@@ -155,6 +156,28 @@ densest (section A failures, 0.61; section D origins, 0.65). It is *strongest* o
 and the narrative arc. Structurally it was flawless — five sections in order, every decision carrying
 an origin label, no stray commentary — and the judge rated its origin-labelling discipline **better
 than the reference's**.
+
+## Experiment 2, run 1 — thinking off
+
+Same model and weights, same input, same judge; only deliberation removed.
+
+| | thinking on | thinking off | change |
+|---|---|---|---|
+| % of Opus ceiling | 81 % | 72 % | −9 pts |
+| grounding | 0.879 | 0.867 | −0.012 |
+| fabricated | 2 (3.4 %) | 1 (2.2 %) | −1 |
+| wall clock | 1,834 s | **382 s** | **4.8× faster** |
+| generated tokens | 15,765 | 3,007 | −12,758 |
+
+**Thinking buys coverage, not honesty.** The whole cost lands on recall; grounding moves ~1 point and
+fabrications go *down*. Generation stayed at 8.8 tok/s in both runs, so the speedup is fewer tokens,
+not faster ones — the bandwidth bound is confirmed, not circumvented. Peak memory was unchanged at
+32.3 GB, so this does nothing for 16 GB by itself; it isolates one lever before the memory-constrained
+candidates move three at once.
+
+The prediction that thinking-off was the biggest available speed lever held (4.8×). The question it
+was run to settle — whether less deliberation would worsen or improve the user-model errors — came
+back neutral, and is now closed.
 
 ## Conclusions
 

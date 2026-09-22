@@ -96,8 +96,8 @@
 
         <section id="status">
             <div class="status-banner">
-                <div class="label">Current status &middot; updated 2026-09-22</div>
-                <p><strong>Experiment 1 complete.</strong> A 27B open-weights model on a 48 GB Mac reached <strong>81% of the Opus reference</strong> on the harvest stage, at $0 and 30.6 minutes — outperforming both hosted cheap tiers on faithfulness. <strong>Experiment 2 is starting now:</strong> the same harness on 16 GB-class models. Every figure here is single-run and provisional until replicated.</p>
+                <div class="label">Current status &middot; updated 2026-09-22, 15:10</div>
+                <p><strong>Experiment 1 complete.</strong> A 27B open-weights model on a 48 GB Mac reached <strong>81% of the Opus reference</strong> at $0 and 30.6 minutes, outperforming both hosted cheap tiers on faithfulness. <strong>Experiment 2, run 1 complete:</strong> turning thinking off made the same model <strong>4.8&times; faster</strong> — 6.4 minutes — and cost <strong>9 points of recall</strong>, while leaving faithfulness essentially unchanged. The 16 GB candidates are next. Every figure here is single-run and provisional until replicated.</p>
             </div>
         </section>
 
@@ -197,13 +197,13 @@
         </section>
 
         <section id="exp2">
-            <h2>Experiment 2 &middot; 16 GB <span class="pill pill-running">running</span></h2>
+            <h2>Experiment 2 &middot; 16 GB <span class="pill pill-running">1 of 4 done</span></h2>
             <p>Experiment 1 measured a ceiling on a developer machine. This one measures what users actually get. On 16 GB of unified memory the OS and open applications leave roughly 8–10 GB for weights <em>and</em> KV cache, which rules out everything tested above.</p>
             <p>Candidates, through the identical harness and judge:</p>
             <table>
                 <thead><tr><th>Candidate</th><th>Why it's here</th><th>Status</th></tr></thead>
                 <tbody>
-                    <tr><td>Qwen3.8-27B, thinking off</td><td>Isolates the single biggest lever on a model already characterised — before any other variable moves</td><td><span class="pill pill-running">running</span></td></tr>
+                    <tr><td>Qwen3.8-27B, thinking off</td><td>Isolates the single biggest lever on a model already characterised — before any other variable moves</td><td><span class="pill pill-done">complete</span></td></tr>
                     <tr><td>Qwen 3.x 8–9B class, 4-bit</td><td>Same family as the 48 GB winner, sized for the target</td><td><span class="pill pill-queued">queued</span></td></tr>
                     <tr><td>Gemma 4 small, 4-bit</td><td>Different family; strong prose, which section C rewards</td><td><span class="pill pill-queued">queued</span></td></tr>
                     <tr><td>gpt-oss-20b, MXFP4</td><td>Heavier reasoner explicitly targeted at 16 GB — the "is the squeeze worth it" control</td><td><span class="pill pill-queued">queued</span></td></tr>
@@ -213,6 +213,25 @@
                 <div class="insight-label">One variable at a time, deliberately</div>
                 <p>The obvious move is to change thinking, architecture and quantization together and jump straight to a 16 GB candidate. That would make the result uninterpretable: whichever changes first moves the number, and the others get measured against a different baseline. Thinking-off on the already-characterised 27B runs first for exactly that reason, even though it costs an extra run.</p>
             </div>
+
+            <h3>Run 1 &mdash; thinking off: 4.8&times; faster, 9 points cheaper in recall</h3>
+            <p>Same model, same weights, same transcript, same prompt, same judge. The only change is that the model no longer reasons before answering.</p>
+            <table>
+                <thead><tr><th>Qwen3.8-27B, 8-bit</th><th>Thinking on</th><th>Thinking off</th><th>Change</th></tr></thead>
+                <tbody>
+                    <tr><td>% of Opus ceiling</td><td>81%</td><td>72%</td><td class="score-negative">&minus;9 pts</td></tr>
+                    <tr><td>Grounding</td><td>0.879</td><td>0.867</td><td>&minus;0.012</td></tr>
+                    <tr><td>Fabricated claims</td><td>2 (3.4%)</td><td>1 (2.2%)</td><td class="score-positive">&minus;1</td></tr>
+                    <tr><td>Wall clock</td><td>1,834 s</td><td><strong>382 s</strong></td><td class="score-positive">4.8&times; faster</td></tr>
+                    <tr><td>Generated tokens</td><td>15,765</td><td>3,007</td><td>&minus;12,758</td></tr>
+                </tbody>
+            </table>
+            <div class="insight">
+                <div class="insight-label">Thinking buys coverage, not honesty</div>
+                <p>The entire cost of switching it off lands on <em>recall</em> — the model finds less. Grounding moves by about one percentage point and fabrications go <em>down</em>, not up. That separates two things it would have been easy to conflate: reasoning tokens help a model notice more of what happened, and do essentially nothing for whether what it reports is true. For a background job that can afford thirty minutes, leave thinking on. For anything latency-bound, switching it off is a coverage trade, not an integrity one.</p>
+            </div>
+            <p>Both runs still generate at 8.8 tokens/s — the speedup is entirely fewer tokens, not faster ones, which confirms the bandwidth bound rather than working around it. Peak memory was unchanged at 32.3 GB, so this run does nothing for the 16 GB problem on its own; it isolates a lever before the memory-constrained candidates move three variables at once.</p>
+            <p><strong>Against the prediction.</strong> Thinking-off was called as the biggest single speed lever available, and at 4.8&times; that held. The open question was whether removing deliberation would worsen the user-model errors or reduce them: the answer is neither to any meaningful degree. That question is now closed, and closing it cost one run.</p>
             <p>Results land in the run log below as each finishes.</p>
         </section>
 
@@ -245,7 +264,12 @@
                     <tr>
                         <td>2026-09-22</td>
                         <td>Exp 2 — Qwen3.8-27B, thinking disabled</td>
-                        <td><span class="pill pill-running">running</span></td>
+                        <td>4.8&times; faster (382 s vs 1,834 s) for &minus;9 points of recall. Grounding flat, fabrications down. Prediction held on speed; the quality question it was run to settle came back neutral.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>Study-wide adjudication re-run, all five candidates pooled</td>
+                        <td>Reproduced all four original candidates' labels exactly on a different shuffle — the pinned rubric is stable. The new run scored 1 fabricated, not the 0 its own single-candidate pass reported.</td>
                     </tr>
                 </tbody>
             </table>

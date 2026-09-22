@@ -1,0 +1,658 @@
+{
+ "summary": {
+  "candidate": "qwen38-27b-8bit-nothink",
+  "reference": "opus-1",
+  "judge_model": "opus",
+  "n_ref_claims": 116,
+  "present": 65,
+  "partial": 23,
+  "absent": 28,
+  "recall": 0.659,
+  "n_cand_claims": 45,
+  "grounded": 39,
+  "distorted": 5,
+  "fabricated": 1,
+  "grounding": 0.867,
+  "fabrication": 0.022,
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate is structurally clean \u2014 all five sections in order, every D item tagged with an origin (often a defensible dual tag), and no stray commentary \u2014 and it is strong on the D/E material: the exchange-projection arithmetic, Jev cost, recall tuning, ground-truth ledger, headless-vs-Agent rationale and baseline outcome numbers are all faithfully reproduced. Its main weakness is a narrativized failure arc: it asserts the Python byte-scan succeeded and yielded the decisive trust string, when in fact both Python passes failed and the conclusion rested on the earlier `strings | grep`; it also miscounts the attempts (4 vs 5) and invents two \"wrong assumptions\" by the assistant (editing ~/.claude.json, and owning the routing target that was actually the user's idea). Recall is thin on knowledge-base provenance \u2014 the 2026-08-02 \"marks\" precedent, the cold-read/never-distilled reframing of the pivot target, the 41% figure, working-conventions.md, the NON-NEGOTIABLE repo convention, the headless-cell recipe deviation and the rubric-sizing decision are all missing \u2014 as are several smaller friction beats (ToolSearch/WebFetch fallback, transcript-parser iteration, PERMISSION_MODES fragment) and quantitative metadata (11 transcripts, 2 commits, turn/tool counts). Net: a well-formed, mostly grounded summary that over-smooths the debugging story and under-reports the knowledge-base reasoning that gave the reference its sharpest insights.",
+  "judge_cost_usd": 0.888215,
+  "adjudicated": true
+ },
+ "detail": {
+  "recall": [
+   {
+    "id": 1,
+    "status": "PRESENT"
+   },
+   {
+    "id": 2,
+    "status": "PRESENT"
+   },
+   {
+    "id": 3,
+    "status": "ABSENT"
+   },
+   {
+    "id": 4,
+    "status": "PRESENT"
+   },
+   {
+    "id": 5,
+    "status": "ABSENT"
+   },
+   {
+    "id": 6,
+    "status": "PRESENT"
+   },
+   {
+    "id": 7,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 8,
+    "status": "ABSENT"
+   },
+   {
+    "id": 9,
+    "status": "ABSENT"
+   },
+   {
+    "id": 10,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 11,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 12,
+    "status": "PRESENT"
+   },
+   {
+    "id": 13,
+    "status": "PRESENT"
+   },
+   {
+    "id": 14,
+    "status": "ABSENT"
+   },
+   {
+    "id": 15,
+    "status": "ABSENT"
+   },
+   {
+    "id": 16,
+    "status": "ABSENT"
+   },
+   {
+    "id": 17,
+    "status": "ABSENT"
+   },
+   {
+    "id": 18,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 19,
+    "status": "ABSENT"
+   },
+   {
+    "id": 20,
+    "status": "ABSENT"
+   },
+   {
+    "id": 21,
+    "status": "ABSENT"
+   },
+   {
+    "id": 22,
+    "status": "ABSENT"
+   },
+   {
+    "id": 23,
+    "status": "PRESENT"
+   },
+   {
+    "id": 24,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 25,
+    "status": "PRESENT"
+   },
+   {
+    "id": 26,
+    "status": "PRESENT"
+   },
+   {
+    "id": 27,
+    "status": "PRESENT"
+   },
+   {
+    "id": 28,
+    "status": "PRESENT"
+   },
+   {
+    "id": 29,
+    "status": "PRESENT"
+   },
+   {
+    "id": 30,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 31,
+    "status": "ABSENT"
+   },
+   {
+    "id": 32,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 33,
+    "status": "PRESENT"
+   },
+   {
+    "id": 34,
+    "status": "PRESENT"
+   },
+   {
+    "id": 35,
+    "status": "PRESENT"
+   },
+   {
+    "id": 36,
+    "status": "PRESENT"
+   },
+   {
+    "id": 37,
+    "status": "PRESENT"
+   },
+   {
+    "id": 38,
+    "status": "PRESENT"
+   },
+   {
+    "id": 39,
+    "status": "PRESENT"
+   },
+   {
+    "id": 40,
+    "status": "PRESENT"
+   },
+   {
+    "id": 41,
+    "status": "PRESENT"
+   },
+   {
+    "id": 42,
+    "status": "ABSENT"
+   },
+   {
+    "id": 43,
+    "status": "ABSENT"
+   },
+   {
+    "id": 44,
+    "status": "PRESENT"
+   },
+   {
+    "id": 45,
+    "status": "ABSENT"
+   },
+   {
+    "id": 46,
+    "status": "ABSENT"
+   },
+   {
+    "id": 47,
+    "status": "PRESENT"
+   },
+   {
+    "id": 48,
+    "status": "PRESENT"
+   },
+   {
+    "id": 49,
+    "status": "PRESENT"
+   },
+   {
+    "id": 50,
+    "status": "PRESENT"
+   },
+   {
+    "id": 51,
+    "status": "PRESENT"
+   },
+   {
+    "id": 52,
+    "status": "PRESENT"
+   },
+   {
+    "id": 53,
+    "status": "PRESENT"
+   },
+   {
+    "id": 54,
+    "status": "ABSENT"
+   },
+   {
+    "id": 55,
+    "status": "PRESENT"
+   },
+   {
+    "id": 56,
+    "status": "PRESENT"
+   },
+   {
+    "id": 57,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 58,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 59,
+    "status": "PRESENT"
+   },
+   {
+    "id": 60,
+    "status": "PRESENT"
+   },
+   {
+    "id": 61,
+    "status": "PRESENT"
+   },
+   {
+    "id": 62,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 63,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 64,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 65,
+    "status": "PRESENT"
+   },
+   {
+    "id": 66,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 67,
+    "status": "PRESENT"
+   },
+   {
+    "id": 68,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 69,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 70,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 71,
+    "status": "PRESENT"
+   },
+   {
+    "id": 72,
+    "status": "PRESENT"
+   },
+   {
+    "id": 73,
+    "status": "PRESENT"
+   },
+   {
+    "id": 74,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 75,
+    "status": "ABSENT"
+   },
+   {
+    "id": 76,
+    "status": "PRESENT"
+   },
+   {
+    "id": 77,
+    "status": "ABSENT"
+   },
+   {
+    "id": 78,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 79,
+    "status": "ABSENT"
+   },
+   {
+    "id": 80,
+    "status": "ABSENT"
+   },
+   {
+    "id": 81,
+    "status": "ABSENT"
+   },
+   {
+    "id": 82,
+    "status": "ABSENT"
+   },
+   {
+    "id": 83,
+    "status": "PRESENT"
+   },
+   {
+    "id": 84,
+    "status": "PRESENT"
+   },
+   {
+    "id": 85,
+    "status": "PRESENT"
+   },
+   {
+    "id": 86,
+    "status": "PRESENT"
+   },
+   {
+    "id": 87,
+    "status": "PRESENT"
+   },
+   {
+    "id": 88,
+    "status": "PRESENT"
+   },
+   {
+    "id": 89,
+    "status": "PRESENT"
+   },
+   {
+    "id": 90,
+    "status": "ABSENT"
+   },
+   {
+    "id": 91,
+    "status": "PRESENT"
+   },
+   {
+    "id": 92,
+    "status": "ABSENT"
+   },
+   {
+    "id": 93,
+    "status": "PRESENT"
+   },
+   {
+    "id": 94,
+    "status": "PRESENT"
+   },
+   {
+    "id": 95,
+    "status": "PRESENT"
+   },
+   {
+    "id": 96,
+    "status": "PRESENT"
+   },
+   {
+    "id": 97,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 98,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 99,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 100,
+    "status": "ABSENT"
+   },
+   {
+    "id": 101,
+    "status": "PRESENT"
+   },
+   {
+    "id": 102,
+    "status": "ABSENT"
+   },
+   {
+    "id": 103,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 104,
+    "status": "PRESENT"
+   },
+   {
+    "id": 105,
+    "status": "PRESENT"
+   },
+   {
+    "id": 106,
+    "status": "PRESENT"
+   },
+   {
+    "id": 107,
+    "status": "PRESENT"
+   },
+   {
+    "id": 108,
+    "status": "PRESENT"
+   },
+   {
+    "id": 109,
+    "status": "PRESENT"
+   },
+   {
+    "id": 110,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 111,
+    "status": "PRESENT"
+   },
+   {
+    "id": 112,
+    "status": "PRESENT"
+   },
+   {
+    "id": 113,
+    "status": "PRESENT"
+   },
+   {
+    "id": 114,
+    "status": "PRESENT"
+   },
+   {
+    "id": 115,
+    "status": "PRESENT"
+   },
+   {
+    "id": 116,
+    "status": "PRESENT"
+   }
+  ],
+  "candidate_claims": [
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Error text and cause match the transcript."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Both Python passes failed (one produced no output, one returned garbled minified bytes). The decisive string came from the earlier `strings | grep`, which the candidate demotes to 'only found the user-facing message'.",
+    "adjudicated": true,
+    "reason": "The Python byte scans and the decisive string both exist, but the string came from the earlier strings|grep; wrong cause/source attribution."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Confirmation came from reading ~/.claude.json (flag false) plus the string literal, not from the Python binary scan.",
+    "adjudicated": true,
+    "reason": "The conclusion that home trust is never persisted is real, but it came from the JSON flag plus the string literal, not the Python binary scan; wrong source."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Five attempts occurred and the final two (both Python) failed; the assistant concluded from string literals, not from locating the logic.",
+    "adjudicated": true,
+    "reason": "Real investigation sequence; wrong count (five attempts) and wrong outcome (the final two Python passes failed)."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Asserted by the assistant in turn 7 and recorded in the README."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "FABRICATED",
+    "note": "No such assumption appears; the assistant inspected the JSON as evidence and reported from the outset that flipping it does nothing. Framing it as a revised wrong assumption invents an error arc.",
+    "adjudicated": true,
+    "reason": "The assistant never held or expressed the assumption that editing ~/.claude.json would fix it; it said from the outset that flipping the JSON does nothing. Invented assumption and error arc."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Wrong actor: the SPINE-routing project was the user's own proposal in turn 4 ('Let's create a project with JEV for aura distill\u2026'), not an assistant assumption.",
+    "adjudicated": true,
+    "reason": "The routing project and the later redirection are real, but the routing target was the user's own proposal; wrong actor for the 'assumption'."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Five attempts, and the effort ended without locating the logic \u2014 the candidate implies a successful RE outcome.",
+    "adjudicated": true,
+    "reason": "The binary investigation is real; wrong attempt count (five) and implied successful RE outcome that did not occur."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   }
+  ],
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate is structurally clean \u2014 all five sections in order, every D item tagged with an origin (often a defensible dual tag), and no stray commentary \u2014 and it is strong on the D/E material: the exchange-projection arithmetic, Jev cost, recall tuning, ground-truth ledger, headless-vs-Agent rationale and baseline outcome numbers are all faithfully reproduced. Its main weakness is a narrativized failure arc: it asserts the Python byte-scan succeeded and yielded the decisive trust string, when in fact both Python passes failed and the conclusion rested on the earlier `strings | grep`; it also miscounts the attempts (4 vs 5) and invents two \"wrong assumptions\" by the assistant (editing ~/.claude.json, and owning the routing target that was actually the user's idea). Recall is thin on knowledge-base provenance \u2014 the 2026-08-02 \"marks\" precedent, the cold-read/never-distilled reframing of the pivot target, the 41% figure, working-conventions.md, the NON-NEGOTIABLE repo convention, the headless-cell recipe deviation and the rubric-sizing decision are all missing \u2014 as are several smaller friction beats (ToolSearch/WebFetch fallback, transcript-parser iteration, PERMISSION_MODES fragment) and quantitative metadata (11 transcripts, 2 commits, turn/tool counts). Net: a well-formed, mostly grounded summary that over-smooths the debugging story and under-reports the knowledge-base reasoning that gave the reference its sharpest insights."
+ },
+ "redaction": "Claim texts removed (they quote a real session). Verbatim user speech removed. Identifiers generalised. Evaluative notes kept: they are the finding."
+}

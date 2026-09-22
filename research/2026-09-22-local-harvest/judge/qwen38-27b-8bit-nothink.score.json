@@ -505,19 +505,19 @@
     "status": "DISTORTED",
     "note": "Both Python passes failed (one produced no output, one returned garbled minified bytes). The decisive string came from the earlier `strings | grep`, which the candidate demotes to 'only found the user-facing message'.",
     "adjudicated": true,
-    "reason": "The decisive string and the Python scans are both real; the claim credits the wrong command with producing the evidence."
+    "reason": "The Python byte-regex passes and the trust string both exist; the claim wrongly credits the Python scan with the decisive find that came from strings|grep."
    },
    {
     "status": "DISTORTED",
     "note": "Confirmation came from reading ~/.claude.json (flag false) plus the string literal, not from the Python binary scan.",
     "adjudicated": true,
-    "reason": "The non-persistence conclusion is real; its source is wrong \u2014 it came from ~/.claude.json plus the binary string literal, not the Python scan."
+    "reason": "The confirmation is real but came from ~/.claude.json plus the string literal, not from the Python binary scan."
    },
    {
     "status": "DISTORTED",
     "note": "Five attempts occurred and the final two (both Python) failed; the assistant concluded from string literals, not from locating the logic.",
     "adjudicated": true,
-    "reason": "The multi-attempt binary investigation is real; the count (five, not four) and the success of the final attempt are both wrong."
+    "reason": "The investigation attempts are real; count is wrong (five) and the success of the fourth is wrong."
    },
    {
     "status": "GROUNDED"
@@ -557,7 +557,7 @@
     "status": "FABRICATED",
     "note": "No such assumption appears; the assistant inspected the JSON as evidence and reported from the outset that flipping it does nothing. Framing it as a revised wrong assumption invents an error arc.",
     "adjudicated": true,
-    "reason": "No assumption that editing ~/.claude.json would fix the prompt was ever held or expressed; the error arc is invented wholesale."
+    "reason": "The assistant never held or expressed the assumption that editing ~/.claude.json would fix trust; the error arc is invented."
    },
    {
     "status": "GROUNDED"
@@ -566,7 +566,7 @@
     "status": "DISTORTED",
     "note": "Wrong actor: the SPINE-routing project was the user's own proposal in turn 4 ('Let's create a project with JEV for aura distill\u2026'), not an assistant assumption.",
     "adjudicated": true,
-    "reason": "The routing project and the later pivot are both real; the routing focus was the user's own turn-4 proposal, so the actor is wrong."
+    "reason": "The routing project and the later pivot are real; the claim assigns the routing proposal to the assistant when the user proposed it."
    },
    {
     "status": "GROUNDED"
@@ -629,7 +629,7 @@
     "status": "DISTORTED",
     "note": "Five attempts, and the effort ended without locating the logic \u2014 the candidate implies a successful RE outcome.",
     "adjudicated": true,
-    "reason": "The binary investigation is real; the attempt count is wrong (five) and the claim implies a successful RE outcome that never happened."
+    "reason": "The binary investigation is real; the attempt count is wrong and success is implied where none occurred."
    },
    {
     "status": "GROUNDED"

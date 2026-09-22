@@ -1,0 +1,665 @@
+{
+ "summary": {
+  "candidate": "qwen38-27b-4bit",
+  "reference": "opus-1",
+  "judge_model": "opus",
+  "n_ref_claims": 116,
+  "present": 74,
+  "partial": 16,
+  "absent": 26,
+  "recall": 0.707,
+  "n_cand_claims": 45,
+  "grounded": 38,
+  "distorted": 7,
+  "fabricated": 0,
+  "grounding": 0.844,
+  "fabrication": 0.0,
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate is strong on the second half of the session \u2014 the pivot, the \"marks\" precedent, the exchange-vs-turn reframing, the cost arithmetic, and nearly every section-D decision from turn 9 are captured with correct numbers and defensible origin labels, and the spec is cleanly satisfied (A\u2013E in order, every D row carries an origin, no stray commentary). It is materially weaker on the mechanical/tooling layer of the early session: the \"Enough evidence already\" parallelization, the PERMISSION_MODES fragment, the empty ToolSearch/WebFetch fallback to curl, both transcript-parser iterations, the in-place spine_entries() patch with its \u2264400-char rubric and 22,585-char budget check, the missing ~/repos directory, the NON-NEGOTIABLE repos convention, the git attribution decision, and the self-caught unverified `answers.file.choice` field name are all absent \u2014 roughly a quarter of the reference set. Grounding is mostly solid, but there are five real defects: an invented 119k\u2013339k cache-read range, \"4 valid cells\" when only 3 were valid, and three over-claims about the user (that he knows what Jev is, that the ledger-as-ground-truth was his, and that he speaks experimental-design vocabulary) \u2014 the first of which directly inverts a reference growth edge. Net: a well-organized summary that reads more confidently than its evidence in section C and slightly padded in the numbers, while under-recording the session's tool-level failure texture and its convention/directive provenance.",
+  "judge_cost_usd": 0.831167,
+  "adjudicated": true
+ },
+ "detail": {
+  "recall": [
+   {
+    "id": 1,
+    "status": "PRESENT"
+   },
+   {
+    "id": 2,
+    "status": "PRESENT"
+   },
+   {
+    "id": 3,
+    "status": "ABSENT"
+   },
+   {
+    "id": 4,
+    "status": "PRESENT"
+   },
+   {
+    "id": 5,
+    "status": "ABSENT"
+   },
+   {
+    "id": 6,
+    "status": "PRESENT"
+   },
+   {
+    "id": 7,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 8,
+    "status": "ABSENT"
+   },
+   {
+    "id": 9,
+    "status": "PRESENT"
+   },
+   {
+    "id": 10,
+    "status": "PRESENT"
+   },
+   {
+    "id": 11,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 12,
+    "status": "PRESENT"
+   },
+   {
+    "id": 13,
+    "status": "PRESENT"
+   },
+   {
+    "id": 14,
+    "status": "ABSENT"
+   },
+   {
+    "id": 15,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 16,
+    "status": "ABSENT"
+   },
+   {
+    "id": 17,
+    "status": "ABSENT"
+   },
+   {
+    "id": 18,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 19,
+    "status": "ABSENT"
+   },
+   {
+    "id": 20,
+    "status": "ABSENT"
+   },
+   {
+    "id": 21,
+    "status": "ABSENT"
+   },
+   {
+    "id": 22,
+    "status": "ABSENT"
+   },
+   {
+    "id": 23,
+    "status": "PRESENT"
+   },
+   {
+    "id": 24,
+    "status": "PRESENT"
+   },
+   {
+    "id": 25,
+    "status": "PRESENT"
+   },
+   {
+    "id": 26,
+    "status": "PRESENT"
+   },
+   {
+    "id": 27,
+    "status": "PRESENT"
+   },
+   {
+    "id": 28,
+    "status": "PRESENT"
+   },
+   {
+    "id": 29,
+    "status": "PRESENT"
+   },
+   {
+    "id": 30,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 31,
+    "status": "ABSENT"
+   },
+   {
+    "id": 32,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 33,
+    "status": "PRESENT"
+   },
+   {
+    "id": 34,
+    "status": "PRESENT"
+   },
+   {
+    "id": 35,
+    "status": "PRESENT"
+   },
+   {
+    "id": 36,
+    "status": "PRESENT"
+   },
+   {
+    "id": 37,
+    "status": "PRESENT"
+   },
+   {
+    "id": 38,
+    "status": "PRESENT"
+   },
+   {
+    "id": 39,
+    "status": "PRESENT"
+   },
+   {
+    "id": 40,
+    "status": "PRESENT"
+   },
+   {
+    "id": 41,
+    "status": "ABSENT"
+   },
+   {
+    "id": 42,
+    "status": "PRESENT"
+   },
+   {
+    "id": 43,
+    "status": "PRESENT"
+   },
+   {
+    "id": 44,
+    "status": "PRESENT"
+   },
+   {
+    "id": 45,
+    "status": "ABSENT"
+   },
+   {
+    "id": 46,
+    "status": "ABSENT"
+   },
+   {
+    "id": 47,
+    "status": "PRESENT"
+   },
+   {
+    "id": 48,
+    "status": "PRESENT"
+   },
+   {
+    "id": 49,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 50,
+    "status": "ABSENT"
+   },
+   {
+    "id": 51,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 52,
+    "status": "ABSENT"
+   },
+   {
+    "id": 53,
+    "status": "PRESENT"
+   },
+   {
+    "id": 54,
+    "status": "ABSENT"
+   },
+   {
+    "id": 55,
+    "status": "PRESENT"
+   },
+   {
+    "id": 56,
+    "status": "PRESENT"
+   },
+   {
+    "id": 57,
+    "status": "ABSENT"
+   },
+   {
+    "id": 58,
+    "status": "ABSENT"
+   },
+   {
+    "id": 59,
+    "status": "PRESENT"
+   },
+   {
+    "id": 60,
+    "status": "PRESENT"
+   },
+   {
+    "id": 61,
+    "status": "PRESENT"
+   },
+   {
+    "id": 62,
+    "status": "PRESENT"
+   },
+   {
+    "id": 63,
+    "status": "PRESENT"
+   },
+   {
+    "id": 64,
+    "status": "PRESENT"
+   },
+   {
+    "id": 65,
+    "status": "PRESENT"
+   },
+   {
+    "id": 66,
+    "status": "ABSENT"
+   },
+   {
+    "id": 67,
+    "status": "PRESENT"
+   },
+   {
+    "id": 68,
+    "status": "PRESENT"
+   },
+   {
+    "id": 69,
+    "status": "ABSENT"
+   },
+   {
+    "id": 70,
+    "status": "PRESENT"
+   },
+   {
+    "id": 71,
+    "status": "PRESENT"
+   },
+   {
+    "id": 72,
+    "status": "PRESENT"
+   },
+   {
+    "id": 73,
+    "status": "PRESENT"
+   },
+   {
+    "id": 74,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 75,
+    "status": "ABSENT"
+   },
+   {
+    "id": 76,
+    "status": "PRESENT"
+   },
+   {
+    "id": 77,
+    "status": "ABSENT"
+   },
+   {
+    "id": 78,
+    "status": "ABSENT"
+   },
+   {
+    "id": 79,
+    "status": "ABSENT"
+   },
+   {
+    "id": 80,
+    "status": "PRESENT"
+   },
+   {
+    "id": 81,
+    "status": "PRESENT"
+   },
+   {
+    "id": 82,
+    "status": "PRESENT"
+   },
+   {
+    "id": 83,
+    "status": "PRESENT"
+   },
+   {
+    "id": 84,
+    "status": "PRESENT"
+   },
+   {
+    "id": 85,
+    "status": "PRESENT"
+   },
+   {
+    "id": 86,
+    "status": "PRESENT"
+   },
+   {
+    "id": 87,
+    "status": "PRESENT"
+   },
+   {
+    "id": 88,
+    "status": "PRESENT"
+   },
+   {
+    "id": 89,
+    "status": "PRESENT"
+   },
+   {
+    "id": 90,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 91,
+    "status": "PRESENT"
+   },
+   {
+    "id": 92,
+    "status": "ABSENT"
+   },
+   {
+    "id": 93,
+    "status": "PRESENT"
+   },
+   {
+    "id": 94,
+    "status": "PRESENT"
+   },
+   {
+    "id": 95,
+    "status": "PRESENT"
+   },
+   {
+    "id": 96,
+    "status": "PRESENT"
+   },
+   {
+    "id": 97,
+    "status": "PRESENT"
+   },
+   {
+    "id": 98,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 99,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 100,
+    "status": "PRESENT"
+   },
+   {
+    "id": 101,
+    "status": "PRESENT"
+   },
+   {
+    "id": 102,
+    "status": "PRESENT"
+   },
+   {
+    "id": 103,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 104,
+    "status": "PRESENT"
+   },
+   {
+    "id": 105,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 106,
+    "status": "PRESENT"
+   },
+   {
+    "id": 107,
+    "status": "PRESENT"
+   },
+   {
+    "id": 108,
+    "status": "PRESENT"
+   },
+   {
+    "id": 109,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 110,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 111,
+    "status": "PRESENT"
+   },
+   {
+    "id": 112,
+    "status": "PRESENT"
+   },
+   {
+    "id": 113,
+    "status": "PRESENT"
+   },
+   {
+    "id": 114,
+    "status": "PRESENT"
+   },
+   {
+    "id": 115,
+    "status": "PRESENT"
+   },
+   {
+    "id": 116,
+    "status": "PRESENT"
+   }
+  ],
+  "candidate_claims": [
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Sequence omits the intervening LC_ALL=C ugrep attempt, and the Python passes did not actually resolve the question (first returned nothing, second returned garbage). 'Completed quickly' is unsupported.",
+    "adjudicated": true,
+    "reason": "The timeout and the subsequent Python script are real; the omitted ugrep step and 'completed quickly'/resolved framing misstate the outcome."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Labeling it a 'false-positive regex match' is the candidate's interpretation; the strings did match, the printed context was adjacent binary data."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "File read and choose_s exact; 'truncated answer' is a reasonable gloss of first_file_to_answer_s = None."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "$0.38 is correct; the cache-read range is not supported \u2014 the only visible cache_read figures are 33,906 (cell 1) and 119,719 (replacement cell). 339k appears nowhere.",
+    "adjudicated": true,
+    "reason": "Cost figure correct and cache-read is a real metric; the 339k upper bound appears nowhere \u2014 wrong number."
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Candidate reuses the assistant's 'dirty floor' phrase, which in the transcript referred to subagent tool/MCP inheritance, not to the context floor."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "One D-table row restates this as '0.3\u20132k tokens per turn', a small unit slip."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The user asked for 'executive summary of what it does' right after installing the skill \u2014 the transcript indicates unfamiliarity, the opposite of knowing what Jev is.",
+    "adjudicated": true,
+    "reason": "The summary request is real; inferring prior knowledge of Jev inverts what the request indicates."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Wrong actor \u2014 the distill ledger and 'Signals Detected' tables were introduced by the assistant in turn 9, not by the user.",
+    "adjudicated": true,
+    "reason": "The ledger-as-ground-truth idea is real but was introduced by the assistant; wrong actor."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The user never uses those terms; he said <quote withheld> and 'we will have data to see the performance gain'. Over-claimed.",
+    "adjudicated": true,
+    "reason": "The user's real requests about measurement exist; crediting him with experimental-design vocabulary over-claims."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Origin labelled 'constraint'; reference treats it as evidence + convention."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Origin labelled 'evidence'; this is a platform constraint."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The bar and medians are right, but the transcript states 4 cells of which only 3 were valid (cell 1 was priced out); 'across 4 valid cells' misreports the sample.",
+    "adjudicated": true,
+    "reason": "Bar and medians are accurate; 'across 4 valid cells' misreports a sample that was 3 valid of 4."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Turn count and clock figures track the transcript's timestamps, but those are UTC ('Z'), not local, and the 25\u201330 minute duration is an extrapolation beyond the last recorded time.",
+    "adjudicated": true,
+    "reason": "Turn count and timestamps are real; labelling UTC times as local and extrapolating 25\u201330 minutes misstates them."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   }
+  ],
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate is strong on the second half of the session \u2014 the pivot, the \"marks\" precedent, the exchange-vs-turn reframing, the cost arithmetic, and nearly every section-D decision from turn 9 are captured with correct numbers and defensible origin labels, and the spec is cleanly satisfied (A\u2013E in order, every D row carries an origin, no stray commentary). It is materially weaker on the mechanical/tooling layer of the early session: the \"Enough evidence already\" parallelization, the PERMISSION_MODES fragment, the empty ToolSearch/WebFetch fallback to curl, both transcript-parser iterations, the in-place spine_entries() patch with its \u2264400-char rubric and 22,585-char budget check, the missing ~/repos directory, the NON-NEGOTIABLE repos convention, the git attribution decision, and the self-caught unverified `answers.file.choice` field name are all absent \u2014 roughly a quarter of the reference set. Grounding is mostly solid, but there are five real defects: an invented 119k\u2013339k cache-read range, \"4 valid cells\" when only 3 were valid, and three over-claims about the user (that he knows what Jev is, that the ledger-as-ground-truth was his, and that he speaks experimental-design vocabulary) \u2014 the first of which directly inverts a reference growth edge. Net: a well-organized summary that reads more confidently than its evidence in section C and slightly padded in the numbers, while under-recording the session's tool-level failure texture and its convention/directive provenance."
+ },
+ "redaction": "Claim texts removed (raw session content). Verbatim user speech removed. Identifiers generalised. Evaluative notes kept: they are the finding."
+}

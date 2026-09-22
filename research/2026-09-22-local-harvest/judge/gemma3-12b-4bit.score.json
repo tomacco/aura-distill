@@ -509,7 +509,7 @@
     "status": "DISTORTED",
     "note": "Wrong actor: the tool harness notified the assistant, not the user; the user was never involved in this.",
     "adjudicated": true,
-    "reason": "The background-task notification is real; its recipient is wrong \u2014 the harness notified the assistant, not the user."
+    "reason": "The background-task notification is real; the recipient was the assistant, not the user."
    },
    {
     "status": "GROUNDED",
@@ -519,13 +519,13 @@
     "status": "DISTORTED",
     "note": "Both Python passes failed \u2014 one produced no output, the other garbled minified text; the conclusion came from the earlier strings|grep literals, and no code was located.",
     "adjudicated": true,
-    "reason": "The follow-up Python scripts genuinely ran; their outcome is wrong \u2014 both failed and no code was located."
+    "reason": "The more targeted Python script is real; claiming it located the relevant code misstates the failed outcome."
    },
    {
     "status": "DISTORTED",
     "note": "This was a previously recorded 'marks' case (2026-08-02) in projects/aura-distill.md, not an attempt in this session; and the reason was that the conversation is already in warm context, not that the process is costly.",
     "adjudicated": true,
-    "reason": "The 'marks' case is real in projects/aura-distill.md; the claim mis-places it in this session and swaps its reason (warm context, not process cost)."
+    "reason": "The 'marks' case is real in projects/aura-distill.md; the claim relocates it to this session and gives the wrong reason (warm context, not process cost)."
    },
    {
     "status": "GROUNDED"
@@ -553,7 +553,7 @@
     "status": "DISTORTED",
     "note": "The assistant produced all of that arithmetic; the user's input was qualitative ('gains are not that crazy'). 'Number of signals' data never existed in the session.",
     "adjudicated": true,
-    "reason": "The transcript-volume and cost data are real but were produced by the assistant; 'number of signals' data additionally never existed."
+    "reason": "The data-driven reasoning is real but was the assistant's; 'number of signals' data also never existed \u2014 wrong actor plus over-claim."
    },
    {
     "status": "GROUNDED"
@@ -569,19 +569,19 @@
     "status": "DISTORTED",
     "note": "Over-claimed: the user only ever said 'go' once; the final pre-filter proposal was never responded to \u2014 the session ended awaiting his decision.",
     "adjudicated": true,
-    "reason": "The user's single 'go' and his engagement with the pivot are real; 'readily accepted suggestions and incorporated new ideas' over-claims their strength."
+    "reason": "The single 'go' acceptance is real; 'readily accepted and incorporated new ideas' over-claims a settlement that never occurred."
    },
    {
     "status": "DISTORTED",
     "note": "The user's opening directives were an install status check, the trust prompt, and a TypeSafe summary; the first Jev directive was a routing benchmark, not '/distill improvement'.",
     "adjudicated": true,
-    "reason": "Real user directives exist, but the first Jev directive was a SPINE routing benchmark; '/distill improvement' mis-states the actual instruction."
+    "reason": "User directives and the later distill-cost focus both exist; the claim mis-states which directive initiated what."
    },
    {
     "status": "DISTORTED",
     "note": "The 59%/41% figure came from projects/aura-distill.md knowledge, not the ledger; the ledger was proposed as the future ground-truth source. Also drops the 41% number.",
     "adjudicated": true,
-    "reason": "The never-processed-sessions target and the 59%/41% split are real; the source is wrong (project knowledge, not the ledger) and the 41% figure is dropped."
+    "reason": "The 59%/41% coverage figure is real but came from the aura-distill project knowledge, not the ledger; wrong source and dropped number."
    },
    {
     "status": "GROUNDED",
@@ -591,13 +591,13 @@
     "status": "DISTORTED",
     "note": "The actual reasoning was that transcripts are ~90% tool I/O and signals anchor on user text, giving a ~10x code-only cut; the exchange unit was chosen to answer the cross-block worry.",
     "adjudicated": true,
-    "reason": "The exchange-unit decision and its reasoning are real (~90% tool I/O, signals anchor on user text, ~10x cut); the stated driver is a mis-rendering of it."
+    "reason": "The exchanges decision is real; the stated driving analysis is a wrong restatement of the 90%-tool-I/O reasoning."
    },
    {
     "status": "DISTORTED",
     "note": "Rationale invented \u2014 the transcript says it is 'a different question than routing' and 'both are small'; and it was a proposal pending user approval, not a decision.",
     "adjudicated": true,
-    "reason": "The repo-split proposal is real; the stated rationale (isolate functionality, avoid dependencies) replaces the actual one and 'was chosen' over-states a pending proposal."
+    "reason": "The repo-split rationale exists ('different question', 'both are small'); the claim substitutes a different rationale and overstates it as decided."
    },
    {
     "status": "GROUNDED",
@@ -610,7 +610,7 @@
     "status": "DISTORTED",
     "note": "'Natural language processing' has no basis; omits Claude Code internals, macOS/zsh, and benchmarking/cost economics.",
     "adjudicated": true,
-    "reason": "Most listed domains are genuinely present; 'natural language processing' is an unsupported addition to an otherwise real list."
+    "reason": "Most listed domains are real; 'natural language processing' is an unsupported addition to a real list."
    },
    {
     "status": "GROUNDED",
@@ -623,7 +623,7 @@
     "status": "DISTORTED",
     "note": "The routing baseline was already executed (4 headless cells, $1.72, ~2.7s median choose time); it ran against SPINE in clean cells, not 'a set of local transcripts'.",
     "adjudicated": true,
-    "reason": "The routing baseline is a real event, but it was already executed and ran against SPINE in clean cells, not pending against local transcripts."
+    "reason": "The routing baseline is real but was already executed and ran over SPINE in clean cells; the claim mis-states its status and data source."
    }
   ],
   "spec": {

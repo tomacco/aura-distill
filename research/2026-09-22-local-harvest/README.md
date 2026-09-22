@@ -204,10 +204,44 @@ is the worst error this pipeline can receive.
 independently of capability — a first-class risk for a local strategy that does not exist for a
 hosted API.
 
+## 24 GB tier — quantisation instead of a smaller model
+
+| Qwen3.8-27B | 8-bit | 4-bit | change |
+|---|---|---|---|
+| % of Opus ceiling | 81 % | **77 %** | −4 pts |
+| grounding | 0.879 | 0.844 | −0.035 |
+| fabricated | 2 (3.4 %) | **0** | −2 |
+| peak memory | 32.3 GB | **18.85 GB** | −13.4 GB |
+| wall clock | 1,834 s | 403 s | 4.6× faster |
+| generation | 8.8 tok/s | 15.4 tok/s | +75 % |
+
+**Capacity beats precision, and it is not close.** Halving precision on a 27B cost 4 points; dropping
+to a 9B at the same precision cost 40. Both free comparable memory. The 4-bit run was also *cleaner*
+on fabrication than the 8-bit.
+
+**It still does not fit 24 GB.** Peak memory measured at two transcript lengths gives the KV slope
+directly: 14,273 tokens → 18.85 GB, and 64,034 tokens → 22.41 GB. That is a **17.8 GB resident floor
+plus ~72 MB per 1,000 tokens**. Against macOS's default GPU-wired cap of ~75 % of RAM:
+
+| machine | default GPU limit | longest transcript that fits |
+|---|---|---|
+| 16 GB | ~12 GB | none — the model does not load |
+| 24 GB | ~18 GB | ~2k tokens, i.e. effectively none |
+| 24 GB, limit raised to 20 GB | 20 GB | ~30k tokens |
+| 24 GB, limit raised to 22 GB | 22 GB | ~58k tokens, leaving 2 GB for the rest of the machine |
+| 32 GB+ | ~24 GB | comfortable |
+
+**The practical floor for this stage is 32 GB.** A 24 GB Mac runs it only with `iogpu.wired_limit_mb`
+raised by `sudo sysctl` — lost on reboot unless persisted, and not fit for general setup instructions.
+
+*Measured on a 48 GB machine.* The memory figures are real; the 16/24 GB verdicts compare those
+figures against those machines' documented limits, not runs on such machines.
+
 ## Conclusions
 
-1. **A local open-weights model can do this stage — with 32 GB of headroom.** 81 % of Opus, a 3.4 %
-   fabrication rate, full spec compliance, $0. At 16 GB, nothing tested comes close.
+1. **A local open-weights model can do this stage — with 32 GB.** 81 % of Opus at 8-bit, 77 % at
+   4-bit in under seven minutes, $0. Below 32 GB nothing tested is usable: at 24 GB the quality is
+   there but the memory is not, and at 16 GB neither is.
 2. **It is not a drop-in for the hosted cheap tier — it is better than it.** On this transcript the
    local 27B dominates Haiku on every quality axis and edges Sonnet on recall while trailing it
    slightly on fabrication, at no cost. The trade is entirely latency.

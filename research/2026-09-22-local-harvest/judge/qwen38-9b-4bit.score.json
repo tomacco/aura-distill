@@ -10,10 +10,10 @@
   "recall": 0.375,
   "n_cand_claims": 32,
   "grounded": 19,
-  "distorted": 13,
-  "fabricated": 0,
+  "distorted": 12,
+  "fabricated": 1,
   "grounding": 0.594,
-  "fabrication": 0.0,
+  "fabrication": 0.031,
   "spec": {
    "sections_present_in_order": true,
    "decisions_have_origin": true,
@@ -495,13 +495,13 @@
     "status": "DISTORTED",
     "note": "Two distinct failures merged and misattributed: 'Illegal byte sequence' came from `cut` reading the backgrounded output, 'complexity limits' from ugrep; the grep itself timed out at 120s, which is not mentioned.",
     "adjudicated": true,
-    "reason": "Both error strings genuinely occurred in the transcript but are merged onto the wrong commands, and the grep's 120s timeout is omitted."
+    "reason": "Both failures are real errors in the transcript; the claim merges and mis-attributes them to a single grep and omits the timeout."
    },
    {
     "status": "DISTORTED",
     "note": "The python fallbacks returned no output and then garbled minified context; the usable evidence came from the earlier `strings | grep`, and the assistant abandoned the search ('Enough evidence already').",
     "adjudicated": true,
-    "reason": "The python3 - / re.finditer attempts are real events; the claim that they resolved the search is a wrong outcome."
+    "reason": "The python3 - / re.finditer attempts are real; crediting them with resolving the search is the wrong outcome."
    },
    {
     "status": "GROUNDED"
@@ -510,10 +510,10 @@
     "status": "GROUNDED"
    },
    {
-    "status": "DISTORTED",
+    "status": "FABRICATED",
     "note": "No Jev call was ever made \u2014 no TYPESAFE_API_KEY exists; the assistant twice flagged the field name as assumed and needing verification.",
     "adjudicated": true,
-    "reason": "The assumed answers.file.choice field and the stated need to verify it are real; asserting the verification happened over-claims the status of a pending item."
+    "reason": "No Jev call was ever made; the verification event and its confirming outcome never occurred in any form."
    },
    {
     "status": "GROUNDED",
@@ -532,13 +532,13 @@
     "status": "DISTORTED",
     "note": "The user proposed per-turn Jev filtering; the assistant reframed it. Wrong actor, and no user correction occurred.",
     "adjudicated": true,
-    "reason": "Per-turn Jev filtering is a real proposal in the transcript, but the user proposed it and no correction of the assistant occurred; wrong actor."
+    "reason": "Per-turn Jev filtering is real but was the user's proposal; also no correction occurred \u2014 wrong actor on a real referent."
    },
    {
     "status": "DISTORTED",
     "note": "The user raised the concern unprompted; the candidate's table places it in the 'What I Did' column.",
     "adjudicated": true,
-    "reason": "The multi-block chunking concern is real; the user raised it, so placing it in the assistant's column is a wrong-actor error."
+    "reason": "The multi-block signal concern genuinely appears; it was raised by the user, so this is wrong-actor attribution."
    },
    {
     "status": "GROUNDED"
@@ -556,19 +556,19 @@
     "status": "DISTORTED",
     "note": "The recipe lives in the user's knowledge base (ops/headless-clean-agents.md) and was applied by the assistant; the user only asked for a 'new, clean agent'. Over-claimed as demonstrated expertise.",
     "adjudicated": true,
-    "reason": "The headless recipe is real in the user's KB and the user did request a clean agent; crediting him with knowing the recipe over-claims a real datum."
+    "reason": "The headless-cell recipe exists in the user's KB and the user asked for a clean agent; presenting this as his demonstrated expertise over-claims."
    },
    {
     "status": "DISTORTED",
     "note": "The user called the trust prompt a 'bug'; the transcript shows the opposite of mechanics knowledge.",
     "adjudicated": true,
-    "reason": "Anchored to the real trust-prompt exchange but inverts its evidential direction: the user called by-design behavior a bug."
+    "reason": "The user's engagement with the trust prompt is real; claiming mechanics knowledge over-claims and inverts what the transcript shows."
    },
    {
     "status": "DISTORTED",
     "note": "The 'go' was the staged go-ahead the assistant explicitly requested ('let me know when you are done'); nothing in the transcript indicates impatience.",
     "adjudicated": true,
-    "reason": "The terse 'go' is real; reading impatience into a go-ahead the assistant explicitly requested mischaracterizes a genuine utterance."
+    "reason": "The brief 'go' is real; reading it as impatience is an over-claimed characterisation of a real event."
    },
    {
     "status": "GROUNDED"
@@ -577,7 +577,7 @@
     "status": "DISTORTED",
     "note": "Content is real but mis-slotted: this is a strength (empirical reframing), not a growth edge; actual growth edges (bug framing, Jev unfamiliarity, delegated design call) are missed.",
     "adjudicated": true,
-    "reason": "The reframe from routing to cold-read filtering is real; classifying it as a growth edge rather than a strength mis-slots a real item."
+    "reason": "The reframe is real; classifying it as a user growth edge mis-slots a real event."
    },
    {
     "status": "GROUNDED"
@@ -586,13 +586,13 @@
     "status": "DISTORTED",
     "note": "'Live data is sacred' is a real core value from profile/the-user.md, but it concerns not mutating/faking production data; the candidate repurposes it as a benchmarking preference, and elevates it to the session's 'Key insight'.",
     "adjudicated": true,
-    "reason": "'Live data is sacred' is a genuine core value in the transcript; repurposing its meaning as a benchmarking preference distorts a real principle."
+    "reason": "'Live data is sacred' is a real KB value; the claim repurposes its meaning into a benchmarking preference."
    },
    {
     "status": "DISTORTED",
     "note": "The driver is a vendor/platform constraint (Claude Code hardcodes non-persistence), not a user directive.",
     "adjudicated": true,
-    "reason": "The zshrc wrapper decision is real; its origin label is wrong \u2014 a platform constraint, not a user directive."
+    "reason": "The workaround is real; its origin is a platform constraint, so the 'Directive' label is a wrong cause."
    },
    {
     "status": "GROUNDED"
@@ -601,13 +601,13 @@
     "status": "DISTORTED",
     "note": "Rationale is correct but the origin label 'Constraint' and the sourcing to headless-clean-agents.md are off: the reasoning was the assistant's evidence-based call under the user's 'your call', and the harness in fact *deviated* from that file's recipe.",
     "adjudicated": true,
-    "reason": "The dirty-floor rationale genuinely appears in turn 5; only the origin label and sourcing to headless-clean-agents.md (which the harness actually deviated from) are wrong."
+    "reason": "The headless-vs-subagent rationale is real; the origin label and sourcing to headless-clean-agents.md are wrong (the harness deviated from that recipe)."
    },
    {
     "status": "DISTORTED",
     "note": "The assistant only proposed a split at the very end of the turn; the user has not yet responded, so 'didn't object' overstates settlement. The proposed name jev-distill-signals is also dropped.",
     "adjudicated": true,
-    "reason": "The repo-split proposal is real; 'was decided' and 'the user didn't object' over-state the settlement of a still-pending question."
+    "reason": "The repo-split proposal is real; 'decided' and 'the user didn't object' overstate an open question."
    },
    {
     "status": "GROUNDED"

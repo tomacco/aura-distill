@@ -495,7 +495,7 @@
     "status": "DISTORTED",
     "note": "JSON was read once; the value was false",
     "adjudicated": true,
-    "reason": "~/.claude.json was read once and did show hasTrustDialogAccepted: false; 'repeated attempts' inflates the count. Wrong number."
+    "reason": "The JSON read and the false flag are real; 'repeated attempts' overstates a single read."
    },
    {
     "status": "GROUNDED",
@@ -523,7 +523,7 @@
     "status": "DISTORTED",
     "note": "first Python pass returned no output; second returned garbled minified context; confirming literals came from the initial strings|grep",
     "adjudicated": true,
-    "reason": "The Python re.finditer byte search really happened; the confirming literals came from the earlier strings|grep, and the Python passes returned no output/garbled context. Wrong outcome attribution."
+    "reason": "The re.finditer approach is real; crediting it with the confirming evidence (which came from strings|grep) is a wrong outcome."
    },
    {
     "status": "GROUNDED"
@@ -535,7 +535,7 @@
     "status": "DISTORTED",
     "note": "$0.58 vs 3\u00d7$0.38=$1.14; transcript says it cost more than the warm cells' answers, not the combined cells",
     "adjudicated": true,
-    "reason": "The transcript says the cold cell cost more than the three warm cells' answers; the claim inflates it to more than the combined cell costs ($0.58 vs $1.14). Over-claimed comparison."
+    "reason": "Real cost comparison ($0.58 cold vs warm cells' answers) mis-scoped to 'three warm cells combined'."
    },
    {
     "status": "GROUNDED"
@@ -556,7 +556,7 @@
     "status": "FABRICATED",
     "note": "no user correction occurred; candidate itself hedges this; 'Enough evidence already' was said before switching to TypeSafe, not before committing to the wrapper",
     "adjudicated": true,
-    "reason": "No user correction of the trust-JSON framing occurs anywhere; the user's only trust-related utterance was the original request. Invented user action."
+    "reason": "No user correction of task 2 occurred anywhere; the correction event is invented."
    },
    {
     "status": "GROUNDED"
@@ -580,7 +580,7 @@
     "status": "DISTORTED",
     "note": "user asked for an executive summary of what the skill does; unfamiliarity is the evidence",
     "adjudicated": true,
-    "reason": "Same shape as claims 19 and 25: real request for an executive summary inverted into deep prior familiarity. Over-claimed."
+    "reason": "The user's TypeSafe interaction is real; 'deep familiarity without needing explanation' inverts his request for a summary."
    },
    {
     "status": "GROUNDED"
@@ -641,13 +641,13 @@
     "status": "DISTORTED",
     "note": "Python passes did not yield the evidence",
     "adjudicated": true,
-    "reason": "Python byte-regex searches and multiple prior tool failures (timeout, ugrep error) genuinely occurred; the claim wrongly credits the Python pass with producing the confirming evidence. Wrong outcome."
+    "reason": "The Python byte-regex attempts after tool failures are real; the implied successful reverse-engineering outcome is wrong."
    },
    {
     "status": "DISTORTED",
     "note": "WebFetch was unavailable (ToolSearch empty); only curl was used",
     "adjudicated": true,
-    "reason": "Doc research really happened via curl; WebFetch was sought via ToolSearch and unavailable. Real activity, over-claimed toolset."
+    "reason": "The docs research via curl is real; including WebFetch, which was unavailable, is a wrong detail on a real action."
    },
    {
     "status": "GROUNDED"

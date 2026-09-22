@@ -509,19 +509,19 @@
     "status": "DISTORTED",
     "note": "Garbled causality: the Jev arm is blocked on a missing TYPESAFE_API_KEY, not on the 'go' sequencing; 'go' triggered the baseline, which the assistant ran itself.",
     "adjudicated": true,
-    "reason": "The unexecuted Jev arm and the 'go' go-ahead are both real; the causal link between them is garbled (the blocker is the missing API key)."
+    "reason": "The unexecuted Jev arm and the 'go' are both real; the causal link between them is garbled (the blocker was the missing API key)."
    },
    {
     "status": "DISTORTED",
     "note": "Cell-01 did not succeed \u2014 it was budget-exhausted and discarded; 3 valid cells plus 1 replacement.",
     "adjudicated": true,
-    "reason": "The higher-budget replacement cell is real; 'all four succeeded' contradicts cell-01's budget exhaustion."
+    "reason": "The higher-budget replacement cell is real; 'all four cells succeeded' contradicts cell-01's budget exhaustion."
    },
    {
     "status": "DISTORTED",
     "note": "Replacement text is exact but the edit was done with a Python string replace, not sed.",
     "adjudicated": true,
-    "reason": "The README edit and its exact replacement text are real; the mechanism (Python string replace, not sed) is wrong."
+    "reason": "The README edit and its exact text are real; the tool used was a Python string replace, not sed."
    },
    {
     "status": "GROUNDED"
@@ -530,7 +530,7 @@
     "status": "DISTORTED",
     "note": "The budget failure and fix were entirely assistant-side; the user never mentioned it.",
     "adjudicated": true,
-    "reason": "The budget-cap failure and $1 fix are real; classifying them as a user correction/teaching assigns the wrong actor."
+    "reason": "The budget-cap failure and fix are real; framing them as a user correction/teaching is wrong-actor."
    },
    {
     "status": "GROUNDED"
@@ -542,19 +542,19 @@
     "status": "DISTORTED",
     "note": "Wrong actor \u2014 the assistant discovered all three; the user asked what TypeSafe does.",
     "adjudicated": true,
-    "reason": "TypeSafe details, SPINE layout and the ledger all appear in the transcript; the assistant discovered them, so the actor is wrong."
+    "reason": "The TypeSafe skill details, SPINE layout and ledger all appear; the assistant discovered them \u2014 wrong actor."
    },
    {
     "status": "DISTORTED",
     "note": "Numbers are real (from docs/assistant arithmetic) but attributed to the user.",
     "adjudicated": true,
-    "reason": "The $0.042/Mtok figure and the one-call-per-session reasoning are real; the actor is wrong (docs + assistant arithmetic)."
+    "reason": "The $0.042/Mtok price and one-call session fit are real; attribution to the user is wrong."
    },
    {
     "status": "DISTORTED",
     "note": "distill-process.md has 'Step 1: Identify signals'; 'exchanges' is the assistant's newly proposed unit, not part of the existing process.",
     "adjudicated": true,
-    "reason": "'Step 1: Identify signals' genuinely exists in distill-process.md; conflating it with the assistant's newly proposed 'exchanges' unit mis-states a real thing."
+    "reason": "'Step 1: Identify signals' is real in distill-process.md; the claim renames it and folds in 'exchanges', which is the assistant's new unit."
    },
    {
     "status": "GROUNDED"
@@ -563,7 +563,7 @@
     "status": "DISTORTED",
     "note": "The assistant proposed the split and explicitly asked the user; nothing was drafted.",
     "adjudicated": true,
-    "reason": "A real repo-split proposal exists; the claim wrongly assigns the preference to the user and over-states progress ('started drafting')."
+    "reason": "Anchored to the real repo-split proposal, but flips its origin to the user and overstates progress; the underlying proposal exists."
    },
    {
     "status": "GROUNDED"
@@ -578,13 +578,13 @@
     "status": "DISTORTED",
     "note": "The assistant chose the repo location and the linux-ssh topic; the user only asked for a measurement.",
     "adjudicated": true,
-    "reason": "Repo layout, topic choice and timing design all happened; wrong actor \u2014 the assistant made those calls."
+    "reason": "Repo layout, topic choice and timing design are all real decisions; they were the assistant's, so this is wrong-actor attribution."
    },
    {
     "status": "DISTORTED",
     "note": "The cited commands were run by the assistant, not the user.",
     "adjudicated": true,
-    "reason": "The cited commands genuinely occurred in the transcript; the actor is wrong (assistant ran them, not the user)."
+    "reason": "The Bash/python3/git commands genuinely occurred; wrong actor (assistant, not user)."
    },
    {
     "status": "GROUNDED"
@@ -593,7 +593,7 @@
     "status": "FABRICATED",
     "note": "The user never reacted to the cell failure; his only reaction was measured pragmatism about the 13s result.",
     "adjudicated": true,
-    "reason": "No user reaction to the priced-out cell or to results exists anywhere; both frustration and excitement are invented emotional states."
+    "reason": "Invented emotional reactions; the user never responded to the cell failure or expressed excitement anywhere."
    },
    {
     "status": "GROUNDED"
@@ -602,7 +602,7 @@
     "status": "DISTORTED",
     "note": "The cited explanations are the assistant's; the user's TypeSafe knowledge is contradicted by his request for a summary of what it does.",
     "adjudicated": true,
-    "reason": "The detailed SPINE and distill-process explanations exist but are the assistant's; the attribution and the resulting expertise claim are wrong."
+    "reason": "The SPINE and distill-process explanations are real but came from the assistant; wrong actor plus over-claim."
    },
    {
     "status": "GROUNDED"
@@ -627,19 +627,19 @@
     "status": "DISTORTED",
     "note": "Origin is assistant preference, pending the user's answer \u2014 the user never expressed it.",
     "adjudicated": true,
-    "reason": "The jev-distill-signals proposal is real; labelling it a decision with user-directive origin misattributes an assistant preference pending approval."
+    "reason": "The jev-distill-signals proposal is real; labelling its origin as the user's directive/preference mis-attributes it."
    },
    {
     "status": "DISTORTED",
     "note": "The user never issued any README instruction.",
     "adjudicated": true,
-    "reason": "Committing baseline results to the README really happened; the origin (a user 'update README' instruction) misattributes a real decision."
+    "reason": "The README results commit really happened; the origin label citing a user 'update README' instruction mis-attributes a real decision."
    },
    {
     "status": "DISTORTED",
     "note": "Assistant-designed requirement from the TypeSafe docs; no user instruction.",
     "adjudicated": true,
-    "reason": "The TYPESAFE_API_KEY requirement is real; its origin label (user directive) is wrong \u2014 it was assistant-designed from the docs."
+    "reason": "The TYPESAFE_API_KEY requirement is real (assistant-designed from docs); only the origin label 'user directive' is mis-attributed."
    },
    {
     "status": "GROUNDED"
@@ -655,7 +655,7 @@
     "status": "DISTORTED",
     "note": "Transcript timestamps span roughly 19:17\u201319:41 \u2014 well under an hour.",
     "adjudicated": true,
-    "reason": "Real session duration (~24 minutes of timestamps) stated with a grossly wrong magnitude."
+    "reason": "Session duration is a real attribute (~19:17\u201319:41, under half an hour); 'several hours' is a wrong magnitude, not an invented event."
    },
    {
     "status": "GROUNDED"

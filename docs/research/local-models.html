@@ -84,6 +84,7 @@
         <a href="#exp1">Exp 1 · 48 GB</a>
         <a href="#exp2">Exp 2 · 16 GB</a>
         <a href="#runlog">Run log</a>
+        <a href="#exp3">24 GB</a>
         <a href="#verdict">Verdict</a>
         <a href="#limits">Limitations</a>
     </nav>
@@ -97,8 +98,8 @@
 
         <section id="status">
             <div class="status-banner">
-                <div class="label">Current status &middot; updated 2026-09-22, 16:05 &middot; both experiments complete</div>
-                <p><strong>The answer splits on memory.</strong> At 48 GB a local 27B reached <strong>81% of the Opus reference</strong> at $0 — better than both hosted cheap tiers on faithfulness. At <strong>16 GB nothing tested is usable</strong>: the best candidate reached 41% of the reference and grounded under 0.65 of its own claims, and the failure is misattribution — scrambling who did what — which is the one error class this pipeline cannot absorb. Every figure is single-run and provisional.</p>
+                <div class="label">Current status &middot; updated 2026-09-22, 17:30 &middot; 24&nbsp;GB tier added</div>
+                <p><strong>The answer splits on memory, and the cliff is between 16&nbsp;GB and 32&nbsp;GB.</strong> At 48 GB a local 27B reached <strong>81% of the Opus reference</strong> at $0 — better than both hosted cheap tiers on faithfulness. Quantising that same model to 4-bit keeps <strong>77%</strong> for half the memory, so capacity matters far more than precision. But even 4-bit needs <strong>17.8 GB resident before a single token of transcript</strong>, which rules out 24 GB machines at default settings and 16 GB machines entirely. At 16 GB the best candidate reached 41%, and the failure is misattribution — scrambling who did what — the one error class this pipeline cannot absorb.</p>
             </div>
         </section>
 
@@ -305,6 +306,16 @@
                     </tr>
                     <tr>
                         <td>2026-09-22</td>
+                        <td>24 GB tier — Qwen3.8-27B at 4-bit, study transcript</td>
+                        <td>77% of ceiling (vs 81% at 8-bit) for 18.9 GB instead of 32.3, 4.6&times; faster, and zero fabrications. Capacity beats precision: &minus;4 points for half the memory, against &minus;40 for a smaller model.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>4-bit peak memory on a 64k-token corpus transcript</td>
+                        <td>22.41 GB. With the 14k-token run this gives a 17.8 GB floor + ~72 MB per 1k tokens &mdash; so 24 GB needs <code>iogpu.wired_limit_mb</code> raised, and 32 GB is the practical floor.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
                         <td>Study-wide adjudication, all eight candidates pooled</td>
                         <td>Third consecutive exact reproduction of every prior label. It also <strong>corrected the small models downward on fabrication</strong>: single-candidate passes had called 2 and 3 invented claims where the study-wide boundary finds 0 and 1. Weak models are misattributing, not hallucinating.</td>
                     </tr>
@@ -316,6 +327,54 @@
             </div>
         </section>
 
+        <section id="exp3">
+            <h2>24 GB &mdash; quantisation instead of a smaller model <span class="pill pill-done">complete</span></h2>
+            <p>Experiments 1 and 2 changed model <em>size</em> to fit smaller machines, and quality collapsed. This asks the other question: keep the 27B that works and cut its <em>precision</em> instead.</p>
+
+            <table>
+                <thead><tr><th>Qwen3.8-27B</th><th>8-bit</th><th>4-bit</th><th>Change</th></tr></thead>
+                <tbody>
+                    <tr><td>% of Opus ceiling</td><td>81%</td><td><strong>77%</strong></td><td class="score-negative">&minus;4 pts</td></tr>
+                    <tr><td>Grounding</td><td>0.879</td><td>0.844</td><td>&minus;0.035</td></tr>
+                    <tr><td>Fabricated claims</td><td>2 (3.4%)</td><td>0</td><td class="score-positive">&minus;2</td></tr>
+                    <tr><td>Peak memory</td><td>32.3 GB</td><td><strong>18.9 GB</strong></td><td class="score-positive">&minus;13.4 GB</td></tr>
+                    <tr><td>Wall clock</td><td>1,834 s</td><td>403 s</td><td class="score-positive">4.6&times; faster</td></tr>
+                    <tr><td>Generation</td><td>8.8 tok/s</td><td>15.4 tok/s</td><td class="score-positive">+75%</td></tr>
+                </tbody>
+            </table>
+
+            <div class="insight">
+                <div class="insight-label">Capacity beats precision, and it is not close</div>
+                <p>Halving precision on a 27B cost <strong>4 points</strong>. Dropping to a 9B at the same precision cost <strong>40</strong>. Both moves free comparable memory. If you have to shrink a local model to fit a machine, quantise the big one rather than reach for a small one &mdash; and the 4-bit run was also cleaner than the 8-bit on fabrication, not worse.</p>
+            </div>
+
+            <h3>But 4-bit still does not fit 24 GB</h3>
+            <p>Peak memory was measured at two transcript lengths, and the difference gives the KV-cache slope directly:</p>
+            <table>
+                <thead><tr><th>Transcript</th><th>Prompt tokens</th><th>Peak memory</th></tr></thead>
+                <tbody>
+                    <tr><td>Study transcript</td><td>14,273</td><td>18.85 GB</td></tr>
+                    <tr><td>Codex session (corpus)</td><td>64,034</td><td>22.41 GB</td></tr>
+                </tbody>
+            </table>
+            <p>That is a <strong>17.8 GB resident floor</strong> plus roughly <strong>72 MB per 1,000 tokens</strong> of transcript. macOS caps GPU-wired memory at about 75% of RAM by default, so:</p>
+            <table>
+                <thead><tr><th>Machine</th><th>Default GPU limit</th><th>Longest transcript that fits</th></tr></thead>
+                <tbody>
+                    <tr><td>16 GB</td><td>~12 GB</td><td class="score-negative">none &mdash; the model does not load</td></tr>
+                    <tr><td>24 GB</td><td>~18 GB</td><td class="score-negative">~2k tokens &mdash; effectively none</td></tr>
+                    <tr><td>24 GB, limit raised to 20 GB</td><td>20 GB</td><td>~30k tokens</td></tr>
+                    <tr><td>24 GB, limit raised to 22 GB</td><td>22 GB</td><td>~58k tokens, leaving 2 GB for everything else</td></tr>
+                    <tr><td>32 GB+</td><td>~24 GB</td><td class="score-positive">comfortable</td></tr>
+                </tbody>
+            </table>
+            <div class="insight">
+                <div class="insight-label">The honest 24 GB verdict</div>
+                <p>A 24 GB Mac cannot run this model as shipped. It can run it if the owner raises <code>iogpu.wired_limit_mb</code> — a system-level change made with <code>sudo sysctl</code>, lost on reboot unless persisted, and not something to put in a feature's setup instructions for general users. Even then the transcript length is capped well below the longest real sessions in the corpus. <strong>The practical floor for this stage is 32 GB.</strong></p>
+                <p><em>Measured on a 48 GB machine.</em> The memory figures are real; the 16/24 GB verdicts are those figures compared against those machines' documented limits, not runs on such machines. Anyone with a 24 GB Mac who wants to falsify this only needs to run the harness on one.</p>
+            </div>
+        </section>
+
         <section id="verdict">
             <h2>Where this leaves the feature</h2>
             <table>
@@ -323,6 +382,7 @@
                 <tbody>
                     <tr><td>Opus 5 rerun <em>(ceiling)</em></td><td>API</td><td>—</td><td>81 s</td><td>100%</td><td>0.943</td></tr>
                     <tr><td><strong>Qwen3.8-27B, thinking on</strong></td><td><strong>local</strong></td><td>32.3 GB</td><td>1,834 s</td><td><strong>81%</strong></td><td>0.879</td></tr>
+                    <tr><td><strong>Qwen3.8-27B, 4-bit</strong></td><td><strong>local</strong></td><td>18.9 GB</td><td>403 s</td><td><strong>77%</strong></td><td>0.844</td></tr>
                     <tr><td>Sonnet 5</td><td>API</td><td>—</td><td>47 s</td><td>74%</td><td>0.863</td></tr>
                     <tr><td>Qwen3.8-27B, thinking off</td><td>local</td><td>32.3 GB</td><td>382 s</td><td>72%</td><td>0.867</td></tr>
                     <tr><td>Haiku 4.5</td><td>API</td><td>—</td><td>103 s</td><td>58%</td><td><span class="score-negative">0.552</span></td></tr>
@@ -331,8 +391,8 @@
                     <tr><td>Gemma 3 12B, 4-bit</td><td>local</td><td>10.0 GB</td><td>52 s</td><td>16%</td><td>0.645</td></tr>
                 </tbody>
             </table>
-            <p><strong>There is a real local option, and it needs 32 GB of headroom.</strong> On a machine that has it, a 27B at 8-bit does this stage better than the cheap hosted tier, for nothing, in half an hour. That is a genuine result and it inverts the assumption the routing directive was written under.</p>
-            <p><strong>There is no 16 GB option today.</strong> Not a marginal one — a 40-point gap to the 48 GB result, and grounding in the low 0.6s across three different families. The honest recommendation for users on 16 GB is a hosted mid-tier model, not a local one.</p>
+            <p><strong>There is a real local option, and it needs 32 GB.</strong> On a machine that has it, a 27B does this stage better than the cheap hosted tier, for nothing. At 4-bit it keeps 77% of the reference, runs in under seven minutes and needs 18.9 GB — which is why 32 GB, not 24, is the floor.</p>
+            <p><strong>There is no 16 GB or 24 GB option today.</strong> At 16 GB, a 40-point gap and grounding in the low 0.6s across three families. At 24 GB the quality is there but the memory is not, without a system-level change. The honest recommendation below 32 GB is a hosted mid-tier model, not a local one.</p>
             <p><strong>Haiku remains the most alarming row in the table</strong>, and it is hosted. Its 0.552 grounding and six invented claims are worse than every local model tested, including ones a third its likely size. Cheapness bought neither speed nor safety here.</p>
             <div class="insight">
                 <div class="insight-label">What would change the answer</div>

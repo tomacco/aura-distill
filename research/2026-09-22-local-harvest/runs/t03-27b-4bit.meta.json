@@ -1,0 +1,16 @@
+{
+ "label": "t03-27b-4bit",
+ "model": "mlx-community/Qwen3.8-27B-4bit",
+ "thinking": true,
+ "load_s": 1.4,
+ "wall_s": 1355.8,
+ "ttft_s": 209.0,
+ "prompt_tokens": 64034,
+ "generated_tokens": 13629,
+ "prompt_tps": 306.6,
+ "generation_tps": 11.9,
+ "peak_memory_gb": 22.41,
+ "thinking_chars": 38854,
+ "output_chars": 17731,
+ "finish_reason": "stop"
+}

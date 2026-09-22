@@ -10,9 +10,10 @@ runs local unless marked otherwise.
 2. A **zero-model** router (BM25 rank-fusion over the index line *and* the file body) routes at
    **0.87 top-1 in 4.85 ms and 29 MB**. Injecting its top-3 into a real headless cell **measured
    −70% cache-creation tokens, −64% cost and one fewer round trip, at 3/3 correct** (E5).
-3. **Laya lost to it on every arm** (best: 0.67) at 5.7 GB and 200× the latency — including on the
-   calibrated-uncertainty property it was brought in for. Clean negative; see the verdict for the
-   narrow claim that is actually supported.
+3. **Laya lost to it at routing** (best arm 0.67 vs 0.87) at 5.7 GB and 200× the latency. But given
+   the task it is actually shaped for — "does *this* file answer the request?", with a BM25-selected
+   passage — it reaches **0.73 balanced accuracy / 0.83 specificity** and its probabilities separate
+   right from wrong, which nothing else here does (E6). Narrow win, real trade-off.
 4. The distillation pre-filter idea **died to arithmetic**: 82% of a transcript is tool traffic, so a
    user-turn classifier is aimed at 13% of the volume.
 
@@ -188,10 +189,11 @@ cannot, and that would be a fine result. The question is now:
 A model that routes no better but *knows when it is unsure* would let the shortlist mechanism fall
 back exactly when it should, which is worth more than a few points of top-1.
 
-**Answered, negatively.** Laya's probabilities do not separate its hits from its misses on any arm
-(E3). The abstention problem is still open, and no mechanism tried here solves it.
+**Answered in two parts.** As a *router*, no — Laya's probabilities do not separate its hits from its
+misses on any routing arm (E3). As a *gate over one candidate*, partially yes — 0.83 specificity with
+separated probabilities, but only when fed a BM25-selected passage rather than the file head (E6).
 
-## E3 — Laya as router and abstention oracle (RUN — clean negative)
+## E3 — Laya as router (RUN — negative; narrowed by E6)
 
 Ran 2026-09-22 on MPS once the other agent freed the machine. Three arms, all scored on accuracy
 **and** on whether their probabilities separate hits from misses (the E2b question):
@@ -233,9 +235,8 @@ problem, which is what BM25 was built for and not what a 421M classifier was bui
 nothing about Laya on the tasks it is shaped for — few options, rich state, a genuine judgment call.
 
 **What would change this verdict:** an arm where the candidate set is already small and the decision
-is semantic rather than lexical. The natural one is E2b's fallback gate — given the *top-1 file's
-actual content* and the request, "does this file answer it?" — two options, real state, one call.
-That is the shape Laya is for, and it is the one question BM25 provably cannot answer. Not run.
+is semantic rather than lexical — E2b's fallback gate. **Run as E6 below; it partially reverses this
+section.** Read E6 before quoting E3's verdict.
 
 ## E4 — the distillation pre-filter, killed by arithmetic and replaced
 
@@ -318,6 +319,84 @@ index read was gone.
 wall-clock is not (10.3 s median from cells of 7.8 s and 12.8 s). Read −70% tokens as measured and
 −24% wall as indicative. Cost for this run: $0.73 across 3 cells.
 
+## E6 — the fair test: Laya as a relevance GATE, not a router (RUN — partial positive)
+
+E3's verdict was weak and I attacked it before publishing. E3 tested a 421M classifier at ranking 65
+files from a short request — high-cardinality retrieval, BM25's job, not a classifier's. Concluding
+"the model is not useful" from that is the same unfair comparison this document warns about
+elsewhere. E6 gives the model the shape it is built for: **two options, rich state, one judgment**.
+
+    state    = the request + the candidate file's content
+    question = "does this file answer this request?"   (yes / no)
+
+That is precisely the question E2b proved no zero-model signal can answer, so a win here is a
+complement to BM25, not a replacement. 90 balanced items: 30 positives (request + its ground-truth
+file), 30 negatives (request + a deterministically-chosen wrong file), 30 realistic (request + BM25's
+actual top-1). Balanced deliberately — BM25 only misses 4 of 30, and a 4-item negative class proves
+nothing.
+
+### E6a/E6b — it says yes to everything
+
+| formulation | recall | specificity | balanced acc |
+| --- | --- | --- | --- |
+| A "does `file` contain what `request` needs?" | 0.967 | **0.100** | 0.533 |
+| B negated ("is `file` IRRELEVANT?") | 0.333 | 0.633 | 0.483 |
+| C strict ("most retrieved files are WRONG, judge strictly") | 0.667 | 0.533 | 0.600 |
+| D `score` type, 4 levels | 1.000 | **0.000** | 0.500 |
+
+Chance is 0.500. **B is the diagnostic**: negating the question *inverts* the bias rather than
+preserving the judgment, which means the model was answering from option polarity, not from the
+content in front of it.
+
+### E6c — the excerpt was the confound, and it mattered
+
+Laya's total sequence is 512 tokens, ~192 of which go to the head, so roughly **700 characters of
+state** reach the model. An aura-distill knowledge file opens with YAML front-matter (`domain`,
+`scope`, `last_updated`, `staleness_threshold`) and a context line. A/B/C/D were therefore largely
+asking the model to judge **front-matter**, which looks nearly identical across all 65 files.
+
+Swapping the file head for the **BM25-best 500-char passage** — the window of the file that best
+matches the request:
+
+| state | recall | specificity | balanced acc | p(yes) true | p(yes) false | separated? |
+| --- | --- | --- | --- | --- | --- | --- |
+| first 1,400 chars (front-matter) | 0.667 | 0.533 | 0.600 | 0.616 | 0.495 | barely |
+| **BM25-best passage** | 0.633 | **0.833** | **0.733** | **0.574** | **0.263** | **yes** |
+
+Specificity 0.53 → 0.83, and the probabilities separate (0.574 vs 0.263) where nothing had separated
+before — not in any zero-model signal (E2b), not in any routing arm (E3). **This is the first thing
+in the whole programme that can tell a right retrieval from a wrong one.**
+
+I nearly shipped E6a's number as the verdict. It was an artifact of feeding the model YAML.
+
+### What the gate is actually worth
+
+Given BM25 top-1 at 0.867 and a gate at recall 0.633 / specificity 0.833, a wrong gate verdict costs
+a fallback to the full SPINE (expensive, never wrong) and a missed one costs a wrong answer:
+
+| configuration | wrong-answer rate | falls back | E[tokens] | saving |
+| --- | --- | --- | --- | --- |
+| status quo (read the SPINE) | 0.0% | n/a | 23,554 | — |
+| shortlist, **no gate** | 13.3% | 0% | **2,307** | **90%** |
+| shortlist + gate (default threshold) | **2.2%** | 42.9% | 11,421 | 52% |
+| shortlist + gate (threshold 0.35) | 3.3% | 31.6% | 9,032 | 62% |
+
+**The gate buys an 11-point drop in wrong answers for 38 points of token saving.** That is not a free
+win and must not ship as one — it is exactly the "token-vs-something trade" the release frame says is
+an opt-in knob with documented consequences. Whether it is worth 5.7 GB resident and ~88 ms is a
+product call, not a measurement.
+
+### Corrected verdict on Laya
+
+**Narrowed, not reversed.** Laya cannot route — it loses to BM25 by 20 points at picking among 65
+files (E3). But it *can* gate at 0.73 balanced accuracy and 0.83 specificity when handed the right
+excerpt, which is the one capability BM25 structurally lacks. The useful architecture, if any, is
+**BM25 retrieves and selects the passage, Laya judges** — not either one alone.
+
+Limits worth stating: 90 items on one self-written eval set; four prompt formulations, not a search;
+the passage selector is itself BM25, so the "model" arm depends on the zero-model arm; and 0.73 is
+a long way from a number anyone should trust a gate to.
+
 ## Resource protocol (PortCall `system-resources`)
 
 Another agent (*Commodore Sparkling Wombat the Unmerged*) held this Mac's unified memory for a
@@ -346,6 +425,9 @@ python3 tools/route_local.py lexical    # E1 single arm with latency reps
 python3 tools/mechanisms.py             # E2 — expected cost per candidate mechanism
 python3 tools/distill_cost.py           # E4 — where transcript volume lives + the cap curve
 python3 tools/run.py shortlist --reps 3 # E5 — end-to-end arm C in a real headless cell (~$0.25/cell)
+~/repos/laya-lab/.venv/bin/python tools/gate.py --device mps              # E6a
+~/repos/laya-lab/.venv/bin/python tools/gate_formulations.py             # E6b
+~/repos/laya-lab/.venv/bin/python tools/gate_excerpt.py                  # E6c
 ~/repos/laya-lab/.venv/bin/python tools/route_local.py laya-yn   # E3, when RAM allows
 ```
 

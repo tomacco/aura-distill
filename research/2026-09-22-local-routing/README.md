@@ -455,6 +455,83 @@ The evidence says what it would have to be, and it is not what aura-distill has:
 Worth noting what this does **not** promise: 0.750 is still a long way from a number that should gate
 anything unsupervised, and every figure here rests on 90 items from one self-written eval set.
 
+## E8 — how many categories, does cascading rescue it, and does semantics matter?
+
+Candidate sets of size K that **always contain the ground truth**, distractors drawn deterministically
+and nested (the K=5 set is a subset of K=10), positions shuffled. The only thing changing is how many
+options share the 192-token head budget. n=30 per cell, so one topic = 0.033 and gaps under ~0.10 are
+noise.
+
+| K | tokens/label | prose | keywords | path | chance |
+| --- | --- | --- | --- | --- | --- |
+| 2 | 48 | 0.767 | 0.833 | 0.867 | 0.500 |
+| 3 | 48 | 0.867 | 0.833 | 0.833 | 0.333 |
+| 5 | 35 | 0.800 | 0.900 | 0.767 | 0.200 |
+| **8** | 22 | **0.833** | **0.867** | 0.800 | 0.125 |
+| 10 | 17 | 0.733 | 0.733 | 0.667 | 0.100 |
+| 15 | 11 | 0.700 | 0.600 | 0.667 | 0.067 |
+| **20** | 8 | 0.767 | 0.767 | 0.767 | 0.050 |
+| **30** | 5 | **0.533** | 0.533 | 0.533 | 0.033 |
+| 45 | 4 | **0.333** | 0.333 | 0.333 | 0.022 |
+| 65 | 4 | 0.333 | 0.333 | 0.333 | 0.015 |
+
+### A. The ceiling is ~20 options, and it is a cliff, not a slope
+
+Accuracy is flat in the 0.70–0.87 band from K=2 to K=20, then **falls off between K=20 and K=30** and
+flattens again at 0.333 for K≥45. It tracks **tokens per label**, not K itself: 8 tokens still works,
+5 does not. K=45 and K=65 score identically because both are clamped to the 4-token floor — the labels
+are equally shredded, so adding 20 more of them changes nothing.
+
+Note it is *not* monotonic in the working range: K=3 (0.867) ≈ K=8 (0.833) ≈ K=20 (0.767). Within the
+budget, the number of options barely matters. **Design to the token budget, not to a category count.**
+
+### B. Cascading does not rescue it — errors multiply and level 1 is unrecoverable
+
+Projecting a two-level tree from the measured per-level accuracies above:
+
+| design | level 1 | level 2 | end-to-end |
+| --- | --- | --- | --- |
+| 8 groups × 9 members | 0.833 | 0.783 | **0.652** |
+| 4 groups × 17 | 0.834 | 0.727 | 0.606 |
+| 5 groups × 13 | 0.800 | 0.713 | 0.571 |
+| 2 groups × 33 | 0.767 | 0.493 | 0.378 |
+| *flat K=65 (measured)* | — | — | *0.333* |
+| *real 2-level cascade (E3 `laya-hier`, measured)* | — | — | *0.400* |
+| *BM25 rank-fusion (zero model)* | — | — | **0.867** |
+
+Cascading beats a flat 65-way choice (0.65 vs 0.33) — and still loses to free by 21 points. Two 80%
+steps are a 64% pipeline, and a wrong group at level 1 cannot be recovered at level 2. The projection
+is also the **optimistic** bound: it assumes random distractors, while real groups contain
+semantically confusable siblings. The one real cascade that was measured came in at 0.400, below the
+projection, as expected.
+
+### C. Semantics are not doing the work — at these label lengths
+
+`prose` (the hand-written SPINE line), `keywords` (its 12 highest-IDF terms, no grammar) and `path`
+(just `ops/linux-shell-ssh.md` → "ops linux shell ssh") are **indistinguishable**. No style gap at any
+K exceeds 3 topics. At K=20 all three score exactly 0.767; at K≥30 all three are identical.
+
+**The file path alone performs as well as the carefully written index description.**
+
+### The mechanism this exposes, which is the real finding
+
+Compare with E7, where the *same model* on the *same knowledge* showed the SPINE line to be the most
+discriminative input available — beating the file's own content (probability gap 0.462 vs 0.311).
+
+The two results reconcile through the token budget:
+
+> **When labels are compressed to fit, the model stops doing semantics and starts doing keyword
+> matching — which is what BM25 already does better, 1,000× faster and in 29 MB.**
+
+At 8–35 tokens a label there is no room for meaning, only for terms. The model degenerates into an
+expensive, worse BM25, and that is why every routing arm lost. It only earns its weights where it has
+room to read: **one candidate, a few hundred tokens of real content, a yes/no judgment** — exactly the
+configuration where it beat everything else in this programme (E6/E7).
+
+**Direct consequence for a Laya-shaped index: it must not be a category taxonomy.** Not 65 options,
+not 20, not a 5×13 tree. Cheap retrieval proposes; the model judges candidates one at a time, with the
+budget spent on content rather than split across labels.
+
 ## Resource protocol (PortCall `system-resources`)
 
 Another agent (*Commodore Sparkling Wombat the Unmerged*) held this Mac's unified memory for a

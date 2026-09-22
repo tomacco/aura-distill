@@ -14,7 +14,11 @@ runs local unless marked otherwise.
    the task it is actually shaped for — "does *this* file answer the request?", with a BM25-selected
    passage — it reaches **0.73 balanced accuracy / 0.83 specificity** and its probabilities separate
    right from wrong, which nothing else here does (E6). Narrow win, real trade-off.
-4. The distillation pre-filter idea **died to arithmetic**: 82% of a transcript is tool traffic, so a
+4. **The representation dominates the model.** Changing only how a candidate is described to Laya
+   swings it 0.600 → 0.750 balanced accuracy, more than the whole Laya-vs-BM25 gap. The SPINE line
+   is the most discriminative input there is — and the routing arms structurally never received it
+   (4–17 tokens per option). See E7.
+5. The distillation pre-filter idea **died to arithmetic**: 82% of a transcript is tool traffic, so a
    user-turn classifier is aimed at 13% of the volume.
 
 Nothing here is merged. The two shippable candidates — the router hook and the tool-traffic cap —
@@ -396,6 +400,60 @@ excerpt, which is the one capability BM25 structurally lacks. The useful archite
 Limits worth stating: 90 items on one self-written eval set; four prompt formulations, not a search;
 the passage selector is itself BM25, so the "model" arm depends on the zero-model arm; and 0.73 is
 a long way from a number anyone should trust a gate to.
+
+## E7 — is the SPINE the limit, or the model? (RUN — the representation dominates)
+
+Direct test of the claim *"with the current state of the SPINE files we barely see improvement from a
+decision model"*. Same E6 gate, same 90 balanced items, same prompt — **only the candidate's
+description changes**:
+
+| description given to the model | recall | specificity | balanced acc | p(yes) true − false | tuned bal. acc |
+| --- | --- | --- | --- | --- | --- |
+| file head (1,400 chars ≈ front-matter) | 0.667 | 0.533 | 0.600 | 0.120 | 0.669 |
+| **SPINE line** | 0.500 | **0.933** | 0.717 | **0.462** | **0.819** |
+| BM25-best 500-char passage | 0.633 | 0.833 | 0.733 | 0.311 | 0.750 |
+| **SPINE line + best passage** | 0.700 | 0.800 | **0.750** | 0.437 | 0.789 |
+
+(Tuned = post-hoc optimal threshold on these same 90 items, so it is optimistic; the probability
+**gap** is the threshold-free measure and tells the same story.)
+
+**Changing the representation moves the model from 0.600 to 0.750 balanced accuracy — a bigger swing
+than the entire distance between Laya and BM25 anywhere in this programme.** The data structure, not
+the model, is the dominant variable.
+
+And the surprise inverts an earlier finding: **the SPINE line is the single most *discriminative*
+input** (gap 0.462, specificity 0.933), beating the file's own content. E1 found the opposite for
+BM25 — there, file bodies beat index lines by 33 points. The two results do not conflict, they
+partition:
+
+- **Lexical matching wants volume.** More text means more chances for a term to match, so BM25 wants
+  the whole file.
+- **A judgment model wants density.** It sees ~700 characters total, so every token of boilerplate is
+  a token of evidence it does not get. The SPINE line is hand-written, distinctive and compressed —
+  the best 133 tokens about that file that exist anywhere.
+
+**The routing arms could never have benefited from this.** In a choice question all options share a
+192-token head budget: at 10 options each label gets **17 tokens**, at 65 options **4 tokens** — 13%
+and 3% of a median 133-token SPINE line. The whole SPINE is 12,427 tokens of option text against a
+192-token budget, so **1.5% of it could ever fit**. E3 did not measure whether Laya can use the SPINE;
+it measured a model that never received it.
+
+### Consequence: a Laya-shaped index is a real design, not a hypothesis
+
+The evidence says what it would have to be, and it is not what aura-distill has:
+
+1. **One record per file, evaluated one at a time** — the gate architecture works, the many-option
+   choice architecture is structurally capped. Rank cheaply first, judge one candidate at a time.
+2. **~250–300 tokens per record, front-loaded with discriminative content** — distinctive nouns and
+   the actual gotchas. YAML front-matter at the top of every file cost 0.13 of balanced accuracy on
+   its own (file-head vs best-passage) because it is what survived truncation.
+3. **Line + passage, not line or passage** (0.750, the best default-threshold result): the curated
+   description says what the file is *for*, the matched passage proves it covers *this* request.
+4. It is a **derived view**, rebuildable from the files, so it cannot rot independently — which is the
+   existing retrieval-axes design constraint, satisfied.
+
+Worth noting what this does **not** promise: 0.750 is still a long way from a number that should gate
+anything unsupervised, and every figure here rests on 90 items from one self-written eval set.
 
 ## Resource protocol (PortCall `system-resources`)
 

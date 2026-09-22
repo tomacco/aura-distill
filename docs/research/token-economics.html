@@ -132,7 +132,7 @@
 
         <section id="diet">
             <h2>Experiment: putting the SPINE on a diet</h2>
-            <p class="note">Update, September 2026: the index has grown since this was measured. It now carries 65 entries at a median 133 tokens each, and the <em>turn</em> that reads it costs 21,247 tokens &mdash; four to five times the 3.6k below, driven by verbosity per entry rather than entry count. See <a href="local-decision-models.html">Local Decision Models</a>. The figures on this page stand as measured in July 2026.</p>
+            <p class="note">Update, September 2026: the index has grown since this was measured. It now carries 65 entries at a median 133 tokens each. The <em>file</em> is an estimated 13.8k&ndash;18.6k tokens (3.8&ndash;5.2&times; the 3.6k below) and the <em>turn</em> that reads it measures 21,247 tokens (5.9&times;) &mdash; growth driven by verbosity per entry rather than entry count. See <a href="local-decision-models.html">Local Decision Models</a>. The figures on this page stand as measured in July 2026.</p>
             <p>The SPINE is 3.6k tokens, re-read constantly. A clean-context agent (which never saw the test set) compressed it by a mechanical rule — every entry becomes <code>[Title](path) — ≤8-word trigger</code>, all 59 entries preserved — landing at 1.2k tokens. A second clean agent (which never saw the diet SPINE) authored 6 held-out retrieval probes, paraphrased so string-matching can't win. Both arms ran on the same pinned model, N=2 per held-out probe.</p>
             <div class="comparison">
                 <div class="comparison-header">

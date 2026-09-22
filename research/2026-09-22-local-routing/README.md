@@ -10,13 +10,14 @@ runs local unless marked otherwise.
    what the shortlist mechanism removes.
 2. A **zero-model** router (BM25 rank-fusion over the index line *and* the file body) routes at
    **0.87 top-1 in 4.85 ms and 29 MB**. Injecting its top-3 into a real headless cell **measured
-   −70% cache-creation tokens, −64% cost and one fewer round trip, at 3/3 correct** (E5). That
+   −70% cache-creation tokens, −64% cost and two fewer turns, at 3/3 correct** (E5). That
    measured figure is the headline; projections appear only with their assumptions attached.
 3. **Laya lost to it at routing** (best arm 0.67 vs 0.87) at 5.7 GB and 9–390× the latency. Given the
    task it is actually shaped for — "does *this* file answer the request?", with a BM25-selected
    passage — it reaches **0.73 balanced accuracy / 0.83 specificity** (E6).
-4. **The representation dominates the model.** Changing only how a candidate is described swings Laya
-   0.600 → 0.750 balanced accuracy, more than the whole Laya-vs-BM25 gap (E7).
+4. **The representation is a variable the size of the model choice.** Changing only how a candidate
+   is described swings Laya 0.600 → 0.750 (0.15), the same order as the 0.20 Laya-vs-BM25 routing
+   gap — and far cheaper to move (E7).
 5. The distillation pre-filter **died to arithmetic**: ~93% of transcript volume is tool traffic.
 
 Nothing here is merged. The two shippable candidates — the router hook and the tool-traffic cap —
@@ -51,7 +52,7 @@ of this document blurred the two and got a headline wrong.
 | F2 | That counter covers the **whole turn** — tool_use block, tool result, surrounding assistant content — not the file alone | definition of the counter; confirmed by F4 | measured |
 | F3 | `SPINE.md` **the file** is ≈13.8k–18.6k tokens | 48,461 chars ÷ a 2.6–3.5 chars/token band | **estimated** |
 | F4 | Two BPE tokenizers put `SPINE.md` at **~3.5 chars/token** (gpt2 14,017 tokens; ModernBERT-large 13,854), against **3.87** for a prose control | `transformers`, local | measured (proxy tokenizers, not Anthropic's) |
-| F5 | This project previously published **3.6k tokens for a 59-entry SPINE** | `docs/research/token-economics.html:94,95,135,143` | measured (prior work) |
+| F5 | This project previously published **3.6k tokens for a 59-entry SPINE** | `docs/research/token-economics.html` (the "Session-start floor" row and the SPINE-diet section) | measured (prior work) |
 | F6 | The index is now **65 entries / 48,461 chars**, median bullet **133 tokens**, mean **191** | `tools/cardinality.py`, `tools/tokens.py` | measured |
 | F7 | The routing decision itself takes **2.7 s median** (2.3–4.4) of a ~13 s session | baseline run 2026-09-21, `choose_s` | measured, n=4 |
 | F8 | Laya runs on this Mac on MPS; ~50 s load, 5.7 GB peak RSS | `tools/gate.py` summaries | measured |
@@ -158,7 +159,7 @@ Same cost model as above. `shortlist-N` injects the top-N *bullets* and the agen
 | mechanism | recall | E[tokens] | saving | round-trips saved |
 | --- | --- | --- | --- | --- |
 | status-quo | 1.00 | 22,987 | — | — |
-| **shortlist-3** | 0.90 | **4,941** | **79%** | 0 (predicted) |
+| **shortlist-3** | 0.90 | **4,941** | **79%** | 0 predicted; **2 measured** (E5) |
 | shortlist-1 | 0.87 | 5,123 | 78% | 0 (predicted) |
 | shortlist-8 | 0.93 | 5,787 | 75% | 0 (predicted) |
 | **inject-files-1** | 0.87 | 6,012 | 74% | **1 (≈2.7 s)** |
@@ -333,7 +334,7 @@ CLAUDE.md floor to cache and is not comparable):
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | **A baseline** (reads SPINE) | 3 | 13.6 s | 12.4 s | **5** | $0.382 | 30,364 | 119,719 |
 | **C shortlist** (top-3 injected) | 2 | 10.3 s | 8.9 s | **3** | **$0.139** | **9,132** | 69,080 |
-| | | −24% | −28% | −1 round trip | **−64%** | **−70%** | −42% |
+| | | −24% | −28% | **−2 turns** | **−64%** | **−70%** | −42% |
 
 **Hit rate 3/3 across all three arm-C cells**, no stray reads; the table counts 2 because only the
 two *warm* cells are token-comparable (a cold cell writes the whole CLAUDE.md floor to cache). Both
@@ -347,9 +348,9 @@ earlier draft claimed otherwise and the review was right to reject it). What it 
 that the mechanism removes essentially all of that turn's cost **and adds nothing unexpected** — no
 hidden re-read, no compensating growth elsewhere. That was worth checking and it held.
 
-**The round trip is the surprise.** Turns dropped 5 → 3 because the agent read both candidate files in
-one turn instead of SPINE-then-files. The arithmetic in E2 credited `shortlist-N` with *zero* saved
-round trips; it saved one anyway, and that is where most of the 24% wall-clock came from. Expected-value
+**The saved turns are the surprise.** Turns dropped 5 → 3 because the agent read both candidate files
+in one turn instead of index-then-files. The arithmetic in E2 credited `shortlist-N` with *zero* saved
+turns; it saved two, and that is where most of the 24% wall-clock came from. Expected-value
 models of agent behaviour miss this class of effect — the agent reorganised its own tool use once the
 index read was gone.
 
@@ -453,9 +454,10 @@ description changes**:
 (Tuned = post-hoc optimal threshold on these same 90 items, so it is optimistic; the probability
 **gap** is the threshold-free measure and tells the same story.)
 
-**Changing the representation moves the model from 0.600 to 0.750 balanced accuracy — a bigger swing
-than the entire distance between Laya and BM25 anywhere in this programme.** The data structure, not
-the model, is the dominant variable.
+**Changing the representation moves the model from 0.600 to 0.750 balanced accuracy — a 0.15 swing,
+the same order as the 0.20 gap between Laya and BM25 at routing, from changing nothing but the text
+handed to it.** The data structure is a variable the size of the model choice, and much cheaper to
+move.
 
 And the surprise inverts an earlier finding: **the SPINE line is the single most *discriminative*
 input** (gap 0.462, specificity 0.933), beating the file's own content. E1 found the opposite for
@@ -531,13 +533,13 @@ Projecting a two-level tree from the measured per-level accuracies above:
 | 4 groups × 17 | 0.834 | 0.727 | 0.606 |
 | 5 groups × 13 | 0.800 | 0.713 | 0.571 |
 | 2 groups × 33 | 0.767 | 0.493 | 0.378 |
-
-*\* Group×member products exceed 65 because the per-level accuracies are read off the K-sweep,
-which uses equal-sized option sets; a real 65-file tree has ragged groups. The projection is an
-upper bound either way, which is all it needs to be to close the question.*
 | *flat K=65 (measured)* | — | — | *0.333* |
 | *real 2-level cascade (E3 `laya-hier`, measured)* | — | — | *0.400* |
 | *BM25 rank-fusion (zero model)* | — | — | **0.867** |
+
+\* Group×member products exceed 65 because the per-level accuracies are read off the K-sweep, which
+uses equal-sized option sets; a real 65-file tree has ragged groups. The projection is an upper bound
+either way, which is all it needs to be to close the question.
 
 Cascading beats a flat 65-way choice (0.65 vs 0.33) — and still loses to free by 21 points. Two 80%
 steps are a 64% pipeline, and a wrong group at level 1 cannot be recovered at level 2. The projection
@@ -593,29 +595,49 @@ estimate.
 
 ## Reproduce
 
-```bash
-cd ~/repos/jev-distill-routing
-python3 tools/tokens.py                 # F1/F4/F5 — measured token accounting
-python3 tools/variants.py               # E1 — four zero-model arms + shortlist curve
-python3 tools/route_local.py lexical    # E1 single arm with latency reps
-python3 tools/mechanisms.py             # E2 — expected cost per candidate mechanism
-python3 tools/distill_cost.py           # E4 — where transcript volume lives + the cap curve
-python3 tools/run.py shortlist --reps 3 # E5 — end-to-end arm C in a real headless cell (~$0.25/cell)
-~/repos/laya-lab/.venv/bin/python tools/gate.py --device mps              # E6a
-~/repos/laya-lab/.venv/bin/python tools/gate_formulations.py             # E6b
-~/repos/laya-lab/.venv/bin/python tools/gate_excerpt.py                  # E6c
-~/repos/laya-lab/.venv/bin/python tools/route_local.py laya-yn   # E3
+Everything needed for the zero-model results is in this folder. Nothing here writes to the knowledge
+store; `tools/` reads it.
+
+```
+tools/          the harness (stdlib only, except the Laya arms)
+prototype/      the shippable router, stdlib only
+topics-eval.json  the 30-query evaluation set
+results/        scored summaries + ledgers for every run cited below
 ```
 
-Raw results: `jev-distill-routing/runs/<stamp>-e1*/`. Harness and eval set live in that repo; this
-folder holds the write-up and the decision record.
+```bash
+cd research/2026-09-22-local-routing
+export AURA_DISTILL_HOME=~/.aura-distill          # or wherever your store lives
 
-`prototype/spine_router.py` is the E1 winner packaged as a shippable, stdlib-only module: a CLI and a
-`--hook` mode for `UserPromptSubmit` that injects the top-3 candidates and abstains below MIN_SCORE.
-It is a prototype for measurement, not a merge candidate — `AGENTS.md` requires an issue and an
-independent review first.
+python3 tools/tokens.py            # F1/F3/F4 — turn cost measured, file size estimated
+python3 tools/variants.py          # E1 — eight zero-model arms + the shortlist curve
+python3 tools/mechanisms.py        # E2 — expected cost per candidate mechanism
+python3 tools/distill_cost.py      # E4 — transcript composition + the cap curve
+python3 tools/run.py shortlist --reps 3   # E5 — arm C in real headless cells (~$0.25/cell)
+```
+
+The Laya arms (E3, E6, E7, E8) additionally need the `laya` package and its checkpoint:
 
 ```bash
-python3 prototype/spine_router.py "I'm about to ssh into the pi and pkill a stuck process"
-echo '{"prompt":"..."}' | python3 prototype/spine_router.py --hook
+uv venv -p 3.12 && uv pip install --python .venv/bin/python laya torch transformers
+.venv/bin/python tools/route_local.py laya-rerank --device mps   # E3
+.venv/bin/python tools/gate.py --device mps                      # E6a
+.venv/bin/python tools/gate_formulations.py                      # E6b
+.venv/bin/python tools/gate_excerpt.py                           # E6c
+.venv/bin/python tools/gate_spine_vs_body.py                     # E7
+.venv/bin/python tools/cardinality.py                            # E8
 ```
+
+### What will and will not reproduce
+
+- **Reproduces exactly:** everything computed from `SPINE.md` and the knowledge files — E1, E2, E7,
+  E8, and the token accounting. Deterministic given the same store.
+- **Reproduces approximately:** the Laya arms. Same checkpoint and the same seeds, but MPS kernels are
+  not bit-identical across machines.
+- **Will not reproduce:** E4's absolute figures. `tools/distill_cost.py` reads the *live*
+  `~/.claude/projects`, which grows continuously — re-running gives different totals by design. The
+  published snapshot is `results/e4-transcript-composition-snapshot.json`.
+- **Costs money:** E5 runs real `claude -p` cells (~$0.25 each). Everything else is free.
+
+Results in `results/<stamp>-<arm>/`. Fresh runs write to `runs/`, which is gitignored so a re-run
+never overwrites the published snapshots.

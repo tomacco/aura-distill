@@ -215,6 +215,8 @@ def main() -> int:
             n = int(args[i+1])
         except ValueError:
             print(f"--n needs a number, got {args[i+1]!r}", file=sys.stderr); return 2
+        if n < 1:
+            print(f"--n must be >= 1, got {n}", file=sys.stderr); return 2
         del args[i:i+2]
     as_json = "--json" in args
     if as_json:

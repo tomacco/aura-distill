@@ -31,7 +31,7 @@
             <a href="./" class="back">&larr; All research</a>
             <h1>A 421M Model, and the 40 Lines of BM25 That Beat It</h1>
             <div class="meta">September 2026 &middot; 8 experiments, one day, one Mac &middot; partial &mdash; published while open &middot; revised after independent review</div>
-            <p class="abstract">Every aura-distill session reads a knowledge index before doing any work. The turn that does it costs 21,247 tokens &mdash; the largest fixed cost of a session, and four to five times what this project last published for the same index. The obvious fix was a small local judgment model. The obvious fix lost, to a zero-model control that fits in 29 MB. What it lost to, and the two places it did not, are more useful than a win would have been.</p>
+            <p class="abstract">Every aura-distill session reads a knowledge index before doing any work. The turn that does it costs 21,247 tokens &mdash; the largest fixed cost of a session, and 5.9&times; the 3.6k this project last published for the same index. The index <em>file</em> alone is an estimated 3.8&ndash;5.2&times; larger than that figure. The obvious fix was a small local judgment model. The obvious fix lost, to a zero-model control that fits in 29 MB. What it lost to, and the two places it did not, are more useful than a win would have been.</p>
         </header>
 
         <section id="cost">
@@ -50,7 +50,7 @@
             </table>
             <div class="insight">
                 <div class="insight-label">The index grew, and nobody was watching the number</div>
-                <p>Against the July figure the index file is <strong>four to five times</strong> larger. The driver is not entry count &mdash; 59 to 65 entries is +10%. It is <strong>verbosity per entry</strong>: 61 tokens per entry then, 191 now, with a p90 of 474 and a single entry at 841. <strong>Index cost scales with how much gets written per line</strong>, and that is the number to watch.</p>
+                <p>Against the July figure the index <em>file</em> is an estimated <strong>3.8&ndash;5.2&times;</strong> larger, and the <em>turn</em> that reads it is <strong>5.9&times;</strong>. The driver is not entry count &mdash; 59 to 65 entries is +10%. It is <strong>verbosity per entry</strong>: 61 tokens per entry then, 191 now, with a p90 of 474 and a single entry at 841. <strong>Index cost scales with how much gets written per line</strong>, and that is the number to watch.</p>
                 <p class="note">Correction: the first version of this page said &ldquo;2.3&times; under-documented&rdquo; against a ~9k figure. That figure was never published by this project &mdash; it came from a different repository&rsquo;s notes. An independent review of the pull request caught it. The comparison above uses this project&rsquo;s own published measurement, and the story it tells &mdash; an index that grew &mdash; is a different and better one than a mis-measurement.</p>
             </div>
         </section>
@@ -85,7 +85,7 @@
                 <tbody>
                     <tr><td>Baseline (reads the index)</td><td>5</td><td>13.6 s</td><td>$0.382</td><td>30,364</td></tr>
                     <tr><td><strong>Shortlist (top-3 injected)</strong></td><td class="score-positive"><strong>3</strong></td><td>10.3 s</td><td class="score-positive"><strong>$0.139</strong></td><td class="score-positive"><strong>9,132</strong></td></tr>
-                    <tr><td></td><td>&minus;1 round trip</td><td>&minus;24%</td><td><strong>&minus;64%</strong></td><td><strong>&minus;70%</strong></td></tr>
+                    <tr><td></td><td>&minus;2 turns</td><td>&minus;24%</td><td><strong>&minus;64%</strong></td><td><strong>&minus;70%</strong></td></tr>
                 </tbody>
             </table>
             <p>Hit rate 3/3 across all three cells; the table counts two because only the warm cells are token-comparable. No stray reads, both arms read the same two files. Cache creation fell by 21,232 tokens against the measured index-read turn of 21,247. These are <em>not</em> independent measurements &mdash; both are the same cache-block accounting of the same turn, so the agreement is arithmetic, not corroboration. What it establishes is that the mechanism removes essentially all of that turn&rsquo;s cost <strong>and adds nothing unexpected</strong>.</p>
@@ -140,19 +140,22 @@
             </table>
             <div class="insight">
                 <div class="insight-label">The finding that outranks the model choice</div>
-                <p>Changing only <em>how a candidate is described</em> &mdash; same model, same items, same prompt &mdash; moves balanced accuracy from 0.600 to 0.750. <strong>That swing is larger than the entire distance between the model and BM25 anywhere in this programme.</strong> The data structure, not the model, is the dominant variable.</p>
+                <p>Changing only <em>how a candidate is described</em> &mdash; same model, same items, same prompt &mdash; moves balanced accuracy from 0.600 to 0.750. <strong>That 0.15 swing is the same order as the 0.20 gap between the model and BM25 &mdash; from changing nothing but the text handed to it.</strong> The data structure is a variable of the same size as the model choice, and a far cheaper one to move.</p>
             </div>
             <p>And the index line is the single most <em>discriminative</em> input available, beating the file's own content &mdash; the inverse of the retrieval result, where file bodies beat index lines by 33 points. The two do not conflict. <strong>Lexical matching wants volume; a judgment model with a 512-token window wants density.</strong></p>
             <h3>What the gate is worth</h3>
+            <p>One base (22,987 tokens: the index turn plus a median knowledge file) and one measured shortlist cost (1,503 tokens, the injection used in the real cell above). The three rows differ only in <em>what happens when the right file is not in the shortlist</em> &mdash; which is a product decision, not a measurement, so each is named rather than averaged.</p>
             <table>
-                <thead><tr><th>Configuration</th><th>wrong answers</th><th>falls back</th><th>E[tokens]</th><th>saving</th></tr></thead>
+                <thead><tr><th>Configuration</th><th>on a miss</th><th>wrong answers</th><th>falls back</th><th>E[tokens]</th><th>saving</th></tr></thead>
                 <tbody>
-                    <tr><td>Status quo (read the index)</td><td>0.0%</td><td>&mdash;</td><td>22,987</td><td>&mdash;</td></tr>
-                    <tr><td>Shortlist, no gate</td><td>13.3%</td><td>0%</td><td class="score-positive"><strong>3,243</strong></td><td><strong>86% (projected)</strong></td></tr>
-                    <tr><td>Shortlist + gate</td><td class="score-positive"><strong>2.2%</strong></td><td>42.9%</td><td>13,104</td><td>43% (projected)</td></tr>
+                    <tr><td>Status quo</td><td>&mdash;</td><td>0.0%</td><td>&mdash;</td><td>22,987</td><td>&mdash;</td></tr>
+                    <tr><td>Shortlist, no gate</td><td>answers from the wrong file</td><td class="score-negative">13.3%</td><td>0%</td><td class="score-positive"><strong>3,243</strong></td><td><strong>86%</strong></td></tr>
+                    <tr><td>Shortlist + index fallback</td><td>reads the full index</td><td>0.0%</td><td>13.3%</td><td>4,941</td><td>79%</td></tr>
+                    <tr><td>Shortlist + model gate</td><td>gate catches 83% of misses</td><td class="score-positive"><strong>2.2%</strong></td><td>42.9%</td><td>13,104</td><td>43%</td></tr>
                 </tbody>
             </table>
-            <p>The gate buys an 11-point drop in wrong answers for 43 points of token saving. That is not a free win and must not ship as one &mdash; it is an opt-in knob with documented consequences. Whether it is worth 5.7 GB resident is a product decision, not a measurement.</p>
+            <p class="note">The measured end-to-end figure is &minus;70% (above), against 79&ndash;86% projected &mdash; projections run optimistic, as projections do. An earlier version of this page quoted 74%, 85% and 90% for what was nominally one mechanism; they were three cost models and two different miss assumptions, which is what this table replaces.</p>
+            <p>The model gate buys an 11-point drop in wrong answers for 43 points of token saving, and the cheap fallback buys the same correctness for 7. Neither is a free win, and neither should ship as one &mdash; these are opt-in knobs with documented consequences. Whether the gate is worth 5.7&nbsp;GB resident and ~88&nbsp;ms, when a full-index fallback reaches 0% wrong answers for less, is a product decision this data does not make.</p>
         </section>
 
         <section id="budget">
@@ -189,17 +192,17 @@
             <table>
                 <thead><tr><th>Change</th><th>Effect</th><th>Evidence</th><th>Ship shape</th></tr></thead>
                 <tbody>
-                    <tr><td><strong>Inject a BM25 shortlist instead of reading the index</strong></td><td><strong>&minus;70% tokens, &minus;64% cost, one fewer round trip</strong> (measured)</td><td>measured end to end, 3/3 correct</td><td>opt-in knob (13% wrong-file rate without a gate)</td></tr>
+                    <tr><td><strong>Inject a BM25 shortlist instead of reading the index</strong></td><td><strong>&minus;70% tokens, &minus;64% cost, two fewer turns</strong> (measured)</td><td>measured end to end, 3/3 correct</td><td>opt-in knob (13% wrong-file rate without a gate)</td></tr>
                     <tr><td><strong>Index file contents, not index descriptions</strong></td><td>+33 points on hard queries</td><td>measured, 8 arms</td><td>internal to the router; no user-visible trade</td></tr>
                     <tr><td><strong>Rank-fuse the two surfaces; never score-fuse</strong></td><td>+10 points over either alone</td><td>measured</td><td>free</td></tr>
                     <tr><td><strong>Do not shorten the index</strong></td><td>a title-only index halves hard-tier accuracy</td><td>measured</td><td>a decision not to act</td></tr>
-                    <tr><td><strong>Out-of-scope detection on raw BM25 score</strong></td><td>keeps 28/30 in-scope, rejects 10/10 out-of-scope at threshold 7.5</td><td>calibrated on 40 queries, <strong>one index</strong></td><td>free, but the threshold is an absolute BM25 score and must be recalibrated per store</td></tr>
+                    <tr><td><strong>Out-of-scope detection on raw BM25 score</strong></td><td>keeps 28/30 in-scope, rejects 10/10 out-of-scope at threshold 7.5</td><td>calibrated on 40 queries, <strong>one index</strong></td><td>cheap, but the threshold is an absolute BM25 score: it must be recalibrated per store, and an uncalibrated one silently disables the hook on a small index</td></tr>
                     <tr><td><strong>Cap tool traffic in the distillation input</strong></td><td>&minus;79% transcript at a 500-char cap</td><td>measured on 9 sessions</td><td>opt-in knob; needs the attribution study first</td></tr>
                 </tbody>
             </table>
             <div class="insight">
                 <div class="insight-label">The uncomfortable part</div>
-                <p>Every item on that list came from measuring the existing system, not from adding anything to it. The most valuable single act of the day was discovering that a documented constant was wrong by a factor of 2.3.</p>
+                <p>Every item on that list came from measuring the existing system, not from adding anything to it. The most valuable single act of the day was measuring what the knowledge index actually costs, and finding that it had grown several times over since anyone last looked.</p>
             </div>
         </section>
 
@@ -210,7 +213,7 @@
             <p><strong>One model, one prompt family.</strong> Four formulations were tried, not searched. A different small model, a fine-tune, or a longer context window would change the picture &mdash; particularly the 512-token window, which caused the front-matter confound and caps every option budget here.</p>
             <p><strong>The model arm depends on the zero-model arm.</strong> The passage handed to the gate is selected by BM25, so &ldquo;the model configuration&rdquo; is really a hybrid. There is no arm in which the model stands alone and wins.</p>
             <p><strong>Three corrections were made during the work</strong>, and all three were caught by measuring rather than by reasoning harder: a misread cumulative swap counter, a peak-memory estimate wrong by 2&times;, and a verdict that was an artifact of feeding the model YAML front-matter. The last one had already been written up before the follow-up experiment overturned it.</p>
-            <p class="note">Raw runs, harness and the full write-up live in the repository under <code>research/2026-09-22-local-routing/</code>. Every number on this page is reproducible from the scripts listed there.</p>
+            <p class="note">The harness (<code>tools/</code>), the evaluation set, the scored run summaries (<code>results/</code>) and the full write-up are in the repository under <code>research/2026-09-22-local-routing/</code>. The zero-model numbers reproduce from those scripts directly; the Laya arms additionally need the <code>laya</code> package and a local checkpoint, and the transcript-composition figures are a dated snapshot of a store that keeps growing &mdash; the write-up says which is which.</p>
         </section>
         <footer>
             <p>Raw runs, harness and the full write-up: <a href="https://github.com/tomacco/aura-distill/tree/main/research/2026-09-22-local-routing">research/2026-09-22-local-routing</a></p>

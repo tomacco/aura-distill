@@ -1,0 +1,8 @@
+{
+  "linux-ssh": {
+    "query": "I'm about to SSH into the Pi and kill a stuck python process with pkill -f, then restart it under systemd. Anything I should know before I do it?",
+    "expected": ["ops/linux-shell-ssh.md"],
+    "acceptable_extra": ["projects/homelab-pi.md", "profile/ivan.md"],
+    "why": "Single-file ground truth (pkill -f self-match + systemd PATH gotchas live ONLY in linux-shell-ssh.md); entry sits mid-SPINE (#48 of 65) so position bias is not trivially in its favour; distinctive nouns (pkill, SSH, systemd) make a JEV Choice answerable from the SPINE line alone."
+  }
+}

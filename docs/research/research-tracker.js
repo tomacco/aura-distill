@@ -24,6 +24,7 @@
         'model-routing': { published: '2026-07-09', version: 1, title: 'Model Routing' },
         'pre-distill-marks': { published: '2026-08-02', version: 1, title: 'Pre-Distill Marks' },
         'local-models': { published: '2026-09-22', version: 1, title: 'Local Models for Distillation' },
+        'local-decision-models': { published: '2026-09-22', version: 1, title: 'Local Decision Models for Retrieval' },
         'changelog': { published: '2026-05-17', version: 2, title: 'Changelog' },
     };
 

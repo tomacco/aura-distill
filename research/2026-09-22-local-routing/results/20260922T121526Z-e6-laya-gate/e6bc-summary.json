@@ -1,0 +1,61 @@
+{
+  "e6b_formulations": {
+    "A-original": {
+      "recall": 0.967,
+      "specificity": 0.1,
+      "balanced_acc": 0.533,
+      "p_true_med": 0.8614,
+      "p_false_med": 0.8565,
+      "best_threshold_bal_acc": 0.597,
+      "at": 0.64
+    },
+    "B-negative-first": {
+      "recall": 0.333,
+      "specificity": 0.633,
+      "balanced_acc": 0.483,
+      "p_true_med": 0.4634,
+      "p_false_med": 0.4674,
+      "best_threshold_bal_acc": 0.531,
+      "at": 0.4
+    },
+    "C-strict": {
+      "recall": 0.667,
+      "specificity": 0.533,
+      "balanced_acc": 0.6,
+      "p_true_med": 0.6155,
+      "p_false_med": 0.4951,
+      "best_threshold_bal_acc": 0.669,
+      "at": 0.55
+    },
+    "D-score": {
+      "recall": 1.0,
+      "specificity": 0.0,
+      "balanced_acc": 0.5,
+      "p_true_med": 1.9685,
+      "p_false_med": 1.8001,
+      "best_threshold_bal_acc": 0.5,
+      "at": 0.99
+    }
+  },
+  "e6c_excerpt": {
+    "head-1400": {
+      "recall": 0.667,
+      "specificity": 0.533,
+      "balanced_acc": 0.6,
+      "p_true_med": 0.6155,
+      "p_false_med": 0.4951,
+      "best_threshold_bal_acc": 0.669,
+      "at": 0.55
+    },
+    "best-passage": {
+      "recall": 0.633,
+      "specificity": 0.833,
+      "balanced_acc": 0.733,
+      "p_true_med": 0.5736,
+      "p_false_med": 0.2629,
+      "best_threshold_bal_acc": 0.75,
+      "at": 0.35
+    }
+  },
+  "note": "e6b/e6c were run in one process each from tools/gate_formulations.py and tools/gate_excerpt.py; only their summaries are kept."
+}

@@ -1,0 +1,3 @@
+# tools/*.py write fresh run dirs here; scored snapshots live in results/ instead
+runs/
+__pycache__/

@@ -1,0 +1,38 @@
+{
+  "spine-line": {
+    "recall": 0.5,
+    "specificity": 0.933,
+    "balanced_acc": 0.717,
+    "p_true_med": 0.5932,
+    "p_false_med": 0.1308,
+    "gap": 0.4624,
+    "best_thr_bal_acc": 0.819
+  },
+  "file-head": {
+    "recall": 0.667,
+    "specificity": 0.533,
+    "balanced_acc": 0.6,
+    "p_true_med": 0.6155,
+    "p_false_med": 0.4951,
+    "gap": 0.1204,
+    "best_thr_bal_acc": 0.669
+  },
+  "best-passage": {
+    "recall": 0.633,
+    "specificity": 0.833,
+    "balanced_acc": 0.733,
+    "p_true_med": 0.5736,
+    "p_false_med": 0.2629,
+    "gap": 0.3107,
+    "best_thr_bal_acc": 0.75
+  },
+  "spine+passage": {
+    "recall": 0.7,
+    "specificity": 0.8,
+    "balanced_acc": 0.75,
+    "p_true_med": 0.6794,
+    "p_false_med": 0.2428,
+    "gap": 0.4366,
+    "best_thr_bal_acc": 0.789
+  }
+}

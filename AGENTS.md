@@ -69,6 +69,74 @@ When developing or testing:
 - Every PR must be reviewed by an independent agent before merging. See `REVIEW-PROTOCOL.md`.
 - The authoring agent spawns a reviewer in a worktree with zero shared context. The reviewer gets only product context — never the author's reasoning, known limitations, or focus suggestions. This is structural, not optional: shared context makes self-review biased by definition.
 
+## Working concurrently in this repo
+
+Ivan runs several agents at once, and more than one may be pointed at this clone.
+
+**Never `git checkout` in a clone you do not exclusively own. Use `git worktree add`.**
+
+```bash
+git worktree add ../aura-distill-<topic> -b feature/<topic>   # your own directory, your own HEAD
+cd ../aura-distill-<topic>                                    # work here
+git worktree remove ../aura-distill-<topic>                   # when done
+```
+
+Leave the primary checkout parked on `main`. A separate `git clone` works too; a worktree is cheaper
+because it shares the object store.
+
+**Why this is a rule and not a preference.** A checkout changes `HEAD` for *every* process in that
+working tree, and nothing tells the others. The agent that gets moved sees a normal `git status` and
+keeps committing — onto whatever branch it was moved to. On 2026-09-22 this put nine commits on local
+`main` that their author believed were on a feature branch, and the other agent pushed `main` twice
+during the same window from a different clone. Had it pushed from the shared tree, those nine
+unreviewed commits would have entered `main` inside an unrelated push, bypassing `REVIEW-PROTOCOL.md`
+with nothing looking wrong to anyone. The failure is silent by construction, so care does not prevent
+it — only isolation does. (See #102; reviewers already work this way, `REVIEW-PROTOCOL.md`.)
+
+**Never let message or issue text reach a shell.** Read it from stdin or a file. The same incident
+included an agent quoting `git checkout` in backticks inside a chat message, passing the text as a
+shell argument, and having the backticks command-substituted — executing a checkout in the shared
+tree, from a message warning against exactly that.
+
+### If it already happened
+
+The reflog is the only evidence, and it is per-tree, not per-branch:
+
+```bash
+git reflog --date=short | head -20        # find 'checkout: moving from X to Y' you did not run
+git log --oneline origin/main..<branch>   # commits stranded on the branch you were moved to
+```
+
+`<branch>` is whatever the reflog shows you were moved *to* — usually `main`, because the other agent
+returned the tree to it, but it can be that agent's own branch.
+
+Then rescue the commits and restore the shared branch. **`git fetch` first**: `origin/main` is a
+local ref, you have been committing rather than fetching, and the other agent has probably been
+pushing — so it is very likely stale, and `reset --hard` to a stale ref silently rewinds the shared
+tree with nothing looking wrong.
+
+```bash
+git fetch origin                          # NOT optional — see above
+git status --porcelain                    # MUST be empty; it is someone else's tree too
+git branch -f <your-branch> <branch>      # rescue the commits
+git reset --hard origin/main
+git rev-parse main origin/main            # MUST match; this is the check that the reset was current
+git worktree add ../aura-distill-<topic> <your-branch>
+cd ../aura-distill-<topic> && git rebase origin/main
+```
+
+If `git branch -f` reports the branch is already checked out in another worktree, run the rescue from
+that worktree instead, or pick a new branch name.
+
+Nothing is lost while the tree is clean and the commits are reachable, but a `reset --hard` over
+someone's uncommitted work is not recoverable — which is why `git status --porcelain` comes before it,
+and why you tell the other agent before running it.
+
+Both the recovery and its failure modes were verified against synthetic reproductions of the incident,
+not reasoned about: commits stranded by a second checkout are recovered intact, and the missing-`fetch`
+variant was caught that way — a first draft of this section omitted it, and restored a shared tree to
+a stale commit without any error.
+
 ## Branch conventions
 
 - `main` — stable, released (quality gate: REVIEW-PROTOCOL.md)

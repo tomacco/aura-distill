@@ -69,6 +69,74 @@ When developing or testing:
 - Every PR must be reviewed by an independent agent before merging. See `REVIEW-PROTOCOL.md`.
 - The authoring agent spawns a reviewer in a worktree with zero shared context. The reviewer gets only product context — never the author's reasoning, known limitations, or focus suggestions. This is structural, not optional: shared context makes self-review biased by definition.
 
+## Working concurrently in this repo
+
+Several agents may run at once, and more than one may be pointed at this clone.
+
+**Never `git checkout` in a clone you do not exclusively own. Use `git worktree add`.**
+
+```bash
+git worktree add ../aura-distill-<topic> -b <feature|research>/<topic>   # your own dir, your own HEAD
+cd ../aura-distill-<topic>                                    # work here
+git worktree remove ../aura-distill-<topic>                   # when done
+```
+
+Leave the primary checkout parked on `main`. A separate clone works too; a worktree shares the object
+store. Both `worktree` commands above refuse rather than clobber — on a dirty directory or an existing
+branch. **Never answer that with `--force`**; `worktree remove --force` discards uncommitted work.
+
+**Why this is a rule.** A checkout changes `HEAD` for *every* process in that tree, and nothing tells
+the others. The moved agent sees a normal `git status` and keeps committing onto whatever branch it
+landed on. On 2026-09-22 that put nine commits on local `main` whose author believed they were on a
+feature branch, while the other agent pushed `main` twice from a different clone — from the shared
+tree, that push carries nine unreviewed commits into `main`, bypassing `REVIEW-PROTOCOL.md` with
+nothing looking wrong. Silent by construction, so care does not prevent it; only isolation does.
+(#102; reviewers already work this way — `REVIEW-PROTOCOL.md`.)
+
+**Never let message, issue or PR text reach a shell as an argument.** Use `--body-file` or a
+*quoted* heredoc; never `--body "$text"` when `$text` came from elsewhere. In the same incident an
+agent quoted `git checkout` in backticks inside a chat message, passed it as a shell argument, and the
+substitution executed a checkout in the shared tree — from a message warning against exactly that.
+
+### If it already happened
+
+**Nothing is lost yet** — commits on the wrong branch stay reachable. Every destructive step is one
+*you* would run. Capture first; never force-update a ref you have not read.
+
+**Capture is safe and solo; restoring the shared tree is neither** — `git checkout main` there yanks
+the other agent exactly as you were yanked.
+
+```bash
+git fetch origin
+git branch --show-current                 # not the branch you expected (empty = detached HEAD)
+git reflog --date=short | grep -E 'checkout: moving|commit:' | head -20
+```
+
+Read the reflog, not `HEAD`: after a second move your commits sit on a branch you are no longer on,
+and `origin/main..HEAD` then reports a confident all-clear. Reflog `commit:` lines survive any number
+of moves.
+
+```bash
+git branch rescue/<topic> <sha of your newest commit>   # plain branch, never -f; a name clash should fail
+git log --format='%h %an %s' origin/main..rescue/<topic>
+```
+
+Read that range first. If you were moved onto another agent's branch it holds **their** commits —
+carrying those into your PR recreates the review bypass in a new shape. Yours are likewise still on
+their branch, where they have no symptom and nobody will look: tell them.
+
+**Then stop and coordinate.** Restoring `main` in a tree someone else is working in is a two-agent
+operation — `docs/runbooks/shared-clone-recovery.md`. You are not blocked meanwhile: work from
+`rescue/<topic>` in your own worktree, which is where you wanted to be.
+
+```bash
+git worktree add ../aura-distill-<topic> rescue/<topic>
+```
+
+**Any edit to this procedure must be re-run against throwaway repositories before it lands.** Three
+successive drafts were wrong in ways only execution revealed: one orphaned commits, one destroyed an
+uninvolved branch while printing a passing check, one reported all-clear after a second move.
+
 ## Branch conventions
 
 - `main` — stable, released (quality gate: REVIEW-PROTOCOL.md)

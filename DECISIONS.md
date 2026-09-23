@@ -11,6 +11,19 @@ Issues own live status and blockers. `ROADMAP.md` owns scope and sequence. This 
 
 ---
 
+## 2026-09-23 — Release channels (#79)
+
+**D-2026-09-23-9 · Beta installs and updates come from a tag named by a manifest on `beta/1.2`.** `provisional` (authoring agent, #79; ADR 0002)
+The beta payload is always a pinned prerelease tag; the moving branch only hosts the one-line pointer. Rejected: raw files from the branch (every merge would ship), the Releases API (rate limits, "latest" could be a v2), Pages (served from `main`). Consequence: `beta/1.2` must never be deleted or renamed while beta installs exist.
+
+**D-2026-09-23-10 · Updating is a script; the dispatcher prose only runs it.** `provisional` (authoring agent, #79; ADR 0002)
+`bin/distill-update.sh` makes every safety decision from fetched content and its own line major, never from `.version` or from model judgement. The prose forbids improvised downloads, but no guarantee depends on the prose.
+
+**D-2026-09-23-11 · The manifest never carries `software.base`, and `main/VERSION` is the only stable version.** `provisional` (authoring agent, #79; amends ADR 0001)
+The files-only line only ever learns a software edition's version, requirements and guide.
+
+---
+
 ## 2026-09-23 — Files-only memory design
 
 **D-2026-09-23-8 · The files-only edition follows the design in `docs/design-files-only-memory.md`, decisions D1–D10.** `evidence` · provisional (agent design, reviewed on PR #93)
@@ -20,6 +33,7 @@ Byte and line budgets checked at write time (D1), evidence twins (D2), archive a
 
 **D-2026-09-23-7 · Reviews converge in at most three rounds, reviewers differ from the author's model, resolutions are traceable, and the reviewer's environment carries no author context.** `evidence` · provisional (agent proposal under D-6, adopted through a reviewed PR)
 REVIEW-PROTOCOL.md rules 6–9; the review runs through `tests/review/run-clean-review.sh` in a separate reviewer profile, with the Agent tool as a disclosed fallback (#108). Evidence: PR #93 had six review rounds, each REQUEST CHANGES with new blocks. PR #92 needed three rounds, and one of them caught a finding that had been "routed" only in a PR comment and never reached the target issue. The round-two reviewer of #104 disclosed that its session had auto-loaded the maintainer's knowledge store, which held the proposal under review. Revisit if a capped round ships a defect that a fourth round would have caught.
+
 
 ## 2026-09-23 — Release and autonomy frame for the files-only edition
 

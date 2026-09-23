@@ -1,0 +1,15 @@
+{
+  "schema": 2,
+  "beta": {
+    "status": "unpublished",
+    "tag": "",
+    "version": ""
+  },
+  "software": {
+    "status": "unpublished",
+    "version": "",
+    "requirements": "",
+    "guide": "",
+    "auto_update": "never"
+  }
+}

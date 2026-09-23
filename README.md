@@ -59,6 +59,8 @@ curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh 
 irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1 | iex
 ```
 
+**Beta (opt-in):** the 1.2 line ships as prereleases first; add `--channel beta` (bash) or set `$env:DISTILL_CHANNEL='beta'` (PowerShell) and use the installer from the `beta/1.2` branch. Stable installs never see beta content, and `--channel stable` takes you back. [Details](INSTALL.md#beta-channel-opt-in).
+
 <sub>No sudo. Knowledge lives in `~/.aura-distill/`; small adapters are added to Claude and Codex configuration. [Read install.sh](install.sh) / [install.ps1](install.ps1) first if you're the responsible kind.</sub>
 
 This installs:

@@ -1,0 +1,13 @@
+{
+ "label": "haiku-1",
+ "model": "claude-haiku-4-5-20251001",
+ "wall_s": 111.8,
+ "duration_api_ms": 108635,
+ "cost_usd": 0.1801225,
+ "input_tokens": 9,
+ "cache_creation": 70298,
+ "cache_read": 6925,
+ "output_tokens": 7765,
+ "num_turns": 1,
+ "output_chars": 20321
+}

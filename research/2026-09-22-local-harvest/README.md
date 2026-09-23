@@ -237,6 +237,43 @@ raised by `sudo sysctl` — lost on reboot unless persisted, and not fit for gen
 *Measured on a 48 GB machine.* The memory figures are real; the 16/24 GB verdicts compare those
 figures against those machines' documented limits, not runs on such machines.
 
+## Replication on real sessions (n = 3)
+
+Two further transcripts from a private corpus of real sessions, ranked by the distiller's own
+recorded signal counts. Same harness, prompt and judge; each transcript gets its own Opus reference
+and its own self-agreement ceiling. Only the two candidates that carry the decision were re-run.
+
+| transcript | ceiling | Qwen3.8-27B 4-bit (local, $0) | Haiku 4.5 (hosted) |
+|---|---|---|---|
+| 13.6k · Claude (original) | 0.918 | 77 % | 58 % |
+| 8.6k · Claude | 0.930 | 87 % | 65 % |
+| 63.3k · Codex | 0.869 | **96 %** | 53 % |
+| **mean** | 0.906 | **87 %** | **59 %** |
+
+| faithfulness | 13.6k | 8.6k | 63.3k | mean |
+|---|---|---|---|---|
+| local grounding | 0.844 | 0.914 | 0.889 | **0.882** |
+| Haiku grounding | 0.552 | 0.766 | 0.600 | **0.639** |
+| local fabricated | 0 | 0 | 0 | **0** |
+| Haiku fabricated | 6 | 1 | 1 | 8 |
+| local distorted | 7 | 3 | 5 | 15 |
+| Haiku distorted | 20 | 10 | 19 | 49 |
+
+**The claim that argues against the routing directive is no longer n = 1.** A free local model beat
+the hosted cheap tier on three of three real sessions, across two CLI formats, with zero fabrications
+against eight. The original transcript was the local model's *worst* showing.
+
+**The ceiling is a property of the transcript** (0.918 / 0.930 / 0.869), not a constant — a study
+reporting "% of a reference model" without measuring it per input mixes run-to-run variance into its
+quality gaps.
+
+**Observation, not a finding:** the local model improved as transcripts lengthened (77 → 87 → 96 %)
+while the ceiling fell. Three points cannot support a mechanism. It does settle that the "long
+transcripts unaddressed" caveat pointed the wrong way — length is not where the local model failed.
+
+Artifacts in `corpus/`. The corpus excludes one session containing employer-internal infrastructure
+detail, at its owner's direction.
+
 ## Conclusions
 
 1. **A local open-weights model can do this stage — with 32 GB.** 81 % of Opus at 8-bit, 77 % at

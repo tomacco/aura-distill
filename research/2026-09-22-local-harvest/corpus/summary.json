@@ -1,0 +1,71 @@
+{
+ "note": "Replication of the headline comparison on two further transcripts from a private corpus of real sessions. Same harness, same prompt, same judge, per-transcript reference and ceiling.",
+ "rows": [
+  {
+   "transcript": "8.6k \u00b7 Claude",
+   "tokens": 8621,
+   "candidate": "opus-2",
+   "ceiling": 0.93,
+   "recall": 0.93,
+   "pct_of_ceiling": 100,
+   "grounding": 0.933,
+   "fabricated": 0,
+   "distorted": 3
+  },
+  {
+   "transcript": "8.6k \u00b7 Claude",
+   "tokens": 8621,
+   "candidate": "qwen38-27b-4bit",
+   "ceiling": 0.93,
+   "recall": 0.813,
+   "pct_of_ceiling": 87,
+   "grounding": 0.914,
+   "fabricated": 0,
+   "distorted": 3
+  },
+  {
+   "transcript": "8.6k \u00b7 Claude",
+   "tokens": 8621,
+   "candidate": "haiku-1",
+   "ceiling": 0.93,
+   "recall": 0.603,
+   "pct_of_ceiling": 65,
+   "grounding": 0.766,
+   "fabricated": 1,
+   "distorted": 10
+  },
+  {
+   "transcript": "63.3k \u00b7 Codex",
+   "tokens": 63346,
+   "candidate": "opus-2",
+   "ceiling": 0.869,
+   "recall": 0.869,
+   "pct_of_ceiling": 100,
+   "grounding": 0.961,
+   "fabricated": 0,
+   "distorted": 2
+  },
+  {
+   "transcript": "63.3k \u00b7 Codex",
+   "tokens": 63346,
+   "candidate": "qwen38-27b-4bit",
+   "ceiling": 0.869,
+   "recall": 0.834,
+   "pct_of_ceiling": 96,
+   "grounding": 0.889,
+   "fabricated": 0,
+   "distorted": 5
+  },
+  {
+   "transcript": "63.3k \u00b7 Codex",
+   "tokens": 63346,
+   "candidate": "haiku-1",
+   "ceiling": 0.869,
+   "recall": 0.459,
+   "pct_of_ceiling": 53,
+   "grounding": 0.6,
+   "fabricated": 1,
+   "distorted": 19
+  }
+ ]
+}

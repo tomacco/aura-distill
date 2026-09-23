@@ -1,0 +1,878 @@
+{
+ "summary": {
+  "candidate": "qwen38-27b-4bit",
+  "reference": "opus-1",
+  "judge_model": "opus",
+  "n_ref_claims": 172,
+  "present": 128,
+  "partial": 31,
+  "absent": 13,
+  "recall": 0.834,
+  "n_cand_claims": 45,
+  "grounded": 40,
+  "distorted": 5,
+  "fabricated": 0,
+  "grounding": 0.889,
+  "fabrication": 0.0,
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate is strong on the conceptual spine of the session \u2014 the identity correction (security primitive \u2192 collaboration primitive), the channels directive, the aura-distill reuse boundary, the rebrand resolution, and the decision-origin tagging in D are all captured with accurate quotes and correct attribution, and the outcome/metadata section is precise (merge SHA, four agents, turn counts). It is noticeably weaker on the fine-grained failure forensics: several friction items are missing entirely (empty docs search and the open/find fix, the cell-84 terminate timeout and fixture PID hunt, the recursive node.exe search, the LF/CRLF warnings, the post-failure view_image success), and the reviewer's concrete output (six findings, critical A2A impersonation path, the contextRef/cwd/session-id leakage blockers) is compressed to \"two rounds\" so the most consequential retraction of the session is lost. Three grounding defects matter: the typecheck cascade is reordered so TS2688 appears to follow npm ci, the theatre vocabulary is credited to the user when the assistant introduced it, and the screenshot Get-Item failure is explained by a fabricated \"New-Item created the wrong dir\" cause plus an over-claim that CI covers the unfixed WSL hook test. Structurally it meets spec: A\u2013E in order, every D item carries an origin label, and there is no commentary outside the sections.",
+  "judge_cost_usd": 1.6999269999999997,
+  "adjudicated": true
+ },
+ "detail": {
+  "recall": [
+   {
+    "id": 1,
+    "status": "PRESENT"
+   },
+   {
+    "id": 2,
+    "status": "PRESENT"
+   },
+   {
+    "id": 3,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 4,
+    "status": "PRESENT"
+   },
+   {
+    "id": 5,
+    "status": "PRESENT"
+   },
+   {
+    "id": 6,
+    "status": "PRESENT"
+   },
+   {
+    "id": 7,
+    "status": "PRESENT"
+   },
+   {
+    "id": 8,
+    "status": "PRESENT"
+   },
+   {
+    "id": 9,
+    "status": "PRESENT"
+   },
+   {
+    "id": 10,
+    "status": "PRESENT"
+   },
+   {
+    "id": 11,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 12,
+    "status": "PRESENT"
+   },
+   {
+    "id": 13,
+    "status": "PRESENT"
+   },
+   {
+    "id": 14,
+    "status": "ABSENT"
+   },
+   {
+    "id": 15,
+    "status": "ABSENT"
+   },
+   {
+    "id": 16,
+    "status": "ABSENT"
+   },
+   {
+    "id": 17,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 18,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 19,
+    "status": "PRESENT"
+   },
+   {
+    "id": 20,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 21,
+    "status": "PRESENT"
+   },
+   {
+    "id": 22,
+    "status": "PRESENT"
+   },
+   {
+    "id": 23,
+    "status": "PRESENT"
+   },
+   {
+    "id": 24,
+    "status": "PRESENT"
+   },
+   {
+    "id": 25,
+    "status": "PRESENT"
+   },
+   {
+    "id": 26,
+    "status": "PRESENT"
+   },
+   {
+    "id": 27,
+    "status": "PRESENT"
+   },
+   {
+    "id": 28,
+    "status": "PRESENT"
+   },
+   {
+    "id": 29,
+    "status": "PRESENT"
+   },
+   {
+    "id": 30,
+    "status": "PRESENT"
+   },
+   {
+    "id": 31,
+    "status": "PRESENT"
+   },
+   {
+    "id": 32,
+    "status": "PRESENT"
+   },
+   {
+    "id": 33,
+    "status": "ABSENT"
+   },
+   {
+    "id": 34,
+    "status": "ABSENT"
+   },
+   {
+    "id": 35,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 36,
+    "status": "PRESENT"
+   },
+   {
+    "id": 37,
+    "status": "PRESENT"
+   },
+   {
+    "id": 38,
+    "status": "ABSENT"
+   },
+   {
+    "id": 39,
+    "status": "PRESENT"
+   },
+   {
+    "id": 40,
+    "status": "PRESENT"
+   },
+   {
+    "id": 41,
+    "status": "PRESENT"
+   },
+   {
+    "id": 42,
+    "status": "PRESENT"
+   },
+   {
+    "id": 43,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 44,
+    "status": "PRESENT"
+   },
+   {
+    "id": 45,
+    "status": "PRESENT"
+   },
+   {
+    "id": 46,
+    "status": "PRESENT"
+   },
+   {
+    "id": 47,
+    "status": "PRESENT"
+   },
+   {
+    "id": 48,
+    "status": "PRESENT"
+   },
+   {
+    "id": 49,
+    "status": "PRESENT"
+   },
+   {
+    "id": 50,
+    "status": "PRESENT"
+   },
+   {
+    "id": 51,
+    "status": "PRESENT"
+   },
+   {
+    "id": 52,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 53,
+    "status": "PRESENT"
+   },
+   {
+    "id": 54,
+    "status": "PRESENT"
+   },
+   {
+    "id": 55,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 56,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 57,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 58,
+    "status": "ABSENT"
+   },
+   {
+    "id": 59,
+    "status": "PRESENT"
+   },
+   {
+    "id": 60,
+    "status": "PRESENT"
+   },
+   {
+    "id": 61,
+    "status": "PRESENT"
+   },
+   {
+    "id": 62,
+    "status": "PRESENT"
+   },
+   {
+    "id": 63,
+    "status": "PRESENT"
+   },
+   {
+    "id": 64,
+    "status": "PRESENT"
+   },
+   {
+    "id": 65,
+    "status": "ABSENT"
+   },
+   {
+    "id": 66,
+    "status": "PRESENT"
+   },
+   {
+    "id": 67,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 68,
+    "status": "PRESENT"
+   },
+   {
+    "id": 69,
+    "status": "PRESENT"
+   },
+   {
+    "id": 70,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 71,
+    "status": "PRESENT"
+   },
+   {
+    "id": 72,
+    "status": "ABSENT"
+   },
+   {
+    "id": 73,
+    "status": "ABSENT"
+   },
+   {
+    "id": 74,
+    "status": "ABSENT"
+   },
+   {
+    "id": 75,
+    "status": "PRESENT"
+   },
+   {
+    "id": 76,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 77,
+    "status": "PRESENT"
+   },
+   {
+    "id": 78,
+    "status": "PRESENT"
+   },
+   {
+    "id": 79,
+    "status": "PRESENT"
+   },
+   {
+    "id": 80,
+    "status": "PRESENT"
+   },
+   {
+    "id": 81,
+    "status": "PRESENT"
+   },
+   {
+    "id": 82,
+    "status": "PRESENT"
+   },
+   {
+    "id": 83,
+    "status": "PRESENT"
+   },
+   {
+    "id": 84,
+    "status": "PRESENT"
+   },
+   {
+    "id": 85,
+    "status": "PRESENT"
+   },
+   {
+    "id": 86,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 87,
+    "status": "PRESENT"
+   },
+   {
+    "id": 88,
+    "status": "PRESENT"
+   },
+   {
+    "id": 89,
+    "status": "ABSENT"
+   },
+   {
+    "id": 90,
+    "status": "ABSENT"
+   },
+   {
+    "id": 91,
+    "status": "PRESENT"
+   },
+   {
+    "id": 92,
+    "status": "PRESENT"
+   },
+   {
+    "id": 93,
+    "status": "PRESENT"
+   },
+   {
+    "id": 94,
+    "status": "PRESENT"
+   },
+   {
+    "id": 95,
+    "status": "PRESENT"
+   },
+   {
+    "id": 96,
+    "status": "PRESENT"
+   },
+   {
+    "id": 97,
+    "status": "PRESENT"
+   },
+   {
+    "id": 98,
+    "status": "PRESENT"
+   },
+   {
+    "id": 99,
+    "status": "PRESENT"
+   },
+   {
+    "id": 100,
+    "status": "PRESENT"
+   },
+   {
+    "id": 101,
+    "status": "PRESENT"
+   },
+   {
+    "id": 102,
+    "status": "PRESENT"
+   },
+   {
+    "id": 103,
+    "status": "PRESENT"
+   },
+   {
+    "id": 104,
+    "status": "PRESENT"
+   },
+   {
+    "id": 105,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 106,
+    "status": "PRESENT"
+   },
+   {
+    "id": 107,
+    "status": "PRESENT"
+   },
+   {
+    "id": 108,
+    "status": "PRESENT"
+   },
+   {
+    "id": 109,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 110,
+    "status": "PRESENT"
+   },
+   {
+    "id": 111,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 112,
+    "status": "PRESENT"
+   },
+   {
+    "id": 113,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 114,
+    "status": "PRESENT"
+   },
+   {
+    "id": 115,
+    "status": "PRESENT"
+   },
+   {
+    "id": 116,
+    "status": "PRESENT"
+   },
+   {
+    "id": 117,
+    "status": "PRESENT"
+   },
+   {
+    "id": 118,
+    "status": "PRESENT"
+   },
+   {
+    "id": 119,
+    "status": "PRESENT"
+   },
+   {
+    "id": 120,
+    "status": "PRESENT"
+   },
+   {
+    "id": 121,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 122,
+    "status": "PRESENT"
+   },
+   {
+    "id": 123,
+    "status": "PRESENT"
+   },
+   {
+    "id": 124,
+    "status": "PRESENT"
+   },
+   {
+    "id": 125,
+    "status": "PRESENT"
+   },
+   {
+    "id": 126,
+    "status": "PRESENT"
+   },
+   {
+    "id": 127,
+    "status": "PRESENT"
+   },
+   {
+    "id": 128,
+    "status": "PRESENT"
+   },
+   {
+    "id": 129,
+    "status": "PRESENT"
+   },
+   {
+    "id": 130,
+    "status": "PRESENT"
+   },
+   {
+    "id": 131,
+    "status": "PRESENT"
+   },
+   {
+    "id": 132,
+    "status": "PRESENT"
+   },
+   {
+    "id": 133,
+    "status": "PRESENT"
+   },
+   {
+    "id": 134,
+    "status": "PRESENT"
+   },
+   {
+    "id": 135,
+    "status": "PRESENT"
+   },
+   {
+    "id": 136,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 137,
+    "status": "PRESENT"
+   },
+   {
+    "id": 138,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 139,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 140,
+    "status": "PRESENT"
+   },
+   {
+    "id": 141,
+    "status": "PRESENT"
+   },
+   {
+    "id": 142,
+    "status": "PRESENT"
+   },
+   {
+    "id": 143,
+    "status": "PRESENT"
+   },
+   {
+    "id": 144,
+    "status": "PRESENT"
+   },
+   {
+    "id": 145,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 146,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 147,
+    "status": "PRESENT"
+   },
+   {
+    "id": 148,
+    "status": "PRESENT"
+   },
+   {
+    "id": 149,
+    "status": "PRESENT"
+   },
+   {
+    "id": 150,
+    "status": "PRESENT"
+   },
+   {
+    "id": 151,
+    "status": "PRESENT"
+   },
+   {
+    "id": 152,
+    "status": "PRESENT"
+   },
+   {
+    "id": 153,
+    "status": "PRESENT"
+   },
+   {
+    "id": 154,
+    "status": "PRESENT"
+   },
+   {
+    "id": 155,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 156,
+    "status": "PRESENT"
+   },
+   {
+    "id": 157,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 158,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 159,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 160,
+    "status": "PRESENT"
+   },
+   {
+    "id": 161,
+    "status": "PRESENT"
+   },
+   {
+    "id": 162,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 163,
+    "status": "PRESENT"
+   },
+   {
+    "id": 164,
+    "status": "PRESENT"
+   },
+   {
+    "id": 165,
+    "status": "PRESENT"
+   },
+   {
+    "id": 166,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 167,
+    "status": "PRESENT"
+   },
+   {
+    "id": 168,
+    "status": "PRESENT"
+   },
+   {
+    "id": 169,
+    "status": "PRESENT"
+   },
+   {
+    "id": 170,
+    "status": "PRESENT"
+   },
+   {
+    "id": 171,
+    "status": "PRESENT"
+   },
+   {
+    "id": 172,
+    "status": "PRESENT"
+   }
+  ],
+  "candidate_claims": [
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Sequence inverted: TS2688 arose from pointing at the main clone's tsc BEFORE npm ci, and npm ci fixed it. The candidate places TS2688 after npm ci and omits the main-clone attempt.",
+    "adjudicated": true,
+    "reason": "Every element of the cascade is real (tsc not found, main-clone tsc attempt, TS2688, npm ci, a2a.ts TS2322) but the ordering is inverted and one step omitted. Real sequence, wrong order."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "No wrong-directory diagnosis or dir-creation fix exists in the transcript; the 208KB PNG followed the SSE fix plus process cleanup and fixture restart, and the 'cannot find path' failures were an async-write race on the mobile shot.",
+    "adjudicated": true,
+    "reason": "The Get-Item 'cannot find path' failures and the 208,092-byte PNG are both real transcript events. The diagnosis (wrong directory from New-Item -Force) and the claimed dir-creation fix are wrong \u2014 the PNG followed the SSE fix, process cleanup and fixture restart. Real events, wrong cause."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Plausible inference, but the subsequent plain `bash -x tests/test-claude-hook.sh` run (without that PATH) also failed on daemon start, showing node simply unavailable in the non-interactive shell.",
+    "adjudicated": true,
+    "reason": "The PATH-injection attempt and its failure are real; the stated cause (Windows binary can't run in WSL) is contradicted by the subsequent plain bash -x run failing identically without that PATH. Real event, wrong cause."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Over-claimed: the transcript never establishes that the CI matrix runs test-claude-hook.sh; the assistant simply moved on after the Windows equivalent and the bash installer test passed.",
+    "adjudicated": true,
+    "reason": "The CI matrix really exists and really passes on ubuntu-latest, and the assistant really did move on after the Windows equivalent and bash installer test passed. The claim over-states that CI covers test-claude-hook.sh, a coverage assertion never established. Real referent, over-claimed."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Wrong actor: the assistant introduced the theatre vocabulary (Role/Actor/Vessel/Stage/Company/Harbor) in A37; the user then said 'I'd really liked your simil with theatre' and paraphrased it back.",
+    "adjudicated": true,
+    "reason": "The theatre vocabulary (Role/Actor/Vessel/Stage/Company/Harbor) genuinely exists in the transcript, introduced by the assistant in A37; the user only praised and paraphrased it. Real content, wrong actor."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "The ATTENTION pattern is quoted from the SPINE/identity notes read in-session; the linkage is interpretive but reasonable."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   }
+  ],
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate is strong on the conceptual spine of the session \u2014 the identity correction (security primitive \u2192 collaboration primitive), the channels directive, the aura-distill reuse boundary, the rebrand resolution, and the decision-origin tagging in D are all captured with accurate quotes and correct attribution, and the outcome/metadata section is precise (merge SHA, four agents, turn counts). It is noticeably weaker on the fine-grained failure forensics: several friction items are missing entirely (empty docs search and the open/find fix, the cell-84 terminate timeout and fixture PID hunt, the recursive node.exe search, the LF/CRLF warnings, the post-failure view_image success), and the reviewer's concrete output (six findings, critical A2A impersonation path, the contextRef/cwd/session-id leakage blockers) is compressed to \"two rounds\" so the most consequential retraction of the session is lost. Three grounding defects matter: the typecheck cascade is reordered so TS2688 appears to follow npm ci, the theatre vocabulary is credited to the user when the assistant introduced it, and the screenshot Get-Item failure is explained by a fabricated \"New-Item created the wrong dir\" cause plus an over-claim that CI covers the unfixed WSL hook test. Structurally it meets spec: A\u2013E in order, every D item carries an origin label, and there is no commentary outside the sections."
+ },
+ "redaction": "Claim texts and verbatim user speech removed; identifiers generalised. Evaluative notes kept."
+}

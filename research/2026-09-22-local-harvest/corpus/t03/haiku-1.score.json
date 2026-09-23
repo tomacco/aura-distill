@@ -1,0 +1,947 @@
+{
+ "summary": {
+  "candidate": "haiku-1",
+  "reference": "opus-1",
+  "judge_model": "opus",
+  "n_ref_claims": 172,
+  "present": 55,
+  "partial": 48,
+  "absent": 69,
+  "recall": 0.459,
+  "n_cand_claims": 50,
+  "grounded": 30,
+  "distorted": 19,
+  "fabricated": 1,
+  "grounding": 0.6,
+  "fabrication": 0.02,
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate is strongest exactly where the session was most conceptual: it captures the channels directive, the identity reframe from security primitive to collaboration primitive, the user's persona formula, the anti-anchoring habit, the aura-distill reuse proposal, the moderator-admission convention, and the merge outcome, usually with accurate quotes. It is far weaker than the reference on the operational ledger \u2014 roughly two thirds of the friction claims are missing entirely (the node-PATH/manual-helper failure, all four apply_patch verification failures, the GitHub connector 403 and gh fallback, the Start-Process policy blocks, the wait_agent and view_image failures, the screenshot write race, the CRLF warnings, the daemon inspection at :4747), and it never mentions worktree isolation, the visual-QA rule, or the distilled craft conventions that actually originated several decisions. More damaging than the omissions are the attribution inversions: it says the user 'accepted the limitation' on the 258K window when the user was the one who corrected the assistant, credits the three-layer identity model and the aura-distill separation boundary to the user when both were the assistant's, and assigns the keep-PortCall decision to design principle rather than the user's explicit U17 call. It also invents mechanism where it lacked evidence \u2014 a retry-loop fix for the WSL hook test, a deterministic-hash avatar algorithm, a Program Files write restriction, and a 900+ line diff figure \u2014 which is the pattern to watch: smooth plausible detail filling gaps the transcript left open.",
+  "judge_cost_usd": 1.931657,
+  "adjudicated": true
+ },
+ "detail": {
+  "recall": [
+   {
+    "id": 1,
+    "status": "ABSENT"
+   },
+   {
+    "id": 2,
+    "status": "ABSENT"
+   },
+   {
+    "id": 3,
+    "status": "ABSENT"
+   },
+   {
+    "id": 4,
+    "status": "ABSENT"
+   },
+   {
+    "id": 5,
+    "status": "PRESENT"
+   },
+   {
+    "id": 6,
+    "status": "PRESENT"
+   },
+   {
+    "id": 7,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 8,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 9,
+    "status": "ABSENT"
+   },
+   {
+    "id": 10,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 11,
+    "status": "PRESENT"
+   },
+   {
+    "id": 12,
+    "status": "ABSENT"
+   },
+   {
+    "id": 13,
+    "status": "ABSENT"
+   },
+   {
+    "id": 14,
+    "status": "ABSENT"
+   },
+   {
+    "id": 15,
+    "status": "ABSENT"
+   },
+   {
+    "id": 16,
+    "status": "ABSENT"
+   },
+   {
+    "id": 17,
+    "status": "ABSENT"
+   },
+   {
+    "id": 18,
+    "status": "ABSENT"
+   },
+   {
+    "id": 19,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 20,
+    "status": "ABSENT"
+   },
+   {
+    "id": 21,
+    "status": "ABSENT"
+   },
+   {
+    "id": 22,
+    "status": "ABSENT"
+   },
+   {
+    "id": 23,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 24,
+    "status": "ABSENT"
+   },
+   {
+    "id": 25,
+    "status": "ABSENT"
+   },
+   {
+    "id": 26,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 27,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 28,
+    "status": "PRESENT"
+   },
+   {
+    "id": 29,
+    "status": "ABSENT"
+   },
+   {
+    "id": 30,
+    "status": "PRESENT"
+   },
+   {
+    "id": 31,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 32,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 33,
+    "status": "ABSENT"
+   },
+   {
+    "id": 34,
+    "status": "ABSENT"
+   },
+   {
+    "id": 35,
+    "status": "PRESENT"
+   },
+   {
+    "id": 36,
+    "status": "PRESENT"
+   },
+   {
+    "id": 37,
+    "status": "PRESENT"
+   },
+   {
+    "id": 38,
+    "status": "ABSENT"
+   },
+   {
+    "id": 39,
+    "status": "ABSENT"
+   },
+   {
+    "id": 40,
+    "status": "PRESENT"
+   },
+   {
+    "id": 41,
+    "status": "ABSENT"
+   },
+   {
+    "id": 42,
+    "status": "ABSENT"
+   },
+   {
+    "id": 43,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 44,
+    "status": "ABSENT"
+   },
+   {
+    "id": 45,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 46,
+    "status": "ABSENT"
+   },
+   {
+    "id": 47,
+    "status": "ABSENT"
+   },
+   {
+    "id": 48,
+    "status": "ABSENT"
+   },
+   {
+    "id": 49,
+    "status": "ABSENT"
+   },
+   {
+    "id": 50,
+    "status": "ABSENT"
+   },
+   {
+    "id": 51,
+    "status": "ABSENT"
+   },
+   {
+    "id": 52,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 53,
+    "status": "PRESENT"
+   },
+   {
+    "id": 54,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 55,
+    "status": "ABSENT"
+   },
+   {
+    "id": 56,
+    "status": "ABSENT"
+   },
+   {
+    "id": 57,
+    "status": "ABSENT"
+   },
+   {
+    "id": 58,
+    "status": "ABSENT"
+   },
+   {
+    "id": 59,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 60,
+    "status": "ABSENT"
+   },
+   {
+    "id": 61,
+    "status": "ABSENT"
+   },
+   {
+    "id": 62,
+    "status": "ABSENT"
+   },
+   {
+    "id": 63,
+    "status": "ABSENT"
+   },
+   {
+    "id": 64,
+    "status": "ABSENT"
+   },
+   {
+    "id": 65,
+    "status": "ABSENT"
+   },
+   {
+    "id": 66,
+    "status": "ABSENT"
+   },
+   {
+    "id": 67,
+    "status": "PRESENT"
+   },
+   {
+    "id": 68,
+    "status": "ABSENT"
+   },
+   {
+    "id": 69,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 70,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 71,
+    "status": "PRESENT"
+   },
+   {
+    "id": 72,
+    "status": "ABSENT"
+   },
+   {
+    "id": 73,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 74,
+    "status": "ABSENT"
+   },
+   {
+    "id": 75,
+    "status": "PRESENT"
+   },
+   {
+    "id": 76,
+    "status": "PRESENT"
+   },
+   {
+    "id": 77,
+    "status": "PRESENT"
+   },
+   {
+    "id": 78,
+    "status": "PRESENT"
+   },
+   {
+    "id": 79,
+    "status": "PRESENT"
+   },
+   {
+    "id": 80,
+    "status": "PRESENT"
+   },
+   {
+    "id": 81,
+    "status": "PRESENT"
+   },
+   {
+    "id": 82,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 83,
+    "status": "PRESENT"
+   },
+   {
+    "id": 84,
+    "status": "PRESENT"
+   },
+   {
+    "id": 85,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 86,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 87,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 88,
+    "status": "PRESENT"
+   },
+   {
+    "id": 89,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 90,
+    "status": "PRESENT"
+   },
+   {
+    "id": 91,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 92,
+    "status": "PRESENT"
+   },
+   {
+    "id": 93,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 94,
+    "status": "PRESENT"
+   },
+   {
+    "id": 95,
+    "status": "PRESENT"
+   },
+   {
+    "id": 96,
+    "status": "ABSENT"
+   },
+   {
+    "id": 97,
+    "status": "ABSENT"
+   },
+   {
+    "id": 98,
+    "status": "ABSENT"
+   },
+   {
+    "id": 99,
+    "status": "ABSENT"
+   },
+   {
+    "id": 100,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 101,
+    "status": "PRESENT"
+   },
+   {
+    "id": 102,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 103,
+    "status": "ABSENT"
+   },
+   {
+    "id": 104,
+    "status": "PRESENT"
+   },
+   {
+    "id": 105,
+    "status": "PRESENT"
+   },
+   {
+    "id": 106,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 107,
+    "status": "PRESENT"
+   },
+   {
+    "id": 108,
+    "status": "PRESENT"
+   },
+   {
+    "id": 109,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 110,
+    "status": "PRESENT"
+   },
+   {
+    "id": 111,
+    "status": "ABSENT"
+   },
+   {
+    "id": 112,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 113,
+    "status": "PRESENT"
+   },
+   {
+    "id": 114,
+    "status": "PRESENT"
+   },
+   {
+    "id": 115,
+    "status": "PRESENT"
+   },
+   {
+    "id": 116,
+    "status": "ABSENT"
+   },
+   {
+    "id": 117,
+    "status": "PRESENT"
+   },
+   {
+    "id": 118,
+    "status": "PRESENT"
+   },
+   {
+    "id": 119,
+    "status": "ABSENT"
+   },
+   {
+    "id": 120,
+    "status": "ABSENT"
+   },
+   {
+    "id": 121,
+    "status": "ABSENT"
+   },
+   {
+    "id": 122,
+    "status": "ABSENT"
+   },
+   {
+    "id": 123,
+    "status": "PRESENT"
+   },
+   {
+    "id": 124,
+    "status": "PRESENT"
+   },
+   {
+    "id": 125,
+    "status": "PRESENT"
+   },
+   {
+    "id": 126,
+    "status": "PRESENT"
+   },
+   {
+    "id": 127,
+    "status": "PRESENT"
+   },
+   {
+    "id": 128,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 129,
+    "status": "PRESENT"
+   },
+   {
+    "id": 130,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 131,
+    "status": "PRESENT"
+   },
+   {
+    "id": 132,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 133,
+    "status": "ABSENT"
+   },
+   {
+    "id": 134,
+    "status": "ABSENT"
+   },
+   {
+    "id": 135,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 136,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 137,
+    "status": "ABSENT"
+   },
+   {
+    "id": 138,
+    "status": "ABSENT"
+   },
+   {
+    "id": 139,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 140,
+    "status": "ABSENT"
+   },
+   {
+    "id": 141,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 142,
+    "status": "ABSENT"
+   },
+   {
+    "id": 143,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 144,
+    "status": "ABSENT"
+   },
+   {
+    "id": 145,
+    "status": "ABSENT"
+   },
+   {
+    "id": 146,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 147,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 148,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 149,
+    "status": "ABSENT"
+   },
+   {
+    "id": 150,
+    "status": "PRESENT"
+   },
+   {
+    "id": 151,
+    "status": "PRESENT"
+   },
+   {
+    "id": 152,
+    "status": "PRESENT"
+   },
+   {
+    "id": 153,
+    "status": "PRESENT"
+   },
+   {
+    "id": 154,
+    "status": "PRESENT"
+   },
+   {
+    "id": 155,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 156,
+    "status": "PRESENT"
+   },
+   {
+    "id": 157,
+    "status": "ABSENT"
+   },
+   {
+    "id": 158,
+    "status": "ABSENT"
+   },
+   {
+    "id": 159,
+    "status": "ABSENT"
+   },
+   {
+    "id": 160,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 161,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 162,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 163,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 164,
+    "status": "PRESENT"
+   },
+   {
+    "id": 165,
+    "status": "PRESENT"
+   },
+   {
+    "id": 166,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 167,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 168,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 169,
+    "status": "PRESENT"
+   },
+   {
+    "id": 170,
+    "status": "PRESENT"
+   },
+   {
+    "id": 171,
+    "status": "PRESENT"
+   },
+   {
+    "id": 172,
+    "status": "ABSENT"
+   }
+  ],
+  "candidate_claims": [
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The transcript's causes were PATH/login-shell scoping (~/.nvm, ~/.local/bin) and a missing worktree node_modules; 'corporate sandbox restrictions' is imported from the distill note about the box having no Node/Python.",
+    "adjudicated": true,
+    "reason": "Node unavailability is a real, recurring problem in the transcript, with real causes (login-shell PATH scoping for ~/.nvm and ~/.local/bin, missing worktree node_modules). The claim substitutes 'Siemens corporate sandbox restrictions'. Real problem, wrong root cause."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Correct failure, but v24 is an upgrade from v20; the direction is stated backwards.",
+    "adjudicated": true,
+    "reason": "The v20 '--experimental-strip-types' failure and the later move to v24.18.0 are both real; calling v20\u2192v24 a 'downgrade' reverses the direction. Real events, wrong direction."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "A16 states the supported model_context_window setting can raise new sessions toward the 1M maximum; it merely cannot resize a live session.",
+    "adjudicated": true,
+    "reason": "A16 explicitly states the supported `model_context_window` setting can raise new sessions toward the 1M maximum but cannot resize the live session. The claim inverts this into 'no override available'. Real finding, wrong direction."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The user actively corrected the assistant ('ahhh status line is showing 258K window'), forcing a re-investigation; it was a correction, not passive acceptance.",
+    "adjudicated": true,
+    "reason": "The user did respond to the context-window answer \u2014 but with a correction ('ahhh status line is showing 258K window') that forced re-investigation. A real reaction is mischaracterised as frictionless acceptance."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Accurate, though the candidate presents delegation as the assistant's solution rather than the user's explicit instruction."
+   },
+   {
+    "status": "GROUNDED",
+    "note": "54s timeout is accurate; the '60s max allowed' framing is an unsupported embellishment (a later call timed out at ~64s)."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Transcript names 'one critical A2A impersonation path'; the mechanism is consistent with the applied patch."
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Matches the registry [channelId, pair] patch and the PSM1 channelId guard."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Actual UI string was 'declared actor \u00b7 via harness'/'claims:'; substance matches."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The bash -x trace shows a `seq 1 40` poll loop failing because node was unavailable in the non-interactive shell, not a timing race.",
+    "adjudicated": true,
+    "reason": "tests/test-claude-hook.sh really did fail, and the `seq 1 40` poll loop really appears in the bash -x trace. The claim mis-diagnoses the cause as a timing window when node was simply unavailable in the non-interactive shell. Real event, wrong cause."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "No retry-loop increase occurred; the WSL hook test was left failing and the Windows equivalent plus the bash installer test were run instead. The setTimeout-after-listen fix belongs to tests/test-channels.ts.",
+    "adjudicated": true,
+    "reason": "Both components have real referents misassembled: the `seq 1 40` loop exists (but was never increased), and the setTimeout-after-listen fix is real but belongs to tests/test-channels.ts, not the WSL hook test, which was left failing. Real fixes, wrong target and wrong outcome."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The layered model (Principal/Actor/Persona, later Role/Actor/Vessel) was the assistant's construction; the user supplied 'persona = permissions + context + model' and the collaboration-incentive framing.",
+    "adjudicated": true,
+    "reason": "The layered identity model is real in the transcript (A31 Principal/Actor/Persona, later Role/Actor/Vessel) but was the assistant's construction; the user contributed 'persona = permissions + context + model' and the collaboration-incentive framing. Real model, wrong attribution."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The user, not the assistant, made the call ('lets keep portcall from now'); the candidate's D item further assigns the origin to 'design_principle + evidence'.",
+    "adjudicated": true,
+    "reason": "The rebrand discussion and the decision to keep PortCall are both real (A37, U17), but the user made the call ('lets keep porcall from now'). Real decision, wrong actor and wrong origin classification."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The user proposed reuse; the assistant added the boundary, explicitly citing the user's own separation-principles.md.",
+    "adjudicated": true,
+    "reason": "The separation principle and the reuse proposal both exist: the user (U15) proposed reusing Aura Distill, and the assistant (A36) added the transversal-vs-project-local boundary citing the user's own separation-principles.md. Real content, wrong attribution."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "'copper' is invented; the palette was ink navy, parchment, brass, sea-glass."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "status_line and context-window awareness are demonstrated; nothing in the transcript shows the user engaging with reasoning levels.",
+    "adjudicated": true,
+    "reason": "The user demonstrably engages with status_line config (U2, U3) and context-window mechanics (U8, U10). Only the 'model reasoning levels' element is unsupported. Over-claimed breadth on a real referent."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Unsupported inferential link; the profile's async/audio-cue pattern is about screen attention, not delegation behaviour.",
+    "adjudicated": true,
+    "reason": "Both halves exist: the profile's ATTENTION pattern (async/audio cues, not watching screen) and the user's delegation behaviour. The claim invents an evidentiary link between them that the transcript does not support. Real elements, wrong inferential connection."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The user pushed back against the assistant's 1.05M claim with the observed 258K reading.",
+    "adjudicated": true,
+    "reason": "Same shape as claim 8: the user's 258K observation was a pushback against the assistant's 1.05M answer, not passive acceptance. Real reaction, mischaracterised."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "fork_turns:'none' is accurate, but the reviewer was already running before the user's U12 request; it also follows a standing craft convention the candidate omits.",
+    "adjudicated": true,
+    "reason": "review_portcall_pr2 was indeed spawned with fork_turns:'none', but it was launched in A26 before the user's U12 request; the assistant explicitly said <quote withheld>. Real events, wrong causal ordering/origin."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Round one returned 6 findings (A2A + handshake scoping); metadata leakage and attestation confusion were the 2 second-round blockers. Two rounds are collapsed into one.",
+    "adjudicated": true,
+    "reason": "Six findings (A2A impersonation, channel-scoping in Flag Check) came from round one; metadata leakage and attestation confusion were the two round-two blockers. Real findings, two rounds wrongly collapsed into one."
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Stated as an assistant proposal in conversation; the candidate elevates a sketch to an implemented decision."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "That sentence is from A5 about the status_line config, unrelated to channel admission.",
+    "adjudicated": true,
+    "reason": "The quoted sentence genuinely appears in A5, about leaving the status_line config unchanged. The claim reattaches it to the unrelated private-channel-admission decision. Real quote, wrong context."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The Program Files write restriction never appears; the documented constraint is 'no Node, no real Python on this box'.",
+    "adjudicated": true,
+    "reason": "The portable-Node decision genuinely happened (A42, scratchpad node.exe download) and was driven by a real documented constraint ('no Node, no real Python on this box'). The claim keeps the real decision but substitutes an invented cause (Program Files write restriction / corporate sandbox). Wrong cause on a real referent."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "FABRICATED",
+    "note": "No avatar implementation detail appears anywhere in the transcript.",
+    "adjudicated": true,
+    "reason": "The transcript contains no avatar implementation at any point \u2014 no hashing, no colour/pattern derivation, no code for avatar generation. Only the user's request for 'procedurally generated, stable' avatars and visual remarks exist. The specific algorithm is invented whole; there is no mis-stated implementation to distort."
+   },
+   {
+    "status": "GROUNDED",
+    "note": "'stable geometric sailor avatars' and 32px mobile avatar CSS both appear; 'readable at 32\u00d732px' is a reasonable read of the QA."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Merged as stated; the candidate omits that the branch deletion failed and needed a separate push --delete."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "No line total is derivable from the truncated diffstats; the figure is invented.",
+    "adjudicated": true,
+    "reason": "A large multi-area diff genuinely exists with (truncated) diffstats covering protocol, clients, UI, tests, docs. Only the aggregate line figure is unverifiable and supplied. Real referent, invented number."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The patch imports node:crypto and validates supplied channel/agent identity; 'cryptographically verify channel membership' overstates what the code does.",
+    "adjudicated": true,
+    "reason": "The a2a.ts patch really does import node:crypto and validate supplied channel/agent identity on the dataPart path. Describing this as cryptographic verification of channel membership over-claims what the code does. Real change, over-claimed strength."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The review drove two full fix-and-push rounds (six findings, then two blockers) across multiple CI cycles; it materially extended the session.",
+    "adjudicated": true,
+    "reason": "The independent review really did add rigor, but it drove two full fix-and-push rounds plus multiple CI cycles, materially extending the session. Real referent, wrong direction on impact."
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Interpretive commentary rather than a transcript fact, but not contradicted."
+   }
+  ],
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate is strongest exactly where the session was most conceptual: it captures the channels directive, the identity reframe from security primitive to collaboration primitive, the user's persona formula, the anti-anchoring habit, the aura-distill reuse proposal, the moderator-admission convention, and the merge outcome, usually with accurate quotes. It is far weaker than the reference on the operational ledger \u2014 roughly two thirds of the friction claims are missing entirely (the node-PATH/manual-helper failure, all four apply_patch verification failures, the GitHub connector 403 and gh fallback, the Start-Process policy blocks, the wait_agent and view_image failures, the screenshot write race, the CRLF warnings, the daemon inspection at :4747), and it never mentions worktree isolation, the visual-QA rule, or the distilled craft conventions that actually originated several decisions. More damaging than the omissions are the attribution inversions: it says the user 'accepted the limitation' on the 258K window when the user was the one who corrected the assistant, credits the three-layer identity model and the aura-distill separation boundary to the user when both were the assistant's, and assigns the keep-PortCall decision to design principle rather than the user's explicit U17 call. It also invents mechanism where it lacked evidence \u2014 a retry-loop fix for the WSL hook test, a deterministic-hash avatar algorithm, a Program Files write restriction, and a 900+ line diff figure \u2014 which is the pattern to watch: smooth plausible detail filling gaps the transcript left open."
+ },
+ "redaction": "Claim texts and verbatim user speech removed; identifiers generalised. Evaluative notes kept."
+}

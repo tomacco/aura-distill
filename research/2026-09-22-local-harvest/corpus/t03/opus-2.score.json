@@ -1,0 +1,893 @@
+{
+ "summary": {
+  "candidate": "opus-2",
+  "reference": "opus-1",
+  "judge_model": "opus",
+  "n_ref_claims": 172,
+  "present": 141,
+  "partial": 17,
+  "absent": 14,
+  "recall": 0.869,
+  "n_cand_claims": 51,
+  "grounded": 49,
+  "distorted": 2,
+  "fabricated": 0,
+  "grounding": 0.961,
+  "fabrication": 0.0,
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "Recall on the mechanical failure/friction material is excellent: the candidate independently reconstructs almost every debugging arc (PATH/nvm, worktree tsc, ECONNREFUSED triple-attempt, SSE screenshot hang, apply_patch re-anchoring, 403\u2192gh fallback, merge-cleanup) often with exact error strings, and its section D is stronger than average \u2014 most rows carry an explicit origin, quote the originating directive, and one row honestly records both sides of the identity disagreement. It also matches the reference closely on the conceptual thread (identity as collaboration primitive, persona-adoption rebuild, aura-distill method-not-store boundary, keep-PortCall decision). Weaknesses cluster in three places: small recovery details are dropped (the empty docs search fixed by open+find, the wsl.localhost/ConvertFrom-Json jq workaround, the SVG\u2192PNG render, the terminate-124 hang, the view_image-after-race success, the LF/CRLF noise), a few cited conventions are missing entirely (the feedback/preferences.md \"surface the REAL fix\" rule, the sign-off ritual's authorship semantics, the distill integrity numbers), and section E contains two numeric distortions \u2014 \"several hundred tool calls\" and \"five commits\" \u2014 where the reference says ~200 calls and five pushes. Two D rows also label origin as \"assistant judgment/argument\" rather than one of the four taxonomy values, though the origin itself is explicit.",
+  "judge_cost_usd": 1.633652,
+  "adjudicated": true
+ },
+ "detail": {
+  "recall": [
+   {
+    "id": 1,
+    "status": "PRESENT"
+   },
+   {
+    "id": 2,
+    "status": "PRESENT"
+   },
+   {
+    "id": 3,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 4,
+    "status": "PRESENT"
+   },
+   {
+    "id": 5,
+    "status": "PRESENT"
+   },
+   {
+    "id": 6,
+    "status": "PRESENT"
+   },
+   {
+    "id": 7,
+    "status": "PRESENT"
+   },
+   {
+    "id": 8,
+    "status": "PRESENT"
+   },
+   {
+    "id": 9,
+    "status": "PRESENT"
+   },
+   {
+    "id": 10,
+    "status": "PRESENT"
+   },
+   {
+    "id": 11,
+    "status": "PRESENT"
+   },
+   {
+    "id": 12,
+    "status": "PRESENT"
+   },
+   {
+    "id": 13,
+    "status": "PRESENT"
+   },
+   {
+    "id": 14,
+    "status": "ABSENT"
+   },
+   {
+    "id": 15,
+    "status": "ABSENT"
+   },
+   {
+    "id": 16,
+    "status": "PRESENT"
+   },
+   {
+    "id": 17,
+    "status": "PRESENT"
+   },
+   {
+    "id": 18,
+    "status": "PRESENT"
+   },
+   {
+    "id": 19,
+    "status": "PRESENT"
+   },
+   {
+    "id": 20,
+    "status": "PRESENT"
+   },
+   {
+    "id": 21,
+    "status": "PRESENT"
+   },
+   {
+    "id": 22,
+    "status": "PRESENT"
+   },
+   {
+    "id": 23,
+    "status": "PRESENT"
+   },
+   {
+    "id": 24,
+    "status": "PRESENT"
+   },
+   {
+    "id": 25,
+    "status": "PRESENT"
+   },
+   {
+    "id": 26,
+    "status": "PRESENT"
+   },
+   {
+    "id": 27,
+    "status": "PRESENT"
+   },
+   {
+    "id": 28,
+    "status": "PRESENT"
+   },
+   {
+    "id": 29,
+    "status": "PRESENT"
+   },
+   {
+    "id": 30,
+    "status": "PRESENT"
+   },
+   {
+    "id": 31,
+    "status": "PRESENT"
+   },
+   {
+    "id": 32,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 33,
+    "status": "ABSENT"
+   },
+   {
+    "id": 34,
+    "status": "PRESENT"
+   },
+   {
+    "id": 35,
+    "status": "PRESENT"
+   },
+   {
+    "id": 36,
+    "status": "PRESENT"
+   },
+   {
+    "id": 37,
+    "status": "PRESENT"
+   },
+   {
+    "id": 38,
+    "status": "ABSENT"
+   },
+   {
+    "id": 39,
+    "status": "PRESENT"
+   },
+   {
+    "id": 40,
+    "status": "PRESENT"
+   },
+   {
+    "id": 41,
+    "status": "PRESENT"
+   },
+   {
+    "id": 42,
+    "status": "PRESENT"
+   },
+   {
+    "id": 43,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 44,
+    "status": "PRESENT"
+   },
+   {
+    "id": 45,
+    "status": "PRESENT"
+   },
+   {
+    "id": 46,
+    "status": "ABSENT"
+   },
+   {
+    "id": 47,
+    "status": "PRESENT"
+   },
+   {
+    "id": 48,
+    "status": "PRESENT"
+   },
+   {
+    "id": 49,
+    "status": "PRESENT"
+   },
+   {
+    "id": 50,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 51,
+    "status": "PRESENT"
+   },
+   {
+    "id": 52,
+    "status": "PRESENT"
+   },
+   {
+    "id": 53,
+    "status": "PRESENT"
+   },
+   {
+    "id": 54,
+    "status": "PRESENT"
+   },
+   {
+    "id": 55,
+    "status": "PRESENT"
+   },
+   {
+    "id": 56,
+    "status": "ABSENT"
+   },
+   {
+    "id": 57,
+    "status": "PRESENT"
+   },
+   {
+    "id": 58,
+    "status": "ABSENT"
+   },
+   {
+    "id": 59,
+    "status": "PRESENT"
+   },
+   {
+    "id": 60,
+    "status": "PRESENT"
+   },
+   {
+    "id": 61,
+    "status": "PRESENT"
+   },
+   {
+    "id": 62,
+    "status": "PRESENT"
+   },
+   {
+    "id": 63,
+    "status": "ABSENT"
+   },
+   {
+    "id": 64,
+    "status": "ABSENT"
+   },
+   {
+    "id": 65,
+    "status": "ABSENT"
+   },
+   {
+    "id": 66,
+    "status": "PRESENT"
+   },
+   {
+    "id": 67,
+    "status": "PRESENT"
+   },
+   {
+    "id": 68,
+    "status": "PRESENT"
+   },
+   {
+    "id": 69,
+    "status": "PRESENT"
+   },
+   {
+    "id": 70,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 71,
+    "status": "PRESENT"
+   },
+   {
+    "id": 72,
+    "status": "PRESENT"
+   },
+   {
+    "id": 73,
+    "status": "PRESENT"
+   },
+   {
+    "id": 74,
+    "status": "ABSENT"
+   },
+   {
+    "id": 75,
+    "status": "PRESENT"
+   },
+   {
+    "id": 76,
+    "status": "PRESENT"
+   },
+   {
+    "id": 77,
+    "status": "PRESENT"
+   },
+   {
+    "id": 78,
+    "status": "PRESENT"
+   },
+   {
+    "id": 79,
+    "status": "PRESENT"
+   },
+   {
+    "id": 80,
+    "status": "PRESENT"
+   },
+   {
+    "id": 81,
+    "status": "PRESENT"
+   },
+   {
+    "id": 82,
+    "status": "PRESENT"
+   },
+   {
+    "id": 83,
+    "status": "PRESENT"
+   },
+   {
+    "id": 84,
+    "status": "PRESENT"
+   },
+   {
+    "id": 85,
+    "status": "PRESENT"
+   },
+   {
+    "id": 86,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 87,
+    "status": "PRESENT"
+   },
+   {
+    "id": 88,
+    "status": "PRESENT"
+   },
+   {
+    "id": 89,
+    "status": "PRESENT"
+   },
+   {
+    "id": 90,
+    "status": "PRESENT"
+   },
+   {
+    "id": 91,
+    "status": "PRESENT"
+   },
+   {
+    "id": 92,
+    "status": "PRESENT"
+   },
+   {
+    "id": 93,
+    "status": "PRESENT"
+   },
+   {
+    "id": 94,
+    "status": "PRESENT"
+   },
+   {
+    "id": 95,
+    "status": "PRESENT"
+   },
+   {
+    "id": 96,
+    "status": "PRESENT"
+   },
+   {
+    "id": 97,
+    "status": "PRESENT"
+   },
+   {
+    "id": 98,
+    "status": "PRESENT"
+   },
+   {
+    "id": 99,
+    "status": "PRESENT"
+   },
+   {
+    "id": 100,
+    "status": "PRESENT"
+   },
+   {
+    "id": 101,
+    "status": "PRESENT"
+   },
+   {
+    "id": 102,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 103,
+    "status": "PRESENT"
+   },
+   {
+    "id": 104,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 105,
+    "status": "PRESENT"
+   },
+   {
+    "id": 106,
+    "status": "PRESENT"
+   },
+   {
+    "id": 107,
+    "status": "PRESENT"
+   },
+   {
+    "id": 108,
+    "status": "PRESENT"
+   },
+   {
+    "id": 109,
+    "status": "PRESENT"
+   },
+   {
+    "id": 110,
+    "status": "PRESENT"
+   },
+   {
+    "id": 111,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 112,
+    "status": "PRESENT"
+   },
+   {
+    "id": 113,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 114,
+    "status": "PRESENT"
+   },
+   {
+    "id": 115,
+    "status": "PRESENT"
+   },
+   {
+    "id": 116,
+    "status": "PRESENT"
+   },
+   {
+    "id": 117,
+    "status": "PRESENT"
+   },
+   {
+    "id": 118,
+    "status": "PRESENT"
+   },
+   {
+    "id": 119,
+    "status": "PRESENT"
+   },
+   {
+    "id": 120,
+    "status": "PRESENT"
+   },
+   {
+    "id": 121,
+    "status": "PRESENT"
+   },
+   {
+    "id": 122,
+    "status": "PRESENT"
+   },
+   {
+    "id": 123,
+    "status": "PRESENT"
+   },
+   {
+    "id": 124,
+    "status": "PRESENT"
+   },
+   {
+    "id": 125,
+    "status": "PRESENT"
+   },
+   {
+    "id": 126,
+    "status": "PRESENT"
+   },
+   {
+    "id": 127,
+    "status": "PRESENT"
+   },
+   {
+    "id": 128,
+    "status": "PRESENT"
+   },
+   {
+    "id": 129,
+    "status": "PRESENT"
+   },
+   {
+    "id": 130,
+    "status": "PRESENT"
+   },
+   {
+    "id": 131,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 132,
+    "status": "PRESENT"
+   },
+   {
+    "id": 133,
+    "status": "PRESENT"
+   },
+   {
+    "id": 134,
+    "status": "PRESENT"
+   },
+   {
+    "id": 135,
+    "status": "PRESENT"
+   },
+   {
+    "id": 136,
+    "status": "PRESENT"
+   },
+   {
+    "id": 137,
+    "status": "PRESENT"
+   },
+   {
+    "id": 138,
+    "status": "PRESENT"
+   },
+   {
+    "id": 139,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 140,
+    "status": "PRESENT"
+   },
+   {
+    "id": 141,
+    "status": "PRESENT"
+   },
+   {
+    "id": 142,
+    "status": "PRESENT"
+   },
+   {
+    "id": 143,
+    "status": "PRESENT"
+   },
+   {
+    "id": 144,
+    "status": "ABSENT"
+   },
+   {
+    "id": 145,
+    "status": "ABSENT"
+   },
+   {
+    "id": 146,
+    "status": "PRESENT"
+   },
+   {
+    "id": 147,
+    "status": "PRESENT"
+   },
+   {
+    "id": 148,
+    "status": "PRESENT"
+   },
+   {
+    "id": 149,
+    "status": "PRESENT"
+   },
+   {
+    "id": 150,
+    "status": "PRESENT"
+   },
+   {
+    "id": 151,
+    "status": "PRESENT"
+   },
+   {
+    "id": 152,
+    "status": "PRESENT"
+   },
+   {
+    "id": 153,
+    "status": "PRESENT"
+   },
+   {
+    "id": 154,
+    "status": "PRESENT"
+   },
+   {
+    "id": 155,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 156,
+    "status": "PRESENT"
+   },
+   {
+    "id": 157,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 158,
+    "status": "ABSENT"
+   },
+   {
+    "id": 159,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 160,
+    "status": "PRESENT"
+   },
+   {
+    "id": 161,
+    "status": "PRESENT"
+   },
+   {
+    "id": 162,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 163,
+    "status": "PRESENT"
+   },
+   {
+    "id": 164,
+    "status": "PRESENT"
+   },
+   {
+    "id": 165,
+    "status": "PRESENT"
+   },
+   {
+    "id": 166,
+    "status": "PRESENT"
+   },
+   {
+    "id": 167,
+    "status": "PRESENT"
+   },
+   {
+    "id": 168,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 169,
+    "status": "PRESENT"
+   },
+   {
+    "id": 170,
+    "status": "PRESENT"
+   },
+   {
+    "id": 171,
+    "status": "PRESENT"
+   },
+   {
+    "id": 172,
+    "status": "PRESENT"
+   }
+  ],
+  "candidate_claims": [
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "tests/visual-fixture-server.cjs was indeed created and run with the v20 binary; the causal framing is a reasonable reading."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "The 'virtual-time-budget never settled' mechanism is inference but consistent with the transcript."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Transcript shows five such verification failures; the install.ps1 rejection quoted test-file text."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Fix description is a generalisation; the actual jq recovery also verified settings.json from PowerShell over \\\\wsl.localhost."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "The six findings are not enumerated in-transcript, but the critical A2A path, two channel-scoping flaws and the delivery/SSE fixes are all stated by the assistant."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Acceptance is inferred; the user never explicitly ratified it, which the candidate flags."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Loose: the CI matrix was added before the test-claude-hook.ps1 invocation bug, though earlier PS quoting/installer issues did exist."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Turn counts are right; tool-call volume is inflated \u2014 the transcript supports roughly 200, not 'several hundred'.",
+    "adjudicated": true,
+    "reason": "Turn counts and the existence of a large volume of tool calls are real; only the magnitude ('several hundred' vs ~200) is overstated. Real quantity, wrong number."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "There were ~7 commits on the branch (and 5 pushes); 'five commits' conflates the two.",
+    "adjudicated": true,
+    "reason": "Commits and review cycles both genuinely occurred; the branch carried ~7 commits across 5 pushes. Real quantity, wrong number."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   }
+  ],
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "Recall on the mechanical failure/friction material is excellent: the candidate independently reconstructs almost every debugging arc (PATH/nvm, worktree tsc, ECONNREFUSED triple-attempt, SSE screenshot hang, apply_patch re-anchoring, 403\u2192gh fallback, merge-cleanup) often with exact error strings, and its section D is stronger than average \u2014 most rows carry an explicit origin, quote the originating directive, and one row honestly records both sides of the identity disagreement. It also matches the reference closely on the conceptual thread (identity as collaboration primitive, persona-adoption rebuild, aura-distill method-not-store boundary, keep-PortCall decision). Weaknesses cluster in three places: small recovery details are dropped (the empty docs search fixed by open+find, the wsl.localhost/ConvertFrom-Json jq workaround, the SVG\u2192PNG render, the terminate-124 hang, the view_image-after-race success, the LF/CRLF noise), a few cited conventions are missing entirely (the feedback/preferences.md \"surface the REAL fix\" rule, the sign-off ritual's authorship semantics, the distill integrity numbers), and section E contains two numeric distortions \u2014 \"several hundred tool calls\" and \"five commits\" \u2014 where the reference says ~200 calls and five pushes. Two D rows also label origin as \"assistant judgment/argument\" rather than one of the four taxonomy values, though the origin itself is explicit."
+ },
+ "redaction": "Claim texts and verbatim user speech removed; identifiers generalised. Evaluative notes kept."
+}

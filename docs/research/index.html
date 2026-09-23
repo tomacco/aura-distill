@@ -177,10 +177,10 @@
             </a>
 
             <a href="local-models.html" class="paper-card">
-                <div class="paper-status status-complete">3 tiers &middot; 9 models &middot; Cost economics</div>
+                <div class="paper-status status-complete">3 tiers &middot; 9 models &middot; 3 sessions &middot; Cost economics</div>
                 <div class="paper-title">Can a Local Model Do the Distilling?</div>
                 <div class="paper-desc">Distillation's extraction stage is assigned to the cheap tier. How far down does that go &mdash; all the way to an open-weights model on the user's own machine? Blind-judged against an Opus reference, normalised to Opus's own self-agreement ceiling. Updated as runs land.</div>
-                <div class="paper-finding">Headline: the answer splits on memory. At 48 GB a local 27B reached 81% of the ceiling at $0, beating both hosted cheap tiers on faithfulness. Quantising it to 4-bit keeps 77% for half the memory &mdash; capacity beats precision by 10&times; &mdash; but even that needs 17.8 GB before a token of transcript, so 32 GB is the floor. Below it the failure is misattribution, scrambling who decided what.</div>
+                <div class="paper-finding">Headline: the answer splits on memory. At 48 GB a local 27B reached 81% of the ceiling at $0, beating both hosted cheap tiers on faithfulness. Replicated on three real sessions: the free local model beat hosted Haiku on every one, grounding 0.882 vs 0.639, zero fabrications against eight. Quantising to 4-bit keeps most of it for half the memory &mdash; capacity beats precision by 10&times; &mdash; but 32 GB is still the floor.</div>
             </a>
 
             <a href="local-decision-models.html" class="paper-card">

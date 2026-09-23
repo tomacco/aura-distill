@@ -1,0 +1,13 @@
+{
+ "label": "opus-1",
+ "model": "claude-opus-5",
+ "wall_s": 62.6,
+ "duration_api_ms": 59618,
+ "cost_usd": 0.361425,
+ "input_tokens": 2,
+ "cache_creation": 23699,
+ "cache_read": 0,
+ "output_tokens": 4977,
+ "num_turns": 1,
+ "output_chars": 13178
+}

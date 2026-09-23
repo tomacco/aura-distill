@@ -85,6 +85,7 @@
         <a href="#exp2">Exp 2 · 16 GB</a>
         <a href="#runlog">Run log</a>
         <a href="#exp3">24 GB</a>
+        <a href="#corpus">Replication</a>
         <a href="#verdict">Verdict</a>
         <a href="#limits">Limitations</a>
     </nav>
@@ -98,8 +99,8 @@
 
         <section id="status">
             <div class="status-banner">
-                <div class="label">Current status &middot; updated 2026-09-22, 17:30 &middot; 24&nbsp;GB tier added</div>
-                <p><strong>The answer splits on memory, and the cliff is between 16&nbsp;GB and 32&nbsp;GB.</strong> At 48 GB a local 27B reached <strong>81% of the Opus reference</strong> at $0 — better than both hosted cheap tiers on faithfulness. Quantising that same model to 4-bit keeps <strong>77%</strong> for half the memory, so capacity matters far more than precision. But even 4-bit needs <strong>17.8 GB resident before a single token of transcript</strong>, which rules out 24 GB machines at default settings and 16 GB machines entirely. At 16 GB the best candidate reached 41%, and the failure is misattribution — scrambling who did what — the one error class this pipeline cannot absorb.</p>
+                <div class="label">Current status &middot; updated 2026-09-23 &middot; replicated on real sessions</div>
+                <p><strong>Replicated.</strong> The headline comparison now holds across three real sessions, two harness formats and 8.6k&ndash;63.3k tokens: the local model beat the hosted cheap tier on <em>every</em> transcript and <em>every</em> metric, and fabricated nothing in three runs. <strong>The answer splits on memory, and the cliff is between 16&nbsp;GB and 32&nbsp;GB.</strong> At 48 GB a local 27B reached <strong>81% of the Opus reference</strong> at $0 — better than both hosted cheap tiers on faithfulness. Quantising that same model to 4-bit keeps <strong>77%</strong> for half the memory, so capacity matters far more than precision. But even 4-bit needs <strong>17.8 GB resident before a single token of transcript</strong>, which rules out 24 GB machines at default settings and 16 GB machines entirely. At 16 GB the best candidate reached 41%, and the failure is misattribution — scrambling who did what — the one error class this pipeline cannot absorb.</p>
             </div>
         </section>
 
@@ -305,6 +306,16 @@
                         <td>Reproduced all four original candidates' labels exactly on a different shuffle — the pinned rubric is stable. The new run scored 1 fabricated, not the 0 its own single-candidate pass reported.</td>
                     </tr>
                     <tr>
+                        <td>2026-09-23</td>
+                        <td>Replication — local 4-bit vs Haiku on two further real sessions (8.6k Claude, 63.3k Codex)</td>
+                        <td><strong>Holds on all three.</strong> Local 87% of ceiling mean vs Haiku 59%; grounding 0.882 vs 0.639; zero fabrications vs eight. The original transcript was the local model's worst case.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-23</td>
+                        <td>Renderer extended to Codex CLI transcripts</td>
+                        <td>Cross-checked against an independent implementation — turn and tool counts match exactly. Both implementations were dropping Codex tool output (a list of blocks, not a string); the corpus manifest under-counts two sessions by ~55%.</td>
+                    </tr>
+                    <tr>
                         <td>2026-09-22</td>
                         <td>24 GB tier — Qwen3.8-27B at 4-bit, study transcript</td>
                         <td>77% of ceiling (vs 81% at 8-bit) for 18.9 GB instead of 32.3, 4.6&times; faster, and zero fabrications. Capacity beats precision: &minus;4 points for half the memory, against &minus;40 for a smaller model.</td>
@@ -375,6 +386,45 @@
             </div>
         </section>
 
+        <section id="corpus">
+            <h2>Replication on real sessions <span class="pill pill-done">n = 3</span></h2>
+            <p>Everything above rests on one transcript. This repeats the comparison that carries the decision &mdash; the shippable local model against the hosted cheap tier &mdash; on two further sessions drawn from a private corpus, ranked by the distiller's own recorded signal counts rather than by anything this study chose.</p>
+            <p>Same harness, same prompt, same judge. Each transcript gets its <em>own</em> Opus reference and its own self-agreement ceiling, because the ceiling is a property of the transcript, not a constant.</p>
+
+            <table>
+                <thead><tr><th>Transcript</th><th>Ceiling</th><th>Qwen3.8-27B 4-bit <em>(local, $0)</em></th><th>Haiku 4.5 <em>(hosted)</em></th></tr></thead>
+                <tbody>
+                    <tr><td>13.6k &middot; Claude <em>(original)</em></td><td>0.918</td><td>77%</td><td>58%</td></tr>
+                    <tr><td>8.6k &middot; Claude</td><td>0.930</td><td>87%</td><td>65%</td></tr>
+                    <tr><td>63.3k &middot; Codex</td><td>0.869</td><td><strong>96%</strong></td><td>53%</td></tr>
+                    <tr><td><strong>mean</strong></td><td>0.906</td><td><strong>87%</strong></td><td><strong>59%</strong></td></tr>
+                </tbody>
+            </table>
+            <table>
+                <thead><tr><th>Faithfulness</th><th>13.6k</th><th>8.6k</th><th>63.3k</th><th>mean</th></tr></thead>
+                <tbody>
+                    <tr><td>Local grounding</td><td>0.844</td><td>0.914</td><td>0.889</td><td><strong>0.882</strong></td></tr>
+                    <tr><td>Haiku grounding</td><td><span class="score-negative">0.552</span></td><td>0.766</td><td>0.600</td><td><span class="score-negative"><strong>0.639</strong></span></td></tr>
+                    <tr><td>Local fabricated</td><td>0</td><td>0</td><td>0</td><td class="score-positive"><strong>0</strong></td></tr>
+                    <tr><td>Haiku fabricated</td><td>6</td><td>1</td><td>1</td><td>8</td></tr>
+                    <tr><td>Local distorted</td><td>7</td><td>3</td><td>5</td><td>15</td></tr>
+                    <tr><td>Haiku distorted</td><td>20</td><td>10</td><td>19</td><td>49</td></tr>
+                </tbody>
+            </table>
+
+            <div class="insight">
+                <div class="insight-label">The claim that argued against the routing directive is no longer n = 1</div>
+                <p>A local open-weights model running for free on the developer's own machine produced a more faithful harvest than the hosted cheap tier on <strong>three of three</strong> real sessions, across two different CLI formats, with <strong>zero fabricated claims</strong> against Haiku's eight. The original transcript turns out to have been the local model's <em>worst</em> showing, not a flattering one.</p>
+            </div>
+
+            <h3>The ceiling is a property of the transcript</h3>
+            <p>Opus's self-agreement varied &mdash; 0.918, 0.930, 0.869 &mdash; and fell on the longest session. Any study reporting &ldquo;% of a reference model&rdquo; without measuring that per input is quietly mixing run-to-run variance into its quality gaps.</p>
+
+            <h3>An observation, not yet a finding</h3>
+            <p>The local model <em>improved</em> as transcripts got longer (77% &rarr; 87% &rarr; 96%) while the ceiling fell. One reading is that on long sessions every model converges on the main arc, and the fine detail Opus captures inconsistently is exactly where disagreement lives. Three points do not support asserting that. What it does settle is that the <em>&ldquo;long transcripts unaddressed&rdquo;</em> caveat this study carried from the start pointed the wrong way: length was not where the local model fell apart.</p>
+            <p>Two constraints on this replication, both real. Only the <strong>local model and Haiku</strong> were re-run &mdash; the 16&nbsp;GB candidates and the 8-bit variant were not, because their verdicts were already unambiguous and re-running a clear negative buys little. And the corpus excludes one session containing employer-internal infrastructure detail, at its owner's direction.</p>
+        </section>
+
         <section id="verdict">
             <h2>Where this leaves the feature</h2>
             <table>
@@ -393,7 +443,7 @@
             </table>
             <p><strong>There is a real local option, and it needs 32 GB.</strong> On a machine that has it, a 27B does this stage better than the cheap hosted tier, for nothing. At 4-bit it keeps 77% of the reference, runs in under seven minutes and needs 18.9 GB — which is why 32 GB, not 24, is the floor.</p>
             <p><strong>There is no 16 GB or 24 GB option today.</strong> At 16 GB, a 40-point gap and grounding in the low 0.6s across three families. At 24 GB the quality is there but the memory is not, without a system-level change. The honest recommendation below 32 GB is a hosted mid-tier model, not a local one.</p>
-            <p><strong>Haiku remains the most alarming row in the table</strong>, and it is hosted. Its 0.552 grounding and six invented claims are worse than every local model tested, including ones a third its likely size. Cheapness bought neither speed nor safety here.</p>
+            <p><strong>Haiku remains the most alarming row in the table</strong>, and it is hosted. Across three sessions it grounded a mean of <strong>0.639</strong> of its own claims and invented eight, against zero from the free local model. Cheapness bought neither speed nor safety here.</p>
             <div class="insight">
                 <div class="insight-label">What would change the answer</div>
                 <p>Not a better 9B. The gap is too large for a model of that size to close by being slightly better. What could close it is changing the <em>task</em>: chunking a transcript so a small model judges one exchange at a time, where misattribution has far less room to occur, and where a wrong answer is cheap to discard. That is a different experiment, and this study does not test it.</p>
@@ -402,7 +452,7 @@
 
         <section id="limits">
             <h2>Limitations <span class="provisional">read before citing</span></h2>
-            <p><strong>One transcript, one run per model.</strong> There is no variance estimate anywhere on this page. The ceiling itself (0.918) is a single measurement. Any gap smaller than a few points is noise until replicated across roughly five sessions, and that replication has not happened.</p>
+            <p><strong>Still one run per model per transcript.</strong> The headline comparison &mdash; local versus hosted cheap tier &mdash; now has three transcripts behind it and survives on all three, so it no longer rests on a single measurement. Everything else on this page does: the 16&nbsp;GB verdicts, the thinking-off result and the 8-bit/4-bit comparison were each measured once, on the original transcript. Treat those as provisional.</p>
             <p><strong>The judge and the reference are the same model family.</strong> Opus judges output that is scored against an Opus reference. Self-preference bias is plausible even with the judge blind to which system produced what, and it would inflate the ceiling row while deflating everyone else. The adjudication pass fixed the <em>consistency</em> of the fabrication boundary; it does nothing about this.</p>
             <p><strong>A rendered transcript is a proxy.</strong> Today's <code>/distill</code> harvests from live conversation context. This study feeds a text rendering with tool results truncated. That proxy is right for the planned background auto-distiller, which will also cold-read transcripts from disk, and wrong for measuring the in-session command as it ships now.</p>
             <p><strong>Only the harvest stage.</strong> Encoding — the step that actually writes to the knowledge base — is a harder, higher-stakes job, and nothing here says anything about running <em>that</em> locally.</p>

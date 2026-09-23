@@ -1,0 +1,19 @@
+{
+ "n_claims_pooled": 17,
+ "labels_changed": 2,
+ "per_candidate": {
+  "haiku-1": {
+   "n": 11,
+   "changed": 1
+  },
+  "qwen38-27b-4bit": {
+   "n": 3,
+   "changed": 0
+  },
+  "opus-2": {
+   "n": 3,
+   "changed": 1
+  }
+ },
+ "method": "Per-transcript pooled adjudication: all non-GROUNDED claims from every candidate on THIS transcript scored in one blind shuffled call with the pinned rubric."
+}

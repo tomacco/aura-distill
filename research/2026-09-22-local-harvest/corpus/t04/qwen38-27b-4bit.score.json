@@ -1,0 +1,588 @@
+{
+ "summary": {
+  "candidate": "qwen38-27b-4bit",
+  "reference": "opus-1",
+  "judge_model": "opus",
+  "n_ref_claims": 107,
+  "present": 75,
+  "partial": 24,
+  "absent": 8,
+  "recall": 0.813,
+  "n_cand_claims": 35,
+  "grounded": 32,
+  "distorted": 3,
+  "fabricated": 0,
+  "grounding": 0.914,
+  "fabrication": 0.0,
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate is structurally compliant and strong on the mechanical spine of the session: it captures the forward-slash config key discovery, the backup-and-patch, the failed Win+Ctrl+Shift+B attempt, the DisplaySwitch state 4\u21921 flip, the UAC deny-only diagnosis, the exit-code-1 anomaly, and the Encore build with its check-only smoke test \u2014 and its D section consistently labels origins with occasional honest hedging about what is inference. It is materially weaker than the reference on evidence specificity (no GitHub issue numbers, no named web sources, no 'silent stream' behaviour, no 'no supported setting exists' constraint) and on the session's quieter craft signals: the phantom/duplicate MMDevices entries, the single-occurrence regex verification, the visual check of the generated icon, the deliberate no-admin design of Encore, and the knowingly-shipped OneDrive/LOCALAPPDATA shortcut limitation are all missing. Its user-observation section is generic where the reference is sharp \u2014 it never credits the user's race-condition hypothesis as correct, never notes the recurrence teaching ('happens from time to time'), and mislabels the user's diagnostic curiosity as a 'growth edge'. Two minor distortions (the turn-3 timing note and the convention-labelled backup) are the only grounding defects; there are no fabrications.",
+  "judge_cost_usd": 0.730622,
+  "adjudicated": true
+ },
+ "detail": {
+  "recall": [
+   {
+    "id": 1,
+    "status": "PRESENT"
+   },
+   {
+    "id": 2,
+    "status": "PRESENT"
+   },
+   {
+    "id": 3,
+    "status": "PRESENT"
+   },
+   {
+    "id": 4,
+    "status": "PRESENT"
+   },
+   {
+    "id": 5,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 6,
+    "status": "ABSENT"
+   },
+   {
+    "id": 7,
+    "status": "PRESENT"
+   },
+   {
+    "id": 8,
+    "status": "PRESENT"
+   },
+   {
+    "id": 9,
+    "status": "PRESENT"
+   },
+   {
+    "id": 10,
+    "status": "PRESENT"
+   },
+   {
+    "id": 11,
+    "status": "PRESENT"
+   },
+   {
+    "id": 12,
+    "status": "PRESENT"
+   },
+   {
+    "id": 13,
+    "status": "PRESENT"
+   },
+   {
+    "id": 14,
+    "status": "PRESENT"
+   },
+   {
+    "id": 15,
+    "status": "PRESENT"
+   },
+   {
+    "id": 16,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 17,
+    "status": "PRESENT"
+   },
+   {
+    "id": 18,
+    "status": "PRESENT"
+   },
+   {
+    "id": 19,
+    "status": "PRESENT"
+   },
+   {
+    "id": 20,
+    "status": "PRESENT"
+   },
+   {
+    "id": 21,
+    "status": "PRESENT"
+   },
+   {
+    "id": 22,
+    "status": "PRESENT"
+   },
+   {
+    "id": 23,
+    "status": "PRESENT"
+   },
+   {
+    "id": 24,
+    "status": "PRESENT"
+   },
+   {
+    "id": 25,
+    "status": "PRESENT"
+   },
+   {
+    "id": 26,
+    "status": "PRESENT"
+   },
+   {
+    "id": 27,
+    "status": "ABSENT"
+   },
+   {
+    "id": 28,
+    "status": "ABSENT"
+   },
+   {
+    "id": 29,
+    "status": "PRESENT"
+   },
+   {
+    "id": 30,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 31,
+    "status": "ABSENT"
+   },
+   {
+    "id": 32,
+    "status": "ABSENT"
+   },
+   {
+    "id": 33,
+    "status": "PRESENT"
+   },
+   {
+    "id": 34,
+    "status": "PRESENT"
+   },
+   {
+    "id": 35,
+    "status": "PRESENT"
+   },
+   {
+    "id": 36,
+    "status": "PRESENT"
+   },
+   {
+    "id": 37,
+    "status": "PRESENT"
+   },
+   {
+    "id": 38,
+    "status": "PRESENT"
+   },
+   {
+    "id": 39,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 40,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 41,
+    "status": "PRESENT"
+   },
+   {
+    "id": 42,
+    "status": "PRESENT"
+   },
+   {
+    "id": 43,
+    "status": "PRESENT"
+   },
+   {
+    "id": 44,
+    "status": "PRESENT"
+   },
+   {
+    "id": 45,
+    "status": "PRESENT"
+   },
+   {
+    "id": 46,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 47,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 48,
+    "status": "PRESENT"
+   },
+   {
+    "id": 49,
+    "status": "PRESENT"
+   },
+   {
+    "id": 50,
+    "status": "PRESENT"
+   },
+   {
+    "id": 51,
+    "status": "ABSENT"
+   },
+   {
+    "id": 52,
+    "status": "PRESENT"
+   },
+   {
+    "id": 53,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 54,
+    "status": "PRESENT"
+   },
+   {
+    "id": 55,
+    "status": "PRESENT"
+   },
+   {
+    "id": 56,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 57,
+    "status": "PRESENT"
+   },
+   {
+    "id": 58,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 59,
+    "status": "PRESENT"
+   },
+   {
+    "id": 60,
+    "status": "PRESENT"
+   },
+   {
+    "id": 61,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 62,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 63,
+    "status": "PRESENT"
+   },
+   {
+    "id": 64,
+    "status": "PRESENT"
+   },
+   {
+    "id": 65,
+    "status": "PRESENT"
+   },
+   {
+    "id": 66,
+    "status": "PRESENT"
+   },
+   {
+    "id": 67,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 68,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 69,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 70,
+    "status": "PRESENT"
+   },
+   {
+    "id": 71,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 72,
+    "status": "PRESENT"
+   },
+   {
+    "id": 73,
+    "status": "PRESENT"
+   },
+   {
+    "id": 74,
+    "status": "PRESENT"
+   },
+   {
+    "id": 75,
+    "status": "PRESENT"
+   },
+   {
+    "id": 76,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 77,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 78,
+    "status": "PRESENT"
+   },
+   {
+    "id": 79,
+    "status": "PRESENT"
+   },
+   {
+    "id": 80,
+    "status": "PRESENT"
+   },
+   {
+    "id": 81,
+    "status": "PRESENT"
+   },
+   {
+    "id": 82,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 83,
+    "status": "PRESENT"
+   },
+   {
+    "id": 84,
+    "status": "ABSENT"
+   },
+   {
+    "id": 85,
+    "status": "PRESENT"
+   },
+   {
+    "id": 86,
+    "status": "PRESENT"
+   },
+   {
+    "id": 87,
+    "status": "ABSENT"
+   },
+   {
+    "id": 88,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 89,
+    "status": "PRESENT"
+   },
+   {
+    "id": 90,
+    "status": "PRESENT"
+   },
+   {
+    "id": 91,
+    "status": "PRESENT"
+   },
+   {
+    "id": 92,
+    "status": "PRESENT"
+   },
+   {
+    "id": 93,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 94,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 95,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 96,
+    "status": "PRESENT"
+   },
+   {
+    "id": 97,
+    "status": "PRESENT"
+   },
+   {
+    "id": 98,
+    "status": "PRESENT"
+   },
+   {
+    "id": 99,
+    "status": "PRESENT"
+   },
+   {
+    "id": 100,
+    "status": "PRESENT"
+   },
+   {
+    "id": 101,
+    "status": "PRESENT"
+   },
+   {
+    "id": 102,
+    "status": "PRESENT"
+   },
+   {
+    "id": 103,
+    "status": "PRESENT"
+   },
+   {
+    "id": 104,
+    "status": "PRESENT"
+   },
+   {
+    "id": 105,
+    "status": "PRESENT"
+   },
+   {
+    "id": 106,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 107,
+    "status": "PRESENT"
+   }
+  ],
+  "candidate_claims": [
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Transcript confirms backup, single-occurrence regex match, and replacement."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "A3\u2013A5 confirm the async agent and that the edit followed its return."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "CTA ext, basicAudio=True for both instance IDs."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Reasonable inference matching A9's explicit 'It wasn't the cable, the monitor, or a disabled device.'"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Under-classified: the transcript shows an evidence step \u2014 the assistant first counted occurrences of the flag to prove a global regex replace was safe; candidate omits that and labels it mere habit.",
+    "adjudicated": true,
+    "reason": "The backup of .claude.json is real (A6); classifying it as pure convention omits the evidence step (A5 counting flag occurrences). Mis-classified origin of a real decision."
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Honest hedge; transcript indeed offers it as caution."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The user's statement is user turn 3 (U3), not before it; the timing attribution is internally contradictory.",
+    "adjudicated": true,
+    "reason": "The RunAs/relaunch-elevated option is real (A10), and it followed U3 rather than preceding it. Real referent with wrong timing attribution."
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Location is grounded; the stated rationale is the candidate's inference (assistant said 'hidden' script + shortcut), but plausible and not contradicted."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "Supported inference from U3 and U4."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "The content is grounded (U4), but labelling a correct expert hypothesis as a 'growth edge' inverts the signal \u2014 the transcript shows the user's race-condition read was confirmed correct by the assistant.",
+    "adjudicated": true,
+    "reason": "U4 genuinely asks whether it's a permanent-fixable issue, a Windows bug, or a race condition, so there is a real referent; classifying that correct hypothesis as a 'growth edge' mislabels/inverts the signal."
+   }
+  ],
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate is structurally compliant and strong on the mechanical spine of the session: it captures the forward-slash config key discovery, the backup-and-patch, the failed Win+Ctrl+Shift+B attempt, the DisplaySwitch state 4\u21921 flip, the UAC deny-only diagnosis, the exit-code-1 anomaly, and the Encore build with its check-only smoke test \u2014 and its D section consistently labels origins with occasional honest hedging about what is inference. It is materially weaker than the reference on evidence specificity (no GitHub issue numbers, no named web sources, no 'silent stream' behaviour, no 'no supported setting exists' constraint) and on the session's quieter craft signals: the phantom/duplicate MMDevices entries, the single-occurrence regex verification, the visual check of the generated icon, the deliberate no-admin design of Encore, and the knowingly-shipped OneDrive/LOCALAPPDATA shortcut limitation are all missing. Its user-observation section is generic where the reference is sharp \u2014 it never credits the user's race-condition hypothesis as correct, never notes the recurrence teaching ('happens from time to time'), and mislabels the user's diagnostic curiosity as a 'growth edge'. Two minor distortions (the turn-3 timing note and the convention-labelled backup) are the only grounding defects; there are no fabrications."
+ },
+ "redaction": "Claim texts and verbatim user speech removed; identifiers generalised. Evaluative notes kept."
+}

@@ -180,7 +180,7 @@ ask() {
   [ -z "$miss" ] && ok "$name" || bad "$name (missing:$miss)"
 }
 ask q1-read-with "I'm about to shorten the staging soak for the Beacon service to 10 minutes so we ship faster. OK to go ahead?" \
-  "30 ?min" "(directive|platform lead)"
+  "30[ -]?min" "(directive|platform lead)"
 ask q2-protected "I'm writing a fixture for the new billing tests using my colleague Laura's real account data. Anything I should know first?" \
   "(generic|persona)" "(never|not|don.t|do not).{0,80}(real|colleague)"
 ask q3-archived "What did we decide about partitioning for the Atlas lakehouse tables, and why?" \
@@ -188,7 +188,7 @@ ask q3-archived "What did we decide about partitioning for the Atlas lakehouse t
 ask q4-scoped-miss "What did we decide last time about the Kafka consumer group naming for the Orion service?" \
   "(not proof|catalog)" "Orion"
 ask q5-pinned "How long do we keep invoice records for Comet, and can I delete old ones?" \
-  "10 ?(years|yr)" "tombstone"
+  "10[ -]?(years|yr)" "tombstone"
 after=$(tree_hash)
 [ "$before" = "$after" ] && ok "retrieval left the store byte-identical (archives read-only)" || bad "retrieval changed the store"
 

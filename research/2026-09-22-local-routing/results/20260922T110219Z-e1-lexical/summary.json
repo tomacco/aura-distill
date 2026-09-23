@@ -1,0 +1,32 @@
+{
+  "all": {
+    "n": 30,
+    "hit@1": 0.633,
+    "hit@3": 0.7,
+    "top1_acceptable": 0.7,
+    "mrr": 0.698,
+    "latency_ms_median": 0.3
+  },
+  "easy": {
+    "n": 15,
+    "hit@1": 0.933,
+    "hit@3": 0.933,
+    "top1_acceptable": 1.0,
+    "mrr": 0.936,
+    "latency_ms_median": 0.3
+  },
+  "hard": {
+    "n": 15,
+    "hit@1": 0.333,
+    "hit@3": 0.467,
+    "top1_acceptable": 0.4,
+    "mrr": 0.46,
+    "latency_ms_median": 0.3
+  },
+  "router": "lexical",
+  "n_entries": 65,
+  "load_s": 0,
+  "max_rss_mb": 14.0,
+  "device": null,
+  "stamp": "20260922T110219Z"
+}

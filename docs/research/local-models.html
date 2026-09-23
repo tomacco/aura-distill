@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Models for Distillation — aura-distill Research</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,400;0,7..72,600;1,7..72,300;1,7..72,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="research-style.css">
+    <style>
+        /* Live-study additions: a running log, status pills, and one magnitude chart. */
+        .status-banner {
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent-4);
+            background: var(--surface);
+            padding: 1rem 1.25rem;
+            margin: 2rem 0;
+            border-radius: 2px;
+        }
+        .status-banner .label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--accent-4);
+            margin-bottom: 0.4rem;
+        }
+        .status-banner p { margin: 0; }
+        .pill {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 0.15rem 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            color: var(--dim);
+            white-space: nowrap;
+        }
+        .pill-done { color: var(--positive); border-color: var(--positive); }
+        .pill-running { color: var(--accent-4); border-color: var(--accent-4); }
+        .pill-queued { color: var(--dim); }
+        .chart-figure { margin: 2rem 0; }
+        .chart-figure svg { width: 100%; height: auto; display: block; }
+        .chart-caption {
+            font-size: 0.85rem;
+            color: var(--dim);
+            margin-top: 0.75rem;
+            font-style: italic;
+        }
+        .c-bar { fill: var(--accent); }
+        .c-grid { stroke: var(--ornament-dim); stroke-width: 1; }
+        .c-axis { stroke: var(--ornament); stroke-width: 1; }
+        .c-ceiling { stroke: var(--accent-4); stroke-width: 2; stroke-dasharray: 4 4; }
+        .c-label { font-family: 'Inter', sans-serif; font-size: 14px; fill: var(--text); }
+        .c-value { font-family: 'JetBrains Mono', monospace; font-size: 14px; fill: var(--bright); }
+        .c-note  { font-family: 'JetBrains Mono', monospace; font-size: 11px; fill: var(--dim); }
+        .c-mark  { font-family: 'JetBrains Mono', monospace; font-size: 11px; fill: var(--accent-4); }
+        .runlog td:first-child { white-space: nowrap; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
+        .provisional {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--negative);
+            border: 1px solid var(--negative);
+            padding: 0.1rem 0.4rem;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <button class="mode-toggle" onclick="toggleMode()" aria-label="Toggle dark mode">
+        <span class="icon-sun">☀</span>
+        <span class="icon-moon">☽</span>
+    </button>
+    <nav class="toc">
+        <a href="#status">Status</a>
+        <a href="#question">The question</a>
+        <a href="#method">How it's scored</a>
+        <a href="#exp1">Exp 1 · 48 GB</a>
+        <a href="#exp2">Exp 2 · 16 GB</a>
+        <a href="#runlog">Run log</a>
+        <a href="#exp3">24 GB</a>
+        <a href="#verdict">Verdict</a>
+        <a href="#limits">Limitations</a>
+    </nav>
+    <div class="container">
+        <header>
+            <a href="./" class="back">&larr; All research</a>
+            <h1>Can a Local Model Do the Distilling?</h1>
+            <div class="meta">September 2026 &middot; <strong>live study, updated as runs land</strong> &middot; Apple M5 Pro 48 GB &rarr; 16 GB targets</div>
+            <p class="abstract">Distillation's first stage reads a session transcript and extracts the signals worth remembering. The routing directive already forbids frontier models there. This study asks how much further down it goes — all the way to an open-weights model on the user's own machine, at zero API cost. The answer splits sharply on memory: at 48 GB a local model beats the hosted cheap tier outright; at 16 GB, the configuration most users actually have, nothing tested is usable. Results were published here as each run landed, not held back until the end.</p>
+        </header>
+
+        <section id="status">
+            <div class="status-banner">
+                <div class="label">Current status &middot; updated 2026-09-22, 17:30 &middot; 24&nbsp;GB tier added</div>
+                <p><strong>The answer splits on memory, and the cliff is between 16&nbsp;GB and 32&nbsp;GB.</strong> At 48 GB a local 27B reached <strong>81% of the Opus reference</strong> at $0 — better than both hosted cheap tiers on faithfulness. Quantising that same model to 4-bit keeps <strong>77%</strong> for half the memory, so capacity matters far more than precision. But even 4-bit needs <strong>17.8 GB resident before a single token of transcript</strong>, which rules out 24 GB machines at default settings and 16 GB machines entirely. At 16 GB the best candidate reached 41%, and the failure is misattribution — scrambling who did what — the one error class this pipeline cannot absorb.</p>
+            </div>
+        </section>
+
+        <section id="question">
+            <h2>The question, and why the cheap tier isn't obviously the answer</h2>
+            <p><span class="drop-cap">T</span>he <code>/distill</code> pipeline's Step 1 — <em>signal harvest</em> — reads a conversation and emits a five-part structured summary: failures and friction, corrections the user made, observations about how the user works, the origin of each decision, and session metadata. It is extraction, not judgment about code, so the <a href="model-routing.html">routing study</a> assigns it to the cheap tier.</p>
+            <p>Two things make that worth re-testing. First, the stage runs in the background for the planned auto-distiller, so latency barely matters and quality does. Second, a model that runs locally costs nothing per token — which makes it the true floor of the cheap tier, below Haiku, if its output is good enough.</p>
+            <p>"Good enough" is the hard part. A harvest that invents a fact does not merely score badly; it writes a false belief about the user into a knowledge base that later sessions treat as authoritative. So this study measures two different things and refuses to collapse them: how much the model <em>finds</em>, and how much of what it says is <em>true</em>.</p>
+        </section>
+
+        <section id="method">
+            <h2>How a model is scored against Opus</h2>
+            <p>One real Claude Code session is rendered to plain text, deterministically. Every model — hosted or local — receives byte-identical input and the same prompt, lifted from the shipped <code>distill.md</code>. Opus 5's harvest is the reference. Then a blind judge, never told which system produced which output, does two passes:</p>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <div class="detail-label">Recall</div>
+                    <div class="detail-value">The reference is decomposed into 116 atomic claims. Each is marked present, partial or absent in the candidate. <em>How much did it find?</em></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Grounding</div>
+                    <div class="detail-value">The candidate is decomposed into its <em>own</em> claims, each checked against the transcript: grounded, distorted, or fabricated. <em>Is what it says true?</em></div>
+                </div>
+            </div>
+            <div class="insight">
+                <div class="insight-label">The ceiling is not 100%</div>
+                <p>Opus re-run on the identical prompt recalls only <strong>91.8%</strong> of its own first answer. Two runs of the same frontier model disagree about one claim in twelve. So 0.918 — not 1.0 — is what "100% of Opus" means on this page; every percentage is normalised to it. Without that anchor, every model looks worse than it is, and the reader has no way to tell ordinary run-to-run variance from a real quality gap.</p>
+            </div>
+            <p>One correction is baked into the method. In the first pass each candidate was judged in a separate call, and the boundary between "distorted" and "fabricated" drifted between them — the same kind of note landed on different sides for different models. An independent reviewer caught it. A <a href="https://github.com/tomacco/aura-distill/blob/main/research/2026-09-22-local-harvest/tools/adjudicate.py">calibrated adjudication pass</a> now pools every non-grounded claim from every candidate into one blind, shuffled call with a pinned rubric, so a single boundary applies to all of them. It moved 10 of 43 labels, and it changed a headline figure. Numbers below are post-adjudication.</p>
+        </section>
+
+        <section id="exp1">
+            <h2>Experiment 1 &middot; 48 GB <span class="pill pill-done">complete</span></h2>
+            <p><strong>Candidate:</strong> Qwen3.8-27B, MLX 8-bit, on an Apple M5 Pro with 48 GB unified memory. <strong>Anchors:</strong> Opus 5 (reference and ceiling), Sonnet 5, Haiku 4.5.</p>
+
+            <div class="chart-figure">
+                <svg viewBox="0 0 720 300" role="img" aria-label="Harvest quality as a percentage of the Opus self-agreement ceiling: Opus 5 rerun 100%, Qwen3.8-27B local 81%, Sonnet 5 74%, Haiku 4.5 58%.">
+                    <line class="c-grid" x1="295" y1="34" x2="295" y2="246" />
+                    <line class="c-grid" x1="410" y1="34" x2="410" y2="246" />
+                    <line class="c-grid" x1="525" y1="34" x2="525" y2="246" />
+                    <line class="c-ceiling" x1="640" y1="26" x2="640" y2="246" />
+                    <text class="c-mark" x="640" y="18" text-anchor="middle">ceiling</text>
+                    <line class="c-axis" x1="180" y1="34" x2="180" y2="246" />
+
+                    <text class="c-label" x="170" y="62" text-anchor="end">Opus 5 rerun</text>
+                    <path class="c-bar" d="M180,44 H636 Q640,44 640,48 V68 Q640,72 636,72 H180 Z" />
+                    <text class="c-value" x="652" y="62">100%</text>
+
+                    <text class="c-label" x="170" y="114" text-anchor="end">Qwen3.8-27B</text>
+                    <text class="c-note" x="170" y="130" text-anchor="end">local · $0</text>
+                    <path class="c-bar" d="M180,96 H548.6 Q552.6,96 552.6,100 V120 Q552.6,124 548.6,124 H180 Z" />
+                    <text class="c-value" x="565" y="114">81%</text>
+
+                    <text class="c-label" x="170" y="166" text-anchor="end">Sonnet 5</text>
+                    <path class="c-bar" d="M180,148 H516.4 Q520.4,148 520.4,152 V172 Q520.4,176 516.4,176 H180 Z" />
+                    <text class="c-value" x="533" y="166">74%</text>
+
+                    <text class="c-label" x="170" y="218" text-anchor="end">Haiku 4.5</text>
+                    <path class="c-bar" d="M180,200 H442.8 Q446.8,200 446.8,204 V224 Q446.8,228 442.8,228 H180 Z" />
+                    <text class="c-value" x="459" y="218">58%</text>
+
+                    <line class="c-axis" x1="180" y1="246" x2="640" y2="246" />
+                    <text class="c-note" x="180" y="266" text-anchor="middle">0</text>
+                    <text class="c-note" x="410" y="266" text-anchor="middle">50</text>
+                    <text class="c-note" x="640" y="266" text-anchor="middle">100</text>
+                    <text class="c-note" x="410" y="288" text-anchor="middle">recall as % of the Opus self-agreement ceiling (0.918)</text>
+                </svg>
+                <div class="chart-caption">One transcript, one run per model. The dashed line is Opus re-run against itself — the highest score any model could honestly be expected to reach.</div>
+            </div>
+
+            <table>
+                <thead><tr><th>Model</th><th>% of Opus</th><th>Grounding</th><th>Fabricated</th><th>Wall clock</th><th>Cost</th></tr></thead>
+                <tbody>
+                    <tr><td>Opus 5 rerun <em>(ceiling)</em></td><td>100%</td><td>0.943</td><td>0</td><td>81 s</td><td>$0.396</td></tr>
+                    <tr><td><strong>Qwen3.8-27B — local</strong></td><td><strong>81%</strong></td><td>0.879</td><td>2 (3.4%)</td><td>1,834 s</td><td><strong>$0</strong></td></tr>
+                    <tr><td>Sonnet 5</td><td>74%</td><td>0.863</td><td>1 (2.0%)</td><td>47 s</td><td>$0.126</td></tr>
+                    <tr><td>Haiku 4.5</td><td>58%</td><td><span class="score-negative">0.552</span></td><td>6 (10.3%)</td><td>103 s</td><td>$0.076</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Finding 1 — the hosted cheap tier fails on truth, not on coverage</h3>
+            <p>Haiku's grounding of <strong>0.552</strong> means nearly half of everything it asserted was wrong in some way against the transcript, and one claim in ten had no referent there at all. The inventions were not random: they were attributions to the user. That the user knew a convention by heart. That the user accepted a proposal. That the user responded to something, when no such response exists in the session.</p>
+            <div class="insight">
+                <div class="insight-label">Why this is worse than a low score</div>
+                <p>The distillation process has an explicit anti-sycophancy rule — never encode comfort as truth. A model that invents user approval violates it in the one section where the error is unrecoverable: the user model. A wrong technical detail gets corrected the next time someone reads the file. A false belief about what the user knows and wants shapes every future session silently.</p>
+            </div>
+
+            <h3>Finding 2 — the local model beat both hosted cheap tiers, for nothing</h3>
+            <p>Qwen3.8-27B recalled more than Sonnet and far more than Haiku, with a grounding score above both, at zero marginal cost. It was not clean — it invented two assistant mental states, and it made the same <em>category</em> of error as the others, recasting the user's knowledge gaps as expertise. Sycophancy toward the user model is the shared weakness of every non-frontier model tested, local ones included. If a local model ships, that section needs a guard.</p>
+            <p>Where it loses ground is precision about numbers: it drops token counts, dollar figures and file counts, and is weakest exactly where the reference is densest. Structurally it was flawless — five sections in order, every decision carrying an origin label — and the judge rated its origin-labelling discipline <em>better than the reference's</em>.</p>
+
+            <h3>Finding 3 — the cost is entirely time, and thinking is most of it</h3>
+            <p>30.6 minutes against Opus's 71 seconds. Prompt processing was fine at 342 tokens/s; generation ran at 8.8 tokens/s because a dense 27B at 8-bit is memory-bandwidth bound. Two-thirds of everything it generated was reasoning the user never sees — 42,654 characters of thinking before the first line of the answer. That makes the thinking budget, not the model size, the first lever to pull.</p>
+            <p>At 30 minutes per transcript a nightly background pass over undistilled sessions is unremarkable. An interactive <code>/distill</code> at that latency is not shippable.</p>
+
+            <h3>A measurement worth stealing</h3>
+            <p>A two-character prompt through the same headless flags costs <strong>8,302 tokens</strong> — about 7.5k of which is pure harness floor carried into every call, before any content. <code>--tools ""</code> and <code>--tools none</code> measure identically. Any token accounting that ignores that floor is wrong by roughly the size of a small transcript.</p>
+        </section>
+
+        <section id="exp2">
+            <h2>Experiment 2 &middot; 16 GB <span class="pill pill-done">complete</span></h2>
+            <p>Experiment 1 measured a ceiling on a developer machine. This one measures what users actually get. On 16 GB of unified memory the OS and open applications leave roughly 8–10 GB for weights <em>and</em> KV cache, which rules out everything tested above.</p>
+            <div class="insight">
+                <div class="insight-label">One variable at a time, deliberately</div>
+                <p>The obvious move is to change thinking, architecture and quantization together and jump straight to a 16 GB candidate. That would make the result uninterpretable: whichever changes first moves the number, and the others get measured against a different baseline. Thinking-off on the already-characterised 27B runs first for exactly that reason, even though it costs an extra run.</p>
+            </div>
+
+            <h3>Run 1 &mdash; thinking off: 4.8&times; faster, 9 points cheaper in recall</h3>
+            <p>Same model, same weights, same transcript, same prompt, same judge. The only change is that the model no longer reasons before answering.</p>
+            <table>
+                <thead><tr><th>Qwen3.8-27B, 8-bit</th><th>Thinking on</th><th>Thinking off</th><th>Change</th></tr></thead>
+                <tbody>
+                    <tr><td>% of Opus ceiling</td><td>81%</td><td>72%</td><td class="score-negative">&minus;9 pts</td></tr>
+                    <tr><td>Grounding</td><td>0.879</td><td>0.867</td><td>&minus;0.012</td></tr>
+                    <tr><td>Fabricated claims</td><td>2 (3.4%)</td><td>1 (2.2%)</td><td class="score-positive">&minus;1</td></tr>
+                    <tr><td>Wall clock</td><td>1,834 s</td><td><strong>382 s</strong></td><td class="score-positive">4.8&times; faster</td></tr>
+                    <tr><td>Generated tokens</td><td>15,765</td><td>3,007</td><td>&minus;12,758</td></tr>
+                </tbody>
+            </table>
+            <div class="insight">
+                <div class="insight-label">Thinking buys coverage, not honesty</div>
+                <p>The entire cost of switching it off lands on <em>recall</em> — the model finds less. Grounding moves by about one percentage point and fabrications go <em>down</em>, not up. That separates two things it would have been easy to conflate: reasoning tokens help a model notice more of what happened, and do essentially nothing for whether what it reports is true. For a background job that can afford thirty minutes, leave thinking on. For anything latency-bound, switching it off is a coverage trade, not an integrity one.</p>
+            </div>
+            <p>Both runs still generate at 8.8 tokens/s — the speedup is entirely fewer tokens, not faster ones, which confirms the bandwidth bound rather than working around it. Peak memory was unchanged at 32.3 GB, so this run does nothing for the 16 GB problem on its own; it isolates a lever before the memory-constrained candidates move three variables at once.</p>
+            <p><strong>Against the prediction.</strong> Thinking-off was called as the biggest single speed lever available, and at 4.8&times; that held. The open question was whether removing deliberation would worsen the user-model errors or reduce them: the answer is neither to any meaningful degree. That question is now closed, and closing it cost one run.</p>
+
+            <h3>The 16 GB candidates</h3>
+            <table>
+                <thead><tr><th>Candidate</th><th>Peak RAM</th><th>Wall</th><th>% of Opus</th><th>Grounding</th><th>Fits 16&nbsp;GB?</th></tr></thead>
+                <tbody>
+                    <tr><td>Qwen3.8-9B, 4-bit</td><td>7.1 GB</td><td>54 s</td><td><strong>41%</strong></td><td>0.594</td><td class="score-positive">yes</td></tr>
+                    <tr><td>gpt-oss-20b, MXFP4</td><td>13.2 GB</td><td>83 s</td><td>36%</td><td>0.600</td><td class="score-negative">no &mdash; exceeds the default GPU wired limit</td></tr>
+                    <tr><td>Gemma 3 12B, 4-bit <em>(substitute)</em></td><td>10.0 GB</td><td>52 s</td><td>16%</td><td>0.645</td><td>marginal</td></tr>
+                    <tr><td>Gemma 4 12B / E4B, 4-bit</td><td colspan="4"><em>Could not be run at all &mdash; see below</em></td><td class="score-negative">n/a</td></tr>
+                </tbody>
+            </table>
+
+            <div class="insight">
+                <div class="insight-label">The verdict at 16 GB</div>
+                <p>Every candidate that fits collapses to <strong>0.59&ndash;0.65 grounding</strong> &mdash; a third of what they assert does not survive a check against the transcript. The best of them recalls 41% of the reference against the 27B's 81%. Halving the memory did not halve the quality; it removed most of it. On this evidence there is <strong>no 16 GB configuration worth shipping</strong> for this stage today.</p>
+            </div>
+
+            <h3>The failure is misattribution, not invention</h3>
+            <p>The study-wide adjudication makes the shape precise. Outright fabrication is <em>rare</em> in the small models &mdash; 0, 1 and 0 claims. What they do instead is <strong>distort</strong>: 13, 15 and 11 claims each carry a real referent stated wrongly. Overwhelmingly, that means swapping who did what. The 9B credited the assistant's proposals to the user and read impatience into a go-ahead the assistant had itself requested. gpt-oss-20b, in the judge's words, <em>"repeatedly credit[s] the user with facts, explanations and directives that were the assistant's own"</em>, and invented user emotions and a session duration.</p>
+            <p>For most summarisation tasks that would be a small error. For this one it is the worst possible error: sections C and D exist precisely to record <em>who</em> decided <em>what</em> and <em>why</em>. A harvest that scrambles agency writes a false model of the user into a knowledge base that later sessions treat as settled fact.</p>
+
+            <h3>Gemma 4 could not be run at all</h3>
+            <p>Neither Gemma 4 size that fits 16 GB is loadable by any released mlx-lm. The 12B checkpoints declare model type <code>gemma4_unified</code>, which 0.31.3 &mdash; the newest on PyPI &mdash; does not implement; E4B fails with a 126-parameter mismatch against the <code>gemma4</code> implementation that does exist. The 26B-A4B MoE that <em>would</em> load is 15.6 GB, too large for the target. Gemma 3 12B stands in, and is labelled a substitute rather than a Gemma 4 result.</p>
+            <div class="insight">
+                <div class="insight-label">Tooling support gates availability, independently of capability</div>
+                <p>A model you cannot load is not a candidate, however good its benchmarks are. For a hosted API this failure mode does not exist. For a local-model strategy it is a first-class risk, and it argues for treating runtime support as a selection criterion rather than an implementation detail &mdash; especially for a feature shipped to users who will not debug a quantisation loader.</p>
+            </div>
+        </section>
+
+        <section id="runlog">
+            <h2>Run log</h2>
+            <p>Every execution, in order, including the ones that changed an earlier answer.</p>
+            <table class="runlog">
+                <thead><tr><th>Date</th><th>What ran</th><th>Outcome</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>Exp 1 — Opus 5 reference + rerun, Sonnet 5, Haiku 4.5, Qwen3.8-27B MLX 8-bit</td>
+                        <td>Local model at 81% of ceiling, $0, 30.6 min. Haiku grounding 0.552.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>Independent review of the published result</td>
+                        <td><strong>Three findings, all upheld.</strong> The documented reproduction steps did not run at all; the "zero fabrications" headline was contradicted by the judge's own notes; a claimed token-floor figure was an unsound subtraction across two tokenizers. All three corrected.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>Calibrated adjudication pass over all 43 non-grounded claims</td>
+                        <td>Moved 10 of 43 labels. Qwen 0 &rarr; 2 fabricated, Haiku 11 &rarr; 6, Sonnet 0 &rarr; 1. Ranking survived; two published headline figures did not.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>Direct measurement of the headless prompt floor</td>
+                        <td>8,302 tokens, identical for <code>--tools ""</code> and <code>--tools none</code>. Replaced the inferred figure.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>Exp 2 — Qwen3.8-27B, thinking disabled</td>
+                        <td>4.8&times; faster (382 s vs 1,834 s) for &minus;9 points of recall. Grounding flat, fabrications down. Prediction held on speed; the quality question it was run to settle came back neutral.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>Exp 2 — Qwen3.8-9B 4-bit · gpt-oss-20b MXFP4 · Gemma 3 12B 4-bit</td>
+                        <td>41% / 36% / 16% of the reference; grounding 0.594 / 0.600 / 0.645; 7.1 / 13.2 / 10.0 GB peak. No 16 GB candidate is usable.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>Harness bug — gpt-oss Harmony channel leaked into the scored answer</td>
+                        <td><strong>Caught before scoring.</strong> The runner stripped only <code>&lt;/think&gt;</code>, so 12,921 characters of analysis would have been judged as the harvest. Fixed to extract the <code>final</code> channel, plus a guard that aborts if any chat control token survives. Result re-derived from the saved raw output, not re-run.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>Gemma 4 12B and E4B — load failures</td>
+                        <td>Unrunnable on released mlx-lm (<code>gemma4_unified</code> unimplemented; E4B parameter mismatch). Gemma 3 12B substituted and labelled as such.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>Study-wide adjudication re-run, all five candidates pooled</td>
+                        <td>Reproduced all four original candidates' labels exactly on a different shuffle — the pinned rubric is stable. The new run scored 1 fabricated, not the 0 its own single-candidate pass reported.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>24 GB tier — Qwen3.8-27B at 4-bit, study transcript</td>
+                        <td>77% of ceiling (vs 81% at 8-bit) for 18.9 GB instead of 32.3, 4.6&times; faster, and zero fabrications. Capacity beats precision: &minus;4 points for half the memory, against &minus;40 for a smaller model.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>4-bit peak memory on a 64k-token corpus transcript</td>
+                        <td>22.41 GB. With the 14k-token run this gives a 17.8 GB floor + ~72 MB per 1k tokens &mdash; so 24 GB needs <code>iogpu.wired_limit_mb</code> raised, and 32 GB is the practical floor.</td>
+                    </tr>
+                    <tr>
+                        <td>2026-09-22</td>
+                        <td>Study-wide adjudication, all eight candidates pooled</td>
+                        <td>Third consecutive exact reproduction of every prior label. It also <strong>corrected the small models downward on fabrication</strong>: single-candidate passes had called 2 and 3 invented claims where the study-wide boundary finds 0 and 1. Weak models are misattributing, not hallucinating.</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="insight">
+                <div class="insight-label">What the review cost, and what it bought</div>
+                <p>Two of the three blocking findings changed numbers that had already been published. The reviewer predicted the corrected fabrication rate — ~2 of 58 claims — before the adjudication pass was written, and the pass returned exactly that. The value of a reviewer with no authorship context is not that it finds typos; it is that it does not know which claims you are attached to.</p>
+            </div>
+        </section>
+
+        <section id="exp3">
+            <h2>24 GB &mdash; quantisation instead of a smaller model <span class="pill pill-done">complete</span></h2>
+            <p>Experiments 1 and 2 changed model <em>size</em> to fit smaller machines, and quality collapsed. This asks the other question: keep the 27B that works and cut its <em>precision</em> instead.</p>
+
+            <table>
+                <thead><tr><th>Qwen3.8-27B</th><th>8-bit</th><th>4-bit</th><th>Change</th></tr></thead>
+                <tbody>
+                    <tr><td>% of Opus ceiling</td><td>81%</td><td><strong>77%</strong></td><td class="score-negative">&minus;4 pts</td></tr>
+                    <tr><td>Grounding</td><td>0.879</td><td>0.844</td><td>&minus;0.035</td></tr>
+                    <tr><td>Fabricated claims</td><td>2 (3.4%)</td><td>0</td><td class="score-positive">&minus;2</td></tr>
+                    <tr><td>Peak memory</td><td>32.3 GB</td><td><strong>18.9 GB</strong></td><td class="score-positive">&minus;13.4 GB</td></tr>
+                    <tr><td>Wall clock</td><td>1,834 s</td><td>403 s</td><td class="score-positive">4.6&times; faster</td></tr>
+                    <tr><td>Generation</td><td>8.8 tok/s</td><td>15.4 tok/s</td><td class="score-positive">+75%</td></tr>
+                </tbody>
+            </table>
+
+            <div class="insight">
+                <div class="insight-label">Capacity beats precision, and it is not close</div>
+                <p>Halving precision on a 27B cost <strong>4 points</strong>. Dropping to a 9B at the same precision cost <strong>40</strong>. Both moves free comparable memory. If you have to shrink a local model to fit a machine, quantise the big one rather than reach for a small one &mdash; and the 4-bit run was also cleaner than the 8-bit on fabrication, not worse.</p>
+            </div>
+
+            <h3>But 4-bit still does not fit 24 GB</h3>
+            <p>Peak memory was measured at two transcript lengths, and the difference gives the KV-cache slope directly:</p>
+            <table>
+                <thead><tr><th>Transcript</th><th>Prompt tokens</th><th>Peak memory</th></tr></thead>
+                <tbody>
+                    <tr><td>Study transcript</td><td>14,273</td><td>18.85 GB</td></tr>
+                    <tr><td>Codex session (corpus)</td><td>64,034</td><td>22.41 GB</td></tr>
+                </tbody>
+            </table>
+            <p>That is a <strong>17.8 GB resident floor</strong> plus roughly <strong>72 MB per 1,000 tokens</strong> of transcript. macOS caps GPU-wired memory at about 75% of RAM by default, so:</p>
+            <table>
+                <thead><tr><th>Machine</th><th>Default GPU limit</th><th>Longest transcript that fits</th></tr></thead>
+                <tbody>
+                    <tr><td>16 GB</td><td>~12 GB</td><td class="score-negative">none &mdash; the model does not load</td></tr>
+                    <tr><td>24 GB</td><td>~18 GB</td><td class="score-negative">~2k tokens &mdash; effectively none</td></tr>
+                    <tr><td>24 GB, limit raised to 20 GB</td><td>20 GB</td><td>~30k tokens</td></tr>
+                    <tr><td>24 GB, limit raised to 22 GB</td><td>22 GB</td><td>~58k tokens, leaving 2 GB for everything else</td></tr>
+                    <tr><td>32 GB+</td><td>~24 GB</td><td class="score-positive">comfortable</td></tr>
+                </tbody>
+            </table>
+            <div class="insight">
+                <div class="insight-label">The honest 24 GB verdict</div>
+                <p>A 24 GB Mac cannot run this model as shipped. It can run it if the owner raises <code>iogpu.wired_limit_mb</code> — a system-level change made with <code>sudo sysctl</code>, lost on reboot unless persisted, and not something to put in a feature's setup instructions for general users. Even then the transcript length is capped well below the longest real sessions in the corpus. <strong>The practical floor for this stage is 32 GB.</strong></p>
+                <p><em>Measured on a 48 GB machine.</em> The memory figures are real; the 16/24 GB verdicts are those figures compared against those machines' documented limits, not runs on such machines. Anyone with a 24 GB Mac who wants to falsify this only needs to run the harness on one.</p>
+            </div>
+        </section>
+
+        <section id="verdict">
+            <h2>Where this leaves the feature</h2>
+            <table>
+                <thead><tr><th>Model</th><th>Where</th><th>Peak RAM</th><th>Wall</th><th>% of Opus</th><th>Grounding</th></tr></thead>
+                <tbody>
+                    <tr><td>Opus 5 rerun <em>(ceiling)</em></td><td>API</td><td>—</td><td>81 s</td><td>100%</td><td>0.943</td></tr>
+                    <tr><td><strong>Qwen3.8-27B, thinking on</strong></td><td><strong>local</strong></td><td>32.3 GB</td><td>1,834 s</td><td><strong>81%</strong></td><td>0.879</td></tr>
+                    <tr><td><strong>Qwen3.8-27B, 4-bit</strong></td><td><strong>local</strong></td><td>18.9 GB</td><td>403 s</td><td><strong>77%</strong></td><td>0.844</td></tr>
+                    <tr><td>Sonnet 5</td><td>API</td><td>—</td><td>47 s</td><td>74%</td><td>0.863</td></tr>
+                    <tr><td>Qwen3.8-27B, thinking off</td><td>local</td><td>32.3 GB</td><td>382 s</td><td>72%</td><td>0.867</td></tr>
+                    <tr><td>Haiku 4.5</td><td>API</td><td>—</td><td>103 s</td><td>58%</td><td><span class="score-negative">0.552</span></td></tr>
+                    <tr><td>Qwen3.8-9B, 4-bit</td><td>local</td><td>7.1 GB</td><td>54 s</td><td>41%</td><td>0.594</td></tr>
+                    <tr><td>gpt-oss-20b, MXFP4</td><td>local</td><td>13.2 GB</td><td>83 s</td><td>36%</td><td>0.600</td></tr>
+                    <tr><td>Gemma 3 12B, 4-bit</td><td>local</td><td>10.0 GB</td><td>52 s</td><td>16%</td><td>0.645</td></tr>
+                </tbody>
+            </table>
+            <p><strong>There is a real local option, and it needs 32 GB.</strong> On a machine that has it, a 27B does this stage better than the cheap hosted tier, for nothing. At 4-bit it keeps 77% of the reference, runs in under seven minutes and needs 18.9 GB — which is why 32 GB, not 24, is the floor.</p>
+            <p><strong>There is no 16 GB or 24 GB option today.</strong> At 16 GB, a 40-point gap and grounding in the low 0.6s across three families. At 24 GB the quality is there but the memory is not, without a system-level change. The honest recommendation below 32 GB is a hosted mid-tier model, not a local one.</p>
+            <p><strong>Haiku remains the most alarming row in the table</strong>, and it is hosted. Its 0.552 grounding and six invented claims are worse than every local model tested, including ones a third its likely size. Cheapness bought neither speed nor safety here.</p>
+            <div class="insight">
+                <div class="insight-label">What would change the answer</div>
+                <p>Not a better 9B. The gap is too large for a model of that size to close by being slightly better. What could close it is changing the <em>task</em>: chunking a transcript so a small model judges one exchange at a time, where misattribution has far less room to occur, and where a wrong answer is cheap to discard. That is a different experiment, and this study does not test it.</p>
+            </div>
+        </section>
+
+        <section id="limits">
+            <h2>Limitations <span class="provisional">read before citing</span></h2>
+            <p><strong>One transcript, one run per model.</strong> There is no variance estimate anywhere on this page. The ceiling itself (0.918) is a single measurement. Any gap smaller than a few points is noise until replicated across roughly five sessions, and that replication has not happened.</p>
+            <p><strong>The judge and the reference are the same model family.</strong> Opus judges output that is scored against an Opus reference. Self-preference bias is plausible even with the judge blind to which system produced what, and it would inflate the ceiling row while deflating everyone else. The adjudication pass fixed the <em>consistency</em> of the fabrication boundary; it does nothing about this.</p>
+            <p><strong>A rendered transcript is a proxy.</strong> Today's <code>/distill</code> harvests from live conversation context. This study feeds a text rendering with tool results truncated. That proxy is right for the planned background auto-distiller, which will also cold-read transcripts from disk, and wrong for measuring the in-session command as it ships now.</p>
+            <p><strong>Only the harvest stage.</strong> Encoding — the step that actually writes to the knowledge base — is a harder, higher-stakes job, and nothing here says anything about running <em>that</em> locally.</p>
+            <p><strong>Long sessions are unaddressed.</strong> The test transcript is 13.6k tokens and fits trivially. A 100k-token session's KV cache will not fit on a 16 GB machine at all; chunking and merging is a separate design problem that has not been measured.</p>
+            <p><strong>This page does not update the routing playbook.</strong> The <a href="model-routing.html">model routing study</a> currently recommends Haiku-tier for extraction, which finding 1 is evidence against. One transcript is not enough to overturn a published recommendation, so the tension is <a href="https://github.com/tomacco/aura-distill/issues/99">tracked as an open issue</a> rather than acted on.</p>
+            <p><strong>What is not published.</strong> The session transcript, the five models' harvest outputs and the reference claim texts stay private — they are a real session and five models' written observations about a real person. All measurements, all tooling and the judges' evaluative notes are public, and the harness regenerates the rest from any local transcript.</p>
+        </section>
+
+        <footer>
+            <a href="https://github.com/tomacco/aura-distill/tree/main/research/2026-09-22-local-harvest">Measurements, harness &amp; judge artifacts</a> &middot; <a href="https://github.com/tomacco/aura-distill/issues/96">Issue #96</a> &middot; <a href="./">Back to research index</a>
+        </footer>
+    </div>
+
+    <script src="research-theme.js"></script>
+    <script src="research-tracker.js"></script>
+</body>
+</html>

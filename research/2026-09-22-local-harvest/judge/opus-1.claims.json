@@ -1,0 +1,11 @@
+{
+ "n_claims": 116,
+ "per_section": {
+  "A": 32,
+  "B": 14,
+  "C": 20,
+  "D": 26,
+  "E": 24
+ },
+ "note": "Claim texts withheld: they are a decomposition of a real session transcript. Regenerate with tools/judge.py extract <reference-label>."
+}

@@ -12,6 +12,9 @@ on:
       - 'docs/signoff-*.svg'
       - 'README.md'
       - '.github/**'
+      # Research folders publish measurements, not shipped behaviour — a version
+      # bump there would widen VERSION/Homebrew-formula drift for no user change.
+      - 'research/**'
 
 jobs:
   bump:

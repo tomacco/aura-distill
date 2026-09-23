@@ -1,0 +1,13 @@
+{
+ "label": "sonnet-1",
+ "model": "claude-sonnet-5",
+ "wall_s": 46.5,
+ "duration_api_ms": 44911,
+ "cost_usd": 0.126474,
+ "input_tokens": 2,
+ "cache_creation": 20665,
+ "cache_read": 0,
+ "output_tokens": 4381,
+ "num_turns": 1,
+ "output_chars": 12200
+}

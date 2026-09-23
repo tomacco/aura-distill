@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/header.svg?v=1.1.16" alt="aura-distill" width="800"/>
+  <img src="docs/header.svg?v=1.1.23" alt="aura-distill" width="800"/>
 </p>
 
 <p align="center">
@@ -76,6 +76,8 @@ This installs:
 | managed pointer | `~/.codex/AGENTS.md` | Makes Codex load the shared SPINE |
 
 Zero dependencies. No Node.js. No MCP server. No database. Just files.
+
+**Google Antigravity (agy)** support ships in-repo as a plugin (not yet wired into the installers — tracked in [#67](https://github.com/tomacco/aura-distill/issues/67)): copy `plugins/aura-distill/` into an Antigravity customization root's `plugins/` folder and it is discovered automatically — `skills/distill/SKILL.md` (the distill workflow), `rules/AGENTS.md` (session rules deferring to the canonical monitor), plus `bin/distill-recent-agy.sh`/`.ps1`, a Time Index over Antigravity brain transcripts. Knowledge lives in the same shared `~/.aura-distill/`. One dependency note: the POSIX Time Index twin is Python-backed (the PowerShell twin needs nothing); the core system stays dependency-free.
 
 ---
 
@@ -181,5 +183,5 @@ Your knowledge files in `~/.aura-distill/` are preserved. They're yours.
 ---
 
 <p align="center">
-  <sub>v1.1.16 · MIT · Built for Claude Code and Codex</sub>
+  <sub>v1.1.23 · MIT · Built for Claude Code and Codex</sub>
 </p>

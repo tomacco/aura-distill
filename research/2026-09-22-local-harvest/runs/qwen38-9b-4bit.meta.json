@@ -1,0 +1,16 @@
+{
+ "label": "qwen38-9b-4bit",
+ "model": "keXjos/Qwen3.8-9B-mlx-4Bit",
+ "thinking": true,
+ "load_s": 0.9,
+ "wall_s": 53.5,
+ "ttft_s": 10.6,
+ "prompt_tokens": 14235,
+ "generated_tokens": 2093,
+ "prompt_tps": 1354.0,
+ "generation_tps": 48.8,
+ "peak_memory_gb": 7.05,
+ "thinking_chars": 2836,
+ "output_chars": 5185,
+ "finish_reason": "stop"
+}

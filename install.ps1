@@ -181,7 +181,7 @@ function Get-PrefsSection([string]$Text) {
 $rulesTmp = [System.IO.Path]::GetTempFileName()
 try {
     Get-File "$Repo/rules/distill.md" $rulesTmp
-    $fresh = (Get-Content $rulesTmp -Raw).Replace('{DISTILL_DIR}', $DistillDir)
+    $fresh = ([System.IO.File]::ReadAllText($rulesTmp, [System.Text.Encoding]::UTF8)).Replace('{DISTILL_DIR}', $DistillDir)
     if ($fresh -match 'Distill') {
         $preservedPrefs = $null
         if (Test-Path $rulesTarget) {

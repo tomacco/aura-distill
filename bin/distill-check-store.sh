@@ -30,8 +30,8 @@
 #    archived rows' from/hook); evidence_for; collisions; ledger syntax (known event words
 #    only, events appended in non-decreasing date order), last-event agreement + sha256;
 #    catalog staleness (full timestamps when both sides carry them); path containment
-#    (D10) of SPINE, catalog and ledger paths; no symlinks; no legacy archive left inside
-#    a tier directory
+#    (D10) of SPINE, catalog and ledger paths; local/SPINE.md points only inside local/;
+#    no symlinks; no legacy archive left inside a tier directory
 # C3 tier-2 budgets, read_with (inline list, contained targets, no local/), split_from, oversize
 # C4 (--before only) multiset line conservation over principle file + evidence twin
 #    combined, protected blocks and retrieval-marker lines (never only in evidence),
@@ -103,7 +103,8 @@ catalog_row() { grep -F -- "- $2 |" "$1" | head -1 | nocr; }
 is_legacy() { case "${1#archive/}" in legacy/*) return 0 ;; */*) return 1 ;; *) return 0 ;; esac; }   # structural: flat under archive/ or under archive/legacy/ = legacy
 # contained <path> <kind>: D10. Relative, no "." or ".." segment, not absolute, no "~", no
 # backslash or drive colon, and inside the allowed roots. kind: tier (a tier directory),
-# archived (archive/<tier>/...), store (tier, archive/ or evidence/), spine (tier or CATALOG.md)
+# archived (archive/<tier>/...), store (tier, archive/ or evidence/), spine (tier or CATALOG.md),
+# local (inside local/: the only place a pointer in the machine-local local/SPINE.md may lead)
 contained() {
   local p="$1" first
   case "$p" in ''|/*|\~*|*\\*|*:*) return 1 ;; esac
@@ -113,6 +114,7 @@ contained() {
     tier) [ "$first" != "$p" ] && case " $TIERS " in *" $first "*) return 0 ;; esac; return 1 ;;
     archived) case "$p" in archive/*) contained "${p#archive/}" tier ;; *) return 1 ;; esac ;;
     spine) [ "$p" = "CATALOG.md" ] && return 0; contained "$p" tier ;;
+    local) [ "$first" = local ] && [ "$first" != "$p" ] ;;
     store) case "$first" in archive|evidence) [ "$first" != "$p" ] ;; *) contained "$p" tier ;; esac ;;
   esac
 }
@@ -216,6 +218,14 @@ if [ -f "$SPINE" ]; then
   # pointers come only from entry lines ("- [" ...), never from comments or prose
   spine_ptrs=$(nocr < "$SPINE" | grep '^- \[' | grep -o '](\([^)]*\.md\))' | sed 's/^](//;s/)$//' | sort -u)
   while IFS= read -r p; do printf '%s\n' "$spine_ptrs" | grep -Fxq -- "$p" || fail "active file has no SPINE pointer: $p"; done < <(tier_files "$STORE")
+fi
+# the machine-local overlay: its SPINE may point only inside local/ (D10), and the targets exist
+LOCAL_SPINE="$STORE/local/SPINE.md"
+if [ -f "$LOCAL_SPINE" ]; then
+  while IFS= read -r p; do
+    contained "$p" local || { fail "local/SPINE.md may point only inside local/: $p"; continue; }
+    [ -f "$STORE/$p" ] || fail "local/SPINE.md pointer to missing file: $p"
+  done < <(nocr < "$LOCAL_SPINE" | grep '^- \[' | grep -o '](\([^)]*\.md\))' | sed 's/^](//;s/)$//' | sort -u)
 fi
 CAT="$STORE/CATALOG.md"
 LEDGER="$STORE/archive/LEDGER.md"
@@ -330,7 +340,7 @@ while IFS= read -r p; do [ -f "$STORE/archive/$p" ] && fail "path exists both ac
 while IFS= read -r p; do fail "legacy archive inside a tier directory: $p (migration adopts it to archive/legacy/$p)"; done < <(nested_archives "$STORE")
 # every path must resolve inside the store: no symlinks (D10)
 while IFS= read -r l; do fail "symlink in store: ${l#$STORE/}"; done \
-  < <(for d in $TIERS archive evidence SPINE.md CATALOG.md; do [ -e "$STORE/$d" ] || [ -L "$STORE/$d" ] && find "$STORE/$d" -type l; done)
+  < <(for d in $TIERS archive evidence local SPINE.md CATALOG.md; do [ -e "$STORE/$d" ] || [ -L "$STORE/$d" ] && find "$STORE/$d" -type l; done)
 report C2
 
 # ── C3: tier-2 budgets, read_with, split_from, oversize ──────────────────────

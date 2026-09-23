@@ -279,15 +279,35 @@ $NoBom = New-Object System.Text.UTF8Encoding($false)
 
 # Spine
 $spinePath = Join-Path $DistillDir 'SPINE.md'
+# A new store is born in the files-only layout (#78): catalog line + empty CATALOG.md.
+# An existing SPINE (including a legacy copy) is never touched; it goes through migrate-store.
 if (-not (Test-Path $spinePath)) {
     $spine = @(
         '# Distill Knowledge Index',
         '',
         '<!-- This file is managed by aura-distill. Max 80 lines and 16 KB; 400 bytes per entry. -->',
-        '<!-- Each entry: - [Title](path.md) -- when to read this -->'
+        '<!-- Each entry: - [Title](path.md) -- when to read this -->',
+        '',
+        "- [Catalog](CATALOG.md) $EmDash complete inventory of every knowledge file incl. archived and evidence; not loaded at start; consult on a miss."
     ) -join "`n"
-    Set-Content -Path $spinePath -Value $spine -Encoding utf8
-    Write-Done "SPINE.md ${DIM}(knowledge index)${RESET}"
+    [System.IO.File]::WriteAllText($spinePath, $spine + "`n", (New-Object System.Text.UTF8Encoding($false)))
+    $catalogPath = Join-Path $DistillDir 'CATALOG.md'
+    if (-not (Test-Path $catalogPath)) {
+        $stamp = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+        $catalog = @(
+            '# Knowledge catalog',
+            '',
+            "<!-- Complete inventory, rebuilt by /distill. Not loaded at session start. rebuilt: $stamp -->",
+            '',
+            '## active',
+            '',
+            '## archived',
+            '',
+            '## evidence'
+        ) -join "`n"
+        [System.IO.File]::WriteAllText($catalogPath, $catalog + "`n", (New-Object System.Text.UTF8Encoding($false)))
+    }
+    Write-Done "SPINE.md + CATALOG.md ${DIM}(knowledge index, files-only layout)${RESET}"
 } else {
     Write-Skip "SPINE.md ${DIM}(preserved)${RESET}"
 }
@@ -488,7 +508,7 @@ $ManagedStart
 Before doing any work, read $DistillDir/SPINE.md. When the request or an announced action matches a SPINE entry, read the linked file before responding and apply it.
 
 $clientGuidance
-If $DistillDir/.needs-migration exists and does not start with "migrated", tell the user to ask you to distill/migrate existing memories before proceeding.
+If $DistillDir/.needs-migration exists and does not start with "migrated", tell the user to ask you to distill so their existing memory files are imported (a memory import, not the store-layout migration) before proceeding.
 $ManagedEnd
 "@
     $content = if ($cleaned) { "$cleaned`r`n`r`n$block" } else { $block }

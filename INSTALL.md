@@ -144,8 +144,23 @@ cat > "$DISTILL_DIR/SPINE.md" << 'EOF'
 
 <!-- This file is managed by aura-distill. Max 80 lines and 16 KB; 400 bytes per entry. -->
 <!-- Each entry: - [Title](path.md) — when to read this -->
+
+- [Catalog](CATALOG.md) — complete inventory of every knowledge file incl. archived and evidence; not loaded at start; consult on a miss.
+EOF
+cat > "$DISTILL_DIR/CATALOG.md" << EOF
+# Knowledge catalog
+
+<!-- Complete inventory, rebuilt by /distill. Not loaded at session start. rebuilt: $(date -u +%Y-%m-%dT%H:%M:%SZ) -->
+
+## active
+
+## archived
+
+## evidence
 EOF
 ```
+
+Skip this step if `$DISTILL_DIR/SPINE.md` already exists: that store predates 1.2 and moves to the new layout with `/distill migrate-store` (below).
 
 Optional: `echo enabled > "$DISTILL_DIR/.lifecycle"` turns on automatic archiving of stale `projects/` files (off when the file is absent; see "Lifecycle" below).
 
@@ -257,7 +272,7 @@ With it off, `/distill` reports stale projects and asks nothing; `/distill gc` a
 
 ## Upgrading a store from before 1.2
 
-Run `/distill migrate-store` (or ask "move my store to the new layout"). It writes a plan and changes nothing; `/distill migrate-store --apply` then backs up the whole knowledge tree to `data/migration/<time>/backup/`, applies the plan and runs the self-check. If it is interrupted, `/distill` refuses to encode until you finish or revert it.
+A new install starts in the files-only layout (the installer creates `CATALOG.md` with the SPINE); nothing to do there. A store that existed before 1.2 keeps its files untouched by the installer. Run `/distill migrate-store` (or ask "move my store to the new layout"). It writes a plan and changes nothing; `/distill migrate-store --apply` then backs up the whole knowledge tree to `data/migration/<time>/backup/`, applies the plan and runs the self-check. If it is interrupted, `/distill` refuses to encode until you finish or revert it.
 
 ---
 

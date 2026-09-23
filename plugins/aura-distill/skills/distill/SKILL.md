@@ -45,9 +45,10 @@ description: Retrospective memory and context distillation for Antigravity sessi
    - Otherwise, set `{DISTILL_DIR}/.status` to `running <ISO_TIMESTAMP>` — but only immediately
      before spawning in Step 2, never earlier.
 4. **Interrupted store migration (`{DISTILL_DIR}/data/migration/*/PENDING`):**
-   - If one exists, nothing new is encoded until the migration is finished or reverted. Ask the
-     user which one, and for an ordinary distillation queue this session's harvest as ONE inbox
-     item (format in `{DISTILL_DIR}/distill-monitor.md`, "The INBOX") so it is not lost.
+   - If one exists, nothing new is encoded until the migration is finished or reverted. Run an
+     ordinary distillation anyway: the sub-agent queues the harvest as one inbox item instead of
+     encoding it (`distill-process.md`, "An interrupted migration blocks encoding"). Then ask the
+     user whether to finish or revert the migration and run that mode.
 
 ---
 

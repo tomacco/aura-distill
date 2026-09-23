@@ -68,7 +68,7 @@ This installs:
 | File | Location | Purpose |
 |------|----------|---------|
 | `distill.md` | `~/.claude/commands/` | The `/distill` slash command |
-| `distill.md` | `~/.claude/rules/` | Knowledge retrieval (18 lines, auto-loads every session) |
+| `distill.md` | `~/.claude/rules/` | Knowledge retrieval (about 85 lines, auto-loads every session) |
 | `distill-process.md` | `~/.aura-distill/` | Full process (read by sub-agent) |
 | `SPINE.md` | `~/.aura-distill/` | Shared Claude/Codex knowledge index |
 | `bin/distill-check-store.sh` | `~/.aura-distill/` | Optional store self-check, used when bash is available |

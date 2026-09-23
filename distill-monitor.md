@@ -12,7 +12,7 @@ This file is referenced by the Claude and Codex integration blocks. It is intent
 
 1. **Batch the reads.** When several SPINE entries match, read all their files in ONE batch (parallel tool calls in the same message) when your client supports it. Read one after another only when a file's content decides what to read next. If your client cannot issue parallel reads, read them in sequence; do not claim otherwise.
 2. **Required companions, one more batch.** After that batch, read the union of the `read_with:` lists in those files' frontmatter, in one more batch. Depth one: do not follow `read_with` of those companions.
-3. **Contained paths only.** Before following any path from a knowledge file (SPINE pointer, `read_with`, catalog row, prose reference), check it: relative; no `..`, `.` or empty segment; no leading `/`, `\`, `~` or drive letter; no backslash; starting with `craft/ ops/ profile/ projects/ feedback/`, `archive/` or `evidence/` (or `CATALOG.md`); never `local/` from a synced file, never `data/` or a dotfile. A path that fails is not read; mention it.
+3. **Contained paths only.** Before following any path from a knowledge file (SPINE pointer, `read_with`, catalog row, prose reference), check it: relative; no `..`, `.` or empty segment; no leading `/`, `\`, `~` or drive letter; no backslash; starting with `craft/ ops/ profile/ projects/ feedback/`, `archive/` or `evidence/` (or `CATALOG.md`); never `local/` from a synced file, never `data/` or a dotfile. Pointers in `local/SPINE.md` are the one exception: they must start with `local/`. A path that fails is not read; mention it.
 4. **Dangling reference.** If a pointer or a prose reference names `X` and `X` does not exist, look at `archive/X`. If it is there, read it and say it is archived.
 5. **Scoped misses.** `{DISTILL_DIR}/CATALOG.md` is a complete inventory of every knowledge file, including archived and evidence files. It is not loaded at start. Only when the request **refers back to earlier knowledge** (a named project, person or system the user expects you to know; "what did we decide", "last time", "as before") and no SPINE hook matches it, search the catalog for the topic's distinctive words (a text search such as `grep -i`; archived rows keep their original hook).
    - Archived match: read it and say **"found in the archive (archived on DATE, reason R)"**.
@@ -65,7 +65,8 @@ Rules: one item per file; NEVER edit or delete existing inbox items (the distill
 
 1. **Read `{DISTILL_DIR}/SPINE.md`** — mandatory. This is your knowledge map for the session.
 2. **Check if `{DISTILL_DIR}/.needs-migration` exists and does NOT start with "migrated".** If it exists and is not yet migrated, this is URGENT — tell the user IMMEDIATELY on their very first message, before doing anything else:
-   > "Welcome! Distill was just installed. You have existing memory files that need to be ingested. Let me run `/distill` now to bring your existing knowledge into the system — otherwise you'll be working without your accumulated learnings. Shall I go?"
+   > "Welcome! Distill was just installed. You have existing memory files that need to be imported. Let me run `/distill` now to bring your existing knowledge into the system — otherwise you'll be working without your accumulated learnings. Shall I go?"
+   (This memory import is an ordinary distillation. It is not `migrate-store`, which only changes the layout of a store that predates 1.2.)
    Do NOT proceed with their request until migration is addressed. They're flying blind without it.
 3. **Throughout the session:** Track memory pressure (see below).
 4. **When pressure is high:** Suggest `/distill` to the user.

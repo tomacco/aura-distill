@@ -43,7 +43,7 @@ Since 1.2 the store follows the files-only design (`docs/design-files-only-memor
 
 **File:** `SPINE.md` at the store root.
 
-**Hard limits:** 80 lines **and** 16,000 bytes; each entry (its `- [` line plus any wrapped continuation lines) at most 400 bytes. Compaction starts at 60 lines or 12,000 bytes and shortens entries longest first toward 200 bytes. The first cap hit binds, and the distiller enforces it in the same run: "flag" is not a terminal state. This is the ONLY knowledge file that gets auto-loaded into every session context. Line caps alone let entries fatten into digests (a real store reached 80 lines and 39 KB).
+**Hard limits:** 80 lines **and** 16,000 bytes; each entry (its `- [` line plus any wrapped continuation lines) at most 400 bytes. Compaction starts at 60 lines or 12,000 bytes and shortens entries longest first toward 200 bytes until the file is back under that target (or every entry is at 200 bytes); the hard caps are the limit no run may finish above. The first cap hit binds, and the distiller enforces it in the same run: "flag" is not a terminal state. This is the ONLY knowledge file that gets auto-loaded into every session context. Line caps alone let entries fatten into digests (a real store reached 80 lines and 39 KB).
 
 **What it contains:**
 - One-line pointers to Tier 2 files (path + relevance hook)
@@ -222,8 +222,8 @@ Compaction is part of the `/distill` process. Every distillation run should chec
 Triggered at 60 lines or 12,000 bytes; the hard caps (80 lines, 16,000 bytes, 400 bytes per entry) are enforced in the same run.
 
 Actions:
-1. Shorten entries over 400 bytes, then the longest entries toward 200 bytes while the file is over its byte cap; each cut hook goes verbatim to its target file's `## Index detail`
-2. Reclaim lines: split children share their parent's line; blank lines go; same-tier entries on one topic merge into a multi-pointer line
+1. Shorten entries over 400 bytes, then the longest entries toward 200 bytes while the file is over 12,000 bytes; each cut hook goes verbatim to its target file's `## Index detail`
+2. Reclaim lines while over 60: split children share their parent's line; blank lines go; same-tier entries on one topic merge into a multi-pointer line
 3. Never archive a file to make room and never ask about the index
 
 ### File compaction (Tier 2)

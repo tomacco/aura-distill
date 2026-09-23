@@ -435,6 +435,27 @@ expect_pass "legacy restore copies the content to projects/ember.md" "$LEGACY_RE
 tamper "legacy restore done as a move (legacy file gone)" "archive file deleted: archive/projects/ember.md" \
   "$LEGACY_RESTORE; rm \"\$s/archive/legacy/archive/projects/ember.md\"; $REBUILD"
 
+echo "== #78 round one: the local overlay's SPINE points only inside local/ =="
+LOCAL_OK='mkdir -p "$s/local/ops"; printf -- "---\nscope: vpn\n---\n- office VPN profile\n" > "$s/local/ops/vpn.md";
+   printf -- "# Local index\n\n- [VPN](local/ops/vpn.md) — office VPN on this laptop.\n" > "$s/local/SPINE.md"'
+expect_pass "local/SPINE.md pointing inside local/ (never cataloged)" "$LOCAL_OK"
+tamper "local/SPINE.md pointing out of the overlay" "local/SPINE.md may point only inside local/: ops/deploy.md" \
+  "$LOCAL_OK"'; printf -- "- [Deploy](ops/deploy.md) — shared file.\n" >> "$s/local/SPINE.md"'
+tamper "local/SPINE.md with a .. traversal" "local/SPINE.md may point only inside local/: local/../../x.md" \
+  "$LOCAL_OK"'; printf -- "- [X](local/../../x.md) — x.\n" >> "$s/local/SPINE.md"'
+tamper "local/SPINE.md pointer to a missing file" "local/SPINE.md pointer to missing file: local/ops/ghost.md" \
+  "$LOCAL_OK"'; printf -- "- [Ghost](local/ops/ghost.md) — ghost.\n" >> "$s/local/SPINE.md"'
+tamper "synced SPINE pointing into local/" "uncontained path in SPINE.md: local/ops/vpn.md" \
+  "$LOCAL_OK"'; printf -- "- [VPN](local/ops/vpn.md) — vpn.\n" >> "$s/SPINE.md"'
+
+echo "== #78 round one: a new store is born in the files-only layout =="
+tmp=$(mktemp -d); mkdir -p "$tmp/s"
+printf -- "# Distill Knowledge Index\n\n<!-- managed -->\n\n- [Catalog](CATALOG.md) — complete inventory; not loaded at start.\n" > "$tmp/s/SPINE.md"
+printf -- "# Knowledge catalog\n\n<!-- Complete inventory, rebuilt by /distill. Not loaded at session start. rebuilt: 2026-09-23T10:00:00Z -->\n\n## active\n\n## archived\n\n## evidence\n" > "$tmp/s/CATALOG.md"
+out=$(bash "$CHECK" "$tmp/s" 2>&1); rc=$?
+[ $rc -eq 0 ] && ok "an empty installer-shaped store passes" || { bad "empty installer-shaped store fails (rc=$rc)"; echo "$out" | sed 's/^/       /'; }
+rm -rf "$tmp"
+
 echo
 echo "files-only suite: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ]

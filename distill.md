@@ -16,9 +16,9 @@
 
 With a Mode: run the Status check below, **skip Step 1** (no harvest, no beacon), spawn the sub-agent in Step 2 with `## Mode` set to the argument instead of a harvest, relay its report, and skip the ledgers in Step 3 (a maintenance run distilled no conversation). Plain-language requests map to the same modes (the table in `{DISTILL_DIR}/distill-process.md`, "Requests in plain language").
 
-**Interrupted migration.** If any `{DISTILL_DIR}/data/migration/*/PENDING` exists (`ls {DISTILL_DIR}/data/migration/*/PENDING 2>/dev/null`), a store migration did not finish, and the distiller will not encode until it is finished or reverted. Tell the user:
-> "A store migration was interrupted. I can finish it or revert it to the backup it took; nothing new is encoded until one of the two runs. Which do you prefer?"
-For an ordinary `/distill`, still harvest (Step 1) so nothing is lost: write the harvest as ONE inbox item (`origin: session-signal`, the format in `{DISTILL_DIR}/distill-monitor.md`, "The INBOX") and then run the Mode the user chose. The next distillation consumes it.
+**Interrupted migration.** If any `{DISTILL_DIR}/data/migration/*/PENDING` exists (`ls {DISTILL_DIR}/data/migration/*/PENDING 2>/dev/null`), a store migration did not finish, and the distiller will not encode until it is finished or reverted. For an ordinary `/distill`, run it anyway (harvest and spawn as usual): the sub-agent sees the marker, queues your harvest as one inbox item instead of encoding it, and says so in its report (the one place this is handled, `distill-process.md` "An interrupted migration blocks encoding"). Then tell the user:
+> "A store migration was interrupted. Your session's learnings are saved in the inbox. I can finish the migration or revert it to the backup it took; nothing new is encoded until one of the two runs. Which do you prefer?"
+and run the Mode they choose.
 
 Before doing ANYTHING else, run these checks:
 
@@ -40,7 +40,7 @@ If `.status` starts with `running step:` — a prior distillation was interrupte
 **Version check (once per session):**
 If this is the first `/distill` invocation this session, run the version check (see Version Checking section below).
 
-**Migration check:**
+**Memory import check** (the `.needs-migration` flag; unrelated to `migrate-store`, which changes the store layout):
 If `{DISTILL_DIR}/.needs-migration` exists and does NOT start with "migrated", this is the first distill after installation. In addition to normal signal harvesting, the sub-agent must also:
 1. Find all memory files: `find ~/.claude -path "*/memory/*.md" -not -path "*/distill/*"`
 2. Read each one and ingest its content into the appropriate distill tier (craft, ops, profile, feedback, projects)

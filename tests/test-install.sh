@@ -103,7 +103,7 @@ grep -q 'Retrieval protocol' "$AURA/distill-monitor.md"
 grep -q 'CATALOG.md' "$TEST_HOME/.claude/rules/distill.md"
 test ! -e "$AURA/.lifecycle"
 lc_install() {
-  env -u AURA_DISTILL_HOME -u CODEX_HOME -u DISTILL_LIFECYCLE HOME="$TEST_HOME" AURA_DISTILL_REPO="$REPO_ROOT" DISTILL_TOKEN_SAVER=off \
+  env -u AURA_DISTILL_HOME -u CODEX_HOME -u DISTILL_LIFECYCLE -u DISTILL_CHANNEL -u AURA_DISTILL_RAW_ROOT -u AURA_DISTILL_CHANNEL_MANIFEST HOME="$TEST_HOME" AURA_DISTILL_REPO="$REPO_ROOT" DISTILL_TOKEN_SAVER=off \
     "$@" </dev/null >/dev/null
 }
 lc_install bash "$INSTALLER" --lifecycle;          test "$(cat "$AURA/.lifecycle")" = enabled
@@ -111,10 +111,25 @@ lc_install bash "$INSTALLER";                      test "$(cat "$AURA/.lifecycle
 lc_install bash "$INSTALLER" --no-lifecycle;       test "$(cat "$AURA/.lifecycle")" = disabled
 lc_install env DISTILL_LIFECYCLE=on bash "$INSTALLER"; test "$(cat "$AURA/.lifecycle")" = enabled
 lc_install bash "$INSTALLER" --remove-lifecycle;   test ! -e "$AURA/.lifecycle"
-# the installed helper passes on a store it has never seen before: an empty fresh store is not
-# files-only yet (no catalog), so it must FAIL C2 cleanly, never crash
+# This home was seeded from a legacy (pre-1.2) store: its copied SPINE is preserved and no
+# catalog is added, so it stays a store for migrate-store, and the helper reports it cleanly
+test ! -e "$AURA/CATALOG.md"
 set +e; out=$(bash "$AURA/bin/distill-check-store.sh" "$AURA" 2>&1); rc=$?; set -e
 test "$rc" -eq 1
 printf '%s\n' "$out" | grep -q '^C2 FAIL'
+# A fresh install is born in the files-only layout: SPINE catalog line + an empty, stamped
+# CATALOG.md, and the shipped checker passes on it (never "unmigrated")
+FRESH_HOME=$(mktemp -d)
+env -u AURA_DISTILL_HOME -u CODEX_HOME -u DISTILL_LIFECYCLE -u DISTILL_CHANNEL -u AURA_DISTILL_RAW_ROOT -u AURA_DISTILL_CHANNEL_MANIFEST \
+  HOME="$FRESH_HOME" AURA_DISTILL_REPO="$REPO_ROOT" DISTILL_TOKEN_SAVER=off bash "$INSTALLER" </dev/null >/dev/null
+FRESH="$FRESH_HOME/.aura-distill"
+grep -q '^- \[Catalog\](CATALOG.md)' "$FRESH/SPINE.md"
+grep -Eq 'rebuilt: [0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z' "$FRESH/CATALOG.md"
+out=$(bash "$FRESH/bin/distill-check-store.sh" "$FRESH" 2>&1) || { printf '%s\n' "$out" >&2; echo "FAIL fresh store does not pass the checker" >&2; exit 1; }
+before_cat=$(sha256sum "$FRESH/CATALOG.md")
+env -u AURA_DISTILL_HOME -u CODEX_HOME -u DISTILL_LIFECYCLE -u DISTILL_CHANNEL -u AURA_DISTILL_RAW_ROOT -u AURA_DISTILL_CHANNEL_MANIFEST \
+  HOME="$FRESH_HOME" AURA_DISTILL_REPO="$REPO_ROOT" DISTILL_TOKEN_SAVER=off bash "$INSTALLER" </dev/null >/dev/null
+test "$before_cat" = "$(sha256sum "$FRESH/CATALOG.md")"   # reinstall never rewrites the catalog
+rm -rf "$FRESH_HOME"
 
 printf 'PASS files-only runtime: helper installed, Codex routing, lifecycle knob\n'

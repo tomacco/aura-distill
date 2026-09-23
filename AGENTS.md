@@ -76,7 +76,7 @@ When developing or testing:
 - Run persona tests: `./tests/scenarios/methodology/run-persona-test.sh`
 - Run integration tests: `./test-sandbox.sh`
 - Run Antigravity Time Index parity + hostile-input tests: `./tests/antigravity/run-parity-test.sh` (and the connector runners `run-antigravity-connector-tests.sh` / `.ps1`)
-- Run the files-only store invariants (thin SPINE, catalog completeness, lossless migration; #75, #78): `bash tests/files-only/run-files-only-tests.sh` — design in `docs/design-files-only-memory.md` (117 checks; about three minutes locally, longer on CI macOS and several times longer on Windows Git Bash because of process-spawn cost)
+- Run the files-only store invariants (thin SPINE, catalog completeness, lossless migration; #75, #78): `bash tests/files-only/run-files-only-tests.sh` — design in `docs/design-files-only-memory.md` (123 checks; about three minutes locally, longer on CI macOS and several times longer on Windows Git Bash because of process-spawn cost)
 - Validate the runtime instructions with a fresh live agent (manual; needs a logged-in `claude` CLI, costs tokens, never touches a real store): `bash tests/files-only/fresh-agent/run-fresh-agent.sh` — migrates the synthetic store and answers five retrieval questions; record its summary in the PR that changes the instructions
 - Run the clean-reviewer runner's stubbed test (no API calls): `bash tests/review/test-run-clean-review.sh`
 - Run legacy updater compatibility reproductions (captured shipped curl blocks against a local fixture endpoint; no network, no real profiles): `bash tests/updater-compat/run.sh` — decisions they back live in `docs/adr/`

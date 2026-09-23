@@ -404,13 +404,33 @@ echo "$PAYLOAD_VERSION" > "$DISTILL_DIR/.version"
 echo "$CHANNEL" > "$DISTILL_DIR/.channel"
 echo "$CMD_DIR/distill.md" > "$DISTILL_DIR/.command-path"
 
-# Spine
+# Spine. A new store is born in the files-only layout (#78): the SPINE carries its catalog
+# line and an empty CATALOG.md is created with it, so migrate-store is only ever needed for a
+# store that predates 1.2. An existing SPINE (including one copied from a legacy install) is
+# never touched, and no catalog is added to it: that store goes through migrate-store.
 if [ ! -f "$DISTILL_DIR/SPINE.md" ]; then
-    echo "# Distill Knowledge Index" > "$DISTILL_DIR/SPINE.md"
-    echo "" >> "$DISTILL_DIR/SPINE.md"
-    echo "<!-- This file is managed by aura-distill. Max 80 lines and 16 KB; 400 bytes per entry. -->" >> "$DISTILL_DIR/SPINE.md"
-    echo "<!-- Each entry: - [Title](path.md) — when to read this -->" >> "$DISTILL_DIR/SPINE.md"
-    done_msg "SPINE.md ${DIM}(knowledge index)${RESET}"
+    {
+        echo "# Distill Knowledge Index"
+        echo ""
+        echo "<!-- This file is managed by aura-distill. Max 80 lines and 16 KB; 400 bytes per entry. -->"
+        echo "<!-- Each entry: - [Title](path.md) — when to read this -->"
+        echo ""
+        echo "- [Catalog](CATALOG.md) — complete inventory of every knowledge file incl. archived and evidence; not loaded at start; consult on a miss."
+    } > "$DISTILL_DIR/SPINE.md"
+    if [ ! -f "$DISTILL_DIR/CATALOG.md" ]; then
+        {
+            echo "# Knowledge catalog"
+            echo ""
+            echo "<!-- Complete inventory, rebuilt by /distill. Not loaded at session start. rebuilt: $(date -u +%Y-%m-%dT%H:%M:%SZ) -->"
+            echo ""
+            echo "## active"
+            echo ""
+            echo "## archived"
+            echo ""
+            echo "## evidence"
+        } > "$DISTILL_DIR/CATALOG.md"
+    fi
+    done_msg "SPINE.md + CATALOG.md ${DIM}(knowledge index, files-only layout)${RESET}"
 else
     skip_msg "SPINE.md ${DIM}(preserved)${RESET}"
 fi
@@ -595,7 +615,7 @@ Read $DISTILL_DIR/distill-monitor.md for the full retrieval and memory-pressure 
 EOF
 fi
 cat <<EOF
-If $DISTILL_DIR/.needs-migration exists and does not start with "migrated", tell the user to ask you to distill/migrate existing memories before proceeding.
+If $DISTILL_DIR/.needs-migration exists and does not start with "migrated", tell the user to ask you to distill so their existing memory files are imported (a memory import, not the store-layout migration) before proceeding.
 $MANAGED_END
 EOF
 }

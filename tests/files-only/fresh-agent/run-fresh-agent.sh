@@ -60,7 +60,8 @@ echo "work dir: $T"
 SANDBOX=()
 if command -v sandbox-exec >/dev/null 2>&1; then
   deny=""
-  for d in "$HOME/.aura-distill" "$HOME/.claude/distill" "$HOME/.claude/rules" "$HOME/.claude/CLAUDE.md" "$HOME/.codex" "$HOME/.gemini"; do
+  # real stores, instruction files, and the profile's transcripts and memory
+  for d in "$HOME/.aura-distill" "$HOME/.claude/distill" "$HOME/.claude/rules" "$HOME/.claude/CLAUDE.md" "$HOME/.claude/projects" "$HOME/.claude/memory" "$HOME/.claude/todos" "$HOME/.codex" "$HOME/.gemini"; do
     deny="$deny(deny file-read* file-write* (subpath \"$d\"))"
   done
   SANDBOX=(sandbox-exec -p "(version 1)(allow default)$deny")

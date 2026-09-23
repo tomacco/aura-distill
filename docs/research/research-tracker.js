@@ -25,7 +25,7 @@
         'pre-distill-marks': { published: '2026-08-02', version: 1, title: 'Pre-Distill Marks' },
         'local-models': { published: '2026-09-22', version: 1, title: 'Local Models for Distillation' },
         'local-decision-models': { published: '2026-09-22', version: 1, title: 'Local Decision Models for Retrieval' },
-        'files-only-redesign': { published: '2026-09-23', version: 1, title: 'Files-Only Memory Redesign' },
+        'files-only-redesign': { published: '2026-09-23', version: 2, title: 'Files-Only Memory Redesign' },
         'changelog': { published: '2026-05-17', version: 2, title: 'Changelog' },
     };
 

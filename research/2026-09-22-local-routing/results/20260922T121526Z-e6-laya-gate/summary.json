@@ -1,0 +1,29 @@
+{
+  "n": 90,
+  "load_s": 47.8,
+  "positive_recall": 0.967,
+  "negative_specificity": 0.1,
+  "balanced_accuracy": 0.533,
+  "realistic_accuracy": 0.9,
+  "latency_ms_median": 87.9,
+  "p_yes_true_median": 0.8614,
+  "p_yes_false_median": 0.8565,
+  "separable": false,
+  "best_threshold": {
+    "balanced_accuracy": 0.597,
+    "threshold": 0.64
+  },
+  "realistic_gate": {
+    "n_bm25_right": 27,
+    "n_bm25_wrong": 3,
+    "p_yes_when_bm25_right_median": 0.8658,
+    "p_yes_when_bm25_wrong": [
+      0.8356,
+      0.8612,
+      0.921
+    ]
+  },
+  "n_entries": 65,
+  "state_chars": 1400,
+  "max_rss_mb": 5684
+}

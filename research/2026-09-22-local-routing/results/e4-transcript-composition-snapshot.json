@@ -1,0 +1,19 @@
+{
+  "_what": "E4 transcript composition, as published. tools/distill_cost.py recomputes against the LIVE ~/.claude/projects store, which grows continuously, so re-running will not reproduce these figures exactly. This file is the snapshot the write-up cites.",
+  "captured": "2026-09-22",
+  "sessions": 9,
+  "excluded": "the session that ran the analysis (AURA_EXCLUDE_SESSION), which is itself one of the heaviest tool users on the machine",
+  "total_chars": 1903214,
+  "chars_per_token_est": 3.5,
+  "components": {
+    "tool_result":       {"chars": 1435564, "share": 0.754, "tokens_est": 410161},
+    "tool_use_input":    {"chars": 332745,  "share": 0.175, "tokens_est": 95070},
+    "user_text":         {"chars": 65854,   "share": 0.035, "tokens_est": 18815},
+    "assistant_text":    {"chars": 64776,   "share": 0.034, "tokens_est": 18507},
+    "assistant_thinking":{"chars": 4275,    "share": 0.002, "tokens_est": 1221}
+  },
+  "tool_cap_curve": {
+    "uncapped": 543775, "4000": 224698, "2000": 188911, "1000": 151863,
+    "500": 116032, "200": 78759, "0": 38544
+  }
+}

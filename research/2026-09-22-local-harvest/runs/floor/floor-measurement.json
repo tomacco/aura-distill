@@ -1,0 +1,27 @@
+{
+ "method": "Two-character user prompt (\"OK\") through the same flags as the harvest run: claude -p --model haiku --setting-sources \"\" --no-session-persistence --system-prompt <runs/harvest_system_prompt.md> --output-format json --max-turns 1. The total is the headless floor plus the system prompt; it is NOT inferred by subtracting token counts across two different tokenizers.",
+ "date": "2026-09-22",
+ "cli_version": "2.1.278",
+ "platform": "darwin 27.0.0",
+ "measured": {
+  "--tools \"\"": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 8292,
+   "cache_read_input_tokens": 0,
+   "floor_total": 8302
+  },
+  "--tools none": {
+   "input_tokens": 10,
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 8292,
+   "floor_total": 8302
+  }
+ },
+ "same_text_two_tokenizers": {
+  "qwen_system": 607,
+  "qwen_transcript": 13585,
+  "qwen_user_block": 13615,
+  "qwen_full_prompt": 14273
+ },
+ "note": "research/2026-07-09-token-saver measured 5,236 for --tools none in July 2026 on Windows with no replaced system prompt. Different CLI version and platform; quote neither figure without its flags and date."
+}

@@ -1,0 +1,496 @@
+{
+  "bm25-full": {
+    "arm": "bm25-full",
+    "all": {
+      "n": 30,
+      "hit@1": 0.6,
+      "hit@3": 0.767,
+      "top1_acceptable": 0.667,
+      "mrr": 0.721,
+      "latency_ms_median": 0.43
+    },
+    "easy": {
+      "n": 15,
+      "hit@1": 0.933,
+      "hit@3": 1.0,
+      "top1_acceptable": 1.0,
+      "mrr": 0.967,
+      "latency_ms_median": 0.43
+    },
+    "hard": {
+      "n": 15,
+      "hit@1": 0.267,
+      "hit@3": 0.533,
+      "top1_acceptable": 0.333,
+      "mrr": 0.476,
+      "latency_ms_median": 0.43
+    },
+    "shortlist": {
+      "1": {
+        "recall": 0.6,
+        "exp_tokens": 9001,
+        "saving_pct": 57.6
+      },
+      "3": {
+        "recall": 0.767,
+        "exp_tokens": 6186,
+        "saving_pct": 70.9
+      },
+      "5": {
+        "recall": 0.867,
+        "exp_tokens": 4684,
+        "saving_pct": 78.0
+      },
+      "8": {
+        "recall": 0.933,
+        "exp_tokens": 4178,
+        "saving_pct": 80.3
+      },
+      "10": {
+        "recall": 0.933,
+        "exp_tokens": 4857,
+        "saving_pct": 77.1
+      },
+      "15": {
+        "recall": 0.933,
+        "exp_tokens": 6556,
+        "saving_pct": 69.1
+      }
+    },
+    "misses": [
+      {
+        "id": "e05",
+        "rank": 2,
+        "top1": "projects/homelab-pi.md"
+      },
+      {
+        "id": "h02",
+        "rank": 2,
+        "top1": "ops/parallel-agents-shared-repo.md"
+      },
+      {
+        "id": "h03",
+        "rank": 2,
+        "top1": "craft/css-layout.md"
+      },
+      {
+        "id": "h05",
+        "rank": 2,
+        "top1": "projects/projector-stage.md"
+      },
+      {
+        "id": "h06",
+        "rank": 4,
+        "top1": "craft/parallel-builder-orchestration.md"
+      },
+      {
+        "id": "h08",
+        "rank": 2,
+        "top1": "projects/windows-audio-control.md"
+      },
+      {
+        "id": "h09",
+        "rank": 56,
+        "top1": "projects/homelab-pi.md"
+      },
+      {
+        "id": "h10",
+        "rank": 4,
+        "top1": "ops/electron-desktop-overlays.md"
+      },
+      {
+        "id": "h11",
+        "rank": 7,
+        "top1": "ops/github-cli-pitfalls.md"
+      },
+      {
+        "id": "h12",
+        "rank": 6,
+        "top1": "craft/adversarial-review-methodology.md"
+      },
+      {
+        "id": "h13",
+        "rank": 4,
+        "top1": "profile/ethics-dual-use.md"
+      },
+      {
+        "id": "h14",
+        "rank": 18,
+        "top1": "craft/adversarial-review-methodology.md"
+      }
+    ]
+  },
+  "bm25-title": {
+    "arm": "bm25-title",
+    "all": {
+      "n": 30,
+      "hit@1": 0.433,
+      "hit@3": 0.533,
+      "top1_acceptable": 0.533,
+      "mrr": 0.499,
+      "latency_ms_median": 0.05
+    },
+    "easy": {
+      "n": 15,
+      "hit@1": 0.733,
+      "hit@3": 0.8,
+      "top1_acceptable": 0.8,
+      "mrr": 0.777,
+      "latency_ms_median": 0.05
+    },
+    "hard": {
+      "n": 15,
+      "hit@1": 0.133,
+      "hit@3": 0.267,
+      "top1_acceptable": 0.267,
+      "mrr": 0.221,
+      "latency_ms_median": 0.05
+    },
+    "shortlist": {
+      "1": {
+        "recall": 0.433,
+        "exp_tokens": 12602,
+        "saving_pct": 40.7
+      },
+      "3": {
+        "recall": 0.533,
+        "exp_tokens": 11376,
+        "saving_pct": 46.5
+      },
+      "5": {
+        "recall": 0.567,
+        "exp_tokens": 11548,
+        "saving_pct": 45.7
+      },
+      "8": {
+        "recall": 0.567,
+        "exp_tokens": 12917,
+        "saving_pct": 39.2
+      },
+      "10": {
+        "recall": 0.567,
+        "exp_tokens": 13831,
+        "saving_pct": 34.9
+      },
+      "15": {
+        "recall": 0.567,
+        "exp_tokens": 16114,
+        "saving_pct": 24.2
+      }
+    },
+    "misses": [
+      {
+        "id": "e04",
+        "rank": 2,
+        "top1": "projects/homelab-pi.md"
+      },
+      {
+        "id": "e05",
+        "rank": 16,
+        "top1": "craft/tight-loops-llm-validation.md"
+      },
+      {
+        "id": "e13",
+        "rank": 32,
+        "top1": "projects/finance-tracker.md"
+      },
+      {
+        "id": "e15",
+        "rank": 17,
+        "top1": "ops/mcp-chatgpt-connectors.md"
+      },
+      {
+        "id": "h02",
+        "rank": 3,
+        "top1": "ops/parallel-agents-shared-repo.md"
+      },
+      {
+        "id": "h03",
+        "rank": 42,
+        "top1": "projects/finance-tracker.md"
+      },
+      {
+        "id": "h04",
+        "rank": 56,
+        "top1": "craft/interaction-design.md"
+      },
+      {
+        "id": "h05",
+        "rank": 2,
+        "top1": "projects/projector-stage.md"
+      },
+      {
+        "id": "h06",
+        "rank": 27,
+        "top1": "craft/talk-slide-engine.md"
+      },
+      {
+        "id": "h08",
+        "rank": 41,
+        "top1": "projects/finance-tracker.md"
+      },
+      {
+        "id": "h09",
+        "rank": 27,
+        "top1": "profile/working-style.md"
+      },
+      {
+        "id": "h10",
+        "rank": 38,
+        "top1": "projects/brand-not-slop.md"
+      },
+      {
+        "id": "h11",
+        "rank": 35,
+        "top1": "ops/github-cli-pitfalls.md"
+      },
+      {
+        "id": "h12",
+        "rank": 31,
+        "top1": "projects/finance-tracker.md"
+      },
+      {
+        "id": "h13",
+        "rank": 27,
+        "top1": "projects/finance-tracker.md"
+      },
+      {
+        "id": "h14",
+        "rank": 64,
+        "top1": "craft/tight-loops-llm-validation.md"
+      },
+      {
+        "id": "h15",
+        "rank": 5,
+        "top1": "ops/home-network.md"
+      }
+    ]
+  },
+  "bm25-body": {
+    "arm": "bm25-body",
+    "all": {
+      "n": 30,
+      "hit@1": 0.7,
+      "hit@3": 0.767,
+      "top1_acceptable": 0.733,
+      "mrr": 0.75,
+      "latency_ms_median": 1.56
+    },
+    "easy": {
+      "n": 15,
+      "hit@1": 0.933,
+      "hit@3": 0.933,
+      "top1_acceptable": 0.933,
+      "mrr": 0.944,
+      "latency_ms_median": 1.59
+    },
+    "hard": {
+      "n": 15,
+      "hit@1": 0.467,
+      "hit@3": 0.6,
+      "top1_acceptable": 0.533,
+      "mrr": 0.555,
+      "latency_ms_median": 1.52
+    },
+    "shortlist": {
+      "1": {
+        "recall": 0.7,
+        "exp_tokens": 6840,
+        "saving_pct": 67.8
+      },
+      "3": {
+        "recall": 0.767,
+        "exp_tokens": 6186,
+        "saving_pct": 70.9
+      },
+      "5": {
+        "recall": 0.8,
+        "exp_tokens": 6209,
+        "saving_pct": 70.8
+      },
+      "8": {
+        "recall": 0.833,
+        "exp_tokens": 6561,
+        "saving_pct": 69.1
+      },
+      "10": {
+        "recall": 0.867,
+        "exp_tokens": 6489,
+        "saving_pct": 69.5
+      },
+      "15": {
+        "recall": 0.867,
+        "exp_tokens": 8294,
+        "saving_pct": 61.0
+      }
+    },
+    "misses": [
+      {
+        "id": "e05",
+        "rank": 6,
+        "top1": "projects/aura-distill.md"
+      },
+      {
+        "id": "h04",
+        "rank": 3,
+        "top1": "craft/parallel-builder-orchestration.md"
+      },
+      {
+        "id": "h05",
+        "rank": 23,
+        "top1": "craft/realtime-3d-rendering.md"
+      },
+      {
+        "id": "h08",
+        "rank": 46,
+        "top1": "craft/content-copyright.md"
+      },
+      {
+        "id": "h10",
+        "rank": 18,
+        "top1": "craft/talk-slide-engine.md"
+      },
+      {
+        "id": "h11",
+        "rank": 10,
+        "top1": "ops/github-cli-pitfalls.md"
+      },
+      {
+        "id": "h13",
+        "rank": 4,
+        "top1": "profile/ethics-dual-use.md"
+      },
+      {
+        "id": "h14",
+        "rank": 63,
+        "top1": "craft/adversarial-review-methodology.md"
+      },
+      {
+        "id": "h15",
+        "rank": 2,
+        "top1": "ops/home-network.md"
+      }
+    ]
+  },
+  "bm25-hybrid": {
+    "arm": "bm25-hybrid",
+    "all": {
+      "n": 30,
+      "hit@1": 0.6,
+      "hit@3": 0.833,
+      "top1_acceptable": 0.667,
+      "mrr": 0.726,
+      "latency_ms_median": 2.06
+    },
+    "easy": {
+      "n": 15,
+      "hit@1": 0.933,
+      "hit@3": 1.0,
+      "top1_acceptable": 1.0,
+      "mrr": 0.956,
+      "latency_ms_median": 2.03
+    },
+    "hard": {
+      "n": 15,
+      "hit@1": 0.267,
+      "hit@3": 0.667,
+      "top1_acceptable": 0.333,
+      "mrr": 0.496,
+      "latency_ms_median": 2.08
+    },
+    "shortlist": {
+      "1": {
+        "recall": 0.6,
+        "exp_tokens": 9001,
+        "saving_pct": 57.6
+      },
+      "3": {
+        "recall": 0.833,
+        "exp_tokens": 4703,
+        "saving_pct": 77.9
+      },
+      "5": {
+        "recall": 0.867,
+        "exp_tokens": 4684,
+        "saving_pct": 78.0
+      },
+      "8": {
+        "recall": 0.9,
+        "exp_tokens": 4972,
+        "saving_pct": 76.6
+      },
+      "10": {
+        "recall": 0.933,
+        "exp_tokens": 4857,
+        "saving_pct": 77.1
+      },
+      "15": {
+        "recall": 0.967,
+        "exp_tokens": 5688,
+        "saving_pct": 73.2
+      }
+    },
+    "misses": [
+      {
+        "id": "e05",
+        "rank": 3,
+        "top1": "projects/homelab-pi.md"
+      },
+      {
+        "id": "h02",
+        "rank": 2,
+        "top1": "ops/parallel-agents-shared-repo.md"
+      },
+      {
+        "id": "h03",
+        "rank": 2,
+        "top1": "craft/css-layout.md"
+      },
+      {
+        "id": "h05",
+        "rank": 3,
+        "top1": "projects/projector-stage.md"
+      },
+      {
+        "id": "h06",
+        "rank": 2,
+        "top1": "craft/parallel-builder-orchestration.md"
+      },
+      {
+        "id": "h08",
+        "rank": 6,
+        "top1": "projects/windows-audio-control.md"
+      },
+      {
+        "id": "h09",
+        "rank": 2,
+        "top1": "projects/homelab-pi.md"
+      },
+      {
+        "id": "h10",
+        "rank": 10,
+        "top1": "ops/electron-desktop-overlays.md"
+      },
+      {
+        "id": "h11",
+        "rank": 12,
+        "top1": "ops/github-cli-pitfalls.md"
+      },
+      {
+        "id": "h12",
+        "rank": 2,
+        "top1": "craft/adversarial-review-methodology.md"
+      },
+      {
+        "id": "h13",
+        "rank": 5,
+        "top1": "profile/ethics-dual-use.md"
+      },
+      {
+        "id": "h14",
+        "rank": 19,
+        "top1": "craft/adversarial-review-methodology.md"
+      }
+    ]
+  }
+}

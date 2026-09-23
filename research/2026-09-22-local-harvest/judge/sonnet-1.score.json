@@ -1,0 +1,679 @@
+{
+ "summary": {
+  "candidate": "sonnet-1",
+  "reference": "opus-1",
+  "judge_model": "opus",
+  "n_ref_claims": 116,
+  "present": 68,
+  "partial": 22,
+  "absent": 26,
+  "recall": 0.681,
+  "n_cand_claims": 51,
+  "grounded": 44,
+  "distorted": 6,
+  "fabricated": 1,
+  "grounding": 0.863,
+  "fabrication": 0.02,
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate is strong on sections B\u2013E: it captures the pivot, the marks-case redirect, the exchanges/session-pass design, the ground-truth plan, and the open asks with correct origins, and its D section is well-labelled. It is materially weaker on section A grounding: it inverts the outcome of the binary search (crediting Python re.finditer with the confirming evidence when the string literals came from the first strings|grep and both Python passes were empty/garbled), fabricates a \"user explicitly corrected task 2\" framing that it then retracts in the same bullet, over-claims the cold cell cost relative to three warm cells, and wrongly asserts the user has deep familiarity with Jev primitives when the user asked what the skill does. Recall gaps cluster around fine-grained harness details (rubric \u2264400 chars / 22.6k chars, spine_entries patch, arm-B bar, answers.file.choice verification, commit attribution, cell isolation flags, zsh ====== glitch, transcript-parser retry) and a few user-model growth edges.",
+  "judge_cost_usd": 0.7370950000000001,
+  "adjudicated": true
+ },
+ "detail": {
+  "recall": [
+   {
+    "id": 1,
+    "status": "PRESENT"
+   },
+   {
+    "id": 2,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 3,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 4,
+    "status": "PRESENT"
+   },
+   {
+    "id": 5,
+    "status": "ABSENT"
+   },
+   {
+    "id": 6,
+    "status": "PRESENT"
+   },
+   {
+    "id": 7,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 8,
+    "status": "ABSENT"
+   },
+   {
+    "id": 9,
+    "status": "ABSENT"
+   },
+   {
+    "id": 10,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 11,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 12,
+    "status": "ABSENT"
+   },
+   {
+    "id": 13,
+    "status": "ABSENT"
+   },
+   {
+    "id": 14,
+    "status": "PRESENT"
+   },
+   {
+    "id": 15,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 16,
+    "status": "ABSENT"
+   },
+   {
+    "id": 17,
+    "status": "ABSENT"
+   },
+   {
+    "id": 18,
+    "status": "ABSENT"
+   },
+   {
+    "id": 19,
+    "status": "ABSENT"
+   },
+   {
+    "id": 20,
+    "status": "ABSENT"
+   },
+   {
+    "id": 21,
+    "status": "ABSENT"
+   },
+   {
+    "id": 22,
+    "status": "ABSENT"
+   },
+   {
+    "id": 23,
+    "status": "PRESENT"
+   },
+   {
+    "id": 24,
+    "status": "PRESENT"
+   },
+   {
+    "id": 25,
+    "status": "PRESENT"
+   },
+   {
+    "id": 26,
+    "status": "PRESENT"
+   },
+   {
+    "id": 27,
+    "status": "PRESENT"
+   },
+   {
+    "id": 28,
+    "status": "PRESENT"
+   },
+   {
+    "id": 29,
+    "status": "PRESENT"
+   },
+   {
+    "id": 30,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 31,
+    "status": "ABSENT"
+   },
+   {
+    "id": 32,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 33,
+    "status": "PRESENT"
+   },
+   {
+    "id": 34,
+    "status": "PRESENT"
+   },
+   {
+    "id": 35,
+    "status": "PRESENT"
+   },
+   {
+    "id": 36,
+    "status": "PRESENT"
+   },
+   {
+    "id": 37,
+    "status": "PRESENT"
+   },
+   {
+    "id": 38,
+    "status": "PRESENT"
+   },
+   {
+    "id": 39,
+    "status": "PRESENT"
+   },
+   {
+    "id": 40,
+    "status": "PRESENT"
+   },
+   {
+    "id": 41,
+    "status": "ABSENT"
+   },
+   {
+    "id": 42,
+    "status": "PRESENT"
+   },
+   {
+    "id": 43,
+    "status": "PRESENT"
+   },
+   {
+    "id": 44,
+    "status": "PRESENT"
+   },
+   {
+    "id": 45,
+    "status": "PRESENT"
+   },
+   {
+    "id": 46,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 47,
+    "status": "PRESENT"
+   },
+   {
+    "id": 48,
+    "status": "PRESENT"
+   },
+   {
+    "id": 49,
+    "status": "ABSENT"
+   },
+   {
+    "id": 50,
+    "status": "PRESENT"
+   },
+   {
+    "id": 51,
+    "status": "PRESENT"
+   },
+   {
+    "id": 52,
+    "status": "PRESENT"
+   },
+   {
+    "id": 53,
+    "status": "PRESENT"
+   },
+   {
+    "id": 54,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 55,
+    "status": "PRESENT"
+   },
+   {
+    "id": 56,
+    "status": "PRESENT"
+   },
+   {
+    "id": 57,
+    "status": "ABSENT"
+   },
+   {
+    "id": 58,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 59,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 60,
+    "status": "PRESENT"
+   },
+   {
+    "id": 61,
+    "status": "PRESENT"
+   },
+   {
+    "id": 62,
+    "status": "PRESENT"
+   },
+   {
+    "id": 63,
+    "status": "PRESENT"
+   },
+   {
+    "id": 64,
+    "status": "PRESENT"
+   },
+   {
+    "id": 65,
+    "status": "PRESENT"
+   },
+   {
+    "id": 66,
+    "status": "ABSENT"
+   },
+   {
+    "id": 67,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 68,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 69,
+    "status": "ABSENT"
+   },
+   {
+    "id": 70,
+    "status": "PRESENT"
+   },
+   {
+    "id": 71,
+    "status": "PRESENT"
+   },
+   {
+    "id": 72,
+    "status": "PRESENT"
+   },
+   {
+    "id": 73,
+    "status": "PRESENT"
+   },
+   {
+    "id": 74,
+    "status": "ABSENT"
+   },
+   {
+    "id": 75,
+    "status": "ABSENT"
+   },
+   {
+    "id": 76,
+    "status": "PRESENT"
+   },
+   {
+    "id": 77,
+    "status": "ABSENT"
+   },
+   {
+    "id": 78,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 79,
+    "status": "ABSENT"
+   },
+   {
+    "id": 80,
+    "status": "ABSENT"
+   },
+   {
+    "id": 81,
+    "status": "PRESENT"
+   },
+   {
+    "id": 82,
+    "status": "PRESENT"
+   },
+   {
+    "id": 83,
+    "status": "PRESENT"
+   },
+   {
+    "id": 84,
+    "status": "ABSENT"
+   },
+   {
+    "id": 85,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 86,
+    "status": "PRESENT"
+   },
+   {
+    "id": 87,
+    "status": "PRESENT"
+   },
+   {
+    "id": 88,
+    "status": "PRESENT"
+   },
+   {
+    "id": 89,
+    "status": "PRESENT"
+   },
+   {
+    "id": 90,
+    "status": "ABSENT"
+   },
+   {
+    "id": 91,
+    "status": "PRESENT"
+   },
+   {
+    "id": 92,
+    "status": "ABSENT"
+   },
+   {
+    "id": 93,
+    "status": "PRESENT"
+   },
+   {
+    "id": 94,
+    "status": "PRESENT"
+   },
+   {
+    "id": 95,
+    "status": "PRESENT"
+   },
+   {
+    "id": 96,
+    "status": "PRESENT"
+   },
+   {
+    "id": 97,
+    "status": "PRESENT"
+   },
+   {
+    "id": 98,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 99,
+    "status": "PRESENT"
+   },
+   {
+    "id": 100,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 101,
+    "status": "PRESENT"
+   },
+   {
+    "id": 102,
+    "status": "PRESENT"
+   },
+   {
+    "id": 103,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 104,
+    "status": "PRESENT"
+   },
+   {
+    "id": 105,
+    "status": "PRESENT"
+   },
+   {
+    "id": 106,
+    "status": "PRESENT"
+   },
+   {
+    "id": 107,
+    "status": "PRESENT"
+   },
+   {
+    "id": 108,
+    "status": "PRESENT"
+   },
+   {
+    "id": 109,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 110,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 111,
+    "status": "PRESENT"
+   },
+   {
+    "id": 112,
+    "status": "PRESENT"
+   },
+   {
+    "id": 113,
+    "status": "PRESENT"
+   },
+   {
+    "id": 114,
+    "status": "PARTIAL"
+   },
+   {
+    "id": 115,
+    "status": "PRESENT"
+   },
+   {
+    "id": 116,
+    "status": "PRESENT"
+   }
+  ],
+  "candidate_claims": [
+   {
+    "status": "DISTORTED",
+    "note": "JSON was read once; the value was false",
+    "adjudicated": true,
+    "reason": "The JSON read and the false flag are real; 'repeated attempts' overstates a single read."
+   },
+   {
+    "status": "GROUNDED",
+    "note": "assistant assertion in turn 3"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "first Python pass returned no output; second returned garbled minified context; confirming literals came from the initial strings|grep",
+    "adjudicated": true,
+    "reason": "The re.finditer approach is real; crediting it with the confirming evidence (which came from strings|grep) is a wrong outcome."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "$0.58 vs 3\u00d7$0.38=$1.14; transcript says it cost more than the warm cells' answers, not the combined cells",
+    "adjudicated": true,
+    "reason": "Real cost comparison ($0.58 cold vs warm cells' answers) mis-scoped to 'three warm cells combined'."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "FABRICATED",
+    "note": "no user correction occurred; candidate itself hedges this; 'Enough evidence already' was said before switching to TypeSafe, not before committing to the wrapper",
+    "adjudicated": true,
+    "reason": "No user correction of task 2 occurred anywhere; the correction event is invented."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "user asked for an executive summary of what the skill does; unfamiliarity is the evidence",
+    "adjudicated": true,
+    "reason": "The user's TypeSafe interaction is real; 'deep familiarity without needing explanation' inverts his request for a summary."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED",
+    "note": "the placement actually followed the repos rule more than this one, but both are in the same KB line"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "DISTORTED",
+    "note": "Python passes did not yield the evidence",
+    "adjudicated": true,
+    "reason": "The Python byte-regex attempts after tool failures are real; the implied successful reverse-engineering outcome is wrong."
+   },
+   {
+    "status": "DISTORTED",
+    "note": "WebFetch was unavailable (ToolSearch empty); only curl was used",
+    "adjudicated": true,
+    "reason": "The docs research via curl is real; including WebFetch, which was unavailable, is a wrong detail on a real action."
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   },
+   {
+    "status": "GROUNDED"
+   }
+  ],
+  "spec": {
+   "sections_present_in_order": true,
+   "decisions_have_origin": true,
+   "commentary_outside_sections": false
+  },
+  "qualitative": "The candidate is strong on sections B\u2013E: it captures the pivot, the marks-case redirect, the exchanges/session-pass design, the ground-truth plan, and the open asks with correct origins, and its D section is well-labelled. It is materially weaker on section A grounding: it inverts the outcome of the binary search (crediting Python re.finditer with the confirming evidence when the string literals came from the first strings|grep and both Python passes were empty/garbled), fabricates a \"user explicitly corrected task 2\" framing that it then retracts in the same bullet, over-claims the cold cell cost relative to three warm cells, and wrongly asserts the user has deep familiarity with Jev primitives when the user asked what the skill does. Recall gaps cluster around fine-grained harness details (rubric \u2264400 chars / 22.6k chars, spine_entries patch, arm-B bar, answers.file.choice verification, commit attribution, cell isolation flags, zsh ====== glitch, transcript-parser retry) and a few user-model growth edges."
+ },
+ "redaction": "Claim texts removed (raw session content). Verbatim user speech removed. Identifiers generalised. Evaluative notes kept: they are the finding."
+}

@@ -1,0 +1,248 @@
+{
+  "prose": [
+    {
+      "K": 2,
+      "n": 30,
+      "acc": 0.767,
+      "chance": 0.5,
+      "lift": 0.267,
+      "tokens_per_label": 48
+    },
+    {
+      "K": 3,
+      "n": 30,
+      "acc": 0.867,
+      "chance": 0.333,
+      "lift": 0.533,
+      "tokens_per_label": 48
+    },
+    {
+      "K": 5,
+      "n": 30,
+      "acc": 0.8,
+      "chance": 0.2,
+      "lift": 0.6,
+      "tokens_per_label": 35
+    },
+    {
+      "K": 8,
+      "n": 30,
+      "acc": 0.833,
+      "chance": 0.125,
+      "lift": 0.708,
+      "tokens_per_label": 22
+    },
+    {
+      "K": 10,
+      "n": 30,
+      "acc": 0.733,
+      "chance": 0.1,
+      "lift": 0.633,
+      "tokens_per_label": 17
+    },
+    {
+      "K": 15,
+      "n": 30,
+      "acc": 0.7,
+      "chance": 0.067,
+      "lift": 0.633,
+      "tokens_per_label": 11
+    },
+    {
+      "K": 20,
+      "n": 30,
+      "acc": 0.767,
+      "chance": 0.05,
+      "lift": 0.717,
+      "tokens_per_label": 8
+    },
+    {
+      "K": 30,
+      "n": 30,
+      "acc": 0.533,
+      "chance": 0.033,
+      "lift": 0.5,
+      "tokens_per_label": 5
+    },
+    {
+      "K": 45,
+      "n": 30,
+      "acc": 0.333,
+      "chance": 0.022,
+      "lift": 0.311,
+      "tokens_per_label": 4
+    },
+    {
+      "K": 65,
+      "n": 30,
+      "acc": 0.333,
+      "chance": 0.015,
+      "lift": 0.318,
+      "tokens_per_label": 4
+    }
+  ],
+  "keywords": [
+    {
+      "K": 2,
+      "n": 30,
+      "acc": 0.833,
+      "chance": 0.5,
+      "lift": 0.333,
+      "tokens_per_label": 48
+    },
+    {
+      "K": 3,
+      "n": 30,
+      "acc": 0.833,
+      "chance": 0.333,
+      "lift": 0.5,
+      "tokens_per_label": 48
+    },
+    {
+      "K": 5,
+      "n": 30,
+      "acc": 0.9,
+      "chance": 0.2,
+      "lift": 0.7,
+      "tokens_per_label": 35
+    },
+    {
+      "K": 8,
+      "n": 30,
+      "acc": 0.867,
+      "chance": 0.125,
+      "lift": 0.742,
+      "tokens_per_label": 22
+    },
+    {
+      "K": 10,
+      "n": 30,
+      "acc": 0.733,
+      "chance": 0.1,
+      "lift": 0.633,
+      "tokens_per_label": 17
+    },
+    {
+      "K": 15,
+      "n": 30,
+      "acc": 0.6,
+      "chance": 0.067,
+      "lift": 0.533,
+      "tokens_per_label": 11
+    },
+    {
+      "K": 20,
+      "n": 30,
+      "acc": 0.767,
+      "chance": 0.05,
+      "lift": 0.717,
+      "tokens_per_label": 8
+    },
+    {
+      "K": 30,
+      "n": 30,
+      "acc": 0.533,
+      "chance": 0.033,
+      "lift": 0.5,
+      "tokens_per_label": 5
+    },
+    {
+      "K": 45,
+      "n": 30,
+      "acc": 0.333,
+      "chance": 0.022,
+      "lift": 0.311,
+      "tokens_per_label": 4
+    },
+    {
+      "K": 65,
+      "n": 30,
+      "acc": 0.333,
+      "chance": 0.015,
+      "lift": 0.318,
+      "tokens_per_label": 4
+    }
+  ],
+  "path": [
+    {
+      "K": 2,
+      "n": 30,
+      "acc": 0.867,
+      "chance": 0.5,
+      "lift": 0.367,
+      "tokens_per_label": 48
+    },
+    {
+      "K": 3,
+      "n": 30,
+      "acc": 0.833,
+      "chance": 0.333,
+      "lift": 0.5,
+      "tokens_per_label": 48
+    },
+    {
+      "K": 5,
+      "n": 30,
+      "acc": 0.767,
+      "chance": 0.2,
+      "lift": 0.567,
+      "tokens_per_label": 35
+    },
+    {
+      "K": 8,
+      "n": 30,
+      "acc": 0.8,
+      "chance": 0.125,
+      "lift": 0.675,
+      "tokens_per_label": 22
+    },
+    {
+      "K": 10,
+      "n": 30,
+      "acc": 0.667,
+      "chance": 0.1,
+      "lift": 0.567,
+      "tokens_per_label": 17
+    },
+    {
+      "K": 15,
+      "n": 30,
+      "acc": 0.667,
+      "chance": 0.067,
+      "lift": 0.6,
+      "tokens_per_label": 11
+    },
+    {
+      "K": 20,
+      "n": 30,
+      "acc": 0.767,
+      "chance": 0.05,
+      "lift": 0.717,
+      "tokens_per_label": 8
+    },
+    {
+      "K": 30,
+      "n": 30,
+      "acc": 0.533,
+      "chance": 0.033,
+      "lift": 0.5,
+      "tokens_per_label": 5
+    },
+    {
+      "K": 45,
+      "n": 30,
+      "acc": 0.333,
+      "chance": 0.022,
+      "lift": 0.311,
+      "tokens_per_label": 4
+    },
+    {
+      "K": 65,
+      "n": 30,
+      "acc": 0.333,
+      "chance": 0.015,
+      "lift": 0.318,
+      "tokens_per_label": 4
+    }
+  ]
+}

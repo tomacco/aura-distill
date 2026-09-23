@@ -1,0 +1,318 @@
+{
+ "_about": "Routing eval set for the SPINE router experiments (E1). Written 2026-09-22 by the experimenting agent, NOT mined from real sessions (this Mac has 9 sessions, too few). Two tiers: 'easy' = the request naturally names a distinctive noun that also appears in the SPINE line; 'hard' = the request announces the action in the user's own words with the SPINE's distinctive nouns deliberately avoided or aliased. Leakage risk is real for the easy tier — that is why the lexical control arm exists.",
+ "topics": [
+  {
+   "id": "e01",
+   "tier": "easy",
+   "query": "I'm about to SSH into the Pi and kill a stuck python process with pkill -f, then restart it under systemd. Anything I should know before I do it?",
+   "expected": [
+    "ops/linux-shell-ssh.md"
+   ],
+   "acceptable_extra": [
+    "projects/homelab-pi.md",
+    "profile/ivan.md"
+   ]
+  },
+  {
+   "id": "e02",
+   "tier": "easy",
+   "query": "register a scheduled task on the windows box that runs the collector script every night",
+   "expected": [
+    "ops/windows-tooling.md"
+   ],
+   "acceptable_extra": []
+  },
+  {
+   "id": "e03",
+   "tier": "easy",
+   "query": "the pc rebooted again at idle, check the WHEA events and tell me if it's core 0",
+   "expected": [
+    "ops/whea-crash-forensics.md"
+   ],
+   "acceptable_extra": [
+    "ops/zen-smu-tooling.md",
+    "ops/uefi-varstore-windows.md"
+   ]
+  },
+  {
+   "id": "e04",
+   "tier": "easy",
+   "query": "going to flash a fresh image on the pi zero with the imager and set it up headless",
+   "expected": [
+    "ops/raspberry-pi.md"
+   ],
+   "acceptable_extra": [
+    "projects/homelab-pi.md"
+   ]
+  },
+  {
+   "id": "e05",
+   "tier": "easy",
+   "query": "add a cloudflare tunnel route for a new subdomain on tomac.co",
+   "expected": [
+    "ops/home-network.md"
+   ],
+   "acceptable_extra": [
+    "projects/homelab-pi.md"
+   ]
+  },
+  {
+   "id": "e06",
+   "tier": "easy",
+   "query": "open a PR on aura-distill for the inbox folder change",
+   "expected": [
+    "projects/aura-distill.md"
+   ],
+   "acceptable_extra": [
+    "craft/review-protocol.md"
+   ]
+  },
+  {
+   "id": "e07",
+   "tier": "easy",
+   "query": "the clawds mascot should climb the window edge slower, tune it",
+   "expected": [
+    "projects/clawds-desktop.md"
+   ],
+   "acceptable_extra": []
+  },
+  {
+   "id": "e08",
+   "tier": "easy",
+   "query": "I want to make the neuro-screening repo public",
+   "expected": [
+    "projects/neuro-screening.md"
+   ],
+   "acceptable_extra": [
+    "profile/ethics-dual-use.md",
+    "ops/github-cli-pitfalls.md"
+   ]
+  },
+  {
+   "id": "e09",
+   "tier": "easy",
+   "query": "pull my harbiz plan for this week and build the shopping list from the manolito backend",
+   "expected": [
+    "projects/better-harbiz.md"
+   ],
+   "acceptable_extra": []
+  },
+  {
+   "id": "e10",
+   "tier": "easy",
+   "query": "run testcontainers under WSL docker for the kotlin service",
+   "expected": [
+    "ops/wsl-docker.md"
+   ],
+   "acceptable_extra": []
+  },
+  {
+   "id": "e11",
+   "tier": "easy",
+   "query": "headless chrome screenshot of the deck with playwright",
+   "expected": [
+    "ops/cdp-verification.md"
+   ],
+   "acceptable_extra": []
+  },
+  {
+   "id": "e12",
+   "tier": "easy",
+   "query": "add a new voxel planet scene to projector-stage",
+   "expected": [
+    "projects/projector-stage.md"
+   ],
+   "acceptable_extra": [
+    "craft/realtime-3d-rendering.md"
+   ]
+  },
+  {
+   "id": "e13",
+   "tier": "easy",
+   "query": "the yfinance download comes back with a MultiIndex again, fix the loader",
+   "expected": [
+    "ops/free-data-sources.md"
+   ],
+   "acceptable_extra": [
+    "projects/investment-lab.md"
+   ]
+  },
+  {
+   "id": "e14",
+   "tier": "easy",
+   "query": "walk-forward backtest for the new momentum rule in investment lab",
+   "expected": [
+    "projects/investment-lab.md"
+   ],
+   "acceptable_extra": [
+    "craft/backtesting.md"
+   ]
+  },
+  {
+   "id": "e15",
+   "tier": "easy",
+   "query": "I'm going to reverse engineer the backend of a phone app with mitmproxy",
+   "expected": [
+    "ops/mobile-recon-interception.md"
+   ],
+   "acceptable_extra": [
+    "profile/ethics-dual-use.md"
+   ]
+  },
+  {
+   "id": "h01",
+   "tier": "hard",
+   "query": "my session is about to hit the usage cap, how do we hand this work over to a later run",
+   "expected": [
+    "ops/session-limits-continuation.md"
+   ],
+   "acceptable_extra": []
+  },
+  {
+   "id": "h02",
+   "tier": "hard",
+   "query": "spin up four builders on the same repo in parallel for the four slide arms",
+   "expected": [
+    "craft/parallel-builder-orchestration.md"
+   ],
+   "acceptable_extra": [
+    "ops/parallel-agents-shared-repo.md"
+   ]
+  },
+  {
+   "id": "h03",
+   "tier": "hard",
+   "query": "do it tomorrow night",
+   "expected": [
+    "craft/time-relative-phrase-handling.md"
+   ],
+   "acceptable_extra": []
+  },
+  {
+   "id": "h04",
+   "tier": "hard",
+   "query": "before we spend on the run, get someone with fresh eyes to try to break the experiment design",
+   "expected": [
+    "craft/adversarial-review-methodology.md"
+   ],
+   "acceptable_extra": [
+    "craft/self-benchmark-integrity.md"
+   ]
+  },
+  {
+   "id": "h05",
+   "tier": "hard",
+   "query": "which model should the cheap extraction stage use",
+   "expected": [
+    "ops/model-tiering.md"
+   ],
+   "acceptable_extra": [
+    "projects/aura-distill.md"
+   ]
+  },
+  {
+   "id": "h06",
+   "tier": "hard",
+   "query": "the company logo on the slide is a text placeholder, sort it out",
+   "expected": [
+    "ops/brand-asset-sourcing.md"
+   ],
+   "acceptable_extra": [
+    "projects/nast.md"
+   ]
+  },
+  {
+   "id": "h07",
+   "tier": "hard",
+   "query": "the auto-updater overwrote a file the user had edited, that must never happen again",
+   "expected": [
+    "craft/installer-updater-safety.md"
+   ],
+   "acceptable_extra": []
+  },
+  {
+   "id": "h08",
+   "tier": "hard",
+   "query": "the tests were flaky so I skipped them",
+   "expected": [
+    "craft/rca-methodology.md"
+   ],
+   "acceptable_extra": [
+    "feedback/tools-and-preferences.md"
+   ]
+  },
+  {
+   "id": "h09",
+   "tier": "hard",
+   "query": "the login on the mac laptop stopped working for the tester profile",
+   "expected": [
+    "ops/claude-profiles.md"
+   ],
+   "acceptable_extra": []
+  },
+  {
+   "id": "h10",
+   "tier": "hard",
+   "query": "the popup should not jump around when I hover the row",
+   "expected": [
+    "craft/interaction-design.md"
+   ],
+   "acceptable_extra": [
+    "craft/css-layout.md"
+   ]
+  },
+  {
+   "id": "h11",
+   "tier": "hard",
+   "query": "we want to put the questionnaire results behind a password on github pages",
+   "expected": [
+    "craft/static-site-access-gating.md"
+   ],
+   "acceptable_extra": [
+    "projects/neuro-screening.md"
+   ]
+  },
+  {
+   "id": "h12",
+   "tier": "hard",
+   "query": "the sound switched to the wrong output after I turned the TV off",
+   "expected": [
+    "ops/windows-audio.md"
+   ],
+   "acceptable_extra": [
+    "projects/windows-audio-control.md"
+   ]
+  },
+  {
+   "id": "h13",
+   "tier": "hard",
+   "query": "my gaming crashes are back",
+   "expected": [
+    "ops/whea-crash-forensics.md"
+   ],
+   "acceptable_extra": []
+  },
+  {
+   "id": "h14",
+   "tier": "hard",
+   "query": "write the memo for the team about the pricing decision",
+   "expected": [
+    "profile/communication-style.md"
+   ],
+   "acceptable_extra": [
+    "craft/audience-trust.md"
+   ]
+  },
+  {
+   "id": "h15",
+   "tier": "hard",
+   "query": "the home server changed address again",
+   "expected": [
+    "projects/homelab-pi.md"
+   ],
+   "acceptable_extra": [
+    "ops/home-network.md"
+   ]
+  }
+ ]
+}

@@ -16,3 +16,15 @@ dist/
 # `git clone`/checkout on NTFS. See issue #24.
 tests/results/
 tests/**/results/
+
+# Research harness: raw session material is deliberately never committed.
+# These paths hold real transcripts and models' written observations about real people.
+research/**/runs/transcript.txt
+research/**/runs/*.md
+research/**/runs/*.raw.md
+!research/**/runs/harvest_system_prompt.md
+research/**/judge/*.claims.json
+!research/2026-09-22-local-harvest/judge/opus-1.claims.json
+
+# Agent worktrees
+.claude/worktrees/

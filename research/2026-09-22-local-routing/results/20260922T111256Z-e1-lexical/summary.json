@@ -1,0 +1,39 @@
+{
+  "all": {
+    "n": 30,
+    "hit@1": 0.633,
+    "hit@3": 0.7,
+    "top1_acceptable": 0.7,
+    "mrr": 0.698,
+    "latency_ms_median": 0.2
+  },
+  "easy": {
+    "n": 15,
+    "hit@1": 0.933,
+    "hit@3": 0.933,
+    "top1_acceptable": 1.0,
+    "mrr": 0.936,
+    "latency_ms_median": 0.2
+  },
+  "hard": {
+    "n": 15,
+    "hit@1": 0.333,
+    "hit@3": 0.467,
+    "top1_acceptable": 0.4,
+    "mrr": 0.46,
+    "latency_ms_median": 0.2
+  },
+  "abstention": {
+    "hit_min": 7.385,
+    "hit_median": 17.645,
+    "miss_max": 22.397,
+    "miss_median": 9.528,
+    "separable": false
+  },
+  "router": "lexical",
+  "n_entries": 65,
+  "load_s": 0,
+  "max_rss_mb": 14.0,
+  "device": null,
+  "stamp": "20260922T111256Z"
+}

@@ -1,0 +1,43 @@
+{
+ "n_claims_pooled": 96,
+ "labels_changed": 14,
+ "per_candidate": {
+  "gptoss-20b-mxfp4": {
+   "n": 16,
+   "changed": 2
+  },
+  "qwen38-27b-8bit-nothink": {
+   "n": 6,
+   "changed": 1
+  },
+  "gemma3-12b-4bit": {
+   "n": 11,
+   "changed": 0
+  },
+  "haiku-1": {
+   "n": 26,
+   "changed": 7
+  },
+  "sonnet-1": {
+   "n": 7,
+   "changed": 1
+  },
+  "qwen38-9b-4bit": {
+   "n": 13,
+   "changed": 1
+  },
+  "qwen38-27b-8bit-think": {
+   "n": 7,
+   "changed": 2
+  },
+  "qwen38-27b-4bit": {
+   "n": 7,
+   "changed": 0
+  },
+  "opus-2": {
+   "n": 3,
+   "changed": 0
+  }
+ },
+ "method": "All non-GROUNDED claims from every candidate pooled into ONE blind, shuffled call with a pinned rubric. Re-run four times as candidates were added (4, 5, 8, 9): every previously-adjudicated label reproduced exactly each time. Single-candidate passes systematically over-call fabrication on weak output. Pool text withheld; regenerate with tools/adjudicate.py."
+}

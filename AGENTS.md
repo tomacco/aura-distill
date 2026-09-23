@@ -6,6 +6,14 @@ This is the canonical guide for anyone — human or AI agent, whatever the tool 
 
 A first-principles memory system shared by Claude Code, Codex, and Google Antigravity (agy). Users install it via `install.sh` or `install.ps1`, which places knowledge in `~/.aura-distill/` and adds client adapters. Claude can trigger it with `/distill`; Codex users ask it to distill; Antigravity loads it as a skill (installer wiring pending — see #67).
 
+## Plans and decisions
+
+- `ROADMAP.md` — scope and sequence of planned work (files-only redesign, then the opt-in software major).
+- GitHub issues — live status, acceptance criteria and blockers.
+- `DECISIONS.md` — why: who decided what, and on what basis.
+
+A PR that changes scope or dependencies updates `ROADMAP.md` and the affected issues in the same PR. A PR that makes or reverses a decision adds a `DECISIONS.md` entry. `NEXT-STEPS.md` is superseded history.
+
 ## Architecture
 
 - `distill.md` — Dispatcher (runs in main context, harvests signals, spawns sub-agent)

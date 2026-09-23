@@ -11,14 +11,11 @@
   <a href="https://tomacco.github.io/aura-distill/"><strong>Live Demo</strong></a> ·
   <a href="https://tomacco.github.io/aura-distill/research/"><strong>Research</strong></a> ·
   <a href="#installation">Install</a> ·
-  <a href="#results">Results</a>
+  <a href="#results">Results</a> ·
+  <a href="ROADMAP.md">Roadmap</a>
 </p>
 
 ---
-
-## Roadmap
-
-See [the execution roadmap](ROADMAP.md) for the files-only redesign, the later opt-in software major, upgrade protection, dependencies and measurement gates. These are planned changes; the installation instructions below describe the existing release.
 
 ## The problem
 

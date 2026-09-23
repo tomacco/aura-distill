@@ -23,6 +23,7 @@ When a PR is ready for review, the authoring agent spawns:
 Agent({
   description: "Independent PR review",
   isolation: "worktree",
+  model: <a model other than the author's — see rule 7>,
   prompt: <the review prompt below, filled in with the PR number>
 })
 ```
@@ -113,10 +114,12 @@ Structure your review as:
 One paragraph: what this PR does and your overall assessment.
 
 #### Findings
-List each finding with its severity (PASS / FLAG / BLOCK), the file and line, and a clear explanation. Group by area.
+List each finding with its severity (PASS / FLAG / BLOCK), the file and line, and a clear explanation. Group by area. For each BLOCK, state the fix you would accept.
 
 #### Verdict
 APPROVE, REQUEST CHANGES, or NEEDS DISCUSSION. With a one-line justification.
+
+Return the review as your final message. Do not post it, push, or modify the PR.
 ```
 
 ---
@@ -124,17 +127,17 @@ APPROVE, REQUEST CHANGES, or NEEDS DISCUSSION. With a one-line justification.
 ## Rules
 
 1. **Never self-review in the same context.** If you wrote it, you cannot review it. Period.
-2. **The reviewer's verdict is respected.** If it says BLOCK, you fix the issue before merging. Don't argue with the reviewer in a different context window — fix the code.
+2. **The reviewer's verdict is respected.** If it says BLOCK, you fix the issue before merging (rule 6 defines the only exceptions, after round three). Don't argue with the reviewer in a different context window — fix the code.
 3. **Don't coach the reviewer.** The whole point is an unbiased perspective. If you tell it "pay special attention to the lock file migration," you've already biased it toward approving the migration and looking for small issues instead of questioning whether the approach is right.
 4. **Run tests in the worktree.** The reviewer should execute `./test-sandbox.sh` or equivalent in its isolated copy. If the test harness is unavailable (e.g., missing auth config), note this in the review and evaluate test coverage from code inspection instead.
-5. **One reviewer per PR.** Don't spawn multiple reviewers hoping one will approve. If the first reviewer blocks, fix the issues and request a new review.
-6. **Reviews converge in at most three rounds.** Each round uses a new reviewer. After the third round, every remaining BLOCK must end in one of three ways before merge:
-   - it is fixed exactly as the reviewer prescribed, and the fix is quoted in the resolution comment;
+5. **One reviewer per round.** Don't spawn parallel reviewers hoping one will approve. If the first reviewer blocks, fix the issues and request a new review.
+6. **Reviews converge in at most three rounds.** A round is one reviewer's complete report on the PR's current head; each round uses a new reviewer. A NEEDS DISCUSSION verdict goes to the maintainer and does not count as a round. After the third round, every remaining BLOCK must end in one of three ways before merge:
+   - it is fixed as the reviewer prescribed (or, if no fix was prescribed, fixed), and the fix is quoted in the resolution comment;
    - it is turned into a failing test that is then made to pass;
-   - it is recorded as a named known risk in the PR and in the release notes of the version that ships it.
-   Security BLOCKs never take the third path. If none of the three fits, the PR waits for the maintainer. Why: open-ended rounds kept finding new composition issues as a design grew (PR #93 had six rounds and all six returned REQUEST CHANGES), and nothing said when a design was good enough.
-7. **The reviewer runs on a different model from the author.** Reviews from the model that wrote the change share its blind spots. Pick the reviewer's model explicitly (for example, the Agent tool's `model` option). For a release gate, also use a reviewer from a different vendor or harness when one is installed (for example, Codex). Record the reviewer's model in the review comment.
-8. **Resolutions are traceable.** Post every review and its resolution as PR comments: each finding, and what changed or why it did not. When a finding is routed to another issue, add it to that issue in the same step. A routing that exists only in a PR comment or an agent's prompt is lost.
+   - it is recorded as a named known risk in the PR and, in the same PR, under `### Known risks` in `CHANGELOG.md` `[Unreleased]`, which feeds the release notes.
+   BLOCKs about security, user-data loss, or writes outside `{DISTILL_DIR}` or the test sandbox never take the third path. If none of the three fits, the PR waits for the maintainer. Why: open-ended rounds kept finding new composition issues as a design grew (PR #93 had six rounds and all six returned REQUEST CHANGES), and nothing said when a design was good enough.
+7. **The reviewer runs on a different model from the author.** Reviews from the model that wrote the change share its blind spots. Pick the reviewer's model explicitly (for example, the Agent tool's `model` option). For a release gate — cutting a prerelease or promoting a branch to `main` — also use a reviewer from a different vendor or harness when one is installed (for example, Codex). The authoring agent records the reviewer's model in the review comment. Never use a forked agent (`subagent_type: "fork"`) as a reviewer: it inherits the author's context and model.
+8. **Resolutions are traceable.** The authoring agent posts every review and its resolution as PR comments: each finding, and what changed or why it did not. When a finding is routed to another issue, add it to that issue in the same step. A routing that exists only in a PR comment or an agent's prompt is lost.
 
 ## What good looks like
 

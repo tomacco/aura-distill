@@ -13,7 +13,7 @@ Issues own live status and blockers. `ROADMAP.md` owns scope and sequence. This 
 
 ## 2026-09-23 — Review convergence
 
-**D-2026-09-23-7 · Reviews converge in at most three rounds, reviewers differ from the author's model, and resolutions are traceable.** `provisional` (agent proposal under D-6, adopted through this reviewed PR)
+**D-2026-09-23-7 · Reviews converge in at most three rounds, reviewers differ from the author's model, and resolutions are traceable.** `evidence` · provisional (agent proposal under D-6, adopted through a reviewed PR)
 REVIEW-PROTOCOL.md rules 6–8. Evidence: PR #93 had six review rounds, each REQUEST CHANGES with new blocks. PR #92 needed three rounds, and one of them caught a finding that had been "routed" only in a PR comment and never reached the target issue. Revisit if a capped round ships a defect that a fourth round would have caught.
 
 ## 2026-09-23 — Release and autonomy frame for the files-only edition

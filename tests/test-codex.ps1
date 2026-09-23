@@ -95,6 +95,34 @@ DO-NOT-DELETE
     Invoke-TestInstall $partial
     Assert-True ((Get-Content (Join-Path $partial '.claude/CLAUDE.md') -Raw).Contains('DO-NOT-DELETE')) 'partial legacy block cannot delete later user content'
 
+    # Always-On preferences rule (same as install.sh): the section is kept byte for
+    # byte unless it equals the shipped template ignoring whitespace.
+    $mark = '## Always-On User Preferences'
+    function Test-PrefsCase([string]$Name, [string]$Section, [bool]$ExpectKept) {
+        $h = New-TestHome; $homes.Add($h); Invoke-TestInstall $h
+        $rules = Join-Path $h '.claude/rules/distill.md'
+        $text = [System.IO.File]::ReadAllText($rules)
+        $idx = [regex]::Match($text, '(?m)^## Always-On User Preferences').Index
+        $Section = $Section.Replace('@STORE@', (Join-Path $h '.aura-distill'))
+        $new = if ($Section -eq 'MISSING') { "OLD-FILE-WITHOUT-HEADING`n" } else { $text.Substring(0, $idx) + $Section }
+        [System.IO.File]::WriteAllText($rules, $new, (New-Object System.Text.UTF8Encoding($false)))
+        Invoke-TestInstall $h
+        $after = [System.IO.File]::ReadAllText($rules)
+        $m = [regex]::Match($after, '(?m)^## Always-On User Preferences')
+        $afterSection = if ($m.Success) { $after.Substring($m.Index) } else { '' }
+        if ($ExpectKept) { Assert-True ($afterSection -ceq $Section) "install.ps1 keeps $Name preferences byte for byte" }
+        else { Assert-True ($m.Success -and $afterSection -cne $Section -and -not $after.Contains('OLD-FILE-WITHOUT-HEADING') -and -not $after.Contains('{DISTILL' + '_DIR}')) "install.ps1 replaces $Name with the release's section, placeholder resolved" }
+    }
+    Test-PrefsCase 'bullet-only' "$mark`n`n- Answer in bullet points.`n- Never use emoji.`n" $true
+    Test-PrefsCase 'prose' "$mark`n`nKeep answers short; ask before large refactors.`n" $true
+    Test-PrefsCase 'non-ASCII' "$mark`n`n- Responde en español, sin «adornos» ¿vale? — ûÿ`n" $true
+    $templateSection = [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'rules/distill.md'))
+    $templateSection = $templateSection.Substring([regex]::Match($templateSection, '(?m)^## Always-On User Preferences').Index).Replace('{DISTILL' + '_DIR}', '@STORE@')
+    Test-PrefsCase 'an untouched template (whitespace differs)' (($templateSection -replace "`n", "  `n") + "`n`n") $false
+    Test-PrefsCase 'a file without the heading' 'MISSING' $false
+    $freshRules = [System.IO.File]::ReadAllText((Join-Path $fresh '.claude/rules/distill.md'))
+    Assert-True (-not $freshRules.Contains('{DISTILL' + '_DIR}')) 'install.ps1 resolves the store path in rules/distill.md when no preferences are kept'
+
     if ($LiveRetrieval) {
         $live = New-TestHome; $homes.Add($live); Invoke-TestInstall $live
         $liveAura = Join-Path $live '.aura-distill'

@@ -63,6 +63,48 @@ test "$before_codex" = "$after_codex"
 
 printf 'PASS bash installer preserves partial legacy content and is byte-stable\n'
 
+# Always-On preferences rule (same as install.ps1): the section from the heading to
+# the end of the file is kept byte for byte unless it equals the shipped template
+# ignoring whitespace; a file without the heading gets the release's file.
+MARK="## Always-On User Preferences"
+RULES="$TEST_HOME/.claude/rules/distill.md"
+SECTION_FILE="$TEST_HOME/prefs-section"
+prefs_case() { # name, expect (kept|replaced); section read from $SECTION_FILE or MISSING
+  local name="$1" expect="$2" mode="${3:-}" body_tmp after_section
+  body_tmp=$(mktemp)
+  if [ "$mode" = MISSING ]; then
+    printf 'OLD-FILE-WITHOUT-HEADING\n' > "$RULES"
+  else
+    sed "/^$MARK/,\$d" "$RULES" > "$body_tmp"
+    cat "$body_tmp" "$SECTION_FILE" > "$RULES"
+  fi
+  rm -f "$body_tmp"
+  run_install
+  after_section=$(mktemp)
+  sed -n "/^$MARK/,\$p" "$RULES" > "$after_section"
+  if [ "$expect" = kept ]; then
+    cmp -s "$after_section" "$SECTION_FILE" \
+      || { echo "FAIL install.sh did not keep $name preferences byte for byte" >&2; exit 1; }
+  else
+    grep -q "^$MARK" "$RULES" && ! grep -q 'OLD-FILE-WITHOUT-HEADING' "$RULES" \
+      && ! cmp -s "$after_section" "$SECTION_FILE" \
+      || { echo "FAIL install.sh did not replace $name with the release's section" >&2; exit 1; }
+  fi
+  rm -f "$after_section"
+  printf 'PASS install.sh %s preferences: %s\n' "$expect" "$name"
+}
+printf '%s\n\n- Answer in bullet points.\n- Never use emoji.\n' "$MARK" > "$SECTION_FILE"
+prefs_case 'bullet-only' kept
+printf '%s\n\nKeep answers short; ask before large refactors.\n' "$MARK" > "$SECTION_FILE"
+prefs_case 'prose' kept
+printf '%s\n\n- Responde en español, sin «adornos» ¿vale? — ûÿ\n' "$MARK" > "$SECTION_FILE"
+prefs_case 'non-ASCII' kept
+sed -n "/^$MARK/,\$p" "$REPO_ROOT/rules/distill.md" \
+  | sed "s|{DISTILL_DIR}|$TEST_HOME/.aura-distill|g; s|\$|  |" > "$SECTION_FILE"
+printf '\n\n' >> "$SECTION_FILE"
+prefs_case 'an untouched template (whitespace differs)' replaced
+prefs_case 'a file without the heading' replaced MISSING
+
 # Ledger beacon resolution (#46): exercise the documented grep pipeline shape
 # against fixture transcripts — both the match case and the empty-glob case
 # (a bare grep with no file operands would hang on stdin; </dev/null guards it).

@@ -9,6 +9,10 @@
 set -euo pipefail
 REPO_ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 PWSH=${PWSH:-pwsh}
+if ! command -v "$PWSH" >/dev/null 2>&1; then
+  echo "windows-smoke: SKIP (no pwsh found; set PWSH=/path/to/pwsh to run)"
+  exit 0
+fi
 PASS=0; FAIL=0
 check() { local d=$1; shift; if "$@" >/dev/null 2>&1; then PASS=$((PASS+1)); echo "  PASS  $d"; else FAIL=$((FAIL+1)); echo "  FAIL  $d"; fi; }
 native() { if command -v cygpath >/dev/null 2>&1; then cygpath -w "$1"; else printf '%s' "$1"; fi; }

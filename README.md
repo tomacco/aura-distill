@@ -179,6 +179,8 @@ Remove-Item -Force $HOME\.claude\commands\distill.md, $HOME\.claude\rules\distil
 
 Your knowledge files in `~/.aura-distill/` are preserved. They're yours.
 
+`/distill` updates skip a profile whose `commands/distill.md` is gone, so removing the file is enough. To tidy up, also delete that profile's line from `~/.aura-distill/.command-path`.
+
 ---
 
 <p align="center">

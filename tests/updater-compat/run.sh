@@ -857,11 +857,16 @@ printf '1.2.3\n' > "$M/VERSION"; printf '\nPATCH-J3\n' >> "$M/distill.md"
 run_update "$c" auto
 check "one update refreshes every listed profile's dispatcher ('$(first_line "$c")')" \
   bash -c "grep -q '^UPDATED 1.2.2 1.2.3 stable' '$c/update.out' && grep -q PATCH-J3 '$c/.claude/commands/distill.md' && grep -q PATCH-J3 '$c/.claude-mûller/commands/distill.md'"
+rm "$c/.claude/commands/distill.md"   # the user uninstalls /distill from the default profile
+printf '1.2.35\n' > "$M/VERSION"
+run_update "$c" auto
+check "an uninstalled dispatcher stays uninstalled; the sibling profile still updates ('$(first_line "$c")')" \
+  bash -c "grep -q '^UPDATED 1.2.3 1.2.35 stable' '$c/update.out' && [ ! -e '$c/.claude/commands/distill.md' ] && [ \"\$(cat '$s/.version')\" = 1.2.35 ]"
 printf '%s\n' "/nonexistent-elsewhere/.claude/commands/distill.md" >> "$s/.command-path"
 printf '1.2.4\n' > "$M/VERSION"
 run_update "$c" auto
 check "a listed path from another machine is skipped, the others still update ('$(first_line "$c")')" \
-  bash -c "grep -q '^UPDATED 1.2.3 1.2.4 stable' '$c/update.out' && [ ! -e /nonexistent-elsewhere ]"
+  bash -c "grep -q '^UPDATED 1.2.35 1.2.4 stable' '$c/update.out' && [ ! -e /nonexistent-elsewhere ]"
 
 # =====================================================================
 section "Isolation: nothing escaped the sandbox"

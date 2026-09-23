@@ -254,6 +254,8 @@ rm -f "$PROFILE/rules/distill.md"
 # Keep ~/.aura-distill/ unless you intentionally want to delete your knowledge.
 ```
 
+`/distill` updates skip a profile whose `commands/distill.md` is gone, so removing the file is enough. To tidy up, also delete that profile's line from `~/.aura-distill/.command-path`.
+
 ---
 
 ## Research & methodology

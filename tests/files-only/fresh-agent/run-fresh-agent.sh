@@ -15,6 +15,12 @@
 #      scripted PENDING state (store-after on disk, store-before as backup/, a plan listing the
 #      moves and writes); after `migrate-store --revert` it must equal store-before, with no
 #      CATALOG.md, so it is again a pre-1.2 store and the refusals of part C still hold.
+#   E. (ONLY=E) a learning for a file a 1.1 client archived, on a pre-1.2 store: an ordinary
+#      distillation must not re-create the file or touch the archive, and must queue exactly one
+#      inbox item named <ts>-<hex>-archived-<slug>.md directly in inbox/; a second run whose only
+#      input is that inbox item must keep it and add no copy.
+#   F. (ONLY=F) an ordinary distillation during a pending migration: no knowledge file changes,
+#      exactly one inbox item holds the harvest, and the report offers finish or revert.
 #   B. five retrieval questions, each in a new session, against the migrated store:
 #      a read_with companion, a protected rule, an archived recall, a scoped miss and a
 #      pinned project. Each answer is graded by required phrases; the store must be
@@ -33,7 +39,7 @@
 #   SURFACE=codex: retrieval sessions get the Codex managed block as appended system prompt
 #   REUSE=<work dir of an earlier run>: skip part A and ask the questions against a copy of
 #           that run's migrated store
-#   ONLY=C or ONLY=D runs that part alone (cheap)
+#   ONLY=C, D, E or F runs that part alone (cheap)
 #   KEEP=1 (default) keeps the temp dir, which is always printed; STEP_TIMEOUT=1500 seconds per session
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -129,7 +135,7 @@ bad() { FAIL=$((FAIL+1)); echo "  FAIL $1"; }
 
 ISOLATION="This is an isolated test on a synthetic store. The knowledge directory is $STORE (it stands for {DISTILL_DIR}). Do not read or write anything outside $T. There is no user to ask: where the instructions say to ask or confirm, treat the request in this prompt as the answer."
 
-if [ -z "${REUSE:-}" ] && [ "${ONLY:-}" != D ]; then
+if [ -z "${REUSE:-}" ] && { [ -z "${ONLY:-}" ] || [ "${ONLY:-}" = C ]; }; then
 echo "== C. a pre-1.2 store refuses gc and restore until migrated (model: $MODEL) =="
 c_before=$(tree_hash)
 run_agent guard-gc "You are the aura-distill distillation sub-agent. $ISOLATION
@@ -148,7 +154,7 @@ Read $STORE/distill-process.md and follow it for this Mode. Return the report."
 [ ! -f "$STORE/CATALOG.md" ] && ok "no catalog was written" || bad "a catalog was written on a pre-1.2 store"
 for n in guard-gc guard-restore; do final "$n" | tr '\n' ' ' | grep -qi 'migrate-store' && ok "$n points to migrate-store" || bad "$n does not point to migrate-store"; done
 fi
-if [ -z "${REUSE:-}" ] && [ "${ONLY:-}" != C ]; then
+if [ -z "${REUSE:-}" ] && { [ -z "${ONLY:-}" ] || [ "${ONLY:-}" = D ]; }; then
 echo "== D. reverting an interrupted first migration leaves a pre-1.2 store (model: $MODEL) =="
 D=$T/revert-store; TS=20260911T100000Z; MIG=$D/data/migration/$TS
 cp -R "$REPO/tests/files-only/store-after" "$D"
@@ -180,6 +186,49 @@ same=1; while IFS= read -r f; do cmp -s "$REPO/tests/files-only/store-before/$f"
 [ $same = 1 ] && ok "every pre-migration file is back byte-identical" || bad "reverted store differs from the backup"
 [ ! -e "$D/archive/projects/atlas.md" ] && [ ! -e "$D/evidence/craft/testing.md" ] && [ ! -e "$D/craft/testing-2.md" ] && ok "paths the migration created are gone" || bad "created paths left behind"
 [ ! -e "$MIG/PENDING" ] && [ -e "$MIG/REVERTED" ] && ok "PENDING removed, REVERTED written" || bad "PENDING/REVERTED markers wrong"
+fi
+# setup_store <dir> <fixture>: a synthetic store with the runtime "installed" into it
+setup_store() {
+  cp -R "$REPO/tests/files-only/$2" "$1"
+  for f in distill-process.md distill-monitor.md; do sed "s|{DISTILL_DIR}|$1|g" "$REPO/$f" > "$1/$f"; done
+  mkdir -p "$1/bin" "$1/data" "$1/inbox"; cp "$REPO/bin/distill-check-store.sh" "$1/bin/"
+  echo "idle $(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$1/.status"
+}
+# knowledge_hash <dir>: every file except data/, inbox/ and .status
+knowledge_hash() { (cd "$1" && find . -type f ! -path './data/*' ! -path './inbox/*' ! -name '.status' | LC_ALL=C sort | while IFS= read -r f; do shasum -a 256 "$f"; done) | shasum -a 256 | cut -d' ' -f1; }
+distill_prompt() { # <store> <harvest>
+  printf '%s' "You are the aura-distill distillation sub-agent (an ordinary distillation, no Mode). This is an isolated test on a synthetic store. The knowledge directory is $1 (it stands for {DISTILL_DIR}). Do not read or write anything outside $T. There is no user to ask: where the instructions say to ask, record an open question in the report instead.
+## Session Signal Harvest
+$2
+## Your process
+Read $1/distill-process.md and execute every step for an ordinary distillation. Return the distillation report."
+}
+if [ -z "${REUSE:-}" ] && { [ -z "${ONLY:-}" ] || [ "${ONLY:-}" = E ]; }; then
+echo "== E. a learning for a file a 1.1 client archived, on a pre-1.2 store (model: $MODEL) =="
+E=$T/archived-store; setup_store "$E" store-before
+mkdir -p "$E/archive/projects"; mv "$E/projects/atlas.md" "$E/archive/projects/atlas.md"   # a 1.1 archive: no ledger line
+grep -v '(projects/atlas.md)' "$E/SPINE.md" > "$E/SPINE.tmp" && mv "$E/SPINE.tmp" "$E/SPINE.md"
+a_hash=$(shasum -a 256 "$E/archive/projects/atlas.md" | cut -d' ' -f1)
+run_agent archived-1 "$(distill_prompt "$E" "A) Corrections & teachings: the user resumed the Atlas data-platform migration today. New decision: the phase 3 cutover is rescheduled to 2027-Q1 because the vendor contract renewal finally closed; the 2024 partition backfill is done. origin: evidence. Domain: projects (Atlas). E) Session: one hour of Atlas planning.")" --add-dir "$E"
+n1=$(ls "$E/inbox" | wc -l | tr -d ' '); f1=$(ls "$E/inbox" | head -1)
+[ ! -e "$E/projects/atlas.md" ] && ok "projects/atlas.md was not re-created" || bad "projects/atlas.md was re-created on a pre-1.2 store"
+[ "$(shasum -a 256 "$E/archive/projects/atlas.md" | cut -d' ' -f1)" = "$a_hash" ] && [ ! -e "$E/CATALOG.md" ] && ok "the 1.1 archive is untouched and no catalog was written" || bad "the archive changed or a catalog appeared"
+{ [ "$n1" = 1 ] && printf '%s' "$f1" | grep -Eq '^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{4}-archived-atlas\.md$' && [ -z "$(find "$E/inbox" -mindepth 2)" ]; } \
+  && ok "exactly one inbox item, named <ts>-<hex>-archived-atlas.md, directly in inbox/ ($f1)" || bad "inbox items wrong: $(ls -R "$E/inbox" | tr '\n' ' ')"
+final archived-1 | tr '\n' ' ' | grep -qi 'migrate-store' && ok "the report points to migrate-store" || bad "the report does not point to migrate-store"
+run_agent archived-2 "$(distill_prompt "$E" "(No new signals from a conversation this time; process the inbox only.)")" --add-dir "$E"
+{ [ "$(ls "$E/inbox" | wc -l | tr -d ' ')" = 1 ] && [ "$(ls "$E/inbox")" = "$f1" ] && [ ! -e "$E/projects/atlas.md" ]; } \
+  && ok "a repeated run keeps that inbox item and adds no copy" || bad "repeat run changed the inbox: $(ls "$E/inbox" | tr '\n' ' ')"
+fi
+if [ -z "${REUSE:-}" ] && { [ -z "${ONLY:-}" ] || [ "${ONLY:-}" = F ]; }; then
+echo "== F. an ordinary distillation during a pending migration (model: $MODEL) =="
+F=$T/pending-store; setup_store "$F" store-after
+mkdir -p "$F/data/migration/20260911T100000Z"; echo "data/migration/20260911T100000Z/PLAN.md" > "$F/data/migration/20260911T100000Z/PENDING"
+f_hash=$(knowledge_hash "$F")
+run_agent pending "$(distill_prompt "$F" "B) Corrections: the user corrected the Beacon email digest interval: it moves from 15 to 5 minutes, support tickets complained about delay. origin: evidence. Domain: projects (Beacon).")" --add-dir "$F"
+[ "$(knowledge_hash "$F")" = "$f_hash" ] && ok "no knowledge file changed while PENDING" || bad "a knowledge file changed during a pending migration"
+[ "$(ls "$F/inbox" | wc -l | tr -d ' ')" = 1 ] && grep -qi 'digest' "$F/inbox/"* && ok "exactly one inbox item holds the harvest" || bad "inbox wrong: $(ls "$F/inbox" | tr '\n' ' ')"
+final pending | tr '\n' ' ' | grep -qi 'revert' && final pending | tr '\n' ' ' | grep -qi 'finish' && ok "the report offers finish or revert" || bad "the report does not offer finish or revert"
 fi
 if [ -n "${ONLY:-}" ]; then echo; echo "fresh-agent validation ($MODEL, part ${ONLY}): $PASS passed, $FAIL failed"; echo "transcripts: $LOGS"; [ $FAIL -eq 0 ]; exit; fi
 if [ -z "${REUSE:-}" ]; then

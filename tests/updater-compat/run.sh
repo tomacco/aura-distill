@@ -553,6 +553,11 @@ check "bootstrap template run verbatim (placeholder unsubstituted) refuses and s
   bash -c "printf '%s' \"\$1\" | grep -q 'store path is still a placeholder'" _ "$verr"
 check "  and creates nothing: no '{DISTILL_DIR}' directory in the working directory, the client unchanged, no download" \
   bash -c "[ -z \"\$(ls -A '$vcwd')\" ] && [ \"\$(find '$c' -type f | LC_ALL=C sort | cksum)\" = '$vbefore' ] && [ \"\$2\" = \"\$3\" ]" _ x "$vreq" "$(requests_to /bin/distill-update.sh)"
+# A quoted tilde is not expanded: D="~/.aura-distill" would create ./~/.aura-distill/bin/ in the cwd
+tverb=$(printf '%s' "$verb" | sed 's|D="{DISTILL_DIR}"|D="~/.aura-distill"|')
+terr=$( cd "$vcwd" && HOME="$c" bash -c "$tverb" 2>&1 >/dev/null ) || true
+check "bootstrap with a quoted ~ path refuses and creates no './~' directory in the working directory" \
+  bash -c "printf '%s' \"\$1\" | grep -q 'starts with ~' && [ -z \"\$(ls -A '$vcwd')\" ] && [ \"\$2\" = \"\$3\" ]" _ "$terr" "$vreq" "$(requests_to /bin/distill-update.sh)"
 sp=$(cksum < "$s/distill-process.md")
 run_update "$c" check >/dev/null
 check "check mode reports a pending repair ('$(first_line "$c")') and writes nothing" \

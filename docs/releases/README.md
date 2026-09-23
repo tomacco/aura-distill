@@ -50,7 +50,7 @@ Do this in the release PR, before it merges. Pages only go live once they are on
    ```bash
    grep -n 'X\.Y\.Z\|YYYY-MM-DD\|DD-MM-YYYY\|NNN\|{{' docs/releases/<version>/index.html
    ```
-5. **Add it to the list.** In `docs/releases/index.html`, add one `<li>` at the **top** of `<ul class="rl">`:
+5. **Add it to the list.** Also update the "Updated" date in the kicker and the footer date of `docs/releases/index.html`. In `docs/releases/index.html`, add one `<li>` at the **top** of `<ul class="rl">`:
    version, date, channel badge (`ne-badge` = stable, `ne-badge ne-badge--outline` = beta), a one-line
    summary in EN and ES, and a link to `<version>/`. Update the lead and the "current stable" stat when a
    stable version ships.
@@ -77,7 +77,7 @@ Do this in the release PR, before it merges. Pages only go live once they are on
      only as counts, sizes, ratios and pass/fail (D-2026-09-23-4);
    - no tokens, keys or internal URLs.
    ```bash
-   grep -nE '/Users/|/home/|C:\\\\Users|@[a-z0-9-]+\.[a-z]{2,}|sk-[A-Za-z0-9]|ghp_' docs/releases/<version>/index.html
+   grep -nE '/Users/|/home/|C:\\Users|@[a-z0-9-]+\.[a-z]{2,}|sk-[A-Za-z0-9]|ghp_' docs/releases/<version>/index.html
    ```
    The grep must print nothing. Review anything it finds by hand, then read the page once more as a
    stranger would.

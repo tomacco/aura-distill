@@ -874,11 +874,31 @@ run_update "$c" auto
 check "optional checker present with the expected header: installed with the update ('$(first_line "$c")')" \
   bash -c "grep -q '^UPDATED 1.2.32 1.2.33 stable' '$c/update.out' && grep -q NEW-CHECKER '$s/bin/distill-check-store.sh' && [ -x '$s/bin/distill-check-store.sh' ]"
 rm -f "$M/bin/distill-check-store.sh"
+# rules/distill.md: the user's filled preferences survive an update byte for byte.
+R="$c/.claude-mûller/rules/distill.md"
+printf '\n**Always answer in bullet points.** (user rule, synthetic)\n- keep: é û » ¿ bytes\n' >> "$R"
+sed -n '/^## Always-On User Preferences/,$p' "$R" > "$WORK/prefs.before"
+printf '\nRULES-J-NEW-BODY\n' > "$WORK/rules-extra"
+sed '/^## Always-On User Preferences/,$d' "$M/rules/distill.md" > "$WORK/rules.body"
+{ cat "$WORK/rules.body" "$WORK/rules-extra"; sed -n '/^## Always-On User Preferences/,$p' "$M/rules/distill.md"; } > "$M/rules/distill.md.new" && mv "$M/rules/distill.md.new" "$M/rules/distill.md"
+printf '1.2.34\n' > "$M/VERSION"
+run_update "$c" auto
+check "rules/distill.md is updated with the release ('$(first_line "$c")') and the user's preferences survive byte for byte" \
+  bash -c "grep -q '^UPDATED 1.2.33 1.2.34 stable' '$c/update.out' && grep -q RULES-J-NEW-BODY '$R' && sed -n '/^## Always-On User Preferences/,\$p' '$R' | cmp -s - '$WORK/prefs.before' && ! grep -qF '{DISTILL_DIR}' '$R'"
+check "  the sibling profile's rules file is updated too" grep -q RULES-J-NEW-BODY "$c/.claude/rules/distill.md"
+cp "$R" "$WORK/rules.kept"
+sed '/^## Always-On User Preferences/,$d' "$M/rules/distill.md" > "$M/rules/distill.md.new" && mv "$M/rules/distill.md.new" "$M/rules/distill.md"
+printf '\nRULES-WITHOUT-PREFS-SECTION\n' >> "$M/rules/distill.md"
+printf '1.2.345\n' > "$M/VERSION"
+run_update "$c" auto
+check "a released rules file without the preferences heading leaves every rules file untouched; the rest updates ('$(first_line "$c")')" \
+  bash -c "grep -q '^UPDATED 1.2.34 1.2.345 stable' '$c/update.out' && cmp -s '$R' '$WORK/rules.kept' && ! grep -q RULES-WITHOUT '$c/.claude/rules/distill.md'"
+cp "$REPO_ROOT/rules/distill.md" "$M/rules/distill.md"
 rm "$c/.claude/commands/distill.md"   # the user uninstalls /distill from the default profile
 printf '1.2.35\n' > "$M/VERSION"
 run_update "$c" auto
 check "an uninstalled dispatcher stays uninstalled; the sibling profile still updates ('$(first_line "$c")')" \
-  bash -c "grep -q '^UPDATED 1.2.33 1.2.35 stable' '$c/update.out' && [ ! -e '$c/.claude/commands/distill.md' ] && [ \"\$(cat '$s/.version')\" = 1.2.35 ]"
+  bash -c "grep -q '^UPDATED 1.2.345 1.2.35 stable' '$c/update.out' && [ ! -e '$c/.claude/commands/distill.md' ] && [ \"\$(cat '$s/.version')\" = 1.2.35 ]"
 printf '%s\n' "/nonexistent-elsewhere/.claude/commands/distill.md" >> "$s/.command-path"
 printf '1.2.4\n' > "$M/VERSION"
 run_update "$c" auto

@@ -231,6 +231,33 @@ for f in distill.md distill-process.md distill-monitor.md bin/distill-update.sh;
   fi
 done
 
+# rules/distill.md (the always-on rules) for every profile being updated, merged the
+# way install.sh does it: a user's filled "Always-On User Preferences" section (the
+# heading plus a bold rule line within 30 lines) is kept byte for byte and appended
+# to the new file's body. The new file must contain that heading, or no rules file is
+# touched (the rest of the update still applies).
+PREFS_MARK="## Always-On User Preferences"
+RULES_TARGETS=()
+if fetch "$BASE/rules/distill.md" "$WORK/stage/rules.raw" \
+   && grep -q "Distill" "$WORK/stage/rules.raw" && grep -q "^$PREFS_MARK" "$WORK/stage/rules.raw" \
+   && ! grep -q "$SOFTWARE_MARKER" "$WORK/stage/rules.raw"; then
+  sed "s|$PLACEHOLDER|$store_esc|g" "$WORK/stage/rules.raw" > "$WORK/stage/rules.new"
+  i=0
+  for t in ${CMD_FILES[@]+"${CMD_FILES[@]}"}; do
+    rules="$(dirname "$(dirname "$t")")/rules/distill.md"
+    [ -f "$rules" ] || [ "$FALLBACK" = 1 ] || continue
+    i=$((i+1))
+    if [ -f "$rules" ] && grep -q "^$PREFS_MARK" "$rules" \
+       && grep -A 30 "^$PREFS_MARK" "$rules" | grep -q "^\*\*"; then
+      sed "/^$PREFS_MARK/,\$d" "$WORK/stage/rules.new" > "$WORK/stage/rules.$i"
+      sed -n "/^$PREFS_MARK/,\$p" "$rules" >> "$WORK/stage/rules.$i"
+    else
+      cp "$WORK/stage/rules.new" "$WORK/stage/rules.$i"
+    fi
+    RULES_TARGETS+=("$rules")
+  done
+fi
+
 # Optional: the store-invariant checker (#78). Installed or refreshed only when the
 # release carries one with the expected header; a 404 or a mismatch is skipped and
 # never removes a copy that is already installed.
@@ -249,11 +276,15 @@ mkdir -p "$STORE/bin" "$STORE/data" "$STORE/inbox" || finish "BLOCKED $CHANNEL c
 # rename per file. The status line is only UPDATED if every rename succeeded.
 N=".aura-new.$$"
 cleanup_new() {
-  local t; for t in ${CMD_FILES[@]+"${CMD_FILES[@]}"}; do rm -f "$t$N"; done
+  local t; for t in ${CMD_FILES[@]+"${CMD_FILES[@]}"} ${RULES_TARGETS[@]+"${RULES_TARGETS[@]}"}; do rm -f "$t$N"; done
   rm -f "$STORE/distill-process.md$N" "$STORE/distill-monitor.md$N" "$STORE/bin/distill-update.sh$N" "$STORE/bin/distill-check-store.sh$N" "$STORE/.version$N"
 }
 cmd_ok=1
 for t in ${CMD_FILES[@]+"${CMD_FILES[@]}"}; do cp "$WORK/stage/distill.md" "$t$N" || cmd_ok=0; done
+i=0
+for t in ${RULES_TARGETS[@]+"${RULES_TARGETS[@]}"}; do
+  i=$((i+1)); mkdir -p "$(dirname "$t")" && cp "$WORK/stage/rules.$i" "$t$N" || cmd_ok=0
+done
 [ "$cmd_ok" = 1 ] \
   && cp "$WORK/stage/distill-process.md" "$STORE/distill-process.md$N" \
   && cp "$WORK/stage/distill-monitor.md" "$STORE/distill-monitor.md$N" \
@@ -267,7 +298,7 @@ if [ "$CHECK_STORE" = 1 ]; then
   chmod +x "$STORE/bin/distill-check-store.sh$N" 2>/dev/null || true
   OPTIONAL_TARGETS=("$STORE/bin/distill-check-store.sh")
 fi
-for pair in ${CMD_FILES[@]+"${CMD_FILES[@]}"} "$STORE/distill-process.md" "$STORE/distill-monitor.md" "$STORE/bin/distill-update.sh" ${OPTIONAL_TARGETS[@]+"${OPTIONAL_TARGETS[@]}"} "$STORE/.version"; do
+for pair in ${CMD_FILES[@]+"${CMD_FILES[@]}"} ${RULES_TARGETS[@]+"${RULES_TARGETS[@]}"} "$STORE/distill-process.md" "$STORE/distill-monitor.md" "$STORE/bin/distill-update.sh" ${OPTIONAL_TARGETS[@]+"${OPTIONAL_TARGETS[@]}"} "$STORE/.version"; do
   if ! mv -f "$pair$N" "$pair" 2>/dev/null; then
     cleanup_new
     finish "BLOCKED $CHANNEL replacing $(basename "$pair") failed; the installation may be partially updated, run the installer to repair it"

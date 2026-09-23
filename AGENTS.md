@@ -22,8 +22,9 @@ A PR that changes scope or dependencies updates `ROADMAP.md` in that PR and upda
 - `plugins/aura-distill/` — Antigravity (agy) plugin, laid out per Antigravity's discovery contract: `plugin.json` (marker), `skills/distill/SKILL.md` (the distill workflow), `rules/AGENTS.md` (thin pointer to the canonical `distill-monitor.md` + Antigravity-specific Time Index)
 - `bin/distill-recent-agy.sh` / `.ps1` — Antigravity Time Index over brain transcripts (output-identical twins; parity enforced by `tests/antigravity/run-parity-test.sh`)
 - `knowledge-architecture.md` — Tier system design doc
+- `docs/design-files-only-memory.md` — files-only memory redesign (#75): layout, budgets, lifecycle, migration, guarantees
 - `install.sh` / `install.ps1` — User-facing installers
-- `tests/` — A/B test scenarios, cognitive bias tests, persona-based methodology tests
+- `tests/` — A/B test scenarios, cognitive bias tests, persona-based methodology tests; `tests/files-only/` — synthetic before/after stores and the files-only invariant checker (#75)
 - `docs/` — GitHub Pages site (landing, research); `docs/adr/` — architecture decision records (published with the site)
 - `dashboard/` — Analytics dashboard
 
@@ -70,6 +71,7 @@ When developing or testing:
 - Run persona tests: `./tests/scenarios/methodology/run-persona-test.sh`
 - Run integration tests: `./test-sandbox.sh`
 - Run Antigravity Time Index parity + hostile-input tests: `./tests/antigravity/run-parity-test.sh` (and the connector runners `run-antigravity-connector-tests.sh` / `.ps1`)
+- Run the files-only store invariants (thin SPINE, catalog completeness, lossless migration; #75): `bash tests/files-only/run-files-only-tests.sh` — design in `docs/design-files-only-memory.md` (about 100 checks; about two minutes locally, about five minutes on CI macOS, several times longer on Windows Git Bash because of process-spawn cost)
 - Run legacy updater compatibility reproductions (captured shipped curl blocks against a local fixture endpoint; no network, no real profiles): `bash tests/updater-compat/run.sh` — decisions they back live in `docs/adr/`
 - Run deterministic Claude/Codex installer tests: `pwsh tests/test-codex.ps1`
 - Run a real isolated Codex retrieval test: `pwsh tests/test-codex.ps1 -LiveRetrieval`

@@ -1043,7 +1043,7 @@ Run as `migrate-store --preview` (default), `--apply`, `--finish` or `--revert`.
 - a checklist with one `- [ ]` item per step, in the order Apply runs them.
 On a store already migrated, the plan is a no-op except for adoption of any unledgered `archive/<tier>/` file that appeared since (an older client archived it); say which of the two it is.
 
-**Evidence classification** (your judgement; the Self-check proves it lossless, not correct): a line moves to the twin only if it is a `- ` line starting with a date and carries no protected or retrieval marker. Continuation lines of a principle (`confidence:`, `last_validated:`, `origin:`, `Why:`) never move. A section whose bullets all move takes its heading with it; otherwise the heading stays.
+**Evidence classification** (your judgement; the Self-check proves it lossless, not correct): a line moves to the twin only if it is a `- ` line starting with a date and carries no protected or retrieval marker. Continuation lines of a principle (`confidence:`, `last_validated:`, `origin:`, `Why:`) never move. A section whose bullets all move takes its heading line with it: write the heading into the twin, above the moved lines. Otherwise the heading stays. **No line is ever dropped**: every non-blank line of the original file must still exist, as many times as before, in the principle file, its twin or a split child (the Self-check's conservation check fails on a missing heading).
 
 **Apply.**
 1. Take the lock. Refuse while another `PENDING` exists (finish or revert it). Recompute the plan as in Preview and write it.

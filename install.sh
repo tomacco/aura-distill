@@ -7,9 +7,9 @@ set -e
 
 
 
-VERSION="1.1.23"
+VERSION="1.2.0-beta.1"
 
-BUILD="20260518-01"
+BUILD="20260923-01"
 # Release channels (docs/adr/0002): stable = the files-only line at main (default);
 # beta = an opt-in prerelease, fetched from the tag named by the beta manifest.
 RAW_ROOT="${AURA_DISTILL_RAW_ROOT:-https://raw.githubusercontent.com/tomacco/aura-distill}"

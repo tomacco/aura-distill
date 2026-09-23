@@ -19,6 +19,7 @@ All notable changes to aura-distill.
 - **Research pages**: `docs/research/token-economics.html` (40 days of real usage mined: ~85% of cost is context movement; distill overhead 5–6% of spend) and `docs/research/model-routing.html` (task-shape routing trials; orchestrators route near-optimally unaided).
 
 ### Fixed
+- **Always-On preferences reset on reinstall** (#79, backport of #113's rule): since 1.1.8 both installers kept the "Always-On User Preferences" section of `rules/distill.md` only if it had a `**` line within 30 lines of the heading, so preferences written as plain bullets or prose were reset to the empty template. The section, from its heading to the end of the file, is now kept byte for byte unless it equals the release's template ignoring whitespace; a file without the heading gets the release's file. `install.ps1` also no longer installs the rules file with `{DISTILL_DIR}` unresolved when there are no preferences to keep.
 - **Installer data loss**: updating overwrote `rules/distill.md` wholesale, wiping the user's synced "Always-On User Preferences" section back to the empty template (caught live-testing the v1.1.7 update). Both installers now preserve the section across updates (like SPINE) — only when it holds real content, not the template — and leave the existing file untouched if the download fails.
 
 ### Privacy

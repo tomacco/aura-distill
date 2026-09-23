@@ -159,6 +159,9 @@ try {
         if ($betaTag -cnotmatch '^v[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$' -or $betaTag.Substring(1) -ne [string]$beta.version) {
             throw 'The beta channel manifest names an invalid release.'
         }
+        if ($betaTag.Substring(1).Split('.')[0] -ne [string]$LineMajor) {
+            throw "The beta channel now names $betaTag, a different major version. This installer only installs the v$LineMajor line; that release needs its own installer and your consent."
+        }
         $Repo = "$RawRoot/$betaTag"
     }
 

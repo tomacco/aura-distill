@@ -158,7 +158,17 @@ if [ "$CHANNEL" = beta ]; then
   [ "$served" = "$TARGET" ] || finish "BLOCKED $CHANNEL the beta release is inconsistent (manifest $TARGET, tag serves ${served:-nothing})"
 fi
 
-[ "$TARGET" = "$INSTALLED" ] && finish "CURRENT $TARGET $CHANNEL"
+# An older updater copied files without resolving the store placeholder (ADR 0001,
+# latent defect 2). Re-installing the same version repairs them; it is not an upgrade,
+# so it runs regardless of the Auto-update preference.
+REPAIR=0
+for t in "$CMD_FILE" "$STORE/distill-process.md" "$STORE/distill-monitor.md"; do
+  grep -qF "$PLACEHOLDER" "$t" 2>/dev/null && REPAIR=1
+done
+if [ "$TARGET" = "$INSTALLED" ]; then
+  [ "$REPAIR" = 1 ] || finish "CURRENT $TARGET $CHANNEL"
+  MODE=apply
+fi
 
 if [ "$MODE" = auto ]; then
   if awk '/^## /{on=($0 ~ /^## Auto-update/)} on && /^[ \t]*-[ \t]*enabled:[ \t]*true[ \t]*$/{found=1} END{exit !found}' \
@@ -190,16 +200,22 @@ for f in distill.md distill-process.md distill-monitor.md bin/distill-update.sh;
 done
 
 mkdir -p "$(dirname "$CMD_FILE")" "$STORE/bin" "$STORE/data" "$STORE/inbox" || finish "BLOCKED $CHANNEL cannot create directories; nothing was changed"
-# Same-filesystem temp names next to each target, then one rename per file.
-cp "$WORK/stage/distill.md" "$CMD_FILE.aura-new" \
-  && cp "$WORK/stage/distill-process.md" "$STORE/distill-process.md.aura-new" \
-  && cp "$WORK/stage/distill-monitor.md" "$STORE/distill-monitor.md.aura-new" \
-  && cp "$WORK/stage/bin/distill-update.sh" "$STORE/bin/distill-update.sh.aura-new" \
-  || { rm -f "$CMD_FILE.aura-new" "$STORE"/*.aura-new "$STORE/bin/"*.aura-new; finish "BLOCKED $CHANNEL cannot write the new files; nothing was changed"; }
-chmod +x "$STORE/bin/distill-update.sh.aura-new" 2>/dev/null || true
-mv -f "$CMD_FILE.aura-new" "$CMD_FILE"
-mv -f "$STORE/distill-process.md.aura-new" "$STORE/distill-process.md"
-mv -f "$STORE/distill-monitor.md.aura-new" "$STORE/distill-monitor.md"
-mv -f "$STORE/bin/distill-update.sh.aura-new" "$STORE/bin/distill-update.sh"
-printf '%s\n' "$TARGET" > "$STORE/.version.tmp" && mv -f "$STORE/.version.tmp" "$STORE/.version"
+# Temp names next to each target (same filesystem), unique per process so two
+# sessions updating one store cannot rename each other's files; then one checked
+# rename per file. The status line is only UPDATED if every rename succeeded.
+N=".aura-new.$$"
+cleanup_new() { rm -f "$CMD_FILE$N" "$STORE/distill-process.md$N" "$STORE/distill-monitor.md$N" "$STORE/bin/distill-update.sh$N" "$STORE/.version$N"; }
+cp "$WORK/stage/distill.md" "$CMD_FILE$N" \
+  && cp "$WORK/stage/distill-process.md" "$STORE/distill-process.md$N" \
+  && cp "$WORK/stage/distill-monitor.md" "$STORE/distill-monitor.md$N" \
+  && cp "$WORK/stage/bin/distill-update.sh" "$STORE/bin/distill-update.sh$N" \
+  && printf '%s\n' "$TARGET" > "$STORE/.version$N" \
+  || { cleanup_new; finish "BLOCKED $CHANNEL cannot write the new files; nothing was changed"; }
+chmod +x "$STORE/bin/distill-update.sh$N" 2>/dev/null || true
+for pair in "$CMD_FILE" "$STORE/distill-process.md" "$STORE/distill-monitor.md" "$STORE/bin/distill-update.sh" "$STORE/.version"; do
+  if ! mv -f "$pair$N" "$pair" 2>/dev/null; then
+    cleanup_new
+    finish "BLOCKED $CHANNEL replacing $(basename "$pair") failed; the installation may be partially updated, run the installer to repair it"
+  fi
+done
 finish "UPDATED ${INSTALLED:-unknown} $TARGET $CHANNEL"

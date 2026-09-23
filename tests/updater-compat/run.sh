@@ -449,6 +449,11 @@ run_update() { # <home> <auto|check|apply>
     bash "$store/bin/distill-update.sh" "$2" >"$home/update.out" 2>"$home/update.err"
 }
 first_line() { head -1 "$1/update.out"; }
+run_update_to() { # <home> <output file>: same as run_update, separate output (concurrent runs)
+  local store; store=$(store_of "$1")
+  env -u AURA_DISTILL_HOME -u AURA_DISTILL_CHANNEL_MANIFEST HOME="$1" AURA_DISTILL_RAW_ROOT="$RAW" \
+    bash "$store/bin/distill-update.sh" apply >"$2" 2>/dev/null
+}
 set_autoupdate() { # <home> <true|false>
   local store; store=$(store_of "$1")
   mkdir -p "$store/feedback"
@@ -523,12 +528,13 @@ for spec in "dispatcher-v0.3.1.sh 0.3.1 legacy" "dispatcher-v1.0.0.sh 1.0.1 lega
   check "  bridge step 2 installs the updater script (validated, into the client's own store)" test -f "$s/bin/distill-update.sh"
   set_autoupdate "$c" true
   run_update "$c" auto
-  check "  bridge step 3 with auto-update ON: $(first_line "$c")" \
-    bash -c "grep -q '^CURRENT 1.2.0 stable' '$c/update.out'"
+  check "  bridge step 3 repairs the files the shipped block left unresolved: $(first_line "$c")" \
+    bash -c "grep -q '^UPDATED 1.2.0 1.2.0 stable' '$c/update.out' && ! grep -qF '{DISTILL_DIR}' '$c/.claude/commands/distill.md' '$s/distill-process.md' '$s/distill-monitor.md'"
   check "  the notice names v2.0.0, the requirements and the guide, and nothing else" \
     bash -c "grep -q '^NOTICE: .*software edition (v2.0.0)' '$c/update.out' && grep -q 'local background service' '$c/update.out' && grep -q 'https://tomacco.github.io/aura-distill/upgrade/2.0.0.md' '$c/update.out' && ! grep -q 'software-2.x' '$c/update.out'"
   run_update "$c" auto
-  check "  deferred: the next session shows no notice again" bash -c "! grep -q '^NOTICE' '$c/update.out'"
+  check "  deferred: the next session shows no notice again, and there is nothing left to repair ($(first_line "$c"))" \
+    bash -c "! grep -q '^NOTICE' '$c/update.out' && grep -q '^CURRENT 1.2.0 stable' '$c/update.out'"
   check "  no software payload, no consent record, knowledge unchanged" \
     bash -c "! grep -rq '$MARKER' '$c' && [ ! -e '$s/.major-consent' ] && [ \"\$(cat '$s/SPINE.md' '$s/craft/synthetic.md' | cksum)\" = '$before_k' ]"
 done
@@ -607,10 +613,14 @@ cp "$WORK/upd.bak" "$M/bin/distill-update.sh"; mv "$M/VERSION" "$WORK/version.ba
 fail_case "failed: VERSION unavailable (offline)"
 printf '1.2.3-beta.1\n' > "$M/VERSION"
 fail_case "mixed: the stable endpoint reports a prerelease"
-printf '1.2.2\n' > "$M/VERSION"; printf 'not json {{{\n' > "$M/channels/manifest.json"
+printf '1.2.2\n' > "$M/VERSION"
+pids=""; for i in 1 2 3; do run_update_to "$c" "$WORK/conc.$i" & pids="$pids $!"; done; for p in $pids; do wait "$p" || true; done
+check "three concurrent sessions applying one update: each reports UPDATED or BLOCKED, the result is complete, no temp files left" \
+  bash -c "for i in 1 2 3; do head -1 '$WORK/conc.'\$i | grep -Eq '^(UPDATED|BLOCKED|CURRENT) ' || exit 1; done; [ \"\$(cat '$s/.version')\" = 1.2.2 ] && ! ls '$s'/*.aura-new.* '$s/bin/'*.aura-new.* '$c/.claude/commands/'*.aura-new.* >/dev/null 2>&1"
+printf '1.2.3\n' > "$M/VERSION"; printf 'not json {{{\n' > "$M/channels/manifest.json"
 run_update "$c" auto
 check "malformed manifest on main: the files-only update still applies ('$(first_line "$c")'), no notice" \
-  bash -c "[ \"\$(head -1 '$c/update.out')\" = 'UPDATED 1.2.1 1.2.2 stable' ] && ! grep -q NOTICE '$c/update.out'"
+  bash -c "[ \"\$(head -1 '$c/update.out')\" = 'UPDATED 1.2.2 1.2.3 stable' ] && ! grep -q NOTICE '$c/update.out'"
 
 # =====================================================================
 section "(g) Beta channel: opt-in from a pinned tag, beta auto-update, opt-out"
@@ -661,6 +671,10 @@ beta_block() { # <description>
 set_beta prerelease v2.0.0-beta.1 2.0.0-beta.1
 beta_block "the beta manifest names a new major (v2.0.0-beta.1)"
 check "  nothing was requested from that tag" test "$(requests_since "$LAST_MARK" /v2.0.0-beta.1/)" = 0
+c4=$(mktemp -d "$WORK/clients/g4.XXXXXX"); m=$(mark_log)
+set +e; install_client "$c4" --channel beta; rc=$?; set -e
+check "install.sh --channel beta refuses a v2 beta tag before fetching from it (exit $rc, nothing written)" \
+  bash -c "[ $rc -ne 0 ] && [ ! -e '$c4/.aura-distill' ] && [ \"\$(tail -n +$((m+1)) '$ACCESS_LOG' | grep -c 'GET .*/v2.0.0-beta.1/')\" = 0 ]"
 set_beta prerelease v1.2.0-beta.3 1.2.0-beta.2
 beta_block "tag and version disagree in the manifest"
 make_tag v1.2.0-beta.3 BETA-THREE; printf '1.2.0-beta.4\n' > "$SERVE/tomacco/aura-distill/v1.2.0-beta.3/VERSION"
@@ -711,6 +725,11 @@ c=$(mktemp -d "$WORK/clients/h.XXXXXX")
 install_client "$c"
 check "fresh install: .command-path points at the installed dispatcher" \
   bash -c "[ \"\$(cat '$c/.aura-distill/.command-path')\" = '$c/.claude/commands/distill.md' ]"
+amp=$(mktemp -d "$WORK/clients/h-amp.XXXXXX")
+env -u AURA_DISTILL_HOME -u CODEX_HOME -u AURA_DISTILL_REPO HOME="$amp" AURA_DISTILL_HOME="$amp/my store&co|x/.aura-distill" CODEX_HOME="$amp/.codex" \
+  AURA_DISTILL_RAW_ROOT="$RAW" bash "$REPO_ROOT/install.sh" </dev/null >/dev/null 2>&1 || true
+check "a store path containing '&' and '|' is written literally into the installed files" \
+  bash -c "grep -qF '$amp/my store&co|x/.aura-distill/bin/distill-update.sh' '$amp/.claude/commands/distill.md' && ! grep -qF '{DISTILL_DIR}' '$amp/.claude/commands/distill.md' '$amp/my store&co|x/.aura-distill/distill-process.md' '$amp/.claude/rules/distill.md'"
 printf '2.0.0\n' > "$M/VERSION"
 c=$(mktemp -d "$WORK/clients/h1.XXXXXX")
 set +e; install_client "$c"; rc=$?; set -e

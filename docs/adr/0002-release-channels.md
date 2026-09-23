@@ -20,7 +20,9 @@ Two gaps were left. There was no way to install or follow a beta at all: the dis
 - reads the channel from `<store>/.channel` (`stable` when absent) and the command path from `<store>/.command-path` (default `~/.claude/commands/distill.md`);
 - keys every safety decision on content it just fetched and on its own constant `LINE_MAJOR=1`, never on `.version` (ADR 0001 section c showed `.version` can lie);
 - refuses any target whose major differs from 1, any prerelease served by the stable endpoint, and any file carrying the software payload marker;
-- downloads all four files (dispatcher, process, monitor, itself) to a temp dir, validates each, resolves the store placeholder, and only then renames them into place; `.version` is written last. Any failure leaves every installed file untouched;
+- downloads all four files (dispatcher, process, monitor, itself) to a temp dir, validates each, resolves the store placeholder, and only then renames them into place with per-process temp names; `.version` is renamed last. Any failure before the renames leaves every installed file untouched; a failed rename (for example two sessions updating one store) is reported as `BLOCKED ... may be partially updated`, never as `UPDATED`;
+- repairs, at the same version and regardless of the Auto-update preference, installed files that an older updater copied with the store placeholder unresolved (ADR 0001 latent defect 2), so a legacy client that adopts the bridge is clean after its first `/distill`;
+- reads `.channel`, `.version` and `.command-path` tolerating a UTF-8 byte-order mark and CRLF (Windows PowerShell 5.1 writes both; `install.ps1` now writes these files without them);
 - never touches knowledge (SPINE, tiers, preferences, inbox);
 - runs from a temp copy of itself, so replacing its own file works on Windows too.
 
@@ -37,7 +39,7 @@ The bridge dispatcher carries one command block of its own: installing the scrip
 
 The beta manifest lives at `https://raw.githubusercontent.com/tomacco/aura-distill/beta/1.2/channels/manifest.json`. Its `beta` entry names exactly one tag (`status: prerelease`, `tag: v1.2.0-beta.N`, `version: 1.2.0-beta.N`). Installers and the updater fetch the payload from `https://raw.githubusercontent.com/tomacco/aura-distill/<tag>/`. A tag's content never changes, so a beta user gets exactly what was cut, not what was merged since. Moving the channel forward, or back, is a one-line reviewed change to the manifest.
 
-Checks on every read: the tag must match `v<major>.<minor>.<patch>[-beta.<n>]` (no path segments), `tag == "v" + version`, the major must be 1, and the tag's own `VERSION` must equal the manifest's version. A mismatch is `BLOCKED` and changes nothing. A beta manifest naming a `v2.x` tag is refused before anything is requested from that tag: the beta channel is a files-only channel.
+Checks on every read: the tag must match `v<major>.<minor>.<patch>[-beta.<n>]` (no path segments), `tag == "v" + version`, the major must be 1, and the tag's own `VERSION` must equal the manifest's version. A mismatch is `BLOCKED` and changes nothing. A beta manifest naming a `v2.x` tag is refused, by the updater and by both installers, before anything is requested from that tag: the beta channel is a files-only channel.
 
 The stable channel is unchanged in behaviour: version from `main/VERSION`, files from `main`, which is what every 1.1.x client already does. A stable client never requests a beta URL; section (g) asserts zero such requests.
 
@@ -89,7 +91,11 @@ Both installers stage and validate the whole payload before writing anything. A 
 
 1. Set `VERSION` (and the two installer constants) to a plain `1.2.0` before the merge to `main`: the stable-surface guard fails on a prerelease, and the bump workflow cannot increment a `-beta.N` suffix.
 2. Point the manifest's `beta` entry at the stable tag (or the next beta) so beta users land on the same content.
-3. Never delete `beta/1.2`: installed beta clients read their manifest from it. To close the channel, set `beta.status` to `closed`; clients report it and change nothing.
+3. Never delete `beta/1.2`: installed beta clients read their manifest from it. To close the channel, set `beta.status` to `closed`; clients report it and change nothing (they stay on their beta until the user re-runs the installer with `--channel stable`).
+4. Reword the beta paragraphs in `README.md` and `INSTALL.md`: they describe the pre-promotion state ("the 1.2 line ships as prereleases first", "the `main` installer does not know about channels").
+5. Before cutting the first beta, make the `Syntax checks` job (which runs the endpoint guard) a required status check on `main` and `beta/1.2`; the guard in `bump-version.yml` runs after a merge is already live.
+
+Moving the beta pointer back (beta.2 → beta.1) is allowed and is applied silently to beta users with auto-update on. Once a beta migrates the store format (#78), check that the older beta can read the migrated store before using that lever.
 
 ## Consequences
 

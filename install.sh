@@ -296,6 +296,10 @@ if [ "$CHANNEL" = "beta" ] && [ -z "${AURA_DISTILL_REPO:-}" ]; then
         fail_msg "The beta channel manifest names an invalid release. Nothing was changed."
         exit 1
     fi
+    if [ "${BETA_VERSION%%.*}" != "$LINE_MAJOR" ]; then
+        fail_msg "The beta channel now names v$BETA_VERSION, a different major version. This installer only installs the v$LINE_MAJOR line; that release needs its own installer and your consent. Nothing was changed."
+        exit 1
+    fi
     REPO="$RAW_ROOT/$BETA_TAG"
 fi
 
@@ -369,8 +373,10 @@ fi
 
 # Download core files and resolve {DISTILL_DIR} to actual path
 
+# sed replacement text: escape the characters sed treats specially (& | \) in the path.
+DISTILL_DIR_SED=$(printf '%s' "$DISTILL_DIR" | sed 's/[&|\\]/\\&/g')
 install_core() { # <staged file> <target>
-    sed "s|$PLACEHOLDER|$DISTILL_DIR|g" "$1" > "$2.aura-new" && mv -f "$2.aura-new" "$2"
+    sed "s|$PLACEHOLDER|$DISTILL_DIR_SED|g" "$1" > "$2.aura-new" && mv -f "$2.aura-new" "$2"
 }
 install_core "$STAGE/distill.md" "$CMD_DIR/distill.md"
 done_msg "distill.md ${DIM}(command)${RESET}"
@@ -422,7 +428,7 @@ if [ -f "$RULES_DIR/distill.md" ] && grep -q "^$PREFS_MARK" "$RULES_DIR/distill.
 fi
 
 RULES_TMP=$(mktemp)
-if fetch_file "$REPO/rules/distill.md" | sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" > "$RULES_TMP" \
+if fetch_file "$REPO/rules/distill.md" | sed "s|$PLACEHOLDER|$DISTILL_DIR_SED|g" > "$RULES_TMP" \
    && grep -q "Distill" "$RULES_TMP"; then
     if [ -n "$PREFS_TMP" ]; then
         # Build the merged file in a temp and move it into place atomically —

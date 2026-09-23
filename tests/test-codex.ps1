@@ -155,8 +155,12 @@ DO-NOT-DELETE
     Assert-True ((Read-Trim (Join-Path $betaAura '.version')) -eq '1.2.0') 'opt-out installs the stable version from main'
     Assert-True (-not (Get-Content (Join-Path $betaAura 'distill-process.md') -Raw).Contains('BETA-ONE-PS')) 'opt-out replaces the beta payload'
     Set-BetaManifest 'prerelease' 'v2.0.0-beta.1' '2.0.0-beta.1'
+    $v2Tag = Join-Path $rawRoot 'v2.0.0-beta.1'
+    Copy-Payload $v2Tag
+    Set-Content (Join-Path $v2Tag 'VERSION') '2.0.0-beta.1' -NoNewline
     Invoke-ChannelInstall $beta 'beta'
-    Assert-True ((Read-Trim (Join-Path $betaAura '.channel')) -eq 'stable') 'a beta manifest naming a tag that does not exist changes nothing'
+    Assert-True ((Read-Trim (Join-Path $betaAura '.channel')) -eq 'stable') 'a beta manifest naming a new major (v2 tag present) is refused, nothing changes'
+    Assert-True ((Read-Trim (Join-Path $betaAura '.version')) -eq '1.2.0') 'the v2 beta refusal keeps the installed version'
 
     # Consent boundary: a cross-major payload with piped input is refused, nothing changes.
     $guarded = New-TestHome; $homes.Add($guarded)

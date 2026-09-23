@@ -20,7 +20,7 @@ With a Mode: run the Status check below, **skip Step 1** (no harvest, no beacon)
 
 **Interrupted migration.** If any `{DISTILL_DIR}/data/migration/*/PENDING` exists (`ls {DISTILL_DIR}/data/migration/*/PENDING 2>/dev/null`), a store migration did not finish, and the distiller will not encode until it is finished or reverted. For an ordinary `/distill`, run it anyway (harvest and spawn as usual): the sub-agent sees the marker, queues your harvest as one inbox item instead of encoding it, and says so in its report (the one place this is handled, `distill-process.md` "An interrupted migration blocks encoding"). Then tell the user:
 > "A store migration was interrupted. Your session's learnings are saved in the inbox. I can finish the migration or revert it to the backup it took; nothing new is encoded until one of the two runs. Which do you prefer?"
-and run the Mode they choose.
+and run the Mode they choose. In Step 3, record that distillation's ledger line with `"mode":"skipped"`: the conversation was queued, not distilled (the inbox item is encoded by the next distillation after the migration).
 
 Before doing ANYTHING else, run these checks:
 
@@ -166,7 +166,7 @@ You MUST be able to Write and Edit files in {DISTILL_DIR}/. If any write is deni
 ## Output Format
 Return a distillation report:
 - Signals processed: N
-- Inbox: K items consumed (0 if none; one line each when K > 0)
+- Inbox: K items consumed (0 if none; one line each when K > 0); if a pending migration blocked encoding, say so and give the inbox path the harvest was queued to
 - Learnings encoded: list with file paths
 - User model updates: what changed
 - Tier health: current state (SPINE lines and bytes, files over cap, catalog state, Self-check result and whether the helper or the checklist ran it)
@@ -211,7 +211,7 @@ grep -l "aura-distill-beacon <beacon>" $(ls -t ~/.claude/projects/*/*.jsonl ~/.c
 {"ts":"<ISO-8601 UTC>","session_id":"<id or null>","transcript_path":"<path or null>","transcript_lines":<n or null>,"identity":"resolved|unresolved","trigger":"manual","mode":"full","signals":<N>,"distiller_version":"<contents of {DISTILL_DIR}/.version>"}
 ```
 
-   Enums: `trigger` = `manual` | `auto` (auto arrives with the auto-distiller, #51); `mode` = `full` | `marks` | `skipped` (`marks` ships with #48 if approved; `skipped` is written by automation for trivial sessions). Today the dispatcher always writes `manual`/`full`.
+   Enums: `trigger` = `manual` | `auto` (auto arrives with the auto-distiller, #51); `mode` = `full` | `marks` | `skipped` (`marks` ships with #48 if approved; `skipped` is written by automation for trivial sessions, and by the dispatcher when the sub-agent reports that a pending migration made it queue the harvest in the inbox instead of encoding it). Otherwise the dispatcher writes `manual`/`full`.
 
    Rules: append-only, one JSON object per line, no rewriting past lines, `null` over invented values. Like the economics ledger, this is local diagnostic data — never synced, never transmitted. Distilling the SAME session again later in the conversation is legitimate: append a second record; the growing `transcript_lines` tells automation what has already been covered.
 
@@ -233,10 +233,10 @@ Updates are done by the updater script that ships with aura-distill, never by do
 On the FIRST invocation of `/distill` in a session:
 
 1. The store directory is `{DISTILL_DIR}`. If that path still appears as a literal placeholder in curly braces (an older updater copied this file without resolving it), use `~/.aura-distill` if that directory exists, otherwise `~/.claude/distill`, everywhere this section names the store.
-2. If `{DISTILL_DIR}/bin/distill-update.sh` does not exist (older versions did not ship it), install it with this command (the only change allowed is the store path, replaced as step 1 says), then continue:
+2. If `{DISTILL_DIR}/bin/distill-update.sh` does not exist (older versions did not ship it), install it with this command, then continue. The only change allowed is the value of `D` at its start: the store path from step 1, written out in full (for example `D="$HOME/.aura-distill"`). Every other use goes through `"$D"`, and the command does nothing if `D` still holds a placeholder:
 
    ```bash
-   t=$(mktemp) && curl -fsSL --max-time 30 https://raw.githubusercontent.com/tomacco/aura-distill/main/bin/distill-update.sh -o "$t" && sed -n 2p "$t" | grep -q '^# aura-distill-updater' && mkdir -p "{DISTILL_DIR}/bin" && mv "$t" "{DISTILL_DIR}/bin/distill-update.sh"; rm -f "$t"
+   D="{DISTILL_DIR}"; case "$D" in ''|*'{'*|*'}'*) echo "aura-distill: the store path is still a placeholder; set D first" >&2 ;; *) t=$(mktemp) && curl -fsSL --max-time 30 https://raw.githubusercontent.com/tomacco/aura-distill/main/bin/distill-update.sh -o "$t" && sed -n 2p "$t" | grep -q '^# aura-distill-updater' && mkdir -p "$D/bin" && mv "$t" "$D/bin/distill-update.sh"; rm -f "$t" ;; esac
    ```
 
    If the file still does not exist afterwards, say "aura-distill: update check unavailable right now." and go on with the distillation.

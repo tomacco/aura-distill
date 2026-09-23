@@ -65,7 +65,7 @@
     <span><a href="../">← <span data-lang="en">All releases</span><span data-lang="es">Todas las versiones</span></a></span>
     <!-- SLOT: date — release date, ISO order in EN (2026-10-01), day first in ES (01-10-2026) -->
     <span data-lang="en">Released YYYY-MM-DD</span><span data-lang="es">Publicada el DD-MM-YYYY</span>
-    <!-- SLOT: channel — keep ONE badge.
+    <!-- SLOT: channel — keep ONE badge. It names the channel, not the build: 1.2.0-beta.1 gets "beta", never "beta.1".
          stable: <span class="ne-badge"><span data-lang="en">stable</span><span data-lang="es">estable</span></span>
          beta:   <span class="ne-badge ne-badge--outline">beta</span> -->
     <span class="ne-badge ne-badge--outline">beta</span>
@@ -73,8 +73,8 @@
     <span><a href="https://github.com/tomacco/aura-distill/pull/NNN">PR #NNN</a></span>
   </div>
 
-  <!-- SLOT: version — the short version as the wordmark (e.g. 1.2.0). Put "-beta.N" in the kicker badge
-       and in the h1, not here: it has to fit one line at 360px. -->
+  <!-- SLOT: version — the short version as the wordmark (e.g. 1.2.0). Put "-beta.N" in the h1
+       (the kicker badge just says "beta"), not here: it has to fit one line at 360px. -->
   <div class="ne-wordmark ne-reveal">X.Y.Z</div>
   <div class="ne-tag ne-reveal ne-reveal--2">
     <!-- SLOT: one-sentence answer — what changes for the reader, in one plain sentence (≤ 20 words). EN + ES. -->
@@ -132,7 +132,7 @@
   <section class="ne-section" id="risks">
     <div class="ne-sec"><h2><span data-lang="en">Known risks</span><span data-lang="es">Riesgos conocidos</span></h2><span class="ne-idx">02</span></div>
     <!-- SLOT: known risks — REQUIRED. One <li> per entry under "### Known risks" in CHANGELOG [Unreleased] for this
-         version (REVIEW-PROTOCOL.md rule 6). Name the risk, who it affects, what to do about it, and link the PR/issue
+         version (REVIEW-PROTOCOL.md rule 6: https://github.com/tomacco/aura-distill/blob/085ad363ce77b5f1ecdd894d3fedb47a50439f2e/REVIEW-PROTOCOL.md#L140). Name the risk, who it affects, what to do about it, and link the PR/issue
          that tracks it. If the changelog lists none, delete the <ol> and keep the "None known" note below.
          If the changelog lists any, delete the "None known" note. -->
     <ol class="ne-steps">
@@ -164,7 +164,7 @@
   <section class="ne-section" id="evidence">
     <div class="ne-sec"><h2><span data-lang="en">Measured evidence</span><span data-lang="es">Evidencia medida</span></h2><span class="ne-idx">04</span></div>
     <!-- SLOT: evidence — one row per measurement behind a claim on this page: what, result, link to the research page,
-         test suite or CI run. Aggregates only (DECISIONS D-2026-09-23-4). If nothing was measured, replace the
+         test suite or CI run. Aggregates only (DECISIONS D-2026-09-23-4: https://github.com/tomacco/aura-distill/blob/085ad363ce77b5f1ecdd894d3fedb47a50439f2e/DECISIONS.md#L66). Every row needs a real link: the placeholder check fails on href="#". If nothing was measured, replace the
          panel with a note saying so. -->
     <div class="ne-panel"><ul class="ne-rows">
       <li><span class="ne-k"><span data-lang="en">{{Test suite}}</span><span data-lang="es">{{Batería de pruebas}}</span></span><span class="ne-v"><a href="#">{{result}}</a></span></li>
@@ -214,7 +214,7 @@
   <section class="ne-section" id="review">
     <div class="ne-sec"><h2><span data-lang="en">Review trail</span><span data-lang="es">Registro de revisión</span></h2><span class="ne-idx">07</span></div>
     <!-- SLOT: review trail — one row per PR in this release: PR, review rounds, reviewer model(s) (REVIEW-PROTOCOL.md
-         rule 7: different from the author's; name the release-gate reviewer from another vendor if one ran),
+         rule 7, https://github.com/tomacco/aura-distill/blob/085ad363ce77b5f1ecdd894d3fedb47a50439f2e/REVIEW-PROTOCOL.md#L147: different from the author's; name the release-gate reviewer from another vendor if one ran),
          and the final verdict. Include the release PR itself. -->
     <p class="ne-intro" data-lang="en">{{REVIEW_TRAIL_INTRO — e.g. "Every change in this version was reviewed by an independent agent; the models are listed below." Say "a different model" only if rule 7 held for every PR.}} One row per pull request.</p>
     <p class="ne-intro" data-lang="es">{{INTRO_REVISION — p. ej. "Cada cambio de esta versión lo revisó un agente independiente; los modelos figuran abajo." Di "un modelo distinto" solo si la regla 7 se cumplió en todos los PR.}} Una fila por pull request.</p>

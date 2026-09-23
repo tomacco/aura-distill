@@ -1,7 +1,7 @@
 # Release pages
 
 Every version gets a page at `docs/releases/<version>/index.html`, published at
-`https://tomacco.github.io/aura-distill/releases/<version>/` (DECISIONS.md D-2026-09-23-5).
+`https://tomacco.github.io/aura-distill/releases/<version>/` ([DECISIONS.md D-2026-09-23-5](https://github.com/tomacco/aura-distill/blob/085ad363ce77b5f1ecdd894d3fedb47a50439f2e/DECISIONS.md#L72)).
 The list of all releases is `docs/releases/index.html`.
 
 Files:
@@ -18,17 +18,18 @@ Files:
 ## How to make a release page
 
 Do this in the release PR, before it merges. Pages only go live once they are on `main`
-(D-2026-09-23-3).
+([D-2026-09-23-3](https://github.com/tomacco/aura-distill/blob/085ad363ce77b5f1ecdd894d3fedb47a50439f2e/DECISIONS.md#L60)).
 
 1. **Copy the template.** `cp -R docs/releases/_template docs/releases/<version>` (for example
    `1.2.0-beta.1`). Paths inside the template (`../releases.css`, `../../assets/…`) already work from there.
 2. **Collect the sources.** You need three things, and nothing else:
    - `CHANGELOG.md` → the `[Unreleased]` section that this release ships (Added, Changed, Fixed, Privacy);
-   - its `### Known risks` entries (REVIEW-PROTOCOL.md rule 6);
+   - its `### Known risks` entries ([REVIEW-PROTOCOL.md rule 6](https://github.com/tomacco/aura-distill/blob/085ad363ce77b5f1ecdd894d3fedb47a50439f2e/REVIEW-PROTOCOL.md#L140));
    - the release PR: number, merged PRs, review rounds, reviewer models, release-gate verdict.
 3. **Fill every slot.** Work top to bottom through the `<!-- SLOT: … -->` comments:
    - **version, date, channel.** The wordmark is the short version (`1.2.0`), and `-beta.N` goes in the
-     badge and the h1. Keep only one channel badge.
+     h1. Keep only one channel badge. The badge names the channel, never the build: for `1.2.0-beta.1` it reads
+     `beta` (`<span class="ne-badge ne-badge--outline">beta</span>`), not `beta.1`; for `1.2.0` it reads `stable`.
    - **one-sentence answer** (h1). What changes for the reader, 20 words or fewer.
    - **lead.** Who should install this version and who should wait.
    - **stats** (optional). Only measured numbers with unit and n, linked in the evidence section.
@@ -48,8 +49,9 @@ Do this in the release PR, before it merges. Pages only go live once they are on
      do not insert machine translation at runtime.
 4. **Check nothing is left.** This must print nothing:
    ```bash
-   grep -n 'X\.Y\.Z\|YYYY-MM-DD\|DD-MM-YYYY\|NNN\|{{' docs/releases/<version>/index.html
+   grep -n 'X\.Y\.Z\|YYYY-MM-DD\|DD-MM-YYYY\|NNN\|{{\|href="#"' docs/releases/<version>/index.html
    ```
+   `href="#"` catches evidence rows whose link was never filled in.
 5. **Add it to the list.** Also update the "Updated" date in the kicker and the footer date of `docs/releases/index.html`. In `docs/releases/index.html`, add one `<li>` at the **top** of `<ul class="rl">`:
    version, date, channel badge (`ne-badge` = stable, `ne-badge ne-badge--outline` = beta), a one-line
    summary in EN and ES, and a link to `<version>/`. Update the lead and the "current stable" stat when a
@@ -74,7 +76,7 @@ Do this in the release PR, before it merges. Pages only go live once they are on
 7. **Privacy gate.** Before you commit, check that the page contains no personal data:
    - no absolute home paths (`/Users/…`, `/home/…`, `C:\Users\…`) and no usernames or email addresses;
    - no knowledge-store content, file names, quotes, project or session identifiers. Real data appears
-     only as counts, sizes, ratios and pass/fail (D-2026-09-23-4);
+     only as counts, sizes, ratios and pass/fail ([D-2026-09-23-4](https://github.com/tomacco/aura-distill/blob/085ad363ce77b5f1ecdd894d3fedb47a50439f2e/DECISIONS.md#L66));
    - no tokens, keys or internal URLs.
    ```bash
    grep -nE '/Users/|/home/|C:\\Users|@[a-z0-9-]+\.[a-z]{2,}|sk-[A-Za-z0-9]|ghp_' docs/releases/<version>/index.html
@@ -89,5 +91,8 @@ Do this in the release PR, before it merges. Pages only go live once they are on
 
 - The **Known risks** section is always there. "None known" is a valid answer, and an empty section is not.
 - A page never claims a number, a review or a test that is not linked from the page.
+- Link rules and decisions that exist only on a branch (`REVIEW-PROTOCOL.md`, `DECISIONS.md` before 1.2 is
+  promoted) with a commit permalink (`blob/<sha>/…`), never `blob/<branch>/…`: a branch link dies when the
+  branch is deleted.
 - Do not make pages for versions before 1.2. The 1.1 line has one summary on the list page, because its
   patch numbers were bumped automatically on every merge.

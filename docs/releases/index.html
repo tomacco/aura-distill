@@ -59,11 +59,11 @@
   </div>
 
   <div class="ne-answer">
-    <p class="ne-lead" data-lang="en">The version you get today is on the 1.1 stable line (exact number: <a href="https://github.com/tomacco/aura-distill/blob/main/VERSION">VERSION</a>). From 1.2.0-beta.1 on, every version gets its own page here, with its known risks listed.</p>
-    <p class="ne-lead" data-lang="es">La versión que instalas hoy es de la línea estable 1.1 (número exacto: <a href="https://github.com/tomacco/aura-distill/blob/main/VERSION">VERSION</a>). A partir de 1.2.0-beta.1, cada versión tendrá aquí su propia página, con sus riesgos conocidos.</p>
+    <p class="ne-lead" data-lang="en">The version you get today is on the 1.1 stable line (exact number: <a href="https://github.com/tomacco/aura-distill/blob/main/VERSION">VERSION</a>). The opt-in 1.2 beta starts with <a href="1.2.0-beta.1/">1.2.0-beta.1</a>. From it on, every version gets its own page here, with its known risks listed.</p>
+    <p class="ne-lead" data-lang="es">La versión que instalas hoy es de la línea estable 1.1 (número exacto: <a href="https://github.com/tomacco/aura-distill/blob/main/VERSION">VERSION</a>). La beta opcional 1.2 empieza con <a href="1.2.0-beta.1/">1.2.0-beta.1</a>. Desde ella, cada versión tiene aquí su propia página, con sus riesgos conocidos.</p>
     <div class="ne-stats">
       <div class="ne-stat"><div class="ne-big ne-num-tab">1.1</div><div class="ne-lab"><span data-lang="en">Current stable</span><span data-lang="es">Estable actual</span></div><div class="ne-sub"><span data-lang="en">Exact patch: <a href="https://github.com/tomacco/aura-distill/blob/main/VERSION">VERSION on main</a></span><span data-lang="es">Parche exacto: <a href="https://github.com/tomacco/aura-distill/blob/main/VERSION">VERSION en main</a></span></div></div>
-      <div class="ne-stat"><div class="ne-big ne-num-tab">25</div><div class="ne-lab"><span data-lang="en">Versions in the 1.1 line</span><span data-lang="es">Versiones en la línea 1.1</span></div><div class="ne-sub"><span data-lang="en">1.1.0 to 1.1.24 · 2026-05-18 to 2026-09-23</span><span data-lang="es">1.1.0 a 1.1.24 · 18-05-2026 a 23-09-2026</span></div></div>
+      <div class="ne-stat"><div class="ne-big ne-num-tab">1.2</div><div class="ne-lab"><span data-lang="en">Current beta</span><span data-lang="es">Beta actual</span></div><div class="ne-sub"><span data-lang="en">Opt-in: <a href="1.2.0-beta.1/">1.2.0-beta.1</a></span><span data-lang="es">Opcional: <a href="1.2.0-beta.1/">1.2.0-beta.1</a></span></div></div>
     </div>
     <ul class="ne-takeaways">
       <li><b>01</b><p data-lang="en"><b>Stable</b> is what installers and auto-updates give you. <b>Beta</b> is opt-in only; nothing moves you onto it without you asking.</p><p data-lang="es"><b>Estable</b> es lo que te dan el instalador y las actualizaciones automáticas. <b>Beta</b> solo se instala si lo pides; nada te cambia a ella sin tu permiso.</p></li>
@@ -80,9 +80,18 @@
                         beta   = <span class="ne-badge ne-badge--outline">beta</span>. -->
     <ul class="rl">
       <li>
+        <div class="rl-v"><a href="1.2.0-beta.1/">1.2.0-beta.1</a></div>
+        <div>
+          <div class="rl-meta"><span class="ne-badge ne-badge--outline">beta</span><span class="ne-nw">2026-09-23</span><span data-lang="en">Opt-in · 12 known risks</span><span data-lang="es">Opcional · 12 riesgos conocidos</span></div>
+          <p class="rl-sum" data-lang="en">First beta of the files-only edition: the index every session reads stays within a byte budget, archived knowledge can always be restored, a one-time store migration with preview, backup and revert, and beta updates from a pinned tag.</p>
+          <p class="rl-sum" data-lang="es">Primera beta de la edición «solo archivos»: el índice que lee cada sesión no pasa de un tope de bytes, lo archivado siempre se puede restaurar, una migración única del almacén con vista previa, copia y reversión, y actualizaciones beta desde una etiqueta fija.</p>
+        </div>
+        <a class="ne-link rl-go" href="1.2.0-beta.1/"><span data-lang="en">Read page</span><span data-lang="es">Leer página</span></a>
+      </li>
+      <li>
         <div class="rl-v"><a href="#line-1-1">1.1.x</a></div>
         <div>
-          <div class="rl-meta"><span class="ne-badge"><span data-lang="en">stable</span><span data-lang="es">estable</span></span><span class="ne-nw">2026-05-18 → 2026-09-23</span><span data-lang="en">Stable line · summary</span><span data-lang="es">Línea estable · resumen</span></div>
+          <div class="rl-meta"><span class="ne-badge"><span data-lang="en">stable</span><span data-lang="es">estable</span></span><span class="ne-nw">2026-05-18 →</span><span data-lang="en">Stable line, 1.1.0 onward · summary</span><span data-lang="es">Línea estable, de 1.1.0 en adelante · resumen</span></div>
           <p class="rl-sum" data-lang="en">Saving on request (INBOX), a record of every distillation and what it cost, lighter helper agents (Token Saver), a Google Antigravity connector, and an installer fix that stopped wiping your preferences.</p>
           <p class="rl-sum" data-lang="es">Guardar cuando lo pides (INBOX), un registro de cada destilación y de su coste, agentes auxiliares más ligeros (Token Saver), un conector para Google Antigravity y un arreglo del instalador, que antes borraba tus preferencias.</p>
         </div>
@@ -94,8 +103,8 @@
   <!-- 02 THE 1.1 LINE -->
   <section class="ne-section" id="line-1-1">
     <div class="ne-sec"><h2><span data-lang="en">1.1.x, the stable line</span><span data-lang="es">1.1.x, la línea estable</span></h2><span class="ne-idx">02</span></div>
-    <p class="ne-intro" data-lang="en">A look back at what the 1.1 line shipped, taken from the <code>[Unreleased]</code> section of <a href="https://github.com/tomacco/aura-distill/blob/main/CHANGELOG.md">CHANGELOG.md</a> on <code>main</code> up to 1.1.24. The changelog was not split by version during 1.1, so this is one summary for the whole line, not a page per patch.</p>
-    <p class="ne-intro" data-lang="es">Un repaso de lo que trajo la línea 1.1, tomado de la sección <code>[Unreleased]</code> de <a href="https://github.com/tomacco/aura-distill/blob/main/CHANGELOG.md">CHANGELOG.md</a> en <code>main</code> en la 1.1.24. Durante la 1.1 el changelog no se separó por versión, así que es un solo resumen para toda la línea, no una página por parche.</p>
+    <p class="ne-intro" data-lang="en">A look back at what the 1.1 line shipped, taken from the <code>[Unreleased]</code> section of <a href="https://github.com/tomacco/aura-distill/blob/main/CHANGELOG.md">CHANGELOG.md</a> on <code>main</code> as of 1.1.24, when this summary was written; later 1.1 patches are automatic version bumps. The changelog was not split by version during 1.1, so this is one summary for the whole line, not a page per patch.</p>
+    <p class="ne-intro" data-lang="es">Un repaso de lo que trajo la línea 1.1, tomado de la sección <code>[Unreleased]</code> de <a href="https://github.com/tomacco/aura-distill/blob/main/CHANGELOG.md">CHANGELOG.md</a> en <code>main</code> en la 1.1.24, cuando se escribió este resumen; los parches 1.1 posteriores son subidas automáticas de versión. Durante la 1.1 el changelog no se separó por versión, así que es un solo resumen para toda la línea, no una página por parche.</p>
 
     <div class="ne-subhead"><span class="ne-badge ne-badge--outline"><span data-lang="en">Changed</span><span data-lang="es">Cambios</span></span><h3><span data-lang="en">What 1.1 changed for you</span><span data-lang="es">Qué cambió para ti con la 1.1</span></h3></div>
     <ol class="ne-steps">
@@ -143,7 +152,7 @@
       </div>
     </div>
 
-    <div class="ne-note"><b data-lang="en">Known risks.</b><b data-lang="es">Riesgos conocidos.</b> <span data-lang="en">The 1.1 changelog has no Known risks section. Listing known risks became a release rule with 1.2 (<a href="https://github.com/tomacco/aura-distill/blob/beta/1.2/REVIEW-PROTOCOL.md">REVIEW-PROTOCOL.md</a> rule 6, on the 1.2 beta branch), so from 1.2.0-beta.1 on, each version's page lists them.</span><span data-lang="es">El changelog de la 1.1 no tiene sección de riesgos conocidos. Listarlos pasó a ser una regla de publicación con la 1.2 (regla 6 de <a href="https://github.com/tomacco/aura-distill/blob/beta/1.2/REVIEW-PROTOCOL.md">REVIEW-PROTOCOL.md</a>, en la rama beta 1.2), así que desde 1.2.0-beta.1 la página de cada versión los incluye.</span></div>
+    <div class="ne-note"><b data-lang="en">Known risks.</b><b data-lang="es">Riesgos conocidos.</b> <span data-lang="en">The 1.1 changelog has no Known risks section. Listing known risks became a release rule with 1.2 (<a href="https://github.com/tomacco/aura-distill/blob/085ad363ce77b5f1ecdd894d3fedb47a50439f2e/REVIEW-PROTOCOL.md#L140">REVIEW-PROTOCOL.md</a> rule 6, on the 1.2 beta branch), so from <a href="1.2.0-beta.1/#risks">1.2.0-beta.1</a> on, each version's page lists them.</span><span data-lang="es">El changelog de la 1.1 no tiene sección de riesgos conocidos. Listarlos pasó a ser una regla de publicación con la 1.2 (regla 6 de <a href="https://github.com/tomacco/aura-distill/blob/085ad363ce77b5f1ecdd894d3fedb47a50439f2e/REVIEW-PROTOCOL.md#L140">REVIEW-PROTOCOL.md</a>, en la rama beta 1.2), así que desde 1.2.0-beta.1 la página de cada versión los incluye.</span></div>
 
     <div class="ne-actions">
       <a class="ne-btn ne-btn--solid" href="https://github.com/tomacco/aura-distill/blob/main/CHANGELOG.md"><span data-lang="en">Full changelog</span><span data-lang="es">Changelog completo</span> →</a>

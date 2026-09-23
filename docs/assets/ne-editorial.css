@@ -1,0 +1,336 @@
+/* ==========================================================================
+   ne — "editorial monochrome" design system
+   Monochrome paper + ink, heavy Unbounded display type, Archivo text,
+   1px ink rules, numbered sections, big-number stats, hatch-textured charts.
+   Load fonts in <head>:
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;500;800&family=Archivo:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+   ========================================================================== */
+
+/* ---------- 1. tokens ---------- */
+:root{
+  color-scheme:light;
+  /* surfaces */
+  --ne-paper:#EDEDED;      /* page background: warm-less light grey, never pure white */
+  --ne-paper-2:#F5F5F5;    /* boxed surfaces: charts, tables, cards, callouts */
+  --ne-white:#FFFFFF;      /* rare: thumbnails / tiles inside a box */
+  /* ink */
+  --ne-ink:#111111;        /* text, rules, solid fills */
+  --ne-ink-2:#3A3A3A;      /* secondary text, intros, legends */
+  --ne-ink-3:#6E6E6E;      /* captions, ticks, meta, footers */
+  --ne-line:#111111;       /* structural 1px rules (always = ink) */
+  --ne-hair:#BDBDBD;       /* hairlines inside boxes: table rows, grid lines */
+  /* the only "colours": greys used as data values */
+  --ne-grey:#8A8A8A;       /* mid series fill */
+  --ne-grey-2:#C9C9C9;     /* light series fill */
+
+  /* type */
+  --ne-display:"Unbounded","Archivo",ui-sans-serif,sans-serif;
+  --ne-text:"Archivo",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --ne-mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+
+  /* type scale (fluid; min at 360px, max at ~1120px) */
+  --ne-fs-wordmark:clamp(56px,14vw,150px);  /* one word, Unbounded 800, -.06em */
+  --ne-fs-stat:clamp(44px,9vw,104px);       /* big numbers, Unbounded 800, -.05em */
+  --ne-fs-h2:clamp(22px,3.4vw,34px);        /* section titles, Unbounded 800, caps */
+  --ne-fs-h1:clamp(18px,2.8vw,28px);        /* hero headline, Archivo 500, caps */
+  --ne-fs-lead:clamp(18px,2.4vw,24px);      /* answer paragraph, Archivo 500 */
+  --ne-fs-body:16px;
+  --ne-fs-intro:15px;
+  --ne-fs-small:13px;
+  --ne-fs-label:12px;                        /* caps labels, tracked .14em */
+  --ne-fs-micro:11px;                        /* nav, legends, footer, tracked .12–.16em */
+
+  /* spacing (multiples of ~2px, the site's rhythm) */
+  --ne-gutter:16px;
+  --ne-s1:4px; --ne-s2:8px; --ne-s3:12px; --ne-s4:16px; --ne-s5:18px; --ne-s6:28px; --ne-s7:34px; --ne-s8:72px;
+  --ne-max:1120px;
+  --ne-rule:1px solid var(--ne-line);
+  --ne-hairline:1px solid var(--ne-hair);
+
+  /* motion */
+  --ne-ease:cubic-bezier(.2,.7,.2,1);
+}
+/* dark: follows the OS unless the reader forced light */
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ne-paper:#111111; --ne-paper-2:#181818; --ne-white:#0A0A0A;
+    --ne-ink:#F2F2F2; --ne-ink-2:#CFCFCF; --ne-ink-3:#9A9A9A; --ne-line:#F2F2F2; --ne-hair:#3A3A3A;
+    --ne-grey:#8A8A8A; --ne-grey-2:#3E3E3E;
+  }
+}
+/* dark: forced by the toggle */
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ne-paper:#111111; --ne-paper-2:#181818; --ne-white:#0A0A0A;
+  --ne-ink:#F2F2F2; --ne-ink-2:#CFCFCF; --ne-ink-3:#9A9A9A; --ne-line:#F2F2F2; --ne-hair:#3A3A3A;
+  --ne-grey:#8A8A8A; --ne-grey-2:#3E3E3E;
+}
+
+/* ---------- 2. base ---------- */
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--ne-paper);color:var(--ne-ink);font-family:var(--ne-text);font-size:var(--ne-fs-body);line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img,svg,video{max-width:100%}
+h1,h2,h3,h4{margin:0;font-family:var(--ne-display);font-weight:800;letter-spacing:-.02em;line-height:1.05}
+h2{font-size:var(--ne-fs-h2);text-transform:uppercase}
+h3{font-family:var(--ne-text);font-size:14px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;line-height:1.2}
+p{margin:0}
+p + p{margin-top:.8em}
+a{color:inherit;text-decoration-thickness:1px;text-underline-offset:.18em}
+a:hover{text-decoration-thickness:2px}
+:focus-visible{outline:2px solid var(--ne-ink);outline-offset:2px}
+::selection{background:var(--ne-ink);color:var(--ne-paper)}
+b,strong{font-weight:600}
+[hidden]{display:none!important}
+
+.ne-page{max-width:var(--ne-max);margin:0 auto;padding:0 var(--ne-gutter) var(--ne-s8)}
+.ne-small{font-size:var(--ne-fs-small);color:var(--ne-ink-3)}
+.ne-label{font-size:var(--ne-fs-label);letter-spacing:.14em;text-transform:uppercase;color:var(--ne-ink-2)}
+.ne-star{font-family:var(--ne-display);font-weight:300;font-size:22px;line-height:1}
+.ne-num-tab{font-variant-numeric:tabular-nums}
+
+/* ---------- 3. top bar / nav / toggles ---------- */
+.ne-top{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:16px 0 14px;border-bottom:var(--ne-rule);font-size:var(--ne-fs-micro);letter-spacing:.16em;text-transform:uppercase}
+.ne-top .ne-l,.ne-top .ne-r{display:flex;gap:14px;align-items:center;min-width:0}
+.ne-top a{text-decoration:none;padding-bottom:2px;border-bottom:1px solid transparent}
+.ne-top a:hover,.ne-top a[aria-current="page"]{border-bottom-color:var(--ne-line)}
+.ne-top button{background:none;border:0;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer;padding:0 0 2px;border-bottom:1px solid transparent}
+.ne-top button[aria-pressed="true"]{border-bottom-color:var(--ne-line)}
+.ne-top button:hover{border-bottom-color:var(--ne-hair)}
+.ne-nav{display:flex;gap:14px;flex-wrap:wrap}
+/* segmented toggle (boxed; selected = inverted) */
+.ne-toggle{display:inline-flex;border:var(--ne-rule);font-size:var(--ne-fs-micro);letter-spacing:.1em;text-transform:uppercase}
+.ne-toggle button{background:none;border:0;padding:4px 10px;font:inherit;color:var(--ne-ink-2);cursor:pointer;letter-spacing:inherit;text-transform:inherit}
+.ne-toggle button[aria-pressed="true"]{background:var(--ne-ink);color:var(--ne-paper)}
+
+/* ---------- 4. hero ---------- */
+.ne-wordmark{font-family:var(--ne-display);font-weight:800;font-size:var(--ne-fs-wordmark);letter-spacing:-.06em;line-height:.95;text-transform:uppercase;margin:28px 0 8px;overflow-wrap:anywhere}
+.ne-tag{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;padding:0 0 18px;border-bottom:var(--ne-rule)}
+.ne-tag h1{font-family:var(--ne-text);font-size:var(--ne-fs-h1);font-weight:500;letter-spacing:-.01em;text-transform:uppercase;line-height:1.15;max-width:24ch}
+.ne-arrow{width:44px;height:44px;border:var(--ne-rule);border-radius:50%;display:grid;place-items:center;flex:none;font-size:18px;text-decoration:none;color:var(--ne-ink);transition:background .15s,color .15s}
+.ne-arrow:hover{background:var(--ne-ink);color:var(--ne-paper)}
+.ne-answer{padding:28px 0 6px;border-bottom:var(--ne-rule)}
+.ne-lead{font-size:var(--ne-fs-lead);line-height:1.3;max-width:36ch;font-weight:500}
+
+/* ---------- 5. big-number stats ---------- */
+.ne-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:22px;border-top:var(--ne-rule)}
+.ne-stats--3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ne-stat{padding:16px 16px 14px;border-bottom:var(--ne-rule);border-right:var(--ne-rule);min-width:0}
+.ne-stat:first-child{padding-left:0}
+.ne-stat:last-child{border-right:0;padding-right:0}
+.ne-stat .ne-big{font-family:var(--ne-display);font-weight:800;font-size:var(--ne-fs-stat);letter-spacing:-.05em;line-height:.95;font-variant-numeric:tabular-nums}
+.ne-stats--3 .ne-big{font-size:clamp(40px,7vw,80px)}
+.ne-big sup,.ne-big small{font-size:.4em;letter-spacing:0;font-weight:500}
+.ne-big sup{vertical-align:top;position:relative;top:.55em}
+.ne-stat .ne-lab{font-size:var(--ne-fs-label);letter-spacing:.14em;text-transform:uppercase;margin-top:8px;color:var(--ne-ink-2)}
+.ne-stat .ne-sub{font-size:var(--ne-fs-small);color:var(--ne-ink-3);margin-top:4px}
+
+/* numbered takeaways (01, 02 …) */
+.ne-takeaways{list-style:none;margin:0;padding:0}
+.ne-takeaways li{display:grid;grid-template-columns:44px 1fr;gap:10px;padding:16px 0;border-bottom:var(--ne-rule);line-height:1.45}
+.ne-takeaways li:last-child{border-bottom:0}
+.ne-takeaways li > b{font-family:var(--ne-display);font-weight:500;font-size:22px;letter-spacing:-.03em;line-height:1}
+.ne-takeaways li p{max-width:64ch}
+
+/* ---------- 6. sections ---------- */
+.ne-section{padding:34px 0 8px}
+.ne-sec{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding-bottom:12px;border-bottom:var(--ne-rule);margin-bottom:18px}
+.ne-sec .ne-idx{font-family:var(--ne-display);font-weight:300;font-size:13px;letter-spacing:.1em;flex:none}
+.ne-intro{max-width:66ch;color:var(--ne-ink-2);margin-bottom:18px;font-size:var(--ne-fs-intro)}
+.ne-prose{max-width:68ch;font-size:15.5px}
+.ne-prose h3{margin:22px 0 8px}
+.ne-prose ul,.ne-prose ol{padding-left:1.2em;margin:.6em 0}
+.ne-prose li{margin:.25em 0}
+
+/* grid helpers */
+.ne-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.ne-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:18px;align-items:start}
+@media (max-width:860px){.ne-two,.ne-split{grid-template-columns:1fr}}
+
+/* ---------- 7. inverted panel (menu-style rows) ---------- */
+.ne-panel{background:var(--ne-ink);color:var(--ne-paper);padding:6px 18px 8px;margin:0 0 18px}
+:root[data-theme="dark"] .ne-panel{background:var(--ne-paper-2);color:var(--ne-ink);border:var(--ne-rule)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ne-panel{background:var(--ne-paper-2);color:var(--ne-ink);border:var(--ne-rule)}}
+.ne-rows{list-style:none;margin:0;padding:0}
+.ne-rows li{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:14px 0;border-bottom:1px solid currentColor}
+.ne-rows li:last-child{border-bottom:0}
+.ne-rows .ne-k{font-size:clamp(15px,2vw,20px);font-weight:500;letter-spacing:-.01em;text-transform:uppercase}
+.ne-rows .ne-v{font-size:var(--ne-fs-label);letter-spacing:.1em;text-transform:uppercase;text-align:right}
+.ne-rows .ne-v b{font-family:var(--ne-display);font-weight:500;font-size:16px;letter-spacing:-.02em;text-transform:none}
+.ne-rows a{text-decoration:none;border-bottom:1px solid currentColor}
+
+/* ---------- 8. cards (a row of boxed columns sharing borders) ---------- */
+.ne-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:var(--ne-rule);background:var(--ne-paper-2)}
+.ne-card{padding:16px;border-right:var(--ne-rule);min-width:0}
+.ne-card:last-child{border-right:0}
+.ne-card .ne-sw{width:100%;height:10px;margin-bottom:12px;border:var(--ne-rule)}
+.ne-card .ne-name{font-family:var(--ne-display);font-weight:800;font-size:18px;letter-spacing:-.03em;text-transform:uppercase}
+.ne-card .ne-role{font-size:var(--ne-fs-small);color:var(--ne-ink-2);margin:6px 0 10px}
+.ne-card .ne-meta{margin-top:12px;padding-top:10px;border-top:var(--ne-hairline);font-size:var(--ne-fs-micro);letter-spacing:.08em;text-transform:uppercase;color:var(--ne-ink-3)}
+.ne-card .ne-meta b{display:block;font-family:var(--ne-display);font-weight:500;font-size:20px;letter-spacing:-.03em;color:var(--ne-ink);text-transform:none;margin-top:2px}
+@media (max-width:720px){.ne-cards{grid-template-columns:1fr}.ne-card{border-right:0;border-bottom:var(--ne-rule)}.ne-card:last-child{border-bottom:0}}
+
+/* tile grid (separate boxes, e.g. links / thumbnails) */
+.ne-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.ne-tile{border:var(--ne-rule);display:flex;flex-direction:column;min-width:0;background:var(--ne-paper-2)}
+.ne-tile img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border-bottom:var(--ne-rule);filter:grayscale(1) contrast(1.05)}
+.ne-tile .ne-body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.ne-tile .ne-t{font-family:var(--ne-display);font-weight:500;font-size:14px;letter-spacing:-.02em;text-transform:uppercase}
+.ne-tile .ne-m{font-size:12.5px;color:var(--ne-ink-2)}
+.ne-links{display:flex;gap:12px;font-size:var(--ne-fs-micro);letter-spacing:.12em;text-transform:uppercase;margin-top:auto;padding-top:8px;flex-wrap:wrap}
+.ne-links a{text-decoration:none;border-bottom:var(--ne-rule);white-space:nowrap}
+
+/* ---------- 9. buttons & links ---------- */
+.ne-btn{display:inline-flex;align-items:center;gap:10px;padding:10px 16px;border:var(--ne-rule);background:transparent;color:var(--ne-ink);font:600 var(--ne-fs-micro)/1 var(--ne-text);letter-spacing:.14em;text-transform:uppercase;text-decoration:none;cursor:pointer;transition:background .15s,color .15s}
+.ne-btn:hover{background:var(--ne-ink);color:var(--ne-paper)}
+.ne-btn--solid{background:var(--ne-ink);color:var(--ne-paper)}
+.ne-btn--solid:hover{background:transparent;color:var(--ne-ink)}
+.ne-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.ne-link{font-size:var(--ne-fs-micro);letter-spacing:.12em;text-transform:uppercase;text-decoration:none;border-bottom:var(--ne-rule)}
+
+/* ---------- 10. callout / note ---------- */
+.ne-note{border:var(--ne-rule);padding:12px 14px;font-size:14px;margin-bottom:14px;background:var(--ne-paper-2)}
+.ne-note > b{text-transform:uppercase;letter-spacing:.08em;font-size:var(--ne-fs-label)}
+.ne-note--strong{border-left-width:6px}
+
+/* ---------- 11. code ---------- */
+code,kbd{font-family:var(--ne-mono);font-size:.9em}
+:not(pre) > code{padding:1px 5px;border:var(--ne-hairline);background:var(--ne-paper-2)}
+.ne-code{border:var(--ne-rule);background:var(--ne-paper-2);margin:0 0 18px;min-width:0}
+.ne-code .ne-code-h{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-bottom:var(--ne-rule);font-size:var(--ne-fs-micro);letter-spacing:.12em;text-transform:uppercase;color:var(--ne-ink-3)}
+.ne-code pre{margin:0;padding:14px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch;font-family:var(--ne-mono);font-size:13px;line-height:1.55;color:var(--ne-ink)}
+.ne-code pre code{font-size:inherit;padding:0;border:0;background:none}
+.ne-code .ne-c{color:var(--ne-ink-3)}          /* comment */
+.ne-code .ne-p{color:var(--ne-ink-3);user-select:none} /* prompt "$" */
+
+/* ---------- 12. charts (monochrome; value + texture + direct label) ---------- */
+.ne-chart{border:var(--ne-rule);padding:16px 14px 10px;margin:0 0 18px;background:var(--ne-paper-2);min-width:0}
+.ne-chart h3{margin-bottom:2px}
+.ne-chart .ne-cap{font-size:var(--ne-fs-small);color:var(--ne-ink-3);margin-bottom:10px}
+.ne-chart svg{display:block;width:100%;height:auto;overflow:visible}
+.ne-chart svg text{font-family:var(--ne-text);font-size:12px;fill:var(--ne-ink-2)}
+.ne-chart svg .ne-tick{fill:var(--ne-ink-3);font-variant-numeric:tabular-nums;font-size:11px}
+.ne-chart svg .ne-lbl{fill:var(--ne-ink);font-weight:600}
+.ne-chart svg .ne-grid line{stroke:var(--ne-hair);stroke-width:1}
+.ne-chart svg .ne-bar{stroke:var(--ne-ink);stroke-width:1}
+.ne-chart svg .ne-line{fill:none;stroke:var(--ne-ink);stroke-width:1.5}
+.ne-chart svg .ne-line--key{stroke-width:2.5}
+.ne-chart svg .ne-dot{stroke:var(--ne-ink);stroke-width:1}
+.ne-chart svg .ne-halo{fill:var(--ne-paper-2)}
+.ne-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:var(--ne-fs-micro);color:var(--ne-ink-2);margin-top:8px;letter-spacing:.06em;text-transform:uppercase}
+.ne-legend span{display:inline-flex;align-items:center;gap:7px}
+.ne-legend i{width:16px;height:12px;display:inline-block;border:var(--ne-rule)}
+.ne-legend i.ne-l-line{height:0;border:0;border-top:2px solid var(--ne-ink);width:22px}
+/* swatch fills, identical to the SVG patterns below */
+.ne-fill-ink{background:var(--ne-ink)}
+.ne-fill-grey{background:var(--ne-grey)}
+.ne-fill-light{background:var(--ne-grey-2)}
+.ne-fill-paper{background:var(--ne-paper-2)}
+/* stripe direction matches the SVG patterns: ne-hatch runs '/', ne-hatch2 runs '\' */
+.ne-fill-hatch{background:repeating-linear-gradient(135deg,var(--ne-ink) 0 2px,var(--ne-paper-2) 2px 6px)}
+.ne-fill-hatch2{background:repeating-linear-gradient(45deg,var(--ne-ink) 0 1px,var(--ne-paper-2) 1px 6px)}
+/* tooltip */
+.ne-tip{position:fixed;pointer-events:none;background:var(--ne-ink);color:var(--ne-paper);font-size:12.5px;padding:8px 10px;opacity:0;transition:opacity .12s;max-width:260px;z-index:9;line-height:1.35}
+
+/* ---------- 13. tables ---------- */
+.ne-tbl-tools{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;font-size:var(--ne-fs-small);color:var(--ne-ink-3);flex-wrap:wrap}
+.ne-tbl{border:var(--ne-rule);overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;background:var(--ne-paper-2);margin-bottom:18px}
+.ne-tbl table{border-collapse:collapse;width:100%;font-size:var(--ne-fs-small)}
+.ne-tbl th,.ne-tbl td{padding:10px 12px;text-align:right;border-bottom:var(--ne-hairline);white-space:nowrap}
+.ne-tbl th{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ne-ink-3);font-weight:600;border-bottom:var(--ne-rule)}
+.ne-tbl th:first-child,.ne-tbl td:first-child{text-align:left;position:sticky;left:0;background:var(--ne-paper-2);z-index:1}
+.ne-tbl td{font-variant-numeric:tabular-nums}
+.ne-tbl td.ne-wrap{white-space:normal;min-width:18ch;text-align:left}
+.ne-tbl tr:last-child td{border-bottom:0}
+.ne-tbl td .ne-sub{display:block;font-size:var(--ne-fs-micro);color:var(--ne-ink-3)}
+.ne-tbl th[title]{cursor:help;text-decoration:underline dotted var(--ne-ink-3)}
+
+/* ---------- 14. definition list ---------- */
+.ne-dl{margin:0;display:grid;grid-template-columns:max-content 1fr;gap:8px 16px;font-size:14.5px;max-width:74ch}
+.ne-dl dt{font-size:var(--ne-fs-micro);letter-spacing:.12em;text-transform:uppercase;color:var(--ne-ink-3);padding-top:3px}
+.ne-dl dd{margin:0;padding-bottom:8px;border-bottom:var(--ne-hairline)}
+@media (max-width:600px){.ne-dl{grid-template-columns:1fr}.ne-dl dt{padding-top:8px}}
+
+/* ---------- 15. footer ---------- */
+.ne-footer{padding:26px 0 0;border-top:var(--ne-rule);margin-top:34px;font-size:var(--ne-fs-micro);letter-spacing:.12em;text-transform:uppercase;color:var(--ne-ink-3);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ne-footer a{text-decoration:none;border-bottom:1px solid var(--ne-hair)}
+.ne-footer a:hover{color:var(--ne-ink);border-bottom-color:var(--ne-line)}
+
+/* ---------- 16. language blocks ---------- */
+/* Every translatable block carries data-lang="en" or "es"; the script hides the other. */
+html[lang="es"] [data-lang="en"],html:not([lang="es"]) [data-lang="es"]{display:none!important}
+
+/* ---------- 17. motion ---------- */
+.ne-reveal{opacity:0;transform:translateY(10px);animation:ne-rise .6s var(--ne-ease) forwards}
+.ne-reveal--2{animation-delay:.05s}
+.ne-reveal--3{animation-delay:.1s}
+@keyframes ne-rise{to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.ne-reveal{animation:none;opacity:1;transform:none}.ne-tip,.ne-btn,.ne-arrow{transition:none}}
+
+/* ---------- 18. mobile ---------- */
+@media (max-width:600px){
+  .ne-stats,.ne-stats--3{grid-template-columns:1fr}
+  .ne-stat{border-right:0;padding-left:0;padding-right:0}
+  .ne-tag{flex-direction:column;align-items:flex-start}
+  .ne-top{font-size:10px;letter-spacing:.12em}
+  .ne-top .ne-l,.ne-top .ne-r{gap:10px}
+  .ne-top .ne-nav{display:none}          /* nav moves into the page (.ne-nav-m) on phones */
+}
+.ne-nav-m{display:none}
+@media (max-width:600px){.ne-nav-m{display:flex;gap:14px;flex-wrap:wrap;padding:10px 0;border-bottom:var(--ne-rule);font-size:10px;letter-spacing:.12em;text-transform:uppercase}.ne-nav-m a{text-decoration:none;border-bottom:1px solid var(--ne-hair)}}
+
+/* ---------- 19. print ---------- */
+@media print{.ne-top button,.ne-toggle,.ne-tip{display:none}.ne-reveal{opacity:1;transform:none;animation:none}body{background:#fff}}
+
+/* ---------- 20. report extensions (generic; used by research and release pages) ---------- */
+/* kicker line above the wordmark */
+.ne-kicker{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:22px;font-size:var(--ne-fs-micro);letter-spacing:.14em;text-transform:uppercase;color:var(--ne-ink-3)}
+.ne-kicker a{text-decoration:none;border-bottom:1px solid var(--ne-hair)}
+/* four stats as a 2 x 2 grid */
+.ne-stats--4 .ne-stat:nth-child(2n){border-right:0;padding-right:0}
+.ne-stats--4 .ne-stat:nth-child(2n+1){padding-left:0}
+.ne-stats--4 .ne-big{font-size:clamp(40px,7vw,80px)}
+.ne-big small{margin-left:.06em;color:var(--ne-ink-3)}
+/* verdict badge (inverted) and its outlined twin */
+.ne-badge{display:inline-block;padding:3px 7px 2px;background:var(--ne-ink);color:var(--ne-paper);font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;line-height:1.3;white-space:nowrap}
+.ne-badge--outline{background:transparent;color:var(--ne-ink);border:var(--ne-rule);padding:2px 6px 1px}
+/* sub-heading inside a section: badge + claim */
+.ne-subhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 12px;margin:30px 0 10px;padding-top:14px;border-top:var(--ne-hairline)}
+.ne-subhead:first-of-type{margin-top:8px}
+.ne-subhead h3{font-family:var(--ne-text);font-size:clamp(17px,2.1vw,21px);font-weight:600;letter-spacing:-.005em;text-transform:none;line-height:1.25;flex:1 1 22ch;min-width:0}
+/* boxed pair: "what we know" / "what we don't" */
+.ne-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:var(--ne-rule);background:var(--ne-paper-2);margin-bottom:18px}
+.ne-pair > div{padding:14px 16px;min-width:0}
+.ne-pair > div + div{border-left:var(--ne-rule)}
+.ne-pair h3{margin-bottom:8px}
+.ne-pair ul{margin:0;padding-left:1.1em;font-size:14.5px}
+.ne-pair li{margin:.3em 0}
+@media (max-width:720px){.ne-pair{grid-template-columns:1fr}.ne-pair > div + div{border-left:0;border-top:var(--ne-rule)}}
+/* numbered list for recommendations (reuses takeaway rhythm, boxed) */
+.ne-steps{list-style:none;margin:0 0 18px;padding:0;border-top:var(--ne-rule)}
+.ne-steps li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;padding:14px 0;border-bottom:var(--ne-hairline)}
+.ne-steps li > b{font-family:var(--ne-display);font-weight:500;font-size:18px;letter-spacing:-.03em;line-height:1.1}
+.ne-steps h4{font-family:var(--ne-text);font-size:16px;font-weight:600;letter-spacing:0;line-height:1.3;margin-bottom:4px}
+.ne-steps p{max-width:66ch;font-size:15px;color:var(--ne-ink-2)}
+/* small print meta line (dates, versions) */
+.ne-meta-line{font-size:var(--ne-fs-small);color:var(--ne-ink-3);margin:10px 0 0}
+.ne-section .ne-prose{margin-bottom:16px}
+.ne-prose ul{padding-left:1.1em}
+.ne-rows .ne-v{white-space:nowrap}
+.ne-nw{white-space:nowrap}
+.ne-steps .ne-kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:2px 10px;margin-top:4px;font-size:14.5px;color:var(--ne-ink-2)}
+.ne-steps .ne-kv dt{font-size:var(--ne-fs-micro);letter-spacing:.12em;text-transform:uppercase;color:var(--ne-ink-3);padding-top:3px}
+.ne-steps .ne-kv dd{margin:0 0 4px}
+@media (max-width:600px){.ne-steps .ne-kv{grid-template-columns:1fr}.ne-steps .ne-kv dd{margin-bottom:8px}}
+/* status marks for adopted / open items */
+.ne-st{font-style:normal;font-weight:600;font-size:.72em;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid currentColor}
+.ne-st-row{margin-bottom:6px}
+.ne-response{border-left:6px solid var(--ne-ink);padding:6px 0 6px 12px;margin:-4px 0 18px;font-size:14.5px;max-width:74ch}
+.ne-response b{text-transform:uppercase;letter-spacing:.08em;font-size:var(--ne-fs-label)}
+/* narrow phones: no sticky first column, let headers and labels wrap so numbers stay visible */
+@media (max-width:400px){.ne-tbl th:first-child,.ne-tbl td:first-child{position:static;white-space:normal;min-width:11ch}.ne-tbl th{white-space:normal}.ne-tbl th,.ne-tbl td{padding:8px 8px}}
+.ne-kicker .meta{display:inline-flex;flex-wrap:wrap;gap:0 6px}
+.ne-kicker .meta span{white-space:nowrap}

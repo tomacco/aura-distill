@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Files-only memory redesign — aura-distill Research</title>
+<meta name="description" content="The files-only memory redesign for aura-distill, measured against one real store in two snapshots, a second store's index and ten real sessions. The always-loaded index is a 51&nbsp;KB digest; splitting files, not moving history, is what fixes file size.">
+<meta property="og:title" content="Files-only memory redesign, measured on real data">
+<meta property="og:description" content="The always-loaded index has become a 51&nbsp;KB digest, 3.2 times its budget. Real data confirms the problem, and the measurements changed the design.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://tomacco.github.io/aura-distill/research/files-only-redesign.html">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;500;800&family=Archivo:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/ne-editorial.css">
+<style>/* "MEMORIA" (7 letters) must fit one line at 360px */.ne-wordmark{font-size:clamp(44px,14vw,150px)}</style>
+<script>
+(function(){
+  var d = document.documentElement, lang = null, theme = null;
+  try { lang = localStorage.getItem('ne-lang'); theme = localStorage.getItem('ne-theme'); } catch(e){}
+  var q = (location.search.match(/[?&]lang=(en|es)\b/) || [])[1];
+  if (q) lang = q;
+  if (lang !== 'en' && lang !== 'es') lang = ((navigator.language || '').toLowerCase().indexOf('es') === 0) ? 'es' : 'en';
+  d.lang = lang;
+  if (theme === 'dark' || theme === 'light') d.setAttribute('data-theme', theme);
+})();
+</script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <pattern id="ne-hatch" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><rect width="6" height="6" fill="var(--ne-paper-2)"/><line x1="0" y1="0" x2="0" y2="6" stroke="var(--ne-ink)" stroke-width="2"/></pattern>
+    <pattern id="ne-hatch2" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(135)"><rect width="6" height="6" fill="var(--ne-paper-2)"/><line x1="0" y1="0" x2="0" y2="6" stroke="var(--ne-ink)" stroke-width="1"/></pattern>
+  </defs>
+</svg>
+
+<div class="ne-page">
+  <header class="ne-top">
+    <div class="ne-l"><span class="ne-star" aria-hidden="true">✦</span><a href="./"><span data-lang="en">Research</span><span data-lang="es">Investigación</span></a>
+      <nav class="ne-nav" aria-label="Sections">
+        <a href="#design"><span data-lang="en">Design</span><span data-lang="es">Diseño</span></a>
+        <a href="#stores"><span data-lang="en">Real stores</span><span data-lang="es">Datos reales</span></a>
+        <a href="#sessions"><span data-lang="en">Sessions</span><span data-lang="es">Sesiones</span></a>
+        <a href="#reviews"><span data-lang="en">Reviews</span><span data-lang="es">Revisiones</span></a>
+        <a href="#next"><span data-lang="en">Next</span><span data-lang="es">Qué sigue</span></a>
+        <a href="#method"><span data-lang="en">Method</span><span data-lang="es">Método</span></a>
+      </nav>
+    </div>
+    <div class="ne-r">
+      <button id="lang-en" type="button" aria-pressed="true">EN</button><button id="lang-es" type="button" aria-pressed="false">ES</button>
+      <button id="theme" type="button">dark</button>
+    </div>
+  </header>
+  <nav class="ne-nav-m" aria-label="Sections">
+    <a href="#design"><span data-lang="en">Design</span><span data-lang="es">Diseño</span></a>
+    <a href="#stores"><span data-lang="en">Real stores</span><span data-lang="es">Datos reales</span></a>
+    <a href="#next"><span data-lang="en">Next</span><span data-lang="es">Qué sigue</span></a>
+    <a href="#method"><span data-lang="en">Method</span><span data-lang="es">Método</span></a>
+  </nav>
+
+  <div class="ne-kicker">
+    <span><a href="./">← <span data-lang="en">All research</span><span data-lang="es">Toda la investigación</span></a></span>
+    <span data-lang="en">Updated 2026-09-23</span><span data-lang="es">Actualizado el 23-09-2026</span>
+    <span class="meta"><span data-lang="en">Research note</span><span data-lang="es">Nota de investigación</span></span>
+    <span><span data-lang="en">Design under review ·</span><span data-lang="es">Diseño en revisión ·</span> <a href="https://github.com/tomacco/aura-distill/pull/93">PR #93</a></span>
+  </div>
+  <div class="ne-wordmark ne-reveal"><span data-lang="en">Memory</span><span data-lang="es">Memoria</span></div>
+  <div class="ne-tag ne-reveal ne-reveal--2">
+    <h1><span data-lang="en">Real data confirms the problem, and showed where the fix was weighted wrong.</span><span data-lang="es">Los datos reales confirman el problema y mostraron dónde la solución ponía mal el peso.</span></h1>
+    <a class="ne-arrow" href="#answer" aria-label="down">↓</a>
+  </div>
+
+  <div class="ne-answer" id="answer">
+    <p class="ne-lead" data-lang="en">The one file every session reads first is now a 51&nbsp;KB digest, 3.2 times its planned budget. Real data confirms that problem. It also showed that the redesign leaned on the wrong levers for the rest, and the design has since changed to match.</p>
+    <p class="ne-lead" data-lang="es">El archivo que toda sesión lee primero ya es un resumen de 51&nbsp;KB, 3,2 veces el presupuesto previsto. Los datos reales confirman ese problema. También mostraron que el rediseño apoyaba el resto en las palancas equivocadas, y el diseño ya cambió en consecuencia.</p>
+    <div class="ne-stats ne-stats--4">
+      <div class="ne-stat"><div class="ne-big">51<small>KB</small></div><div class="ne-lab"><span data-lang="en">index loaded every session</span><span data-lang="es">índice cargado en cada sesión</span></div><div class="ne-sub"><span data-lang="en">Store B · budget 16&nbsp;KB · ~12,800 tokens (bytes ÷ 4)</span><span data-lang="es">Almacén B · presupuesto 16&nbsp;KB · ~12 800 tokens (bytes ÷ 4)</span></div></div>
+      <div class="ne-stat"><div class="ne-big">+65<sup>%</sup></div><div class="ne-lab"><span data-lang="en">index growth since Aug 1</span><span data-lang="es">crecimiento del índice desde el 1 ago</span></div><div class="ne-sub"><span data-lang="en">Aug 1 → Sep 22 (Store B) · entries stayed at 65</span><span data-lang="es">1 ago → 22 sep (almacén B) · las entradas siguieron en 65</span></div></div>
+      <div class="ne-stat"><div class="ne-big">3<small>/56</small></div><div class="ne-lab"><span data-lang="en">oversize files fixed by moving dated history</span><span data-lang="es">archivos grandes que se arreglan moviendo historial fechado</span></div><div class="ne-sub"><span data-lang="en">Store B · strict heuristic · splitting fixes all</span><span data-lang="es">Almacén B · criterio estricto · dividir los arregla todos</span></div></div>
+      <div class="ne-stat"><div class="ne-big">2<small>/23</small></div><div class="ne-lab"><span data-lang="en">project files the lifecycle would archive</span><span data-lang="es">archivos de proyecto que el ciclo de vida archivaría</span></div><div class="ne-sub"><span data-lang="en">Store B · design as of round five</span><span data-lang="es">Almacén B · diseño de la quinta ronda</span></div></div>
+    </div>
+    <ul class="ne-takeaways">
+      <li><b>01</b><p data-lang="en"><b>Supports the design.</b> The index is a digest, not an index. It sits at 79 of 80 lines, so the line limit is satisfied, while its size is 3.2 times the proposed byte budget. 44 of 65 entries are over the 400-byte entry cap. Only a limit counted in bytes can see this.</p><p data-lang="es"><b>A favor del diseño.</b> El índice es un resumen, no un índice. Ocupa 79 de 80 líneas, así que cumple el límite de líneas, pero su tamaño es 3,2 veces el presupuesto en bytes propuesto. 44 de 65 entradas superan el tope de 400&nbsp;bytes por entrada. Solo un límite contado en bytes lo detecta.</p></li>
+      <li><b>02</b><p data-lang="en"><b>The two index caps disagree.</b> Cut every entry to 400&nbsp;bytes and the index is still about 24&nbsp;KB. At 65 entries, a 16&nbsp;KB budget allows 240&nbsp;bytes each on average. Only 7 entries are that short today. <i class="ne-st">Adopted:</i> the design now compacts toward 200&nbsp;bytes per entry, so 80 entries fit 16&nbsp;KB.</p><p data-lang="es"><b>Los dos topes del índice no cuadran.</b> Si se recorta cada entrada a 400&nbsp;bytes, el índice sigue pesando unos 24&nbsp;KB. Con 65 entradas, un presupuesto de 16&nbsp;KB deja 240&nbsp;bytes por entrada en promedio. Hoy solo 7 entradas son así de cortas. <i class="ne-st">Adoptado:</i> el diseño ahora compacta hacia 200&nbsp;bytes por entrada, así 80 entradas caben en 16&nbsp;KB.</p></li>
+      <li><b>03</b><p data-lang="en"><b>Splitting, not moving history, fixes file size.</b> Moving clearly dated observations out of oversize files brings 3 of 56 under the cap. The files are long because they hold many principles, not because they hold history. <i class="ne-st">Adopted:</i> splitting is now the primary remedy.</p><p data-lang="es"><b>Dividir, no mover el historial, resuelve el tamaño.</b> Sacar las observaciones con fecha clara de los archivos grandes deja 3 de 56 dentro del tope. Los archivos son largos porque contienen muchos principios, no porque acumulen historial. <i class="ne-st">Adoptado:</i> dividir es ahora el remedio principal.</p></li>
+      <li><b>04</b><p data-lang="en"><b>The lifecycle would have retired almost nothing.</b> As measured, 2 of 23 project files qualified. 18 of the 23 are mentioned by another file, and the blocking rule stopped any mentioned file from moving. <i class="ne-st">Adopted:</i> mentions no longer block; only a declared <code>read_with:</code> does.</p><p data-lang="es"><b>El ciclo de vida no habría retirado casi nada.</b> En la medición calificaban 2 de 23 archivos de proyecto. 18 de los 23 aparecen mencionados en otro archivo, y la regla de bloqueo impedía mover cualquier archivo mencionado. <i class="ne-st">Adoptado:</i> las menciones ya no bloquean; solo lo hace un <code>read_with:</code> declarado.</p></li>
+      <li><b>05</b><p data-lang="en"><b>The existing archive would have blocked migration.</b> 18 of 20 archived files sit in nested folders, a shape the design then treated as "never legacy". As written then, migration would have refused this store. <i class="ne-st">Adopted:</i> migration now moves unledgered files from <code>archive/&lt;tier&gt;/</code> into <code>archive/legacy/</code>.</p><p data-lang="es"><b>El archivo histórico actual habría bloqueado la migración.</b> 18 de 20 archivos archivados están en carpetas anidadas, una forma que el diseño entonces trataba como "nunca heredada". Tal como estaba escrito, la migración habría rechazado este almacén. <i class="ne-st">Adoptado:</i> la migración ahora mueve los archivos sin registro de <code>archive/&lt;tema&gt;/</code> a <code>archive/legacy/</code>.</p></li>
+    </ul>
+    <div class="ne-note ne-note--strong"><b data-lang="en">Design under review.</b><b data-lang="es">Diseño en revisión.</b> <span data-lang="en">The design lives in <a href="https://github.com/tomacco/aura-distill/pull/93">pull request #93</a>. The measurements below were taken against the version that went into review round six. Rounds six and seven (resolved in commit <code>4b02e67</code>) adopted four of this page's findings, marked <i class="ne-st">Adopted</i>. A new review cycle is running. This page describes decisions, not final wording.</span><span data-lang="es">El diseño está en el <a href="https://github.com/tomacco/aura-distill/pull/93">pull request #93</a>. Las mediciones de abajo se hicieron contra la versión que entró en la sexta ronda de revisión. Las rondas seis y siete (resueltas en el commit <code>4b02e67</code>) adoptaron cuatro de los hallazgos de esta página, marcados como <i class="ne-st">Adoptado</i>. Hay un nuevo ciclo de revisión en curso. Esta página describe decisiones, no la redacción final.</span></div>
+  </div>
+
+  <!-- 01 DESIGN -->
+  <section class="ne-section" id="design">
+    <div class="ne-sec"><h2><span data-lang="en">What the redesign is</span><span data-lang="es">Qué es el rediseño</span></h2><span class="ne-idx">01</span></div>
+    <p class="ne-intro" data-lang="en">Aura Distill keeps what a coding agent learns from you as plain Markdown files on your disk. The knowledge only grows, every limit ends in "ask the user", and the file loaded at every session start has turned into a digest. The files-only redesign (<a href="https://github.com/tomacco/aura-distill/issues/75">#75</a>, part of <a href="https://github.com/tomacco/aura-distill/issues/74">#74</a>) fixes this with files and instructions alone: no new program, service or account.</p>
+    <p class="ne-intro" data-lang="es">Aura Distill guarda lo que un agente de programación aprende de ti como archivos Markdown en tu disco. El conocimiento solo crece, cada límite termina en "preguntarle al usuario" y el archivo que se carga al iniciar cada sesión se volvió un resumen. El rediseño solo con archivos (<a href="https://github.com/tomacco/aura-distill/issues/75">#75</a>, parte de <a href="https://github.com/tomacco/aura-distill/issues/74">#74</a>) lo resuelve únicamente con archivos e instrucciones: sin programas, servicios ni cuentas nuevas.</p>
+
+    <div class="ne-subhead"><span class="ne-badge ne-badge--outline"><span data-lang="en">Terms</span><span data-lang="es">Términos</span></span><h3><span data-lang="en">Six words used on this page</span><span data-lang="es">Seis palabras que usa esta página</span></h3></div>
+    <dl class="ne-dl">
+      <dt>SPINE</dt>
+      <dd data-lang="en">The index. One Markdown file with one line per topic, read at the start of every session before any work. Whatever it weighs, every session pays.</dd>
+      <dd data-lang="es">El índice. Un archivo Markdown con una línea por tema que se lee al inicio de cada sesión, antes de cualquier trabajo. Lo que pese, lo paga cada sesión.</dd>
+      <dt data-lang="en">Entry</dt><dt data-lang="es">Entrada</dt>
+      <dd data-lang="en">One line of the SPINE: a link to a topic file plus a short description (the "hook") that tells the agent when to open it.</dd>
+      <dd data-lang="es">Una línea del SPINE: un enlace a un archivo de tema más una descripción breve (el "gancho") que le dice al agente cuándo abrirlo.</dd>
+      <dt data-lang="en">Tier file</dt><dt data-lang="es">Archivo de tema</dt>
+      <dd data-lang="en">A topic file (craft, ops, profile, projects, feedback). The agent reads it only when the task touches its topic.</dd>
+      <dd data-lang="es">Un archivo por tema (oficio, operaciones, perfil, proyectos, feedback). El agente lo lee solo cuando la tarea toca ese tema.</dd>
+      <dt data-lang="en">Byte budget</dt><dt data-lang="es">Presupuesto en bytes</dt>
+      <dd data-lang="en">A size limit counted in bytes instead of lines. A line limit can be met by writing longer lines. A byte limit cannot.</dd>
+      <dd data-lang="es">Un límite de tamaño contado en bytes y no en líneas. Un límite de líneas se cumple escribiendo líneas más largas; uno en bytes, no.</dd>
+      <dt>Tokens</dt>
+      <dd data-lang="en">The unit models read and bill. On this page, estimated as bytes ÷ 4. It is an estimate, not a tokenizer count.</dd>
+      <dd data-lang="es">La unidad que los modelos leen y cobran. En esta página se estima como bytes ÷ 4. Es una estimación, no un conteo con tokenizador.</dd>
+      <dt data-lang="en">Store</dt><dt data-lang="es">Almacén</dt>
+      <dd data-lang="en">One person's whole knowledge directory: the SPINE, the tier files and the archive.</dd>
+      <dd data-lang="es">El directorio completo de conocimiento de una persona: el SPINE, los archivos de tema y el archivo histórico.</dd>
+    </dl>
+
+    <div class="ne-subhead"><span class="ne-badge ne-badge--outline"><span data-lang="en">Decisions</span><span data-lang="es">Decisiones</span></span><h3><span data-lang="en">The design in ten decisions and a migration</span><span data-lang="es">El diseño en diez decisiones y una migración</span></h3></div>
+    <dl class="ne-dl">
+      <dt>D1</dt>
+      <dd data-lang="en"><b>Budgets in bytes, not only lines.</b> The SPINE gets 16,000&nbsp;bytes (about 4,000 tokens) on top of its 80-line limit, each entry 400&nbsp;bytes, each tier file 6,000&nbsp;bytes and 60 lines. Compaction shortens the longest entries first toward 200&nbsp;bytes (80 × 200 = 16,000). A run may not finish over budget, and splitting is the primary remedy for an oversize tier file. The byte numbers are marked provisional.</dd>
+      <dd data-lang="es"><b>Presupuestos en bytes, no solo en líneas.</b> El SPINE recibe 16 000&nbsp;bytes (unos 4000 tokens) además de su límite de 80 líneas; cada entrada, 400&nbsp;bytes; cada archivo de tema, 6000&nbsp;bytes y 60 líneas. La compactación acorta primero las entradas más largas hacia 200&nbsp;bytes (80 × 200 = 16 000). Una ejecución no puede terminar pasada de presupuesto, y dividir es el remedio principal para un archivo de tema demasiado grande. Las cifras en bytes están marcadas como provisionales.</dd>
+      <dt>D2</dt>
+      <dd data-lang="en"><b>Dated history moves to evidence files.</b> Confirmations, corrections and observations go to a parallel file under <code>evidence/</code> that is never loaded by default. The tier file keeps the principle. Protected rules ([NON-NEGOTIABLE], [DIRECTIVE]) never move.</dd>
+      <dd data-lang="es"><b>El historial fechado pasa a archivos de evidencia.</b> Confirmaciones, correcciones y observaciones van a un archivo paralelo en <code>evidence/</code> que no se carga por defecto. El archivo de tema conserva el principio. Las reglas protegidas ([NON-NEGOTIABLE], [DIRECTIVE]) nunca se mueven.</dd>
+      <dt>D3</dt>
+      <dd data-lang="en"><b>Archiving is a move, never a rewrite.</b> The file goes to <code>archive/</code> byte for byte. Before the move, a synced ledger line records its checksum, the reason and the SPINE entry that was removed, so a restore needs nothing invented. Old archive files without a ledger line are moved, byte for byte, into <code>archive/legacy/</code> during migration.</dd>
+      <dd data-lang="es"><b>Archivar es mover, nunca reescribir.</b> El archivo pasa a <code>archive/</code> byte a byte. Antes de moverlo, una línea en un registro sincronizado guarda su suma de verificación, el motivo y la entrada del SPINE que se quitó, así que restaurar no requiere inventar nada. Los archivos archivados antiguos sin línea en el registro se mueven, byte a byte, a <code>archive/legacy/</code> durante la migración.</dd>
+      <dt>D4</dt>
+      <dd data-lang="en"><b>A complete catalog.</b> One line per file, active, archived or evidence, rebuilt on every run and not loaded at session start.</dd>
+      <dd data-lang="es"><b>Un catálogo completo.</b> Una línea por archivo, activo, archivado o de evidencia, que se reconstruye en cada ejecución y no se carga al iniciar la sesión.</dd>
+      <dt>D5</dt>
+      <dd data-lang="en"><b>Honest "not found".</b> When a request refers back to earlier knowledge and no index entry matches, the agent checks the catalog. If that fails too, it says what it searched and when the catalog was rebuilt, instead of claiming the topic was never learned.</dd>
+      <dd data-lang="es"><b>Un "no encontrado" honesto.</b> Si un pedido se refiere a conocimiento anterior y ninguna entrada del índice coincide, el agente revisa el catálogo. Si tampoco encuentra, dice qué revisó y de cuándo es el catálogo, en vez de afirmar que el tema nunca se aprendió.</dd>
+      <dt>D6</dt>
+      <dd data-lang="en"><b>Declared reading, read in batches.</b> A file can list what must be read with it (<code>read_with:</code>). The agent reads every matched file in one batch instead of one at a time.</dd>
+      <dd data-lang="es"><b>Lecturas declaradas y en lote.</b> Un archivo puede indicar qué hay que leer con él (<code>read_with:</code>). El agente lee todos los archivos que coinciden en un solo lote, no de a uno.</dd>
+      <dt>D7</dt>
+      <dd data-lang="en"><b>An opt-in lifecycle.</b> When switched on, project files not confirmed within their own staleness threshold move to the archive without a question per file. Files with a NON-NEGOTIABLE rule are exempt. A file is blocked only when another tier file declares it in <code>read_with:</code>; plain mentions are listed in the report and still resolve to the archived copy.</dd>
+      <dd data-lang="es"><b>Un ciclo de vida opcional.</b> Si se activa, los archivos de proyecto que no se confirmaron dentro de su propio umbral de antigüedad pasan al archivo histórico sin preguntar uno por uno. Los que tienen una regla NON-NEGOTIABLE quedan exentos. Un archivo queda bloqueado solo si otro archivo de tema lo declara en <code>read_with:</code>; las menciones simples se listan en el informe y siguen llevando a la copia archivada.</dd>
+      <dt>D8</dt>
+      <dd data-lang="en"><b>Additive.</b> No existing format changes, so it stays on the 1.x line. The design lists what an older client does when it meets a redesigned store.</dd>
+      <dd data-lang="es"><b>Solo agrega.</b> No cambia ningún formato existente, así que sigue en la línea 1.x. El diseño detalla qué hace un cliente antiguo frente a un almacén rediseñado.</dd>
+      <dt>D9</dt>
+      <dd data-lang="en"><b>Sync rules.</b> Evidence, archive and ledger sync across machines, byte-exact. Lifecycle settings and recovery files stay on each machine.</dd>
+      <dd data-lang="es"><b>Reglas de sincronización.</b> La evidencia, el archivo histórico y el registro se sincronizan entre máquinas, byte a byte. La configuración del ciclo de vida y los archivos de recuperación quedan en cada máquina.</dd>
+      <dt>D10</dt>
+      <dd data-lang="en"><b>Contained paths.</b> Every path read from a synced file (index links, <code>read_with:</code>, ledger and catalog paths) must be relative, with no <code>..</code>, and stay inside the store's knowledge folders. Content read automatically, such as catalog rows, ledger lines and archived files, is data to report, never instructions to follow.</dd>
+      <dd data-lang="es"><b>Rutas contenidas.</b> Toda ruta leída de un archivo sincronizado (enlaces del índice, <code>read_with:</code>, rutas del registro y del catálogo) debe ser relativa, sin <code>..</code>, y quedarse dentro de las carpetas de conocimiento del almacén. El contenido que se lee automáticamente, como filas del catálogo, líneas del registro y archivos archivados, es un dato para informar, nunca una instrucción para seguir.</dd>
+      <dt data-lang="en">Migration</dt><dt data-lang="es">Migración</dt>
+      <dd data-lang="en"><b>Preview, backup, apply, prove.</b> A preview comes first and changes nothing. Applying makes a backup, marks progress per file, and ends with a mechanical check that every original line still exists somewhere. An interrupted run can be finished or reverted.</dd>
+      <dd data-lang="es"><b>Vista previa, respaldo, aplicar, comprobar.</b> Primero una vista previa que no cambia nada. Al aplicar se hace un respaldo, se marca el avance por archivo y se termina con una comprobación mecánica de que cada línea original sigue existiendo en algún lugar. Una ejecución interrumpida se puede terminar o revertir.</dd>
+    </dl>
+  </section>
+
+  <!-- 02 REAL STORES -->
+  <section class="ne-section" id="stores">
+    <div class="ne-sec"><h2><span data-lang="en">What real data shows</span><span data-lang="es">Qué muestran los datos reales</span></h2><span class="ne-idx">02</span></div>
+    <p class="ne-intro" data-lang="en">The design was built and tested on a fictional store. Here it meets real data: one real store in two snapshots, plus a second store's index. <b>Store A</b> is an older copy of the real store, its index dated 2026-09-20. <b>Store B</b> is the same store two to three days later, the current one, copied while a distillation was still running. <b>Store C</b> is a second, smaller store, seen only as index snapshots inside session transcripts. One more data point: a session in early August received the A/B store's index through a read-only connector, dated 2026-08-01.</p>
+    <p class="ne-intro" data-lang="es">El diseño se construyó y probó sobre un almacén ficticio. Aquí se enfrenta a datos reales: un almacén real en dos copias, más el índice de un segundo almacén. El <b>almacén A</b> es una copia anterior del almacén real, con su índice fechado el 20-09-2026. El <b>almacén B</b> es el mismo almacén dos o tres días después, el actual, copiado mientras una destilación todavía estaba en marcha. El <b>almacén C</b> es un segundo almacén, más pequeño, que solo se ve como copias del índice dentro de transcripciones de sesiones. Un dato más: una sesión de principios de agosto recibió el índice del almacén A/B a través de un conector de solo lectura, con fecha 01-08-2026.</p>
+
+    <div class="ne-pair">
+      <div>
+        <h3><span data-lang="en">What the synthetic fixture proves</span><span data-lang="es">Qué prueba el almacén sintético</span></h3>
+        <ul data-lang="en">
+          <li>The rules, the checker and the example store agree. As of round seven the test suite passes all 98 checks: 13 baseline checks (the migrated example passes, the original fails for the named reasons), 9 positive cases and 76 deliberate corruptions that must be caught.</li>
+          <li>The corruptions include a modified archived file, a dropped protected line, a lost index description, a stale catalog and a path that escapes the store.</li>
+          <li>Restore works for a clean and for a modified archived file, and runs in CI on Linux and macOS.</li>
+          <li>This is internal consistency. It says nothing about whether the numbers fit a real store.</li>
+        </ul>
+        <ul data-lang="es">
+          <li>Las reglas, el verificador y el almacén de ejemplo coinciden. Desde la séptima ronda el conjunto de pruebas pasa sus 98 comprobaciones: 13 de base (el ejemplo migrado aprueba y el original falla por las razones esperadas), 9 casos positivos y 76 corrupciones deliberadas que deben detectarse.</li>
+          <li>Entre las corrupciones hay un archivo archivado modificado, una línea protegida eliminada, una descripción del índice perdida, un catálogo desactualizado y una ruta que se sale del almacén.</li>
+          <li>Restaurar funciona tanto con un archivo archivado intacto como con uno modificado, y todo corre en CI en Linux y macOS.</li>
+          <li>Eso es coherencia interna. No dice nada sobre si las cifras le sirven a un almacén real.</li>
+        </ul>
+      </div>
+      <div>
+        <h3><span data-lang="en">What real data shows</span><span data-lang="es">Qué muestran los datos reales</span></h3>
+        <ul data-lang="en">
+          <li>Both snapshots of the real store fail the same three structural checks, for the reasons the design predicts: the index, file sizes and the missing catalog.</li>
+          <li>Sizes, shapes and ages differ from the design's assumptions in four places, each shown below. All four later changed the design.</li>
+          <li>The loss check that compares a store before and after migration was not run: no migrated real store exists yet.</li>
+        </ul>
+        <ul data-lang="es">
+          <li>Las dos copias del almacén real fallan las mismas tres comprobaciones estructurales, por las razones que el diseño anticipa: el índice, el tamaño de los archivos y la falta de catálogo.</li>
+          <li>Los tamaños, formas y antigüedades difieren de lo que el diseño supone en cuatro puntos, cada uno mostrado abajo. Los cuatro terminaron cambiando el diseño.</li>
+          <li>No se corrió la comprobación de pérdidas que compara un almacén antes y después de migrar: todavía no existe ningún almacén real migrado.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 2a -->
+    <div class="ne-subhead"><span class="ne-badge"><span data-lang="en">Supports</span><span data-lang="es">A favor</span></span><h3><span data-lang="en">The index has become a digest, and only a byte limit can see it</span><span data-lang="es">El índice se volvió un resumen, y solo un límite en bytes lo detecta</span></h3></div>
+    <div class="ne-prose">
+      <p data-lang="en">Store B's SPINE is 51,203&nbsp;bytes over 79 lines. That is inside the 80-line limit and 3.2 times over the proposed 16,000-byte budget. 44 of its 65 entries (68%) are longer than the 400-byte entry cap. The median entry is 553&nbsp;bytes and the longest is 3.2&nbsp;KB. The design cites a 39&nbsp;KB index as its motivating case. This one is at 51&nbsp;KB.</p>
+      <p data-lang="es">El SPINE del almacén B pesa 51 203&nbsp;bytes en 79 líneas: dentro del límite de 80 líneas y 3,2 veces por encima del presupuesto propuesto de 16 000&nbsp;bytes. 44 de sus 65 entradas (68 %) superan el tope de 400&nbsp;bytes por entrada. La entrada mediana tiene 553&nbsp;bytes y la más larga 3,2&nbsp;KB. El diseño cita un índice de 39&nbsp;KB como caso de partida. Este va por 51&nbsp;KB.</p>
+      <p data-lang="en">Across three snapshots of the same store, the number of entries never moved from 65 while the file grew 65% between Aug 1 and Sep 22 (57% by Sep 20, in Store A). New files were attached to existing lines as extra links (75 links in August, 95 now), and descriptions kept getting longer. Store C shows a thin index is possible in practice: 7.4 to 8.0&nbsp;KB over seven weeks, 25 to 28 entries, median entry about 270&nbsp;bytes, none over 400.</p>
+      <p data-lang="es">En tres copias del mismo almacén, el número de entradas nunca se movió de 65 mientras el archivo creció un 65 % entre el 1 de agosto y el 22 de septiembre (57 % al 20 de septiembre, en el almacén A). Los archivos nuevos se colgaron de líneas existentes como enlaces extra (75 enlaces en agosto, 95 ahora) y las descripciones se alargaron. El almacén C muestra que un índice delgado es posible en la práctica: entre 7,4 y 8,0&nbsp;KB durante siete semanas, de 25 a 28 entradas, entrada mediana de unos 270&nbsp;bytes y ninguna por encima de 400.</p>
+    </div>
+    <div class="ne-two">
+      <div class="ne-chart" id="c-size"></div>
+      <div class="ne-chart" id="c-growth"></div>
+    </div>
+    <div class="ne-note"><b data-lang="en">About the August point.</b><b data-lang="es">Sobre el dato de agosto.</b> <span data-lang="en">It is the index one session received through a read-only connector. Its header date and content place it in the A/B store's history, but it was not copied from disk. Token figures use bytes ÷ 4. A measured ratio of 3.2 characters per token (from an earlier local-model study) gives about 15,800 tokens for Store B instead of 12,800.</span><span data-lang="es">Es el índice que una sesión recibió a través de un conector de solo lectura. Su fecha de encabezado y su contenido lo ubican en la historia del almacén A/B, pero no se copió del disco. Los tokens se calculan como bytes ÷ 4. Una razón medida de 3,2 caracteres por token (de un estudio anterior con modelos locales) da unos 15 800 tokens para el almacén B en lugar de 12 800.</span></div>
+
+    <!-- 2b -->
+    <div class="ne-subhead"><span class="ne-badge ne-badge--outline"><span data-lang="en">Contradicts, partly</span><span data-lang="es">En contra, en parte</span></span><h3><span data-lang="en">400&nbsp;bytes per entry is realistic, but 65 of them do not fit in 16&nbsp;KB</span><span data-lang="es">400&nbsp;bytes por entrada es realista, pero 65 entradas no caben en 16&nbsp;KB</span></h3></div>
+    <div class="ne-prose">
+      <p data-lang="en">Cut every entry to exactly 400&nbsp;bytes and the index is still about 24&nbsp;KB. (The design's 26&nbsp;KB is 65 × 400; the measured sum is 24&nbsp;KB because 21 entries are already shorter.) At 65 entries, 16,000&nbsp;bytes allows an average of 240&nbsp;bytes per entry, and the 12,000-byte point where compaction starts allows about 178. Only 7 of today's 65 entries are 240&nbsp;bytes or shorter. The design's own arithmetic ("40 such entries fill the byte cap") assumed 40 entries. So the index budget, not the entry cap, is the limit that binds. Meeting it takes much shorter descriptions or fewer lines through merging.</p>
+      <p data-lang="es">Si se recorta cada entrada a exactamente 400&nbsp;bytes, el índice sigue pesando unos 24&nbsp;KB. (Los 26&nbsp;KB del diseño son 65 × 400; la suma medida da 24&nbsp;KB porque 21 entradas ya son más cortas.) Con 65 entradas, 16 000&nbsp;bytes dejan en promedio 240&nbsp;bytes por entrada, y el punto de 12 000&nbsp;bytes donde empieza la compactación deja unos 178. Hoy solo 7 de las 65 entradas miden 240&nbsp;bytes o menos. La cuenta del propio diseño ("40 entradas así llenan el tope") suponía 40 entradas. Así que el límite que manda es el presupuesto del índice, no el tope por entrada. Cumplirlo exige descripciones mucho más cortas o menos líneas, fusionando entradas.</p>
+    </div>
+    <div class="ne-two">
+      <div class="ne-chart" id="c-hist"></div>
+      <div class="ne-chart" id="c-cuts"></div>
+    </div>
+    <p class="ne-response" data-lang="en"><b>Adopted.</b> Design response, round six: D1 now compacts toward 200&nbsp;bytes per entry, so 80 entries fit in 16&nbsp;KB.</p>
+    <p class="ne-response" data-lang="es"><b>Adoptado.</b> Respuesta del diseño, ronda seis: D1 ahora compacta hacia 200&nbsp;bytes por entrada, así 80 entradas caben en 16&nbsp;KB.</p>
+
+    <!-- 2c -->
+    <div class="ne-subhead"><span class="ne-badge ne-badge--outline"><span data-lang="en">Contradicts</span><span data-lang="es">En contra</span></span><h3><span data-lang="en">Splitting files, not moving dated history, is what brings files under budget</span><span data-lang="es">Dividir archivos, no mover el historial fechado, es lo que los deja dentro del presupuesto</span></h3></div>
+    <div class="ne-prose">
+      <p data-lang="en">56 of Store B's 95 tier files are over the proposed file cap. The design expects them to shrink once their dated history moves to evidence files. Measured three ways, they mostly do not. 69 of the 95 files contain no clearly dated observation at all. The files are long because they hold many principles: the median file has about 18 separate blocks. Bringing every file under the cap takes 74 new split files if no history moves, 67 after the strict history move, and 43 after the generous one.</p>
+      <p data-lang="es">56 de los 95 archivos de tema del almacén B superan el tope propuesto. El diseño espera que se achiquen al mover su historial fechado a archivos de evidencia. Medido de tres maneras, en su mayoría no ocurre. 69 de los 95 archivos no tienen ni una observación con fecha clara. Los archivos son largos porque contienen muchos principios: el archivo mediano tiene unos 18 bloques distintos. Dejar todos dentro del tope requiere 74 archivos nuevos de división si no se mueve historial, 67 tras mover el historial con el criterio estricto y 43 con el amplio.</p>
+      <p data-lang="en">Evidence files are still worth having, for history and for the question "why do we believe this?". They are not what fixes file size.</p>
+      <p data-lang="es">Los archivos de evidencia siguen valiendo la pena, para el historial y para responder "¿por qué creemos esto?". Pero no son lo que arregla el tamaño.</p>
+    </div>
+    <div class="ne-chart" id="c-files"></div>
+    <p class="ne-response" data-lang="en"><b>Adopted.</b> Design response, round six: splitting is named the primary remedy for oversize tier files.</p>
+    <p class="ne-response" data-lang="es"><b>Adoptado.</b> Respuesta del diseño, ronda seis: dividir es el remedio principal para archivos de tema demasiado grandes.</p>
+    <div class="ne-note"><b data-lang="en">How history was counted.</b><b data-lang="es">Cómo se contó el historial.</b> <span data-lang="en">The design says deciding what is evidence is a judgement the distiller makes, so these are mechanical bounds. Strict: a block that opens with a date. Generous: any block that mentions a date. Very generous: dates or evidence words such as "confirmed", "observed" or "measured". Blocks carrying [NON-NEGOTIABLE] or [DIRECTIVE] are never counted as movable, because the design keeps them in place. The very generous bound is measured on the line cap only.</span><span data-lang="es">El diseño dice que decidir qué es evidencia es un juicio del destilador, así que estas son cotas mecánicas. Estricta: un bloque que empieza con una fecha. Amplia: cualquier bloque que menciona una fecha. Muy amplia: fechas o palabras de evidencia como "confirmado", "observado" o "medido". Los bloques con [NON-NEGOTIABLE] o [DIRECTIVE] nunca cuentan como movibles, porque el diseño los deja en su lugar. La cota muy amplia se midió solo contra el tope de líneas.</span></div>
+
+    <!-- 2d -->
+    <div class="ne-subhead"><span class="ne-badge ne-badge--outline"><span data-lang="en">Contradicts</span><span data-lang="es">En contra</span></span><h3><span data-lang="en">The lifecycle would archive two files, and its blocking rule is why</span><span data-lang="es">El ciclo de vida archivaría dos archivos, y la regla de bloqueo es la causa</span></h3></div>
+    <div class="ne-prose">
+      <p data-lang="en">The lifecycle only acts on files under <code>projects/</code>. Store B has 23. Seven are past their own staleness threshold. Three of those carry a NON-NEGOTIABLE rule and are exempt. Two are blocked because another active file names them. Two can move. A flat 90-day threshold gives the same 2; a flat 60-day threshold gives 3.</p>
+      <p data-lang="es">El ciclo de vida solo actúa sobre archivos de <code>projects/</code>. El almacén B tiene 23. Siete superan su propio umbral de antigüedad. Tres de ellos tienen una regla NON-NEGOTIABLE y quedan exentos. Dos están bloqueados porque otro archivo activo los nombra. Dos se pueden mover. Con un umbral fijo de 90 días el resultado es el mismo, 2; con 60 días, 3.</p>
+      <p data-lang="en">The bigger number is 18: that many of the 23 project files are named by path in another active file. Under the blocking rule, most projects could never be archived automatically, however stale they get. Protected markers are common too: 49 of 95 files carry NON-NEGOTIABLE or DIRECTIVE, 112 markers in all. The store is only about four and a half months old (median file last confirmed 44 days ago, oldest 129), so "stale projects never retire" cannot really be tested yet.</p>
+      <p data-lang="es">La cifra más importante es 18: esa cantidad de los 23 archivos de proyecto aparece nombrada por su ruta en otro archivo activo. Con la regla de bloqueo, la mayoría de los proyectos nunca podría archivarse automáticamente, por viejos que estén. Las marcas protegidas también abundan: 49 de 95 archivos tienen NON-NEGOTIABLE o DIRECTIVE, 112 marcas en total. El almacén tiene apenas cuatro meses y medio (el archivo mediano se confirmó por última vez hace 44 días, el más antiguo hace 129), así que todavía no se puede probar de verdad que "los proyectos viejos nunca se retiran".</p>
+    </div>
+    <div class="ne-chart" id="c-life"></div>
+    <p class="ne-response" data-lang="en"><b>Adopted.</b> Design response, round six: only a <code>read_with:</code> declared in another tier file blocks a move. Mentions are listed in the report and resolve to the archived copy.</p>
+    <p class="ne-response" data-lang="es"><b>Adoptado.</b> Respuesta del diseño, ronda seis: solo bloquea un <code>read_with:</code> declarado en otro archivo de tema. Las menciones se listan en el informe y llevan a la copia archivada.</p>
+
+    <!-- 2e -->
+    <div class="ne-subhead"><span class="ne-badge ne-badge--outline"><span data-lang="en">Contradicts</span><span data-lang="es">En contra</span></span><h3><span data-lang="en">The existing archive has a shape the design does not expect, and migration would refuse it</span><span data-lang="es">El archivo histórico actual tiene una forma que el diseño no espera, y la migración lo rechazaría</span></h3></div>
+    <div class="ne-prose">
+      <p data-lang="en">The design assumes old archived files sit flat in <code>archive/</code>; it counts five. Store B has 20, and 18 of them are nested in tier folders (<code>archive/&lt;tier&gt;/</code>), at least six with snapshot or rewrite suffixes in their names. The design, as measured, decided "legacy" by folder shape: flat meant legacy, nested never did. So these 18 counted as new-style archives that must have a ledger line, and they cannot have one. When the checker ran on a copy of Store B with a generated catalog added, all 18 failed. As written then, migration would have stopped on this store.</p>
+      <p data-lang="es">El diseño supone que los archivos archivados antiguos están sueltos en <code>archive/</code>; cuenta cinco. El almacén B tiene 20, y 18 están anidados en carpetas por tema (<code>archive/&lt;tema&gt;/</code>), al menos seis con sufijos de copia o reescritura en el nombre. El diseño, tal como se midió, decidía qué es "heredado" por la forma de la carpeta: suelto era heredado, anidado nunca. Así que estos 18 contaban como archivos del formato nuevo que deben tener una línea en el registro, y no pueden tenerla. Al correr el verificador sobre una copia del almacén B con un catálogo generado, los 18 fallaron. Tal como estaba escrita entonces, la migración se habría detenido en este almacén.</p>
+    </div>
+    <div class="ne-chart" id="c-archive"></div>
+    <p class="ne-response" data-lang="en"><b>Adopted.</b> Design response, round seven: migration moves unledgered files under <code>archive/&lt;tier&gt;/</code>, byte for byte, into <code>archive/legacy/</code>, listed in the plan and reversible.</p>
+    <p class="ne-response" data-lang="es"><b>Adoptado.</b> Respuesta del diseño, ronda siete: la migración mueve los archivos sin registro de <code>archive/&lt;tema&gt;/</code>, byte a byte, a <code>archive/legacy/</code>, listados en el plan y reversibles.</p>
+
+    <!-- 2f -->
+    <div class="ne-subhead"><span class="ne-badge ne-badge--outline"><span data-lang="en">Neutral</span><span data-lang="es">Neutral</span></span><h3><span data-lang="en">Links between files are already clean</span><span data-lang="es">Los enlaces entre archivos ya están limpios</span></h3></div>
+    <div class="ne-prose">
+      <p data-lang="en">The catalog (D4) gives archived material a place to be found and lets a "not found" answer say what was searched. It does not repair anything, because in both snapshots nothing is broken.</p>
+      <p data-lang="es">El catálogo (D4) le da al material archivado un lugar donde encontrarse y permite que un "no encontrado" diga qué se revisó. No repara nada, porque en ninguna de las dos copias hay algo roto.</p>
+    </div>
+    <div class="ne-panel">
+      <ul class="ne-rows">
+        <li><span class="ne-k"><span data-lang="en">Broken index links</span><span data-lang="es">Enlaces rotos del índice</span></span><span class="ne-v"><b>0</b> / 95</span></li>
+        <li><span class="ne-k"><span data-lang="en">Tier files missing from the index</span><span data-lang="es">Archivos de tema fuera del índice</span></span><span class="ne-v"><b>0</b> / 95</span></li>
+        <li><span class="ne-k"><span data-lang="en">Broken cross-references</span><span data-lang="es">Referencias cruzadas rotas</span></span><span class="ne-v"><b>0</b> / 529</span></li>
+        <li><span class="ne-k"><span data-lang="en">References into the archive that resolve</span><span data-lang="es">Referencias al archivo histórico que resuelven</span></span><span class="ne-v"><b>14</b> / 14</span></li>
+      </ul>
+    </div>
+    <p class="ne-meta-line" data-lang="en">Store B. Store A (the older snapshot) gives the same result with 94 files and 494 cross-references.</p>
+    <p class="ne-meta-line" data-lang="es">Almacén B. El almacén A (la copia anterior) da el mismo resultado con 94 archivos y 494 referencias cruzadas.</p>
+  </section>
+
+  <!-- 03 SESSIONS -->
+  <section class="ne-section" id="sessions">
+    <div class="ne-sec"><h2><span data-lang="en">What sessions actually load</span><span data-lang="es">Qué cargan de verdad las sesiones</span></h2><span class="ne-idx">03</span></div>
+    <p class="ne-intro" data-lang="en">Ten real sessions: seven in Claude Code, three in Codex. They were chosen because they contained many learning signals, so they are examples, not a sample of typical use. Nine read Store C; one read the A/B store through the connector.</p>
+    <p class="ne-intro" data-lang="es">Diez sesiones reales: siete en Claude Code y tres en Codex. Se eligieron porque tenían muchas señales de aprendizaje, así que son ejemplos, no una muestra del uso típico. Nueve leyeron el almacén C; una leyó el almacén A/B a través del conector.</p>
+    <div class="ne-chart" id="c-start"></div>
+    <div class="ne-tbl-tools"><span data-lang="en">Median per session. Store output is what the store's files returned into the conversation. * Codex usually read the index together with the monitor file.</span><span data-lang="es">Mediana por sesión. La salida del almacén es lo que sus archivos devolvieron a la conversación. * Codex solía leer el índice junto con el archivo monitor.</span></div>
+    <div class="ne-tbl">
+      <table>
+        <thead><tr>
+          <th><span data-lang="en">per session (median)</span><span data-lang="es">por sesión (mediana)</span></th>
+          <th><span data-lang="en">all 10</span><span data-lang="es">las 10</span></th>
+          <th>Claude Code · 7</th>
+          <th>Codex · 3</th>
+        </tr></thead>
+        <tbody>
+          <tr><td><span data-lang="en">Index loaded at start</span><span data-lang="es">Índice cargado al inicio</span></td><td><span data-lang="en">8.0&nbsp;KB</span><span data-lang="es">8,0&nbsp;KB</span></td><td><span data-lang="en">8.0&nbsp;KB</span><span data-lang="es">8,0&nbsp;KB</span></td><td><span data-lang="en">11.7&nbsp;KB*</span><span data-lang="es">11,7&nbsp;KB*</span></td></tr>
+          <tr><td><span data-lang="en">Index loads</span><span data-lang="es">Cargas del índice</span></td><td>1</td><td>1</td><td>2</td></tr>
+          <tr><td><span data-lang="en">Knowledge-file reads</span><span data-lang="es">Lecturas de archivos</span></td><td>5</td><td>4</td><td>20</td></tr>
+          <tr><td><span data-lang="en">Distinct files read</span><span data-lang="es">Archivos distintos leídos</span></td><td><span data-lang="en">4.5</span><span data-lang="es">4,5</span></td><td>4</td><td>12</td></tr>
+          <tr><td><span data-lang="en">Re-reads of the same file</span><span data-lang="es">Relecturas del mismo archivo</span></td><td><span data-lang="en">0.5</span><span data-lang="es">0,5</span></td><td>0</td><td>8</td></tr>
+          <tr><td><span data-lang="en">Calls reading several files</span><span data-lang="es">Llamadas que leen varios archivos</span></td><td><span data-lang="en">0.5</span><span data-lang="es">0,5</span></td><td>0</td><td>4</td></tr>
+          <tr><td><span data-lang="en">Search calls</span><span data-lang="es">Búsquedas</span></td><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td><span data-lang="en">Reads that found nothing</span><span data-lang="es">Lecturas sin resultado</span></td><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td><span data-lang="en">Store output, tokens</span><span data-lang="es">Salida del almacén, tokens</span></td><td><span data-lang="en">~8.6K</span><span data-lang="es">~8,6K</span></td><td><span data-lang="en">~8.4K</span><span data-lang="es">~8,4K</span></td><td>~21K</td></tr>
+          <tr><td><span data-lang="en">Knowledge share of peak context</span><span data-lang="es">Peso del conocimiento en el contexto máximo</span></td><td><span data-lang="en">7.8%</span><span data-lang="es">7,8 %</span></td><td><span data-lang="en">6.1%</span><span data-lang="es">6,1 %</span></td><td><span data-lang="en">9.4%</span><span data-lang="es">9,4 %</span></td></tr>
+          <tr><td><span data-lang="en">Knowledge share of processed input</span><span data-lang="es">Peso del conocimiento en la entrada procesada</span></td><td><span data-lang="en">7.0%</span><span data-lang="es">7,0 %</span></td><td><span data-lang="en">5.6%</span><span data-lang="es">5,6 %</span></td><td><span data-lang="en">15.7%</span><span data-lang="es">15,7 %</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="ne-prose">
+      <p data-lang="en"><b>Batching is a real gap in Claude Code.</b> It read files one per call almost every time: 3 multi-file calls across 7 sessions. Codex shells often read several files at once. The batching rule (D6) targets something that exists.</p>
+      <p data-lang="es"><b>Leer en lote es una carencia real en Claude Code.</b> Casi siempre leyó un archivo por llamada: 3 llamadas con varios archivos en 7 sesiones. Las consolas de Codex a menudo leen varios archivos a la vez. La regla de lectura en lote (D6) apunta a algo que existe.</p>
+      <p data-lang="en"><b>Codex re-reads.</b> 16 of the 19 repeat reads happened in Codex sessions, and one of those sessions compacted its context. Reading again after compaction is a plausible cause, not a confirmed one.</p>
+      <p data-lang="es"><b>Codex relee.</b> 16 de las 19 relecturas ocurrieron en sesiones de Codex, y una de ellas compactó su contexto. Volver a leer tras la compactación es una causa posible, no confirmada.</p>
+      <p data-lang="en"><b>No real read came back empty.</b> The only "not found" results in these sessions were a designed migration check, and they are not counted as misses.</p>
+      <p data-lang="es"><b>Ninguna lectura real volvió vacía.</b> Los únicos "no encontrado" de estas sesiones fueron una comprobación de migración prevista, y no cuentan como fallos.</p>
+      <p data-lang="en"><b>One likely wrong "we have nothing on this".</b> A text search found four statements of that kind. Three were correctly scoped or cannot be checked. One was probably wrong: a helper agent searched the connector's store while a matching file existed in the local one. That is the kind of miss the scoped wording (D5) is meant to prevent. Confidence is low to medium: one reader judged it, and the search's recall is unknown.</p>
+      <p data-lang="es"><b>Un probable "no tenemos nada sobre esto" equivocado.</b> Una búsqueda de texto encontró cuatro frases de ese tipo. Tres estaban bien acotadas o no se pueden comprobar. Una probablemente era errónea: un agente auxiliar buscó en el almacén del conector mientras en el almacén local existía un archivo que coincidía. Es justo el tipo de fallo que la redacción acotada (D5) busca evitar. Confianza baja a media: lo juzgó una sola persona y no se sabe cuánto se le escapó a la búsqueda.</p>
+    </div>
+
+    <div class="ne-subhead"><span class="ne-badge"><span data-lang="en">Cost multiplier</span><span data-lang="es">Multiplicador de costo</span></span><h3><span data-lang="en">Every helper agent pays the index again</span><span data-lang="es">Cada agente auxiliar vuelve a pagar el índice</span></h3></div>
+    <div class="ne-panel">
+      <ul class="ne-rows">
+        <li><span class="ne-k"><span data-lang="en">Helper agents (subagents) in 5 sessions</span><span data-lang="es">Agentes auxiliares (subagentes) en 5 sesiones</span></span><span class="ne-v"><b>23</b></span></li>
+        <li><span class="ne-k"><span data-lang="en">Index loads by helpers</span><span data-lang="es">Cargas del índice por auxiliares</span></span><span class="ne-v"><b>21</b></span></li>
+        <li><span class="ne-k"><span data-lang="en">Knowledge-file reads by helpers</span><span data-lang="es">Lecturas de archivos por auxiliares</span></span><span class="ne-v"><b>129</b></span></li>
+        <li><span class="ne-k"><span data-lang="en">Store output read by helpers</span><span data-lang="es">Salida del almacén leída por auxiliares</span></span><span class="ne-v"><b>647</b> KB</span></li>
+        <li><span class="ne-k"><span data-lang="en">Compared with the main agents</span><span data-lang="es">Comparado con los agentes principales</span></span><span class="ne-v"><b><span data-lang="en">1.2×</span><span data-lang="es">1,2×</span></b></span></li>
+      </ul>
+    </div>
+    <div class="ne-prose">
+      <p data-lang="en">Most of that helper traffic was benchmarking and transcript mining, not everyday retrieval. The point is structural: each helper starts with a clean context and loads the full index before it does anything. At Store B's size that is about 12,800 tokens per helper. The byte budget is worth more than the per-session figure suggests.</p>
+      <p data-lang="es">Gran parte de ese tráfico fue de pruebas comparativas y análisis de transcripciones, no de consultas cotidianas. Lo importante es estructural: cada auxiliar empieza con un contexto limpio y carga el índice completo antes de hacer nada. Con el tamaño del almacén B son unos 12 800 tokens por auxiliar. El presupuesto en bytes vale más de lo que sugiere la cifra por sesión.</p>
+    </div>
+  </section>
+
+  <!-- 04 REVIEWS -->
+  <section class="ne-section" id="reviews">
+    <div class="ne-sec"><h2><span data-lang="en">How the design was stress-tested</span><span data-lang="es">Cómo se puso a prueba el diseño</span></h2><span class="ne-idx">04</span></div>
+    <p class="ne-intro" data-lang="en">Before any real data was measured, the design went through one adversarial review and six independent reviews; a seventh followed once the real data was in. Each reviewer was a fresh agent that started with only the pull request and the product context. Every round asked for changes, and every round changed the design. 87 findings were posted: 23 blocking, 59 flags and 5 notes (the chart leaves out the notes). Review history as of 2026-09-23 (commit <code>4b02e67</code>, 98 of 98 checks passing, CI green on Linux, macOS and Windows). A new cycle is now running under the review rules merged the same day (<a href="https://github.com/tomacco/aura-distill/pull/104">#104</a>: at most three rounds, a closing check, and a reviewer on a different model from the author).</p>
+    <p class="ne-intro" data-lang="es">Antes de medir datos reales, el diseño pasó por una revisión adversaria y seis revisiones independientes; una séptima llegó cuando ya estaban los datos reales. Cada revisor fue un agente nuevo que empezó solo con el pull request y el contexto del producto. Todas las rondas pidieron cambios, y todas cambiaron el diseño. Se publicaron 87 hallazgos: 23 bloqueantes, 59 advertencias y 5 notas (el gráfico no incluye las notas). Historial al 23-09-2026 (commit <code>4b02e67</code>, 98 de 98 comprobaciones aprobadas, CI en verde en Linux, macOS y Windows). Ahora corre un nuevo ciclo con las reglas de revisión fusionadas ese mismo día (<a href="https://github.com/tomacco/aura-distill/pull/104">#104</a>: como máximo tres rondas, una comprobación de cierre y un revisor de un modelo distinto al del autor).</p>
+    <div class="ne-chart" id="c-reviews"></div>
+    <ol class="ne-steps">
+      <li><b>00</b><div><h4 data-lang="en">Adversarial · first draft</h4><h4 data-lang="es">Adversaria · primer borrador</h4>
+        <dl class="ne-kv"><dt><span data-lang="en">Blocked</span><span data-lang="es">Bloqueó</span></dt><dd><span data-lang="en">Archive history lived only in a catalog that is rebuilt from scratch, so it could be lost. Plus 11 more.</span><span data-lang="es">El historial del archivo vivía solo en un catálogo que se reconstruye desde cero, así que podía perderse. Y otros 11.</span></dd>
+        <dt><span data-lang="en">Changed</span><span data-lang="es">Cambió</span></dt><dd><span data-lang="en">A synced ledger written before each move; cut index wording goes to the topic file, not to evidence; migration can truly revert.</span><span data-lang="es">Un registro sincronizado que se escribe antes de cada movimiento; el texto recortado del índice va al archivo de tema, no a la evidencia; la migración puede revertirse de verdad.</span></dd></dl></div></li>
+      <li><b>01</b><div><h4 data-lang="en">Round 1</h4><h4 data-lang="es">Ronda 1</h4>
+        <dl class="ne-kv"><dt><span data-lang="en">Blocked</span><span data-lang="es">Bloqueó</span></dt><dd><span data-lang="en">Ledger events were undefined, so a crash between writing the ledger and moving the file looked healthy.</span><span data-lang="es">Los eventos del registro no estaban definidos, así que un corte entre escribir el registro y mover el archivo parecía sano.</span></dd>
+        <dt><span data-lang="en">Changed</span><span data-lang="es">Cambió</span></dt><dd><span data-lang="en">Four event types, "the last event wins", and the checker compares the ledger with the files.</span><span data-lang="es">Cuatro tipos de evento, "manda el último evento" y el verificador compara el registro con los archivos.</span></dd></dl></div></li>
+      <li><b>02</b><div><h4 data-lang="en">Round 2</h4><h4 data-lang="es">Ronda 2</h4>
+        <dl class="ne-kv"><dt><span data-lang="en">Blocked</span><span data-lang="es">Bloqueó</span></dt><dd><span data-lang="en">Restoring a file re-added an index entry longer than the entry cap.</span><span data-lang="es">Restaurar un archivo volvía a poner una entrada del índice más larga que el tope.</span></dd>
+        <dt><span data-lang="en">Changed</span><span data-lang="es">Cambió</span></dt><dd><span data-lang="en">Restore obeys the budget. Files with a NON-NEGOTIABLE rule are never archived automatically.</span><span data-lang="es">Restaurar respeta el presupuesto. Los archivos con una regla NON-NEGOTIABLE nunca se archivan automáticamente.</span></dd></dl></div></li>
+      <li><b>03</b><div><h4 data-lang="en">Round 3</h4><h4 data-lang="es">Ronda 3</h4>
+        <dl class="ne-kv"><dt><span data-lang="en">Blocked</span><span data-lang="es">Bloqueó</span></dt><dd><span data-lang="en">The text said "cut wording" moves to the topic file; the example moved the whole description.</span><span data-lang="es">El texto decía que se mueve "el texto recortado"; el ejemplo movía la descripción completa.</span></dd>
+        <dt><span data-lang="en">Changed</span><span data-lang="es">Cambió</span></dt><dd><span data-lang="en">"The entire original description" everywhere, with a test that catches a partial copy.</span><span data-lang="es">"La descripción original completa" en todas partes, con una prueba que detecta una copia parcial.</span></dd></dl></div></li>
+      <li><b>04</b><div><h4 data-lang="en">Round 4</h4><h4 data-lang="es">Ronda 4</h4>
+        <dl class="ne-kv"><dt><span data-lang="en">Blocked</span><span data-lang="es">Bloqueó</span></dt><dd><span data-lang="en">Migration only added index lines, so a full index could never finish. Dated markers such as [NON-NEGOTIABLE 2026-05-02] were not recognised.</span><span data-lang="es">La migración solo agregaba líneas al índice, así que un índice lleno nunca terminaba. Las marcas con fecha como [NON-NEGOTIABLE 2026-05-02] no se reconocían.</span></dd>
+        <dt><span data-lang="en">Changed</span><span data-lang="es">Cambió</span></dt><dd><span data-lang="en">A rule to reclaim index lines; one marker pattern used everywhere.</span><span data-lang="es">Una regla para recuperar líneas del índice; un único patrón de marca en todas partes.</span></dd></dl></div></li>
+      <li><b>05</b><div><h4 data-lang="en">Round 5</h4><h4 data-lang="es">Ronda 5</h4>
+        <dl class="ne-kv"><dt><span data-lang="en">Blocked</span><span data-lang="es">Bloqueó</span></dt><dd><span data-lang="en">A whole protected section (a heading carrying the marker) was invisible to the loss check. Merged index lines had no archive rule.</span><span data-lang="es">Una sección protegida completa (un título con la marca) era invisible para la comprobación de pérdidas. Las líneas fusionadas del índice no tenían regla de archivo.</span></dd>
+        <dt><span data-lang="en">Changed</span><span data-lang="es">Cambió</span></dt><dd><span data-lang="en">Protected sections; archiving removes one link from a merged line.</span><span data-lang="es">Secciones protegidas; archivar quita un solo enlace de una línea fusionada.</span></dd></dl></div></li>
+      <li><b>06</b><div><h4 data-lang="en">Round 6</h4><h4 data-lang="es">Ronda 6</h4>
+        <dl class="ne-kv"><dt><span data-lang="en">Blocked</span><span data-lang="es">Bloqueó</span></dt><dd><span data-lang="en">A "skip lines already present" step breaks the promise that every line survives as many times as it appeared. Also a merge conflict.</span><span data-lang="es">Un paso de "omitir líneas ya presentes" rompe la promesa de que cada línea sobrevive tantas veces como aparecía. Además, un conflicto de fusión.</span></dd>
+        <dt><span data-lang="en">Changed</span><span data-lang="es">Cambió</span></dt><dd><span data-lang="en">Duplicates are counted, not skipped. A new rule (D10) keeps every path inside the store. Plus three changes driven by this page's data: a 200-byte compaction target, splitting as the primary remedy, and mentions no longer blocking the lifecycle.</span><span data-lang="es">Los duplicados se cuentan, no se omiten. Una regla nueva (D10) mantiene cada ruta dentro del almacén. Y tres cambios que salen de los datos de esta página: una meta de compactación de 200 bytes, la división como remedio principal y que las menciones ya no bloqueen el ciclo de vida.</span></dd></dl></div></li>
+      <li><b>07</b><div><h4 data-lang="en">Round 7</h4><h4 data-lang="es">Ronda 7</h4>
+        <dl class="ne-kv"><dt><span data-lang="en">Blocked</span><span data-lang="es">Bloqueó</span></dt><dd><span data-lang="en">The round-six fix for old archives targeted a folder shape that does not occur, while the shape real stores use (18 of 20 files under <code>archive/&lt;tier&gt;/</code>) would still stop migration. Also a merge conflict.</span><span data-lang="es">La corrección de la sexta ronda para los archivos antiguos apuntaba a una forma de carpeta que no existe, mientras la forma real (18 de 20 archivos en <code>archive/&lt;tema&gt;/</code>) seguía deteniendo la migración. Además, un conflicto de fusión.</span></dd>
+        <dt><span data-lang="en">Changed</span><span data-lang="es">Cambió</span></dt><dd><span data-lang="en">Unledgered files under <code>archive/&lt;tier&gt;/</code> move into <code>archive/legacy/</code>. A literal <code>|</code> in free text is escaped. Revert rebuilds the catalog. Content read automatically is data, not instructions.</span><span data-lang="es">Los archivos sin registro en <code>archive/&lt;tema&gt;/</code> pasan a <code>archive/legacy/</code>. Un <code>|</code> literal en texto libre se escapa. Revertir reconstruye el catálogo. El contenido que se lee automáticamente es un dato, no una instrucción.</span></dd></dl></div></li>
+    </ol>
+    <div class="ne-note"><b data-lang="en">What the reviews could not do.</b><b data-lang="es">Lo que las revisiones no podían hacer.</b> <span data-lang="en">Every reviewer worked from the text and the fictional store. Through round five none had real data, which is why the findings in section 02 were new. Round six reached the blocking-rule problem from the text alone, and the real data showed how much it mattered. The round-six archive fix then carried a wrong folder shape, relayed by the orchestrating agent rather than measured, and round seven caught it by checking the real store (counts only).</span><span data-lang="es">Todos los revisores trabajaron con el texto y el almacén ficticio. Hasta la quinta ronda ninguno tenía datos reales, por eso los hallazgos de la sección 02 fueron nuevos. La sexta ronda llegó al problema de la regla de bloqueo solo leyendo el texto, y los datos reales mostraron cuánto importaba. Luego la corrección de la sexta ronda para el archivo histórico llevaba una forma de carpeta equivocada, transmitida por el agente coordinador en lugar de medida, y la séptima ronda la detectó revisando el almacén real (solo conteos).</span></div>
+  </section>
+
+  <!-- 05 NEXT -->
+  <section class="ne-section" id="next">
+    <div class="ne-sec"><h2><span data-lang="en">What changed, what is open</span><span data-lang="es">Qué cambió, qué sigue abierto</span></h2><span class="ne-idx">05</span></div>
+    <p class="ne-intro" data-lang="en">The changes this measurement proposed, and where each one stands as of commit <code>4b02e67</code>. Open items go to the implementation issue <a href="https://github.com/tomacco/aura-distill/issues/78">#78</a> and the release gate <a href="https://github.com/tomacco/aura-distill/issues/80">#80</a>. Measurement changed the design: four of the seven are in it, and a fifth in part.</p>
+    <p class="ne-intro" data-lang="es">Los cambios que propuso esta medición y en qué estado está cada uno al commit <code>4b02e67</code>. Lo abierto va al issue de implementación <a href="https://github.com/tomacco/aura-distill/issues/78">#78</a> y la puerta de lanzamiento <a href="https://github.com/tomacco/aura-distill/issues/80">#80</a>. La medición cambió el diseño: cuatro de las siete ya están incorporadas y una quinta, en parte.</p>
+    <ol class="ne-steps">
+      <li><b>01</b><div>
+        <div class="ne-st-row"><span class="ne-badge"><span data-lang="en">Adopted · round six</span><span data-lang="es">Adoptado · ronda seis</span></span></div><h4 data-lang="en">Reconcile the entry cap with the index budget</h4><h4 data-lang="es">Hacer cuadrar el tope por entrada con el presupuesto del índice</h4>
+        <p data-lang="en">Write the arithmetic into D1: with 65 entries, 16&nbsp;KB means about 240&nbsp;bytes each. Either cap descriptions near that (Store C's median of about 270&nbsp;bytes shows short entries work) or plan for fewer lines through merging, and have the migration preview show which. Measured cap values stay with <a href="https://github.com/tomacco/aura-distill/issues/62">#62</a>; the index drift itself is <a href="https://github.com/tomacco/aura-distill/issues/41">#41</a>. <b>Now in D1:</b> compaction shortens the longest entries first toward 200&nbsp;bytes, and 80 × 200&nbsp;bytes = 16&nbsp;KB.</p>
+        <p data-lang="es">Escribir la cuenta en D1: con 65 entradas, 16&nbsp;KB son unos 240&nbsp;bytes por entrada. O se topan las descripciones cerca de eso (la mediana de unos 270&nbsp;bytes del almacén C muestra que las entradas cortas funcionan), o se planifica tener menos líneas fusionando, y la vista previa de la migración muestra cuál. Los valores medidos de los topes siguen en <a href="https://github.com/tomacco/aura-distill/issues/62">#62</a>; la deriva del índice es <a href="https://github.com/tomacco/aura-distill/issues/41">#41</a>. <b>Ya está en D1:</b> la compactación acorta primero las entradas más largas hacia 200&nbsp;bytes, y 80 × 200&nbsp;bytes = 16&nbsp;KB.</p></div></li>
+      <li><b>02</b><div>
+        <div class="ne-st-row"><span class="ne-badge"><span data-lang="en">Adopted · round six</span><span data-lang="es">Adoptado · ronda seis</span></span></div><h4 data-lang="en">Make splitting the main path for oversize files</h4><h4 data-lang="es">Hacer de la división el camino principal para archivos grandes</h4>
+        <p data-lang="en">Expect dozens of split files in a store like B. Split files share their parent's index line, but every extra link still costs index bytes, so the preview must count them against the budget. Keep evidence files for history; stop presenting them as the fix for file size. <b>Now in D1:</b> splitting is named the primary remedy; evidence files fix 3 of 56.</p>
+        <p data-lang="es">Hay que esperar decenas de archivos divididos en un almacén como B. Comparten la línea del índice con su archivo padre, pero cada enlace extra igual cuesta bytes del índice, así que la vista previa debe descontarlos del presupuesto. Los archivos de evidencia se quedan para el historial; hay que dejar de presentarlos como la solución al tamaño. <b>Ya está en D1:</b> dividir es el remedio principal; los archivos de evidencia arreglan 3 de 56.</p></div></li>
+      <li><b>03</b><div>
+        <div class="ne-st-row"><span class="ne-badge"><span data-lang="en">Adopted · round six</span><span data-lang="es">Adoptado · ronda seis</span></span></div><h4 data-lang="en">Narrow the blocking rule</h4><h4 data-lang="es">Acotar la regla de bloqueo</h4>
+        <p data-lang="en">A mention in another file should not freeze a project forever when 18 of 23 projects are mentioned. Keep <code>read_with:</code> as a hard block, and let plain mentions resolve through the catalog after the move (D5). Lifecycle is <a href="https://github.com/tomacco/aura-distill/issues/73">#73</a>. <b>Now in D7:</b> only a <code>read_with:</code> in another tier file blocks; mentions are listed as referrers and resolve to the archived copy. Whether to repoint them at the catalog is an open question for #78.</p>
+        <p data-lang="es">Que otro archivo lo mencione no debería congelar un proyecto para siempre cuando 18 de 23 proyectos están mencionados. Mantener <code>read_with:</code> como bloqueo firme y dejar que las menciones simples se resuelvan a través del catálogo después de mover el archivo (D5). El ciclo de vida es <a href="https://github.com/tomacco/aura-distill/issues/73">#73</a>. <b>Ya está en D7:</b> solo bloquea un <code>read_with:</code> en otro archivo de tema; las menciones se listan y llevan a la copia archivada. Si conviene redirigirlas al catálogo es una pregunta abierta para #78.</p></div></li>
+      <li><b>04</b><div>
+        <div class="ne-st-row"><span class="ne-badge"><span data-lang="en">Adopted · round seven</span><span data-lang="es">Adoptado · ronda siete</span></span></div><h4 data-lang="en">Import nested legacy archives</h4><h4 data-lang="es">Importar los archivos heredados anidados</h4>
+        <p data-lang="en">Add a legacy import step that writes one ledger line per existing archived file, flat or nested, with its checksum at migration time and the reason "legacy import", instead of deciding legacy by folder shape. <b>Adopted differently:</b> legacy stays decided by folder, but migration moves every unledgered file under <code>archive/&lt;tier&gt;/</code>, byte for byte, into <code>archive/legacy/</code>, listed in the plan and reversible. Round six first targeted the wrong shape (<code>&lt;tier&gt;/archive/</code>); round seven fixed it.</p>
+        <p data-lang="es">Agregar un paso de importación que escriba una línea de registro por cada archivo ya archivado, suelto o anidado, con su suma de verificación en el momento de migrar y el motivo "importación heredada", en vez de decidir qué es heredado por la forma de la carpeta. <b>Adoptado de otra forma:</b> lo heredado se sigue decidiendo por carpeta, pero la migración mueve cada archivo sin registro de <code>archive/&lt;tema&gt;/</code>, byte a byte, a <code>archive/legacy/</code>, listado en el plan y reversible. La sexta ronda apuntó primero a la forma equivocada (<code>&lt;tema&gt;/archive/</code>); la séptima lo corrigió.</p></div></li>
+      <li><b>05</b><div>
+        <div class="ne-st-row"><span class="ne-badge ne-badge--outline"><span data-lang="en">Partly adopted · round six</span><span data-lang="es">Adoptado en parte · ronda seis</span></span></div><h4 data-lang="en">Keep the catalog, and justify it honestly</h4><h4 data-lang="es">Mantener el catálogo, con la justificación correcta</h4>
+        <p data-lang="en">It is for finding archived material and scoping "not found", not for repairing links, which are already clean. Search it only when a request refers back to earlier knowledge, as round six asked. <b>Now in D5:</b> the catalog is read only for requests that refer back. The justification is still open.</p>
+        <p data-lang="es">Sirve para encontrar material archivado y acotar los "no encontrado", no para reparar enlaces, que ya están limpios. Consultarlo solo cuando un pedido se refiere a conocimiento anterior, como pidió la sexta ronda. <b>Ya está en D5:</b> el catálogo se lee solo en pedidos que se refieren a algo anterior. La justificación sigue abierta.</p></div></li>
+      <li><b>06</b><div>
+        <div class="ne-st-row"><span class="ne-badge ne-badge--outline"><span data-lang="en">Still open</span><span data-lang="es">Sigue abierto</span></span></div><h4 data-lang="en">Count helper agents in the cost</h4><h4 data-lang="es">Contar a los agentes auxiliares en el costo</h4>
+        <p data-lang="en">Every helper pays the full index again, which makes the byte budget worth more than one session's figure. Batched reads (D6, <a href="https://github.com/tomacco/aura-distill/issues/64">#64</a>) target the one-file-per-call habit measured in Claude Code. </p>
+        <p data-lang="es">Cada auxiliar paga el índice completo otra vez, lo que hace que el presupuesto en bytes valga más que la cifra de una sesión. La lectura en lote (D6, <a href="https://github.com/tomacco/aura-distill/issues/64">#64</a>) apunta al hábito de un archivo por llamada que se midió en Claude Code. </p></div></li>
+      <li><b>07</b><div>
+        <div class="ne-st-row"><span class="ne-badge ne-badge--outline"><span data-lang="en">Still open</span><span data-lang="es">Sigue abierto</span></span></div><h4 data-lang="en">Measure the lifecycle again later</h4><h4 data-lang="es">Volver a medir el ciclo de vida más adelante</h4>
+        <p data-lang="en">A store four and a half months old cannot show whether stale projects retire. Keep the lifecycle opt-in and measure again once files pass 180 days. </p>
+        <p data-lang="es">Un almacén de cuatro meses y medio no puede mostrar si los proyectos viejos se retiran. Mantener el ciclo de vida como opcional y volver a medir cuando haya archivos de más de 180 días. </p></div></li>
+    </ol>
+  </section>
+
+  <!-- 06 METHOD -->
+  <section class="ne-section" id="method">
+    <div class="ne-sec"><h2><span data-lang="en">Method and caveats</span><span data-lang="es">Método y advertencias</span></h2><span class="ne-idx">06</span></div>
+    <div class="ne-prose">
+      <ul data-lang="en">
+        <li><b>What was measured.</b> One real store in two snapshots (A and B), copied to a scratch directory and never written, plus index snapshots of Store C and one of the A/B store found inside ten session transcripts. Python over the copies, and the design's own checker (<code>check-store.sh</code> at commit <code>bfbbe87</code>, after review round five) run unchanged with default caps.</li>
+        <li><b>Whose data this is.</b> The stores and transcripts belong to the project's maintainer, who asked for them to be measured and approved publishing aggregates only.</li>
+        <li><b>Only aggregates are published.</b> No file names, project names, content or session identifiers appear on this page.</li>
+        <li><b>Store B was copied mid-distillation</b> (status "running"), so it may be caught partway through a write.</li>
+        <li><b>Bytes and entries.</b> Byte counts are raw file bytes. An entry is a SPINE line starting with <code>- [</code>, the checker's definition. Links are <code>](path.md)</code>.</li>
+        <li><b>Tokens</b> are bytes ÷ 4 unless stated. That is an estimate, not a tokenizer count. Characters ÷ 3.2 gives about 24% more.</li>
+        <li><b>Evidence heuristics are mechanical.</b> The design leaves the call to the distiller, so a real migration may move more than the strict figure. The generous bounds bracket it.</li>
+        <li><b>Staleness</b> uses the newest <code>last_validated</code> or <code>last_updated</code> date in each file, as the design specifies, measured against 2026-09-23.</li>
+        <li><b>Sessions.</b> Ten, chosen by signal count, not at random: illustrative, not a population estimate. Knowledge share of processed input multiplies each store result by the number of later model calls in the session; it ignores compaction (which overstates Codex) and the always-on rules file, and it measures share of context, not cost, since cached input is billed far lower.</li>
+        <li><b>Review counts</b> are as posted on the pull request, one per bullet. Round five bundled several small points into one bullet. Round seven lists two blocking findings (one of them a merge conflict) and seven flags, three of them marked low. Notes are not in the chart.</li>
+        <li><b>Not run:</b> the before/after loss check (C4), because no migrated real store exists. Store C's tier files were not available, only its index.</li>
+      </ul>
+      <ul data-lang="es">
+        <li><b>Qué se midió.</b> Un almacén real en dos copias (A y B), copiadas a un directorio temporal y nunca modificadas, más copias del índice del almacén C y una del almacén A/B halladas en diez transcripciones de sesiones. Python sobre las copias y el propio verificador del diseño (<code>check-store.sh</code> en el commit <code>bfbbe87</code>, tras la quinta ronda) sin cambios y con los topes por defecto.</li>
+        <li><b>De quién son los datos.</b> Los almacenes y las transcripciones son del mantenedor del proyecto, que pidió medirlos y aprobó publicar solo agregados.</li>
+        <li><b>Solo se publican agregados.</b> En esta página no aparecen nombres de archivos, nombres de proyectos, contenido ni identificadores de sesión.</li>
+        <li><b>El almacén B se copió a mitad de una destilación</b> (estado "en curso"), así que puede haber quedado a medio escribir.</li>
+        <li><b>Bytes y entradas.</b> Los bytes son bytes crudos de archivo. Una entrada es una línea del SPINE que empieza con <code>- [</code>, la definición del verificador. Los enlaces son <code>](ruta.md)</code>.</li>
+        <li><b>Tokens</b> significa bytes ÷ 4 salvo que se indique otra cosa. Es una estimación, no un conteo con tokenizador. Caracteres ÷ 3,2 da un 24 % más.</li>
+        <li><b>Las heurísticas de evidencia son mecánicas.</b> El diseño deja la decisión al destilador, así que una migración real puede mover más que la cifra estricta. Las cotas amplias la encierran.</li>
+        <li><b>La antigüedad</b> usa la fecha <code>last_validated</code> o <code>last_updated</code> más reciente de cada archivo, como indica el diseño, medida al 23-09-2026.</li>
+        <li><b>Sesiones.</b> Diez, elegidas por cantidad de señales y no al azar: ilustrativas, no una estimación poblacional. El peso del conocimiento en la entrada procesada multiplica cada resultado del almacén por la cantidad de llamadas posteriores al modelo en la sesión; ignora la compactación (lo que exagera a Codex) y el archivo de reglas siempre cargado, y mide peso en el contexto, no costo, porque la entrada en caché se cobra mucho más barata.</li>
+        <li><b>Los conteos de revisión</b> son tal como se publicaron en el pull request, uno por viñeta. La quinta ronda agrupó varios puntos pequeños en una viñeta. La séptima lista dos hallazgos bloqueantes (uno es un conflicto de fusión) y siete alertas, tres de ellas de prioridad baja. Las notas no están en el gráfico.</li>
+        <li><b>No se corrió:</b> la comprobación de pérdidas antes/después (C4), porque no existe ningún almacén real migrado. Los archivos de tema del almacén C no estaban disponibles, solo su índice.</li>
+      </ul>
+    </div>
+    <div class="ne-note"><b data-lang="en">Changelog.</b><b data-lang="es">Historial de cambios.</b> <span data-lang="en">2026-09-23 · First version. Measured against the design as it stood after review round five, while round six is being resolved. Revised the same day after review of this page: growth figure made consistent (+65% to Sep 22), split range defined, review history extended to round seven, and each proposal marked adopted or open.</span><span data-lang="es">23-09-2026 · Primera versión. Medida contra el diseño tal como quedó tras la quinta ronda, mientras se resuelve la sexta. Revisada el mismo día tras la revisión de esta página: cifra de crecimiento coherente (+65 % al 22 de septiembre), rango de divisiones definido, historial de revisión extendido a la séptima ronda y cada propuesta marcada como adoptada o abierta.</span></div>
+    <div class="ne-actions">
+      <a class="ne-btn ne-btn--solid" href="https://github.com/tomacco/aura-distill/pull/93"><span data-lang="en">Read the design (PR #93)</span><span data-lang="es">Leer el diseño (PR #93)</span> <span aria-hidden="true">→</span></a>
+      <a class="ne-btn" href="./"><span data-lang="en">All research</span><span data-lang="es">Toda la investigación</span></a>
+    </div>
+  </section>
+
+  <footer class="ne-footer"><span>Aura Distill · <span data-lang="en">research</span><span data-lang="es">investigación</span> · 2026-09-23</span><span><a href="./"><span data-lang="en">all research</span><span data-lang="es">toda la investigación</span></a> · <a href="https://github.com/tomacco/aura-distill">github</a> · MIT</span></footer>
+</div>
+<div class="ne-tip" id="ne-tip" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  var $ = function(s){ return document.querySelector(s); };
+  var root = document.documentElement;
+  var T = {
+    en:{dark:'dark', light:'light',
+      size_t:'The index, in kilobytes', size_c:'SPINE size per snapshot · dashed line = proposed 16\u00a0KB budget · Store C shows its largest snapshot',
+      sB:'Store B · Sep 22', sA:'Store A · Sep 20', sAug:'Same store · Aug 1', sC:'Store C · 25–28 entries', budget:'budget 16\u00a0KB',
+      gr_t:'Bytes grew, entries did not', gr_c:'same store, indexed to Aug 1 = 100 · days on a true time scale',
+      bytes:'bytes', ptrs:'links', ents:'entries',
+      hi_t:'Entry sizes', hi_c:'Store B · 65 entries · number of entries per size band',
+      under:'within the 400 B cap', cap400:'400 B cap', over:'over the cap',
+      cu_t:'What cutting entries achieves', cu_c:'Store B SPINE bytes · dashed line = 16\u00a0KB budget',
+      today:'Today', cut400:'Every entry cut to 400 B', cut300:'Every entry cut to 300 B', need:'What 16\u00a0KB needs: 240 B each',
+      fi_t:'Tier files still over the file cap', fi_c:'Store B · 95 tier files · cap = 60 lines and 6,000\u00a0bytes · * line cap only · split count: 74 with no history moved, 67 after strict, 43 after generous',
+      f0:'Today', f1:'Move clearly dated history (strict)', f2:'Move every block with a date (generous)', f3:'Also move evidence-word blocks (very generous)*', f4:'Split files instead',
+      split:'0 · needs 43–74 new split files',
+      li_t:'What the lifecycle would do', li_c:'Store B · files under projects/ · each file’s own staleness threshold',
+      l0:'Project files', l1:'Past their own threshold', l2:'Outcome for those 7', ex:'exempt, NON-NEGOTIABLE', bl:'blocked, named by another file', el:'can be archived',
+      l3:'Named by another active file',
+      ar_t:'Shape of the existing archive', ar_c:'archived files · the design assumes flat legacy files',
+      a0:'Design assumes', a1:'Store B has', flat:'flat', nested:'nested in tier folders',
+      st_t:'Index cost at every session start', st_c:'estimated tokens (bytes ÷ 4) · dashed line = the 16\u00a0KB budget (~4,000) · paid again by every helper agent',
+      t0:'Store C (median load)', t1:'A/B store via connector, Aug 1', t2:'Store B today', bud2:'budget ~4K',
+      rv_t:'Findings per review', rv_c:'as posted on PR #93 · blocking = fatal + block · checks = suite checks on the reviewed version (98 after the round-seven fixes) · as of 2026-09-23',
+      blk:'blocking', flg:'flags', chk:'checks', adv:'Adversarial', rnd:'Round'},
+    es:{dark:'oscuro', light:'claro',
+      size_t:'El índice, en kilobytes', size_c:'tamaño del SPINE por copia · línea discontinua = presupuesto propuesto de 16\u00a0KB · el almacén C muestra su copia más grande',
+      sB:'Almacén B · 22 sep', sA:'Almacén A · 20 sep', sAug:'Mismo almacén · 1 ago', sC:'Almacén C · 25–28 entradas', budget:'presupuesto 16\u00a0KB',
+      gr_t:'Crecieron los bytes, no las entradas', gr_c:'mismo almacén, índice 1 ago = 100 · días en escala de tiempo real',
+      bytes:'bytes', ptrs:'enlaces', ents:'entradas',
+      hi_t:'Tamaño de las entradas', hi_c:'almacén B · 65 entradas · cantidad de entradas por rango de tamaño',
+      under:'dentro del tope de 400 B', cap400:'tope 400 B', over:'por encima del tope',
+      cu_t:'Qué logra recortar entradas', cu_c:'bytes del SPINE del almacén B · línea discontinua = presupuesto de 16\u00a0KB',
+      today:'Hoy', cut400:'Cada entrada recortada a 400 B', cut300:'Cada entrada recortada a 300 B', need:'Lo que exige 16\u00a0KB: 240 B cada una',
+      fi_t:'Archivos de tema aún por encima del tope', fi_c:'almacén B · 95 archivos · tope = 60 líneas y 6000\u00a0bytes · * solo tope de líneas · divisiones: 74 sin mover historial, 67 tras el estricto, 43 tras el amplio',
+      f0:'Hoy', f1:'Mover historial con fecha clara (estricto)', f2:'Mover todo bloque con fecha (amplio)', f3:'Mover también palabras de evidencia (muy amplio)*', f4:'Dividir los archivos',
+      split:'0 · requiere 43–74 archivos nuevos',
+      li_t:'Qué haría el ciclo de vida', li_c:'almacén B · archivos de projects/ · umbral propio de cada archivo',
+      l0:'Archivos de proyecto', l1:'Superan su propio umbral', l2:'Destino de esos 7', ex:'exentos, NON-NEGOTIABLE', bl:'bloqueados, otro archivo los nombra', el:'se pueden archivar',
+      l3:'Nombrados por otro archivo activo',
+      ar_t:'Forma del archivo histórico actual', ar_c:'archivos archivados · el diseño supone archivos heredados sueltos',
+      a0:'El diseño supone', a1:'El almacén B tiene', flat:'sueltos', nested:'anidados en carpetas por tema',
+      st_t:'Costo del índice al iniciar cada sesión', st_c:'tokens estimados (bytes ÷ 4) · línea discontinua = presupuesto de 16\u00a0KB (~4000) · cada agente auxiliar lo vuelve a pagar',
+      t0:'Almacén C (carga mediana)', t1:'Almacén A/B por conector, 1 ago', t2:'Almacén B hoy', bud2:'presupuesto ~4K',
+      rv_t:'Hallazgos por revisión', rv_c:'tal como se publicaron en el PR #93 · bloqueantes = fatal + bloqueo · pruebas = comprobaciones del conjunto en la versión revisada (98 tras las correcciones de la ronda siete) · al 23-09-2026',
+      blk:'bloqueantes', flg:'alertas', chk:'pruebas', adv:'Adversaria', rnd:'Ronda'}
+  };
+  var MD_EN = (document.querySelector('meta[name=description]') || {}).content;
+  var lang = root.lang === 'es' ? 'es' : 'en';
+  var t = function(k){ return T[lang][k]; };
+  function fmt(n, dec){
+    var s = Number(n).toFixed(dec || 0), parts = s.split('.'), int = parts[0], sep = lang === 'es' ? ' ' : ',';
+    if (lang === 'es' && int.replace('-', '').length <= 4) sep = '';
+    int = int.replace(/\B(?=(\d{3})+(?!\d))/g, sep);
+    return parts[1] ? int + (lang === 'es' ? ',' : '.') + parts[1] : int;
+  }
+
+  /* theme */
+  var mq = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+  function isDark(){ var a = root.getAttribute('data-theme'); return a ? a === 'dark' : !!(mq && mq.matches); }
+  function paintThemeBtn(){ $('#theme').textContent = isDark() ? t('light') : t('dark'); }
+  $('#theme').onclick = function(){ var next = isDark() ? 'light' : 'dark'; root.setAttribute('data-theme', next); try { localStorage.setItem('ne-theme', next); } catch(e){} paintThemeBtn(); };
+  if (mq && mq.addEventListener) mq.addEventListener('change', paintThemeBtn);
+
+  /* language */
+  function setLang(l){ lang = l; root.lang = l; try { localStorage.setItem('ne-lang', l); } catch(e){} render(); }
+  $('#lang-en').onclick = function(){ setLang('en'); };
+  $('#lang-es').onclick = function(){ setLang('es'); };
+
+  /* chart helpers */
+  var tip = $('#ne-tip');
+  function showTip(h, x, y){ tip.innerHTML = h; tip.style.opacity = 1; var w = tip.offsetWidth, hh = tip.offsetHeight; tip.style.left = Math.max(8, Math.min(x + 12, innerWidth - w - 8)) + 'px'; tip.style.top = (y - hh - 12 < 8 ? y + 16 : y - hh - 12) + 'px'; }
+  function hideTip(){ tip.style.opacity = 0; }
+  function el(tag, a, p){ var e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (var k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; }
+  function txt(p, x, y, s, cls, anchor){ var e = el('text', {x:x, y:y, 'class':cls || '', 'text-anchor':anchor || 'start'}, p); e.textContent = s; return e; }
+  function head(host, title, cap){ host.innerHTML = '<h3>' + title + '</h3><div class="ne-cap">' + cap + '</div>'; }
+  function width(host){ return Math.max(240, host.clientWidth - 30); }
+  function legend(items){ return '<div class="ne-legend">' + items.map(function(i){ return '<span><i class="' + i[0] + '"></i>' + i[1] + '</span>'; }).join('') + '</div>'; }
+  function hover(node, html){ node.onmousemove = function(e){ showTip(html, e.clientX, e.clientY); }; node.onmouseleave = hideTip; node.ontouchstart = function(e){ var p = e.touches[0]; showTip(html, p.clientX, p.clientY); setTimeout(hideTip, 1800); }; }
+
+  /* horizontal bars with the label ABOVE each bar (works at phone width).
+     rows: [{label, v, fill, val, tip, segs:[[v, fill, name]]}] */
+  function hbars(host, o){
+    head(host, o.title, o.cap);
+    var W = width(host), L = 0, R = o.right || 64, pitch = 46, Tp = o.ref ? 18 : 4;
+    var H = Tp + o.rows.length * pitch + 2;
+    var X = function(v){ return L + v / o.max * (W - L - R); };
+    var svg = el('svg', {viewBox:'0 0 ' + W + ' ' + H, width:'100%', height:H, role:'img', 'aria-label':o.title}, host);
+    o.rows.forEach(function(r, i){
+      var y = Tp + i * pitch;
+      txt(svg, L, y + 13, r.label, 'ne-lbl');
+      var by = y + 19;
+      if (r.segs){
+        var x = L; r.segs.forEach(function(s){ var w = Math.max(0, X(s[0]) - L - 2); var rc = el('rect', {x:x, y:by, width:w, height:20, fill:s[1], 'class':'ne-bar', 'stroke-width':.75}, svg); hover(rc, '<b>' + r.label + '</b><br>' + s[2] + ': ' + s[0]); x += w + 2; });
+        txt(svg, x + 4, by + 14, r.val, 'ne-tick');
+      } else {
+        var w = Math.max(r.v > 0 ? 2 : 0, X(r.v) - L);
+        if (r.v > 0){ var rc = el('rect', {x:L, y:by, width:w, height:20, fill:r.fill, 'class':'ne-bar'}, svg); hover(rc, '<b>' + r.label + '</b><br>' + (r.tip || r.val)); }
+        else el('line', {x1:L, x2:L, y1:by, y2:by + 20, stroke:'var(--ne-ink)', 'stroke-width':2}, svg);
+        var vx = L + w + 6, rxv = o.ref ? X(o.ref.v) : -1;
+        if (rxv > 0 && vx < rxv + 4 && vx + String(r.val).length * 6.4 > rxv - 2) vx = rxv + 6;
+        txt(svg, vx, by + 14, r.val, 'ne-tick');
+      }
+    });
+    if (o.ref){ var rx = X(o.ref.v);
+      o.rows.forEach(function(r, i){ var by = Tp + i * pitch + 19; el('line', {x1:rx, x2:rx, y1:by - 3, y2:by + 23, stroke:'var(--ne-ink)', 'stroke-width':1.25, 'stroke-dasharray':'3 2'}, svg); });
+      var anc = rx > W * .6 ? 'end' : 'start'; txt(svg, anc === 'end' ? rx - 4 : rx + 4, 10, o.ref.label, 'ne-tick', anc); }
+    if (o.legend) host.insertAdjacentHTML('beforeend', legend(o.legend));
+  }
+
+  function drawSize(){
+    hbars($('#c-size'), {title:t('size_t'), cap:t('size_c'), max:52, ref:{v:16, label:t('budget')}, right:52, rows:[
+      {label:t('sB'), v:51.2, fill:'var(--ne-ink)', val:fmt(51.2,1) + ' KB', tip:fmt(51203) + ' B · ' + fmt(3.2,1) + '×'},
+      {label:t('sA'), v:49.0, fill:'var(--ne-grey)', val:fmt(49.0,1) + ' KB', tip:fmt(48950) + ' B'},
+      {label:t('sAug'), v:31.1, fill:'url(#ne-hatch)', val:fmt(31.1,1) + ' KB', tip:fmt(31097) + ' B'},
+      {label:t('sC'), v:8.0, fill:'url(#ne-hatch2)', val:fmt(7.4,1) + '–' + fmt(8.0,1) + ' KB', tip:fmt(7385) + '–' + fmt(8005) + ' B'}
+    ]});
+  }
+
+  function drawGrowth(){
+    var host = $('#c-growth'); head(host, t('gr_t'), t('gr_c'));
+    var W = width(host), H = 250, L = 34, R = 46, Tp = 12, Bt = 36, y0 = 80, y1 = 180, days = 52;
+    var X = function(d){ return L + d / days * (W - L - R); }, Y = function(v){ return Tp + (1 - (v - y0) / (y1 - y0)) * (H - Tp - Bt); };
+    var svg = el('svg', {viewBox:'0 0 ' + W + ' ' + H, width:'100%', height:H, role:'img', 'aria-label':t('gr_t')}, host);
+    var g = el('g', {'class':'ne-grid'}, svg);
+    for (var v = y0; v <= y1; v += 20){ el('line', {x1:L, x2:W - R, y1:Y(v), y2:Y(v)}, g); txt(g, L - 6, Y(v) + 4, v, 'ne-tick', 'end'); }
+    var xt = lang === 'es' ? [[0,'1 ago'],[31,'1 sep'],[52,'22 sep']] : [[0,'Aug 1'],[31,'Sep 1'],[52,'Sep 22']];
+    xt.forEach(function(x, i){ txt(svg, X(x[0]), H - Bt + 16, x[1], 'ne-tick', i === 0 ? 'start' : (i === 2 ? 'end' : 'middle')); });
+    var D = [0, 50, 52], DL = lang === 'es' ? ['1 ago', '20 sep', '22 sep'] : ['Aug 1', 'Sep 20', 'Sep 22'];
+    var S = [
+      [t('bytes'), [100, 157.4, 164.7], [31097, 48950, 51203], '', 'ne-line ne-line--key', 'var(--ne-ink)', '+65%'],
+      [t('ptrs'), [100, 125.3, 126.7], [75, 94, 95], '6 4', 'ne-line', 'var(--ne-grey)', '+27%'],
+      [t('ents'), [100, 100, 100], [65, 65, 65], '2 4', 'ne-line', 'var(--ne-paper-2)', '±0']
+    ];
+    S.forEach(function(s, si){
+      el('path', {d:s[1].map(function(v, i){ return (i ? 'L' : 'M') + X(D[i]) + ',' + Y(v); }).join(' '), 'class':s[4], 'stroke-dasharray':s[3]}, svg);
+      var mid = 36, mv = s[1][0] + (s[1][1] - s[1][0]) * mid / 50;
+      txt(svg, X(mid), Y(mv) - 9, s[0], 'ne-lbl', 'end');
+      txt(svg, X(52) + 8, Y(s[1][2]) + 4, lang === 'es' ? s[6].replace('%', ' %') : s[6], 'ne-tick');
+      s[1].forEach(function(v, i){ el('circle', {cx:X(D[i]), cy:Y(v), r:6, 'class':'ne-halo'}, svg); var c = el('circle', {cx:X(D[i]), cy:Y(v), r:4, fill:s[5], 'class':'ne-dot'}, svg);
+        hover(c, '<b>' + s[0] + '</b><br>' + DL[i] + ': ' + fmt(s[2][i])); });
+    });
+    host.insertAdjacentHTML('beforeend', '<div class="ne-legend"><span><i class="ne-l-line" style="border-top-width:2.5px"></i>' + t('bytes') + '</span><span><i class="ne-l-line" style="border-top:1.5px dashed var(--ne-ink)"></i>' + t('ptrs') + '</span><span><i class="ne-l-line" style="border-top:1.5px dotted var(--ne-ink)"></i>' + t('ents') + '</span></div>');
+  }
+
+  function drawHist(){
+    var host = $('#c-hist'); head(host, t('hi_t'), t('hi_c'));
+    var D = [['≤ 150 B',0,0],['151–300',14,0],['301–400',7,0],['401–600',16,1],['601–800',9,1],['801–1000',4,1],['> 1000',15,1]];
+    if (lang === 'es') D[5][0] = '801–1000'; else D[5][0] = '801–1,000';
+    if (lang !== 'es') D[6][0] = '> 1,000';
+    var W = width(host), L = 76, R = 30, rowH = 28, Tp = 4, H = Tp + D.length * rowH + 4, max = 16;
+    var svg = el('svg', {viewBox:'0 0 ' + W + ' ' + H, width:'100%', height:H, role:'img', 'aria-label':t('hi_t')}, host);
+    D.forEach(function(d, i){ var y = Tp + i * rowH + 4, w = d[1] / max * (W - L - R);
+      txt(svg, L - 8, y + 14, d[0], 'ne-lbl', 'end');
+      if (d[1] > 0){ var r = el('rect', {x:L, y:y, width:w, height:20, fill:d[2] ? 'var(--ne-ink)' : 'url(#ne-hatch2)', 'class':'ne-bar'}, svg); hover(r, '<b>' + d[0] + '</b><br>' + d[1]); }
+      txt(svg, L + w + 6, y + 14, d[1], 'ne-tick');
+      if (i === 2){ el('line', {x1:0, x2:W, y1:y + 25, y2:y + 25, stroke:'var(--ne-ink)', 'stroke-dasharray':'3 3'}, svg); txt(svg, W, y + 21, t('cap400'), 'ne-tick', 'end'); }
+    });
+    host.insertAdjacentHTML('beforeend', legend([['ne-fill-hatch2', t('under') + ' · 21'], ['ne-fill-ink', t('over') + ' · 44']]));
+  }
+
+  function drawCuts(){
+    hbars($('#c-cuts'), {title:t('cu_t'), cap:t('cu_c'), max:52, ref:{v:16, label:t('budget')}, right:52, rows:[
+      {label:t('today'), v:51.2, fill:'var(--ne-ink)', val:fmt(51.2,1) + ' KB'},
+      {label:t('cut400'), v:24.05, fill:'var(--ne-grey)', val:fmt(24.1,1) + ' KB'},
+      {label:t('cut300'), v:19.1, fill:'url(#ne-hatch)', val:fmt(19.1,1) + ' KB'},
+      {label:t('need'), v:15.6, fill:'url(#ne-hatch2)', val:'16\u00a0KB'}
+    ]});
+  }
+
+  function drawFiles(){
+    hbars($('#c-files'), {title:t('fi_t'), cap:t('fi_c'), max:95, right:40, rows:[
+      {label:t('f0'), v:56, fill:'var(--ne-ink)', val:'56'},
+      {label:t('f1'), v:53, fill:'var(--ne-grey)', val:'53'},
+      {label:t('f2'), v:40, fill:'url(#ne-hatch)', val:'40'},
+      {label:t('f3'), v:28, fill:'url(#ne-hatch2)', val:'28*'},
+      {label:t('f4'), v:0, fill:'var(--ne-grey-2)', val:t('split')}
+    ]});
+  }
+
+  function drawLife(){
+    hbars($('#c-life'), {title:t('li_t'), cap:t('li_c'), max:23, right:40, rows:[
+      {label:t('l0'), v:23, fill:'var(--ne-grey-2)', val:'23'},
+      {label:t('l3'), v:18, fill:'var(--ne-paper-2)', val:'18'},
+      {label:t('l1'), v:7, fill:'var(--ne-grey)', val:'7'},
+      {label:t('l2'), segs:[[3, 'url(#ne-hatch)', t('ex')], [2, 'url(#ne-hatch2)', t('bl')], [2, 'var(--ne-ink)', t('el')]], val:'3 · 2 · 2'}
+    ], legend:[['ne-fill-hatch', t('ex') + ' · 3'], ['ne-fill-hatch2', t('bl') + ' · 2'], ['ne-fill-ink', t('el') + ' · 2']]});
+  }
+
+  function drawArchive(){
+    hbars($('#c-archive'), {title:t('ar_t'), cap:t('ar_c'), max:20, right:60, rows:[
+      {label:t('a0'), segs:[[5, 'url(#ne-hatch)', t('flat')]], val:'5 ' + t('flat')},
+      {label:t('a1'), segs:[[2, 'url(#ne-hatch)', t('flat')], [18, 'var(--ne-ink)', t('nested')]], val:'2 + 18'}
+    ], legend:[['ne-fill-hatch', t('flat')], ['ne-fill-ink', t('nested')]]});
+  }
+
+  function drawStart(){
+    hbars($('#c-start'), {title:t('st_t'), cap:t('st_c'), max:13, right:48, ref:{v:4, label:t('bud2')}, rows:[
+      {label:t('t2'), v:12.8, fill:'var(--ne-ink)', val:'~' + fmt(12.8,1) + 'K'},
+      {label:t('t1'), v:7.8, fill:'url(#ne-hatch)', val:'~' + fmt(7.8,1) + 'K'},
+      {label:t('t0'), v:2.0, fill:'url(#ne-hatch2)', val:'~' + fmt(2.0,1) + 'K'}
+    ]});
+  }
+
+  /* small multiples: one row per review, three columns */
+  function drawReviews(){
+    var host = $('#c-reviews'); head(host, t('rv_t'), t('rv_c'));
+    var R = [[t('adv'),12,14,null],[t('rnd')+' 1',1,8,19],[t('rnd')+' 2',1,7,22],[t('rnd')+' 3',1,5,25],[t('rnd')+' 4',2,4,32],[t('rnd')+' 5',2,3,36],[t('rnd')+' 6',2,11,39],[t('rnd')+' 7',2,7,92]];
+    var C = [[t('blk'),14,'var(--ne-ink)'],[t('flg'),14,'var(--ne-grey)'],[t('chk'),100,'url(#ne-hatch2)']];
+    var W = width(host), L = W < 420 ? 78 : 96, gap = 12, colW = (W - L - gap * 2) / 3, pitch = 28, Tp = 22, H = Tp + R.length * pitch + 2;
+    var svg = el('svg', {viewBox:'0 0 ' + W + ' ' + H, width:'100%', height:H, role:'img', 'aria-label':t('rv_t')}, host);
+    C.forEach(function(c, ci){ txt(svg, L + ci * (colW + gap), 12, c[0], 'ne-tick'); });
+    R.forEach(function(r, i){ var y = Tp + i * pitch + 2;
+      txt(svg, L - 8, y + 14, r[0], 'ne-lbl', 'end');
+      C.forEach(function(c, ci){ var v = r[ci + 1], x0 = L + ci * (colW + gap), bw = colW - 22;
+        if (v === null){ txt(svg, x0, y + 14, '—', 'ne-tick'); return; }
+        var w = Math.max(2, v / c[1] * bw); var rc = el('rect', {x:x0, y:y, width:w, height:20, fill:c[2], 'class':'ne-bar'}, svg);
+        hover(rc, '<b>' + r[0] + '</b><br>' + c[0] + ': ' + v);
+        txt(svg, x0 + w + 4, y + 14, v, 'ne-tick'); });
+    });
+  }
+
+  /* research-tracker.js writes English text into .meta; mirror it in Spanish */
+  var TR = [[' · Published ', ' · Publicado el '], [' · ✓ Read', ' · ✓ Leído'], [' · Updated since last read', ' · Actualizado desde tu última lectura']];
+  function localizeTracker(){
+    document.querySelectorAll('.meta .tracker-pub-date, .meta .tracker-read-mark, .meta .tracker-updated-mark').forEach(function(n){
+      if (!n.hasAttribute('data-en-text')) n.setAttribute('data-en-text', n.textContent);
+      var en = n.getAttribute('data-en-text'), out = en;
+      if (lang === 'es') TR.forEach(function(p){ out = out.replace(p[0], p[1]); });
+      if (n.textContent !== out) n.textContent = out;
+    });
+  }
+  var metaEl = document.querySelector('.meta');
+  if (metaEl && window.MutationObserver) new MutationObserver(localizeTracker).observe(metaEl, {childList:true});
+  function render(){
+    root.lang = lang;
+    $('#lang-en').setAttribute('aria-pressed', lang === 'en'); $('#lang-es').setAttribute('aria-pressed', lang === 'es');
+    document.title = lang === 'es' ? 'Rediseño de memoria solo con archivos — Investigación de aura-distill' : 'Files-only memory redesign — aura-distill Research';
+    var md = document.querySelector('meta[name=description]'); if (md) md.setAttribute('content', lang === 'es' ? 'El rediseño de memoria solo con archivos de aura-distill, medido con datos reales. El índice que se carga siempre es un resumen de 51 KB; dividir archivos, no mover el historial, es lo que arregla su tamaño.' : MD_EN);
+    localizeTracker();
+    paintThemeBtn();
+    drawSize(); drawGrowth(); drawHist(); drawCuts(); drawFiles(); drawLife(); drawArchive(); drawStart(); drawReviews();
+  }
+  var rz, lastW = innerWidth; addEventListener('resize', function(){ if (innerWidth === lastW) return; lastW = innerWidth; clearTimeout(rz); rz = setTimeout(render, 120); });
+  render();
+})();
+</script>
+<script src="research-tracker.js"></script>
+</body>
+</html>

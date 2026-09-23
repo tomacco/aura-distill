@@ -572,7 +572,8 @@ case "$LIFECYCLE" in
         skip_msg "Lifecycle ${DIM}(setting removed — defaults to off)${RESET}"
         ;;
     *)
-        if [ "$(cat "$LC_MARKER" 2>/dev/null)" = "enabled" ]; then
+        # tolerate a UTF-8 byte-order mark (a file written by Windows PowerShell 5.1)
+        if [ "$(sed "1s/^$(printf '\357\273\277')//" "$LC_MARKER" 2>/dev/null | tr -d '[:space:]')" = "enabled" ]; then
             skip_msg "Lifecycle ${DIM}(enabled — kept; turn off with --no-lifecycle)${RESET}"
         else
             skip_msg "Lifecycle ${DIM}(off — opt in with --lifecycle; a preview is always one '/distill gc' away)${RESET}"

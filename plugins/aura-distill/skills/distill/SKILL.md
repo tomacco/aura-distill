@@ -17,7 +17,7 @@ description: Retrospective memory and context distillation for Antigravity sessi
 
 ### Step 0: Pre-flight Status & Integrity Checks
 
-0. **Mode.** If the user asked to clean up / archive old projects (`gc`), bring back an archived file (`restore <path>`), or move the store to the new layout (`migrate-store`), this is a maintenance run: do the status check below, SKIP Step 1 (no harvest), and give the sub-agent the mode instead of a signal payload. `gc` and `migrate-store` start with `--preview`; run `--apply` only after the user accepted the preview. The mapping is the "Requests in plain language" table in `{DISTILL_DIR}/distill-process.md`.
+0. **Mode.** If the user asked to clean up / archive old projects (`gc`), undo a clean-up (`gc --revert <manifest>`, newest manifest in `data/gc-manifests/` unless named), bring back an archived file (`restore <path>`), or move the store to the new layout (`migrate-store`), this is a maintenance run. ("Turn automatic cleanup on/off" and "pin X" are not: edit `.lifecycle` or X's frontmatter directly in the session, per the process's "Requests in plain language" table.) For a maintenance run: do the status check below, SKIP Step 1 (no harvest), and give the sub-agent the mode instead of a signal payload. `gc` and `migrate-store` start with `--preview`; run `--apply` only after the user accepted the preview. The mapping is the "Requests in plain language" table in `{DISTILL_DIR}/distill-process.md`.
 
 1. **Resolve Knowledge Directory `{DISTILL_DIR}`:**
    - Check in order:

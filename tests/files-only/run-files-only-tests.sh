@@ -456,6 +456,18 @@ out=$(bash "$CHECK" "$tmp/s" 2>&1); rc=$?
 [ $rc -eq 0 ] && ok "an empty installer-shaped store passes" || { bad "empty installer-shaped store fails (rc=$rc)"; echo "$out" | sed 's/^/       /'; }
 rm -rf "$tmp"
 
+echo "== #78 round two: the evidence twin of a file a 1.1 client archived, adopted as legacy =="
+EMBER_TWIN='mkdir -p "$s/evidence/projects"; printf -- "---\nevidence_for: projects/ember.md\n---\n- 2026-05-02 observe: rates import ran twice on the DST weekend\n" > "$s/evidence/projects/ember.md";
+   printf -- "- evidence/projects/ember.md | for projects/ember.md | 1 entries\n" >> "$s/CATALOG.md"'
+expect_pass "twin of an adopted legacy archive is accepted (noted, not an orphan)" "$EMBER_TWIN"
+tmp=$(mktemp -d); cp -r store-after "$tmp/s"; ( s="$tmp/s"; eval "$EMBER_TWIN" )
+out=$(bash "$CHECK" "$tmp/s" 2>&1)
+echo "$out" | grep -Fq "note: evidence twin of an adopted legacy archive: evidence/projects/ember.md" && ok "the adopted twin is reported as a note" || { bad "no note for the adopted twin"; echo "$out" | sed 's/^/       /'; }
+rm -rf "$tmp"
+tamper "twin whose file exists nowhere, not even as an adopted legacy archive" "orphan evidence: evidence/projects/fern.md" \
+  'mkdir -p "$s/evidence/projects"; printf -- "---\nevidence_for: projects/fern.md\n---\n- 2026-05-02 observe: x\n" > "$s/evidence/projects/fern.md";
+   printf -- "- evidence/projects/fern.md | for projects/fern.md | 1 entries\n" >> "$s/CATALOG.md"'
+
 echo
 echo "files-only suite: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ]

@@ -17,6 +17,7 @@ This file is referenced by the Claude and Codex integration blocks. It is intent
 5. **Scoped misses.** `{DISTILL_DIR}/CATALOG.md` is a complete inventory of every knowledge file, including archived and evidence files. It is not loaded at start. Only when the request **refers back to earlier knowledge** (a named project, person or system the user expects you to know; "what did we decide", "last time", "as before") and no SPINE hook matches it, search the catalog for the topic's distinctive words (a text search such as `grep -i`; archived rows keep their original hook).
    - Archived match: read it and say **"found in the archive (archived on DATE, reason R)"**.
    - No match: say **"No SPINE entry or catalog line (rebuilt DATE) names X. It may still sit inside a broader file. This is not proof X was never distilled."** Never turn a miss into "we never distilled X". If you also consulted `local/SPINE.md`, say so.
+   - **No `CATALOG.md` at all:** the store has not been migrated to the 1.2 layout yet. Say so, give the miss wording above without the "(rebuilt DATE)" part, and mention `migrate-store`.
    - The catalog is **stale** when a line points at a missing file, a knowledge file has no line, or the newest `archive/LEDGER.md` event is later than its `rebuilt:` stamp. Say so in the answer when it is.
    A new task that does not appeal to prior knowledge reads no catalog.
 6. **Archives are read-only.** Never edit anything under `archive/` and never bump `recall_count`, `last_validated` or any stamp there. Evidence files (`evidence/<path>`) hold the dated history behind a principle; read one only when the user asks why something is believed or how it evolved.
@@ -24,7 +25,7 @@ This file is referenced by the Claude and Codex integration blocks. It is intent
 
 **When the user EXPLICITLY asks to save/remember something:** Write an INBOX item (see below) — do NOT save to memory/. (Passive signals you merely notice are NOT inbox items — they stay mental notes that raise memory pressure.)
 
-**When the user asks to distill, clean up (archive old projects), restore something archived, or migrate the store:** read `{DISTILL_DIR}/distill-process.md` and run it in an isolated sub-agent when supported; its "Requests in plain language" table maps the request to the right procedure (clean-up and migration always show a preview first).
+**When the user asks to distill, clean up (archive old projects), restore something archived, or migrate the store:** read `{DISTILL_DIR}/distill-process.md` and run it in an isolated sub-agent when supported; its "Requests in plain language" table maps the request to the right procedure (clean-up and migration always show a preview first). Two requests need no sub-agent: "turn automatic cleanup on/off" (write `enabled` or `disabled` to `{DISTILL_DIR}/.lifecycle`, no byte-order mark) and "pin X" (add `lifecycle: pinned` to X's frontmatter and "pinned" to its SPINE hook); do them yourself.
 
 ## Knowledge ownership (critical)
 

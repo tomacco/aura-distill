@@ -1932,7 +1932,7 @@
 <div class="results-section">
     <div class="section-label reveal">Measured</div>
     <h2 class="section-heading reveal">Vanilla Claude vs Distill-informed Claude</h2>
-    <p class="section-desc reveal">Same model. Same prompt. Same session. The only difference: 18 lines of retrieval rules + accumulated knowledge. <a href="https://tomacco.github.io/aura-distill/research/ab-testing.html" style="color:var(--synapse)">A/B methodology &rarr;</a></p>
+    <p class="section-desc reveal">Same model. Same prompt. Same session. The only difference: one short retrieval rules file + accumulated knowledge. <a href="https://tomacco.github.io/aura-distill/research/ab-testing.html" style="color:var(--synapse)">A/B methodology &rarr;</a></p>
 
     <div class="results-grid reveal">
 
@@ -2188,7 +2188,7 @@
         </details>
         <details class="faq-item reveal">
             <summary>Does it eat my context window?</summary>
-            <p>Distillation runs in a <strong>spawned sub-agent</strong>. Your main session stays untouched. Retrieval costs ~18 lines loaded at session start (the rules file) plus whatever tier-2 files are relevant to your current task.</p>
+            <p>Distillation runs in a <strong>spawned sub-agent</strong>. Your main session stays untouched. Retrieval costs one short rules file loaded at session start (about 85 lines) plus whatever tier-2 files are relevant to your current task.</p>
         </details>
         <details class="faq-item reveal">
             <summary>What makes retrieval "by relevance" work?</summary>

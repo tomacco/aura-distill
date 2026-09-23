@@ -8,6 +8,9 @@
 #   A. migrate-store --preview, then --apply (lifecycle enabled) on a copy of
 #      tests/files-only/store-before; the shipped checker must then pass against both the
 #      agent's own backup and the pristine fixture.
+#   C. (runs first, on the pristine pre-1.2 copy) the "migrate first" refusal: with the
+#      lifecycle enabled, `gc --apply` and a legacy `restore` must change nothing and point to
+#      migrate-store; asserted by a tree hash, since this is a prompt rule the checker cannot see.
 #   B. five retrieval questions, each in a new session, against the migrated store:
 #      a read_with companion, a protected rule, an archived recall, a scoped miss and a
 #      pinned project. Each answer is graded by required phrases; the store must be
@@ -26,6 +29,7 @@
 #   SURFACE=codex: retrieval sessions get the Codex managed block as appended system prompt
 #   REUSE=<work dir of an earlier run>: skip part A and ask the questions against a copy of
 #           that run's migrated store
+#   ONLY=C runs part C alone (cheap)
 #   KEEP=1 (default) keeps the temp dir, which is always printed; STEP_TIMEOUT=1500 seconds per session
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -122,6 +126,24 @@ bad() { FAIL=$((FAIL+1)); echo "  FAIL $1"; }
 ISOLATION="This is an isolated test on a synthetic store. The knowledge directory is $STORE (it stands for {DISTILL_DIR}). Do not read or write anything outside $T. There is no user to ask: where the instructions say to ask or confirm, treat the request in this prompt as the answer."
 
 if [ -z "${REUSE:-}" ]; then
+echo "== C. a pre-1.2 store refuses gc and restore until migrated (model: $MODEL) =="
+c_before=$(tree_hash)
+run_agent guard-gc "You are the aura-distill distillation sub-agent. $ISOLATION
+The user reviewed a clean-up preview and accepted it.
+## Mode
+gc --apply
+## Your process
+Read $STORE/distill-process.md and follow it for this Mode. Return the report."
+run_agent guard-restore "You are the aura-distill distillation sub-agent. $ISOLATION
+The user asked: \"bring back the old warehouse notes\".
+## Mode
+restore archive/old-warehouse-notes.md
+## Your process
+Read $STORE/distill-process.md and follow it for this Mode. Return the report."
+[ "$c_before" = "$(tree_hash)" ] && ok "gc --apply and restore left the pre-1.2 store byte-identical" || bad "a maintenance mode changed the pre-1.2 store"
+[ ! -f "$STORE/CATALOG.md" ] && ok "no catalog was written" || bad "a catalog was written on a pre-1.2 store"
+for n in guard-gc guard-restore; do final "$n" | tr '\n' ' ' | grep -qi 'migrate-store' && ok "$n points to migrate-store" || bad "$n does not point to migrate-store"; done
+if [ "${ONLY:-}" = C ]; then echo; echo "fresh-agent validation ($MODEL, part C): $PASS passed, $FAIL failed"; echo "transcripts: $LOGS"; [ $FAIL -eq 0 ]; exit; fi
 echo "== A. migrate-store (model: $MODEL) =="
 run_agent migrate-preview "You are the aura-distill distillation sub-agent. $ISOLATION
 ## Mode

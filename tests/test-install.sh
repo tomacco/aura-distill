@@ -111,6 +111,12 @@ lc_install bash "$INSTALLER";                      test "$(cat "$AURA/.lifecycle
 lc_install bash "$INSTALLER" --no-lifecycle;       test "$(cat "$AURA/.lifecycle")" = disabled
 lc_install env DISTILL_LIFECYCLE=on bash "$INSTALLER"; test "$(cat "$AURA/.lifecycle")" = enabled
 lc_install bash "$INSTALLER" --remove-lifecycle;   test ! -e "$AURA/.lifecycle"
+# a .lifecycle written by Windows PowerShell 5.1 may start with a UTF-8 BOM; it still reads as enabled
+printf '\357\273\277enabled' > "$AURA/.lifecycle"
+env -u AURA_DISTILL_HOME -u CODEX_HOME -u DISTILL_LIFECYCLE -u DISTILL_CHANNEL -u AURA_DISTILL_RAW_ROOT -u AURA_DISTILL_CHANNEL_MANIFEST HOME="$TEST_HOME" \
+  AURA_DISTILL_REPO="$REPO_ROOT" DISTILL_TOKEN_SAVER=off bash "$INSTALLER" </dev/null > "$TEST_HOME/lc.out" 2>&1
+grep -q 'enabled — kept' "$TEST_HOME/lc.out"
+rm -f "$AURA/.lifecycle"
 # This home was seeded from a legacy (pre-1.2) store: its copied SPINE is preserved and no
 # catalog is added, so it stays a store for migrate-store, and the helper reports it cleanly
 test ! -e "$AURA/CATALOG.md"

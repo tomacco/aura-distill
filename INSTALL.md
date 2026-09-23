@@ -270,6 +270,8 @@ Created by `/distill` as the store grows: `CATALOG.md` (complete inventory), `ev
 
 With it off, `/distill` reports stale projects and asks nothing; `/distill gc` always shows a preview first.
 
+**A store from before 1.2 must be migrated first** (next section). Until it is, `/distill` ignores the lifecycle setting and refuses `gc` and `restore`, because they would change the store without the migration's backup. New installs are already in the 1.2 layout.
+
 ## Upgrading a store from before 1.2
 
 A new install starts in the files-only layout (the installer creates `CATALOG.md` with the SPINE); nothing to do there. A store that existed before 1.2 keeps its files untouched by the installer. Run `/distill migrate-store` (or ask "move my store to the new layout"). It writes a plan and changes nothing; `/distill migrate-store --apply` then backs up the whole knowledge tree to `data/migration/<time>/backup/`, applies the plan and runs the self-check. If it is interrupted, `/distill` refuses to encode until you finish or revert it.

@@ -83,7 +83,7 @@ Distill operates in its OWN directory: `{DISTILL_DIR}/`. It NEVER writes to user
 ├── local/                     ← machine-local overlay (never synced, never cataloged)
 ├── inbox/                     ← queued explicit saves
 ├── data/                      ← local diagnostics, lifecycle manifests, migration backups
-└── bin/                       ← optional helper scripts (never required)
+└── bin/                       ← optional helper scripts (never required; local, never synced)
 ```
 
 The files-only layout (evidence twins, ledger, catalog, budgets, contained paths) is specified in "Files-only layout: formats and rules" at the end of this file. It applies to every step.
@@ -731,9 +731,10 @@ Don't auto-remove. Ask first. Behavior might be contextual.
 
 ### Staleness review and lifecycle (D7)
 
-Read `{DISTILL_DIR}/.lifecycle` (absent means `disabled`).
+Read `{DISTILL_DIR}/.lifecycle`, ignoring a leading UTF-8 byte-order mark and surrounding whitespace (a file written by Windows PowerShell 5.1 may carry one). Absent, or any content other than `enabled`, means `disabled`.
 
-- **`enabled`**: run gc Apply ("Maintenance sub-procedures: gc") on the eligible `projects/` files, without per-item questions: ledger line first, byte-identical move, SPINE entry removed, catalog rebuilt. Report every move (with its `[DIRECTIVE…]` marker count), every blocked, exempt and ineligible file, and each prose referrer. Files in `craft/ ops/ profile/ feedback/` past their threshold keep the ask-first behaviour: "Is [file] still relevant?" If yes, bump `last_updated`; if no, archive it the same way (ledger, move).
+- **A store that predates 1.2 and is not yet migrated** (Step 0, "Which layout is this store in?"): whatever `.lifecycle` says, move nothing and write no catalog. Report the files past their threshold as debt and say that automatic clean-up starts once the store is migrated with `migrate-store`.
+- **`enabled`** (files-only store): run gc Apply ("Maintenance sub-procedures: gc") on the eligible `projects/` files, without per-item questions: ledger line first, byte-identical move, SPINE entry removed, catalog rebuilt. Report every move (with its `[DIRECTIVE…]` marker count), every blocked, exempt and ineligible file, and each prose referrer. Files in `craft/ ops/ profile/ feedback/` past their threshold keep the ask-first behaviour: "Is [file] still relevant?" If yes, bump `last_updated`; if no, archive it the same way (ledger, move).
 - **`disabled`**: ask nothing. Report the files past their threshold as debt and mention that the user can say "clean up old projects" (a gc preview) or enable the policy.
 
 A pinned file (`lifecycle: pinned`) and any file carrying `[NON-NEGOTIABLE…]` are never archived automatically. Age alone never means a project ended; the move only says "not validated within its threshold, kept whole in cold storage, findable through the catalog".
@@ -881,7 +882,7 @@ evidence_for: craft/testing.md
 - 2026-08-10 correct: relayed root-cause was wrong; observation right, diagnosis reproduced
 ```
 
-- `evidence_for:` equals the twin's own path minus `evidence/`. It does not change when the principle file is archived.
+- `evidence_for:` equals the twin's own path minus `evidence/`. It does not change when the principle file is archived, nor when a 1.1 client archived that file without a ledger line and `migrate-store` adopted it to `archive/legacy/archive/<path>`: the twin then stays where it is and belongs to the adopted legacy file (the Self-check notes it, and a legacy restore re-attaches it).
 - **Evidence is dated observation lines only**: a `- ` line starting with a date (confirmations, corrections, observations, session pointers, superseded findings recorded as dated observations).
 - **Never moved to evidence:** any line or block carrying a protected marker (`[NON-NEGOTIABLE…]`, `[DIRECTIVE…]`, dated forms included; pattern `\[(NON-NEGOTIABLE|DIRECTIVE)[^]]*\]`) or a Step 1d retrieval marker (`[UPDATED…]`, `[DEPRECATED…]`, `[CORRECTED…]`, `[IMPORTANT…]`, `[CONTEXT…]`, `[PROVISIONAL…]`). A marked bullet travels with its indented continuation lines (`confidence:`, `origin:`, `Why:`). A heading that carries a marker (`## [DIRECTIVE 2026-08-02] Title`, `## [DEPRECATED] …`) starts a section that runs to the next heading of equal or higher level and stays whole. These lines steer retrieval, and retrieval does not read evidence.
 - The principle keeps its `confidence:` line with counts, its `last_validated:` date and one citation line: `Evidence: <first date> to <last date> in \`evidence/<tier>/<name>.md\` (<N> entries).`
@@ -904,7 +905,7 @@ Archiving `projects/atlas.md` is `mv projects/atlas.md archive/projects/atlas.md
 - Only these event words exist. A line with any other event, or without a leading date, is an error to report loudly, never to skip.
 - `to:` is exactly `archive/` + `from:` for `archive`, and the reverse for `restore`.
 - Fields are separated by ` | ` and parsed from the left; each key appears once; `spine-entry:` is last. A literal `|` inside free text (the SPINE line, `reason:`) is written `\|` and read back as `|`.
-- `sha256:` is over the raw bytes. `sha256-norm:` is the checksum with the frontmatter `recall_count:` line removed: 1.1 clients bump that field on every archive read, so a mismatch confined to it is **drift**, reported and tolerated, not modification. Compute both with `bash {DISTILL_DIR}/bin/distill-check-store.sh --hashes <file>` when the helper is available (see Self-check), otherwise `sha256sum <file>` or `shasum -a 256 <file>` (PowerShell `Get-FileHash -Algorithm SHA256`) for the raw value and the same command over `awk 'NR==1 && /^---\r?$/ {fm=1; print; next} fm && /^---\r?$/ {fm=0; print; next} fm && /^recall_count:/ {next} {print}' <file>` for the normalised one.
+- `sha256:` is over the raw bytes. `sha256-norm:` is the checksum with the frontmatter `recall_count:` line removed: 1.1 clients bump that field on every archive read, so a mismatch confined to it is **drift**, reported and tolerated, not modification. Compute both with `bash "{DISTILL_DIR}/bin/distill-check-store.sh" --hashes "<file>"` when the helper is available (see Self-check), otherwise `sha256sum <file>` or `shasum -a 256 <file>` (PowerShell `Get-FileHash -Algorithm SHA256`) for the raw value and the same command over `awk 'NR==1 && /^---\r?$/ {fm=1; print; next} fm && /^---\r?$/ {fm=0; print; next} fm && /^recall_count:/ {next} {print}' <file>` for the normalised one.
 - **No collision.** A path never exists both as `X` and `archive/X`. A project that comes back is restored, never re-created: refuse to write `X` while `archive/X` exists and report it.
 - **Legacy archives** are structural: a file directly under `archive/` or anywhere under `archive/legacy/` is legacy (written by the pre-1.2 rewrite-style compaction; no ledger line, never identity-checked against a source). A file under `archive/<tier>/` with no ledger `archive` event is **pending adoption**, not corruption: `migrate-store` moves it byte-identically to `archive/legacy/` + **its current store-relative path, leading `archive/` included**: `archive/projects/x.md` → `archive/legacy/archive/projects/x.md` (never `archive/legacy/projects/x.md`, and never a path taken from its `archived_from:` frontmatter). The same applies to any file inside an `archive/` folder nested in a tier directory (`craft/archive/y.md` → `archive/legacy/craft/archive/y.md`). Legacy files are never deleted.
 
@@ -929,15 +930,16 @@ Archiving `projects/atlas.md` is `mv projects/atlas.md archive/projects/atlas.md
 - evidence/craft/testing.md | for craft/testing.md | <number of "- " lines> entries
 ```
 
-Every field is derived: `validated` is the newest of every `last_validated:` / `last_updated:` date in the file (omitted for an undated file); `pinned` iff frontmatter `lifecycle: pinned`; `oversize: <reason>` iff declared; archived rows from the ledger's last event per path; free text escapes `|` as `\|`; rows sorted by path. With the helper, `bash {DISTILL_DIR}/bin/distill-check-store.sh --print-catalog {DISTILL_DIR} > {DISTILL_DIR}/CATALOG.md.tmp && mv {DISTILL_DIR}/CATALOG.md.tmp {DISTILL_DIR}/CATALOG.md` produces exactly this. `local/` is never cataloged.
+Every field is derived: `validated` is the newest of every `last_validated:` / `last_updated:` date in the file (omitted for an undated file); `pinned` iff frontmatter `lifecycle: pinned`; `oversize: <reason>` iff declared; archived rows from the ledger's last event per path; free text escapes `|` as `\|`; rows sorted by path. With the helper, `bash "{DISTILL_DIR}/bin/distill-check-store.sh" --print-catalog "{DISTILL_DIR}" > "{DISTILL_DIR}/CATALOG.md.tmp" && mv "{DISTILL_DIR}/CATALOG.md.tmp" "{DISTILL_DIR}/CATALOG.md"` produces exactly this. `local/` is never cataloged.
 
 The catalog is **stale** when a line points at a missing file, a file has no line, or the newest ledger event is later than its `rebuilt:` stamp (full timestamps compared when both carry one; a date-only side compares dates and cannot see a same-day move). Retrieval uses the catalog only on a miss (`distill-monitor.md`, "Retrieval protocol").
 
 ### read_with (D6), local overlay, lifecycle knob
 
 - A tier file may declare `read_with: [ops/deploy.md, craft/testing.md]` (inline list only) for files that must be read together with it. Readers take one extra batch, depth one. A synced file never lists a `local/` path.
+- **Sync classes (D9).** Shared across machines: `SPINE.md`, `CATALOG.md`, the tier directories, `evidence/`, `archive/` (byte-exact) and `inbox/`. Local, never synced: `local/`, `bin/`, `data/` and the dotfiles (`.lifecycle`, `.status`, …). `bin/` holds scripts the distiller executes; only ever run a helper the installer placed on this machine, never one that arrived with synced knowledge.
 - `local/` is a machine-local overlay with its own `local/SPINE.md`: never synced, never cataloged, never touched by gc or migration. **The local SPINE points only inside `local/`** (`- [VPN](local/ops/vpn.md) — …`), and `local/` is reachable only from it: a synced file never points, `read_with`s or refers into `local/`.
-- `{DISTILL_DIR}/.lifecycle` holds `enabled` or `disabled` (absent = disabled). It is local, like `.token-saver`, and set by the installer (`--lifecycle`, `--no-lifecycle`) or by the user asking.
+- `{DISTILL_DIR}/.lifecycle` holds `enabled` or `disabled` (absent = disabled; ignore a leading byte-order mark and whitespace when reading, write it without one). It is local, like `.token-saver`, and set by the installer (`--lifecycle`, `--no-lifecycle`) or by the user asking.
 
 ### Contained paths (D10), checked before any read or move
 
@@ -960,8 +962,8 @@ Catalog rows, ledger lines, archived bodies, evidence lines, plan files and inbo
 
 The invariants are the ones in the design's section 5 (C1 SPINE budgets and the catalog line; C2 pointers, catalog equals tree, evidence_for, collisions, ledger syntax, order and agreement, catalog staleness, path containment, no symlinks, no legacy archive inside a tier directory; C3 tier-file budgets, `read_with`, `split_from`; C4 with a before-copy: line conservation, protected and marker lines, archive and legacy identity, pins, SPINE hooks). One implementation of them ships as an **optional helper**:
 
-1. **With bash and the helper.** If `bash` is available and `sed -n 2p {DISTILL_DIR}/bin/distill-check-store.sh` prints exactly `# aura-distill-check-store invariants v1`, run
-   `bash {DISTILL_DIR}/bin/distill-check-store.sh {DISTILL_DIR}` (add `--before <backup-dir>` in `migrate-store`). Exit 0 means every group passed. Put every `FAIL` reason and every `note:` line in the report. The helper only reads.
+1. **With bash and the helper.** If `bash` is available and `sed -n 2p "{DISTILL_DIR}/bin/distill-check-store.sh"` prints exactly `# aura-distill-check-store invariants v1`, run
+   `bash "{DISTILL_DIR}/bin/distill-check-store.sh" "{DISTILL_DIR}"` (add `--before <backup-dir>` in `migrate-store`). Exit 0 means every group passed. Put every `FAIL` reason and every `note:` line in the report. The helper only reads.
 2. **Without it** (no bash, e.g. PowerShell-only Windows; or an install that `/distill` updated before the helper shipped, which re-running the installer fixes): check the same invariants yourself and say in the report that the check was agent-executed:
    - SPINE: lines ≤ 80, bytes ≤ 16,000, each entry (with continuation lines) ≤ 400 bytes; one `- [Catalog](CATALOG.md)` entry line.
    - Every SPINE pointer exists; every tier file (excluding `<tier>/**/archive/**`) has a pointer on a `- [` line.
@@ -980,16 +982,21 @@ The checks are deterministic; your execution of them is best effort. Nothing enf
 
 These run only when the dispatcher passes a **Mode** (or the user asked in plain language, below). They skip Steps 1 to 3 (no signal harvest), use the same `.status` lock, refresh it with `running <UTC>` after every file they write or move, rebuild the catalog, run the Self-check and end with a report. **Maintenance reads bump nothing**: reading files to plan or verify never changes `last_validated`, `last_updated` or any other stamp.
 
+**Two refusals come first, for every mode except `migrate-store`:**
+- **A store that predates 1.2 and is not yet migrated** (no `CATALOG.md`, and at least one file under a tier directory or `archive/`; Step 0 "Which layout is this store in?"): `gc` (any flag), `restore` and legacy restore change nothing. Say: "This store predates the 1.2 layout. Run `migrate-store` first (it previews, backs up the whole store and checks the result); clean-up and restore work after that." Writing a catalog or moving files here would switch the store to in-place budget enforcement without that backup.
+- **An interrupted migration** (`data/migration/*/PENDING` exists): `gc` and `restore` change nothing; only `migrate-store --finish` or `--revert` run.
+
 ### Requests in plain language
 
-Codex and Antigravity have no slash command; Claude users may also just ask. Map the request, then run the mode:
+Codex and Antigravity have no slash command; Claude users may also just ask. Map the request, then run the mode (two rows are small edits the session makes itself, with no Mode and no sub-agent):
 
 | The user says | Mode | Rule |
 |---|---|---|
 | "distill", "save what we learned" | ordinary distillation | Steps 0 to 5 |
 | "clean up", "archive old projects", "the index is too big" | `gc --preview` | Show the plan. Run `gc --apply` only after the user accepts that plan in the conversation |
-| "turn automatic cleanup on / off" | write `enabled` / `disabled` to `{DISTILL_DIR}/.lifecycle` | Local to this machine. When enabled, Step 5 applies gc without per-item questions |
-| "pin X", "never archive X" | add `lifecycle: pinned` to X's frontmatter and the word "pinned" to its SPINE hook | |
+| "undo the clean-up", "put back what gc archived" | `gc --revert <manifest>` | The newest manifest in `data/gc-manifests/` unless the user names one. Show the moves it will reverse; run after the user accepts |
+| "turn automatic cleanup on / off" | **no Mode: the session does it** | Write exactly `enabled` or `disabled` (no byte-order mark) to `{DISTILL_DIR}/.lifecycle` in the current session. Local to this machine. When enabled, Step 5 applies gc without per-item questions, on a migrated store only |
+| "pin X", "never archive X" | **no Mode: the session does it** | Add `lifecycle: pinned` to X's frontmatter and the word "pinned" to its SPINE hook, in the current session. A small edit to one file and one line, safe on any store |
 | "bring back X", "restore X", "we are working on X again" | `restore <path>` | X found through the catalog's archived rows |
 | "restore X" where X exists only as a **legacy** archive (`archive/legacy/…` or flat `archive/…`) | legacy restore (below) | A copy, never a move: the legacy file stays |
 | "move my store to the new layout", "upgrade the store layout", "migrate-store" | `migrate-store --preview` | Show the plan. `--apply` only after the user accepts it |
@@ -1014,21 +1021,22 @@ Codex and Antigravity have no slash command; Claude users may also just ask. Map
 1. Refuse while `data/migration/*/PENDING` exists. If `data/gc-manifests/` holds an unfinished manifest, recover it first (below) or stop.
 2. Write the manifest `data/gc-manifests/<UTC-compact>.json` before the first move: `{"ts":…,"moves":[{"from":"projects/x.md","to":"archive/projects/x.md","sha256":…,"sha256_norm":…,"spine_entry":…,"done":false}]}`.
 3. For each move, in order: check D10 and that `archive/X` does not exist; append the ledger `archive` line (full removed SPINE line as `spine-entry:`; for a merged multi-pointer line, the derived single-pointer entry `- [Title](X) — <the shared hook>`); `mkdir -p archive/<tier>` and `mv X archive/X`; verify `archive/X` has the recorded sha256; remove the SPINE line, or only this file's `+ [Title](X)` pointer when the line has other targets; set `"done": true`; refresh `.status`.
-4. Rebuild the catalog, run the Self-check, report every move (with `[DIRECTIVE…]` counts), blocked and exempt files, and the debt before and after.
+4. Rebuild the catalog (gc only ever runs on a files-only store: see the refusals above), run the Self-check, report every move (with `[DIRECTIVE…]` counts), blocked and exempt files, and the debt before and after.
 
-**Recovering an unfinished manifest:** for each move not marked done, recompute the source's sha256. Complete only exact matches (append the ledger line if the last event for X is not already this `archive`, then move). If the source is gone and `archive/X` has the recorded checksum, mark it done. If the ledger says archived but neither file matches, append a `move never completed` line. **Any other mismatch** (for example a stub an older client re-created at the source path) **stops the run**: report it and change nothing more. `gc --revert <manifest>` reverses the done moves with one `restore` line each (`reason: revert <manifest>`), restores the SPINE entries from the ledger, then rebuilds the catalog.
+**Recovering an unfinished manifest:** for each move not marked done, recompute the source's sha256. Complete only exact matches (append the ledger line if the last event for X is not already this `archive`, then move). If the source is gone and `archive/X` has the recorded checksum, mark it done. If the ledger says archived but neither file matches, append a `move never completed` line. **Any other mismatch** (for example a stub an older client re-created at the source path) **stops the run**: report it and change nothing more. `gc --revert <manifest>` (after the same refusals) reverses the done moves with one `restore` line each (`reason: revert <manifest>`), restores the SPINE entries from the ledger (within D1, as in restore step 5), then rebuilds the catalog.
 
 ### restore <path> (D3, D7)
 
+0. Apply the two refusals above: a pre-1.2 store not yet migrated, or a `PENDING` migration, means nothing moves.
 1. Accept `X` or `archive/X`; check D10. If `X` resolves only to a legacy file, do the legacy restore instead.
 2. Refuse if `X` already exists (collision); report it.
 3. The last ledger event for X must be `archive`. Compute the file's checksums: raw equal to the ledger `sha256:` → event `restore`; raw differs but `sha256-norm:` matches → event `restore`, and remove the `recall_count:` frontmatter line after the move (drift from a 1.1 client, reported); anything else → event `restore (modified)` with the observed checksum, restore anyway and report the difference.
 4. Append the ledger line, then `mv archive/X X` (a split family: every member, one ledger line each).
 5. Re-add the saved `spine-entry` (unescape `\|`): if the merged line it came from still exists, add the pointer back to it; otherwise add the entry. **Subject to D1**: if the saved entry is over 400 bytes, write a fresh short entry and append the entire saved hook to X under `## Index detail (moved from SPINE <date>)`. A restore never finishes with the SPINE over budget.
 6. Set X's frontmatter `last_updated:` to today: the user's request is an activity observation, and without it the next gc would archive the file again.
-7. Rebuild the catalog, run the Self-check, report.
+7. Rebuild the catalog (the store is files-only: see step 0), run the Self-check, report.
 
-**Legacy restore.** Legacy files have no ledger line and may have been rewritten by the old compaction. Copy (never move) the content into a new active file at the frontmatter's `archived_from:` path (or a path the user names; D10; refuse on a collision with an active or archived file). In the new file drop `archived_on`, `reason` and `recall_count`, add `restored_from: <legacy path>` and `last_updated: <today>`. Add a SPINE entry within D1, rebuild the catalog, run the Self-check. The legacy file stays byte-identical where it was: Tier 3 is never deleted, and the checker fails a store whose legacy file disappeared.
+**Legacy restore** (same refusals as step 0). Legacy files have no ledger line and may have been rewritten by the old compaction. Copy (never move) the content into a new active file at the frontmatter's `archived_from:` path (or a path the user names; D10; refuse on a collision with an active or archived file). In the new file drop `archived_on`, `reason` and `recall_count`, add `restored_from: <legacy path>` and `last_updated: <today>`. Add a SPINE entry within D1, rebuild the catalog, run the Self-check. The legacy file stays byte-identical where it was: Tier 3 is never deleted, and the checker fails a store whose legacy file disappeared.
 
 ### migrate-store (the one-time move to this layout)
 

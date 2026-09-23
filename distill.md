@@ -10,9 +10,11 @@
 
 | Argument | What runs |
 |---|---|
-| `gc [--preview\|--apply]` | Lifecycle clean-up of stale `projects/` files. Preview is the default; run `--apply` only after the user accepted the preview in this conversation |
+| `gc [--preview\|--apply\|--revert <manifest>]` | Lifecycle clean-up of stale `projects/` files. Preview is the default; run `--apply` only after the user accepted the preview in this conversation. `--revert` undoes one clean-up ("undo the clean-up"): newest manifest unless the user names one |
 | `restore <path>` | Move an archived file back (or copy a legacy archive back) |
 | `migrate-store [--preview\|--apply\|--finish\|--revert]` | One-time move of the store to the files-only layout. Preview is the default; `--apply` only after the user accepted the preview |
+
+Two plain-language requests are **not** modes: "turn automatic cleanup on/off" and "pin X" are small edits you make yourself in this session (write `enabled`/`disabled` to `{DISTILL_DIR}/.lifecycle` without a byte-order mark; add `lifecycle: pinned` to X's frontmatter and "pinned" to its SPINE hook). No sub-agent.
 
 With a Mode: run the Status check below, **skip Step 1** (no harvest, no beacon), spawn the sub-agent in Step 2 with `## Mode` set to the argument instead of a harvest, relay its report, and skip the ledgers in Step 3 (a maintenance run distilled no conversation). Plain-language requests map to the same modes (the table in `{DISTILL_DIR}/distill-process.md`, "Requests in plain language").
 

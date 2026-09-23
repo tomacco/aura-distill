@@ -160,7 +160,7 @@ The last line naming a path is its state; lines are appended in date order. A re
 
 Alongside the tiers, other directories exist: `evidence/` (twins, above), `inbox/` (a pre-tier queue — items explicitly saved mid-session, consumed into the pipeline by the next distillation), `local/` (a machine-local overlay with its own `local/SPINE.md`, never synced, never cataloged) and `data/` (local diagnostics, lifecycle manifests and migration backups — never part of the synced knowledge set).
 
-**Sync classification.** Shared: the tier directories, `evidence/`, `archive/` including the ledger (byte-exact: no line-ending normalisation, or every checksum breaks), `CATALOG.md` (rebuilt on conflict). Local: `local/`, `.lifecycle`, `data/`.
+**Sync classification.** Shared: the tier directories, `evidence/`, `archive/` including the ledger (byte-exact: no line-ending normalisation, or every checksum breaks), `CATALOG.md` (rebuilt on conflict). Local, never synced: `local/`, `.lifecycle`, `data/`, and `bin/` (installed scripts the distiller executes; a synced copy must never be run).
 
 ---
 

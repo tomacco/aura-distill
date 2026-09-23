@@ -27,7 +27,7 @@
 # C1 SPINE budgets (an entry = its "- [" line plus any wrapped continuation lines); a
 #    catalog entry line
 # C2 pointers; catalog equals tree (presence, validated date, pinned, evidence counts,
-#    archived rows' from/hook); evidence_for; collisions; ledger syntax (known event words
+#    archived rows' from/hook); evidence_for (an active, archived or adopted-legacy file); collisions; ledger syntax (known event words
 #    only, events appended in non-decreasing date order), last-event agreement + sha256;
 #    catalog staleness (full timestamps when both sides carry them); path containment
 #    (D10) of SPINE, catalog and ledger paths; local/SPINE.md points only inside local/;
@@ -258,7 +258,12 @@ if [ ! -f "$CAT" ]; then fail "CATALOG.md missing"; else
     target=$(fm_value "$STORE/$e" evidence_for)
     if [ -z "$target" ]; then fail "$e has no evidence_for"
     elif [ "$target" != "${e#evidence/}" ]; then fail "evidence_for disagrees with the twin's path: $e says $target"
-    elif [ ! -f "$STORE/$target" ] && [ ! -f "$STORE/archive/$target" ]; then fail "orphan evidence: $e (evidence_for $target is neither active nor archived)"; fi
+    elif [ ! -f "$STORE/$target" ] && [ ! -f "$STORE/archive/$target" ]; then
+      # a 1.1 client archived the file without a ledger line and migrate-store adopted it (D3):
+      # the twin belongs to the adopted legacy file
+      if [ -f "$STORE/archive/legacy/archive/$target" ]; then note "evidence twin of an adopted legacy archive: $e (archive/legacy/archive/$target)"
+      else fail "orphan evidence: $e (evidence_for $target is neither active nor archived)"; fi
+    fi
   done < <(evidence_files "$STORE")
   # archived rows: from + hook, hook equals the ledger's spine-entry hook, sha256 from the last archive event
   while IFS= read -r a; do

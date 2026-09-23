@@ -445,13 +445,13 @@ Write-Section 'Lifecycle'
 $LcMarker = Join-Path $DistillDir '.lifecycle'
 $Lifecycle = if ($env:DISTILL_LIFECYCLE) { $env:DISTILL_LIFECYCLE.ToLower() } else { 'auto' }
 if ($Lifecycle -eq 'on') {
-    Set-Content -Path $LcMarker -Value 'enabled' -Encoding utf8 -NoNewline
+    [System.IO.File]::WriteAllText($LcMarker, 'enabled', (New-Object System.Text.UTF8Encoding($false)))
     Write-Done 'Lifecycle enabled'
     Write-Info 'Each distillation moves projects/ files not validated within their staleness threshold'
     Write-Info '(default 90 days) to archive/, byte-identical and logged in archive/LEDGER.md, without asking.'
     Write-Info 'Pinned files (lifecycle: pinned) and files with [NON-NEGOTIABLE] rules never move. Undo: ask to restore the file.'
 } elseif ($Lifecycle -eq 'off') {
-    Set-Content -Path $LcMarker -Value 'disabled' -Encoding utf8 -NoNewline
+    [System.IO.File]::WriteAllText($LcMarker, 'disabled', (New-Object System.Text.UTF8Encoding($false)))
     Write-Skip "Lifecycle ${DIM}(off -- stale projects are reported, nothing is asked; enable: `$env:DISTILL_LIFECYCLE='on'; re-run)${RESET}"
 } elseif ($Lifecycle -eq 'remove') {
     Remove-Item $LcMarker -Force -ErrorAction SilentlyContinue

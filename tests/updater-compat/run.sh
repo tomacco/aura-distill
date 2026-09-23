@@ -915,9 +915,25 @@ check "no listed dispatcher here: the default profile's is updated ('$(first_lin
   bash -c "grep -q '^UPDATED 1.2.36 1.2.37 stable' '$k/update.out' && grep -q PATCH-K '$k/.claude/commands/distill.md' && grep -q '^NOTICE: .*default profile' '$k/update.out'"
 rm "$k/.claude/commands/distill.md"
 printf '1.2.38\n' > "$M/VERSION"
+run_update "$k" check
+check "check reports the same BLOCKED that apply would ('$(first_line "$k")'), never AVAILABLE" \
+  bash -c "grep -q '^BLOCKED stable no /distill command' '$k/update.out'"
 run_update "$k" auto
 check "no dispatcher at all on this machine: '$(first_line "$k")', .version not bumped, nothing created" \
   bash -c "grep -q '^BLOCKED stable no /distill command' '$k/update.out' && [ \"\$(cat '$ks/.version')\" = 1.2.37 ] && [ ! -e '$k/.claude/commands/distill.md' ]"
+# Two stores on one machine: the default profile uses store A, a work profile store B.
+# With B's dispatcher removed, B's updater must not adopt A's default dispatcher.
+t2=$(mktemp -d "$WORK/clients/twostores.XXXXXX")
+install_client "$t2"
+mkdir -p "$t2/.claude-work"
+env -u AURA_DISTILL_HOME -u CODEX_HOME -u DISTILL_CHANNEL -u AURA_DISTILL_REPO HOME="$t2" AURA_DISTILL_HOME="$t2/storeB" CODEX_HOME="$t2/.codex" \
+  AURA_DISTILL_RAW_ROOT="$RAW" bash "$REPO_ROOT/install.sh" --profile work </dev/null >/dev/null 2>&1
+rm "$t2/.claude-work/commands/distill.md"
+before_a=$(cat "$t2/.claude/commands/distill.md" "$t2/.claude/rules/distill.md" | cksum)
+printf '1.2.39\n' > "$M/VERSION"
+env -u AURA_DISTILL_HOME HOME="$t2" AURA_DISTILL_RAW_ROOT="$RAW" bash "$t2/storeB/bin/distill-update.sh" apply > "$t2/b.out" 2>&1 || true
+check "two stores: B's updater with B's dispatcher removed reports '$(head -1 "$t2/b.out")' and leaves A's dispatcher and rules untouched" \
+  bash -c "grep -q '^BLOCKED stable no /distill command' '$t2/b.out' && [ \"\$(cat '$t2/.claude/commands/distill.md' '$t2/.claude/rules/distill.md' | cksum)\" = '$before_a' ] && grep -qF '$t2/.aura-distill/' '$t2/.claude/commands/distill.md'"
 k2=$(mktemp -d "$WORK/clients/k2.XXXXXX"); mkdir -p "$k2/store/bin"; cp "$REPO_ROOT/bin/distill-update.sh" "$k2/store/bin/"
 printf '1.2.0\n' > "$k2/store/.version"
 env -u AURA_DISTILL_HOME HOME="$k2/home" AURA_DISTILL_RAW_ROOT="$RAW" bash "$k2/store/bin/distill-update.sh" apply > "$k2/out" 2>&1 || true

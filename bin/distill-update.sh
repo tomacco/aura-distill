@@ -4,7 +4,8 @@
 # The only code that replaces installed aura-distill files after installation.
 # The /distill dispatcher runs it instead of composing its own download commands.
 # It never executes anything it downloads, never installs a different major
-# version, and never touches knowledge files (SPINE, tiers, preferences, inbox).
+# version, and never touches knowledge files (SPINE, tiers, preferences, inbox). The
+# Always-On preferences inside rules/distill.md are preserved by the merge below.
 #
 # Usage: distill-update.sh auto | check | apply
 #   auto   apply when the Auto-update preference is on, otherwise behave like check
@@ -95,7 +96,17 @@ while IFS= read -r line || [ -n "$line" ]; do
   [ "$dup" = 1 ] || CMD_FILES+=("$line")
 done < <(cat "$STORE/.command-path" 2>/dev/null || true)
 DEFAULT_NOTICE=""
-if [ "${#CMD_FILES[@]}" = 0 ] && [ -f "$HOME/.claude/commands/distill.md" ]; then
+# The default dispatcher is adopted only if it belongs to THIS store: it names the
+# store path (as install.sh writes it, or with backslashes as install.ps1 does), or
+# still holds the unresolved placeholder (an older updater copied it raw). A default
+# profile installed for another store is never written to.
+STORE_BS=$(printf '%s' "$STORE" | tr '/' '\\')
+default_is_ours() {
+  grep -qF "$STORE/" "$1" 2>/dev/null || grep -qF "$STORE_BS\\" "$1" 2>/dev/null \
+    || grep -qF "$STORE_BS/" "$1" 2>/dev/null || grep -qF "$PLACEHOLDER" "$1" 2>/dev/null
+}
+if [ "${#CMD_FILES[@]}" = 0 ] && [ -f "$HOME/.claude/commands/distill.md" ] \
+   && default_is_ours "$HOME/.claude/commands/distill.md"; then
   CMD_FILES=("$(canon "$HOME/.claude/commands/distill.md")")
   [ "$LISTED" = 0 ] || DEFAULT_NOTICE="NOTICE: aura-distill: none of the /distill commands recorded in $STORE/.command-path exists on this machine; the default profile's (${CMD_FILES[0]}) was used. Re-run the installer to record this machine's profiles."
 fi
@@ -212,6 +223,11 @@ for t in ${CMD_FILES[@]+"${CMD_FILES[@]}"} "$STORE/distill-process.md" "$STORE/d
 done
 if [ "$TARGET" = "$INSTALLED" ]; then
   [ "$REPAIR" = 1 ] || finish "CURRENT $TARGET $CHANNEL"
+fi
+# Decided before check/apply diverge, so check never reports AVAILABLE for an update
+# that apply would refuse.
+[ "${#CMD_FILES[@]}" -gt 0 ] || finish "BLOCKED $CHANNEL no /distill command of this store exists on this machine; nothing was changed, re-run the installer"
+if [ "$TARGET" = "$INSTALLED" ]; then
   [ "$MODE" = check ] && finish "AVAILABLE ${INSTALLED:-unknown} $TARGET $CHANNEL"
   MODE=apply
 fi
@@ -284,7 +300,6 @@ if fetch "$BASE/bin/distill-check-store.sh" "$WORK/stage/bin/distill-check-store
   CHECK_STORE=1
 fi
 
-[ "${#CMD_FILES[@]}" -gt 0 ] || finish "BLOCKED $CHANNEL no /distill command of this store exists on this machine; nothing was changed (re-run the installer)"
 mkdir -p "$STORE/bin" "$STORE/data" "$STORE/inbox" || finish "BLOCKED $CHANNEL cannot create directories; nothing was changed"
 # Temp names next to each target (same filesystem), unique per process so two
 # sessions updating one store cannot rename each other's files; then one checked

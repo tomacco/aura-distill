@@ -312,7 +312,9 @@ if (-not (Test-Path $RulesDir)) { New-Item -ItemType Directory -Force -Path $Rul
 # Rule (shared by install.sh, install.ps1 and bin/distill-update.sh): the section runs
 # from the heading (at a line start) to the end of the file, and it is kept byte for
 # byte unless it is identical, ignoring whitespace, to the template section of the
-# file being installed.
+# file being installed. One difference from the updater: when a release's rules file
+# has no preferences heading, the installers still install it (appending a kept
+# section after its body), while the updater leaves every rules file untouched.
 $rulesTarget = Join-Path $RulesDir 'distill.md'
 $prefsPattern = '(?m)^## Always-On User Preferences'
 function Get-PrefsSection([string]$Text) {

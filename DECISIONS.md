@@ -13,6 +13,9 @@ Issues own live status and blockers. `ROADMAP.md` owns scope and sequence. This 
 
 ## 2026-09-23 — Release channels (#79)
 
+**D-2026-09-23-12 · Preferences are kept byte for byte unless they equal the template; with no listed dispatcher, block rather than guess.** `provisional` (authoring agent, #79 / PR #113 review)
+The installers and the updater keep the Always-On section unless it is identical, ignoring whitespace, to the release's template: losing a user's preferences is worse than keeping a stale template. When none of a store's listed dispatchers exists on this machine, the updater only adopts the default dispatcher if it names this store; otherwise it reports BLOCKED and changes nothing, so it never writes into another store's profile.
+
 **D-2026-09-23-9 · Beta installs and updates come from a tag named by a manifest on `beta/1.2`.** `provisional` (authoring agent, #79; ADR 0002)
 The beta payload is always a pinned prerelease tag; the moving branch only hosts the one-line pointer. Rejected: raw files from the branch (every merge would ship), the Releases API (rate limits, "latest" could be a v2), Pages (served from `main`). Consequence: `beta/1.2` must never be deleted or renamed while beta installs exist.
 

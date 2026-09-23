@@ -429,6 +429,9 @@ mkdir -p "$RULES_DIR"
 # Rule (shared by install.sh, install.ps1 and bin/distill-update.sh): the section runs
 # from the heading to the end of the file, and it is kept byte for byte unless it is
 # identical, ignoring whitespace, to the template section of the file being installed.
+# One difference from the updater: when a release's rules file has no preferences
+# heading, the installers still install it (appending a kept section after its body),
+# while the updater leaves every rules file untouched.
 PREFS_MARK="## Always-On User Preferences"
 PREFS_TMP=""
 RULES_TMP=$(mktemp)

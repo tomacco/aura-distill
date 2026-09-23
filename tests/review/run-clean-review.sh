@@ -57,7 +57,7 @@ prompt="$(awk '/^## Review prompt template/{f=1} f' "$template" | awk '/^```$/{c
 if [ -z "$prompt" ]; then echo "Could not extract the review template from $template" >&2; exit 2; fi
 prompt="$prompt
 
-(Repository: $repo — pass -R $repo to gh.)"
+(Repository: $repo — pass -R $repo to gh. This is a headless session: run every command in the foreground; the session ends when you stop, so finish the full report before stopping.)"
 
 out_dir="${REVIEW_OUT_DIR:-$(mktemp -d)}"; mkdir -p "$out_dir"
 out="$out_dir/review-$pr-$(date -u +%Y%m%dT%H%M%SZ).md"
@@ -74,6 +74,11 @@ status=0
   ) > "$out" || status=$?
 
 cat "$out"
+# A headless reviewer that stops early (e.g. after starting a background command) returns no verdict.
+if [ "$status" = 0 ] && ! grep -q '^#### Verdict' "$out"; then
+  echo "No '#### Verdict' section in the review: the reviewer stopped early. Re-run it." >&2
+  status=3
+fi
 echo "Reviewed head: $head_sha" >> "$out"
 echo "Reviewed head: $head_sha"
 echo "Reviewer model: $model · profile: $profile · review saved to $out · exit $status" >&2

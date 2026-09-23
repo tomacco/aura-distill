@@ -51,7 +51,7 @@ Anything beyond that contaminates the review.
 
 ## Review prompt template
 
-Copy this prompt verbatim. Fill in only `{PR_NUMBER}`. The only permitted addition is one line naming the repository, which `run-clean-review.sh` appends.
+Copy this prompt verbatim. Fill in only `{PR_NUMBER}`. The only permitted addition is one line naming the repository and saying the session is headless (run commands in the foreground, finish the report before stopping), which `run-clean-review.sh` appends.
 
 ```
 You are reviewing PR #{PR_NUMBER} on an open-source project you have never seen before.

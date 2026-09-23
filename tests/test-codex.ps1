@@ -95,6 +95,32 @@ DO-NOT-DELETE
     Invoke-TestInstall $partial
     Assert-True ((Get-Content (Join-Path $partial '.claude/CLAUDE.md') -Raw).Contains('DO-NOT-DELETE')) 'partial legacy block cannot delete later user content'
 
+    # Always-On preferences rule (same as install.sh and bin/distill-update.sh): the
+    # section is kept byte for byte unless it equals the shipped template ignoring whitespace.
+    $mark = '## Always-On User Preferences'
+    function Test-PrefsCase([string]$Name, [string]$Section, [bool]$ExpectKept) {
+        $h = New-TestHome; $homes.Add($h); Invoke-TestInstall $h
+        $rules = Join-Path $h '.claude/rules/distill.md'
+        $text = [System.IO.File]::ReadAllText($rules)
+        $idx = [regex]::Match($text, '(?m)^## Always-On User Preferences').Index
+        $Section = $Section.Replace('@STORE@', (Join-Path $h '.aura-distill'))
+        $new = if ($Section -eq 'MISSING') { "OLD-FILE-WITHOUT-HEADING`n" } else { $text.Substring(0, $idx) + $Section }
+        [System.IO.File]::WriteAllText($rules, $new, (New-Object System.Text.UTF8Encoding($false)))
+        Invoke-TestInstall $h
+        $after = [System.IO.File]::ReadAllText($rules)
+        $m = [regex]::Match($after, '(?m)^## Always-On User Preferences')
+        $afterSection = if ($m.Success) { $after.Substring($m.Index) } else { '' }
+        if ($ExpectKept) { Assert-True ($afterSection -ceq $Section) "install.ps1 keeps $Name preferences byte for byte" }
+        else { Assert-True ($m.Success -and $afterSection -cne $Section -and -not $after.Contains('OLD-FILE-WITHOUT-HEADING')) "install.ps1 replaces $Name with the release's section" }
+    }
+    Test-PrefsCase 'bullet-only' "$mark`n`n- Answer in bullet points.`n- Never use emoji.`n" $true
+    Test-PrefsCase 'prose' "$mark`n`nKeep answers short; ask before large refactors.`n" $true
+    Test-PrefsCase 'non-ASCII' "$mark`n`n- Responde en español, sin «adornos» ¿vale? — ûÿ`n" $true
+    $templateSection = [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'rules/distill.md'))
+    $templateSection = $templateSection.Substring([regex]::Match($templateSection, '(?m)^## Always-On User Preferences').Index).Replace('{DISTILL' + '_DIR}', '@STORE@')
+    Test-PrefsCase 'an untouched template (whitespace differs)' (($templateSection -replace "`n", "  `n") + "`n`n") $false
+    Test-PrefsCase 'a file without the heading' 'MISSING' $false
+
     # Release channels (docs/adr/0002) against a local raw-root fixture laid out like
     # raw.githubusercontent.com: main/, beta/1.2/channels/manifest.json, <tag>/.
     $rawRoot = New-TestHome; $homes.Add($rawRoot)
@@ -147,7 +173,9 @@ DO-NOT-DELETE
     $channelBytes = [System.IO.File]::ReadAllBytes((Join-Path $betaAura '.channel'))
     Assert-True ($channelBytes.Length -eq 4 -and $channelBytes[0] -eq [byte][char]'b') '.channel is written without a BOM or newline (read by bash)'
     $cmdPath = [System.IO.File]::ReadAllText((Join-Path $betaAura '.command-path'))
-    Assert-True ($cmdPath.EndsWith('/distill.md') -and -not $cmdPath.Contains('\')) '.command-path is written with forward slashes for Git Bash'
+    Assert-True ($cmdPath.TrimEnd("`n").EndsWith('/distill.md') -and -not $cmdPath.Contains('\') -and -not $cmdPath.Contains("`r")) '.command-path is written with forward slashes and LF for Git Bash'
+    Invoke-ChannelInstall $beta 'beta'
+    Assert-True (([System.IO.File]::ReadAllText((Join-Path $betaAura '.command-path')) -split "`n" | Where-Object { $_ }).Count -eq 1) 're-installing does not duplicate the .command-path entry'
     Invoke-ChannelInstall $beta $null
     Assert-True ((Read-Trim (Join-Path $betaAura '.channel')) -eq 'beta') 're-install without DISTILL_CHANNEL keeps the persisted beta choice'
     Invoke-ChannelInstall $beta 'stable'

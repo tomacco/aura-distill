@@ -21,6 +21,12 @@ All notable changes to aura-distill.
 - **Research pages**: `docs/research/token-economics.html` (40 days of real usage mined: ~85% of cost is context movement; distill overhead 5–6% of spend) and `docs/research/model-routing.html` (task-shape routing trials; orchestrators route near-optimally unaided).
 
 ### Fixed
+- **Store metadata keeps non-ASCII paths** (#79): only a *leading* byte-order mark and trailing CRs are stripped, so paths with `û`, `»` and similar are no longer corrupted.
+- **CRLF `preferences.md` keeps auto-update on** (#79): a Windows-edited preferences file no longer silently turns auto-update off.
+- **Every profile's `/distill` is updated** (#79): `.command-path` lists each Claude profile sharing the store (canonical paths, no duplicates); a profile whose `distill.md` was removed stays uninstalled; when no listed dispatcher exists, the default one is used only if it belongs to this store, otherwise nothing changes.
+- **Always-On preferences kept byte for byte** (#79): the installers and the updater keep any preferences section that is not the untouched template. Before, only sections with a bold rule line were kept, so bullet-only or prose preferences were overwritten (since 1.1.8).
+- **`/distill` updates refresh `rules/distill.md`** (#79) with that merge, and install or refresh the optional store checker (`bin/distill-check-store.sh`, #78) when a release carries it.
+- **Bootstrap wording and Windows CI** (#79): the dispatcher's bootstrap step names the one allowed substitution; CI runs `install.ps1` then the updater under Git Bash (`tests/updater-compat/windows-smoke.sh`).
 - **Installers could leave an empty or partial install on a failed download** (#79): core files were piped straight from `curl` into place, so a network error wrote empty files. Both installers now stage and validate the whole payload first and change nothing on failure. `tests/test-install.sh` and `test-sandbox.sh` no longer inherit `AURA_DISTILL_HOME`/`CODEX_HOME` from the calling shell, and `test-sandbox.sh` checks the shared store (`~/.aura-distill`) instead of the pre-1.1.10 path.
 - **Installer data loss**: updating overwrote `rules/distill.md` wholesale, wiping the user's synced "Always-On User Preferences" section back to the empty template (caught live-testing the v1.1.7 update). Both installers now preserve the section across updates (like SPINE) — only when it holds real content, not the template — and leave the existing file untouched if the download fails.
 

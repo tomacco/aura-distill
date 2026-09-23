@@ -824,6 +824,169 @@ sed 's/"version": "2.0.0"/"version": "1.9.0"/' "$SYN/channels/manifest.json" > "
 check "major-release check rejects an entry that is not a new major" bash -c "! bash '$HERE/check-major-release.sh' '$T/m.json' '$SYN/docs/upgrade/2.0.0.md' >/dev/null"
 
 # =====================================================================
+section "(j) Store metadata: non-ASCII paths, byte-order marks, CRLF, several profiles"
+serve_bridge
+M=$(served_main)
+c=$(mktemp -d "$WORK/clients/j.XXXXXX")
+mkdir -p "$c/.claude" "$c/.claude-mûller"
+install_client "$c" --profile mûller
+s="$c/.aura-distill"
+check "a --profile install whose path contains 'û' records it intact" \
+  bash -c "grep -qxF '$c/.claude-mûller/commands/distill.md' '$s/.command-path'"
+seed_knowledge "$c"; set_autoupdate "$c" true
+printf '\357\273\277%s\r\n' "$c/.claude-mûller/commands/distill.md" > "$s/.command-path"
+printf '1.2.1\n' > "$M/VERSION"; printf '\nPATCH-J1\n' >> "$M/distill.md"
+run_update "$c" auto
+check "BOM + CRLF .command-path with a non-ASCII path: the 'û' profile's dispatcher is updated ('$(first_line "$c")')" \
+  bash -c "grep -q '^UPDATED 1.2.0 1.2.1 stable' '$c/update.out' && grep -q PATCH-J1 '$c/.claude-mûller/commands/distill.md'"
+check "  and nothing is written into the default profile" test ! -e "$c/.claude/commands/distill.md"
+# CRLF preferences (a Windows editor): the opt-in must still count.
+printf -- '---\r\ndomain: feedback\r\n---\r\n\r\n## Auto-update\r\n- enabled: true\r\n' > "$s/feedback/preferences.md"
+printf '1.2.2\n' > "$M/VERSION"
+run_update "$c" auto
+check "a CRLF preferences.md with 'enabled: true' still auto-applies ('$(first_line "$c")')" \
+  bash -c "grep -q '^UPDATED 1.2.1 1.2.2 stable' '$c/update.out'"
+# Two profiles on one store: both dispatchers are listed and both are updated.
+install_client "$c" --profile default
+check "a second profile's install appends its dispatcher to .command-path (2 entries, no duplicates)" \
+  bash -c "[ \"\$(grep -c . '$s/.command-path')\" = 2 ] && grep -qxF '$c/.claude/commands/distill.md' '$s/.command-path'"
+install_client "$c" --profile default
+check "  re-installing the same profile adds nothing" bash -c "[ \"\$(grep -c . '$s/.command-path')\" = 2 ]"
+set_autoupdate "$c" true
+printf '1.2.3\n' > "$M/VERSION"; printf '\nPATCH-J3\n' >> "$M/distill.md"
+run_update "$c" auto
+check "one update refreshes every listed profile's dispatcher ('$(first_line "$c")')" \
+  bash -c "grep -q '^UPDATED 1.2.2 1.2.3 stable' '$c/update.out' && grep -q PATCH-J3 '$c/.claude/commands/distill.md' && grep -q PATCH-J3 '$c/.claude-mûller/commands/distill.md'"
+# Optional store checker (#78): absent from the release -> skipped, an installed copy kept.
+printf '#!/usr/bin/env bash\n# aura-distill-check-store invariants v0\necho OLD-CHECKER\n' > "$s/bin/distill-check-store.sh"
+printf '1.2.31\n' > "$M/VERSION"
+run_update "$c" auto
+check "optional checker absent from the release: update succeeds ('$(first_line "$c")'), installed copy untouched" \
+  bash -c "grep -q '^UPDATED 1.2.3 1.2.31 stable' '$c/update.out' && grep -q OLD-CHECKER '$s/bin/distill-check-store.sh'"
+printf '#!/usr/bin/env bash\n# something else\necho BAD-CHECKER\n' > "$M/bin/distill-check-store.sh"
+printf '1.2.32\n' > "$M/VERSION"
+run_update "$c" auto
+check "optional checker with a wrong header: skipped ('$(first_line "$c")'), installed copy untouched" \
+  bash -c "grep -q '^UPDATED 1.2.31 1.2.32 stable' '$c/update.out' && grep -q OLD-CHECKER '$s/bin/distill-check-store.sh'"
+printf '#!/usr/bin/env bash\n# aura-distill-check-store invariants v1\necho NEW-CHECKER\n' > "$M/bin/distill-check-store.sh"
+printf '1.2.33\n' > "$M/VERSION"
+run_update "$c" auto
+check "optional checker present with the expected header: installed with the update ('$(first_line "$c")')" \
+  bash -c "grep -q '^UPDATED 1.2.32 1.2.33 stable' '$c/update.out' && grep -q NEW-CHECKER '$s/bin/distill-check-store.sh' && [ -x '$s/bin/distill-check-store.sh' ]"
+rm -f "$M/bin/distill-check-store.sh"
+# rules/distill.md: the user's filled preferences survive an update byte for byte.
+R="$c/.claude-mûller/rules/distill.md"
+printf '\n**Always answer in bullet points.** (user rule, synthetic)\n- keep: é û » ¿ bytes\n' >> "$R"
+sed -n '/^## Always-On User Preferences/,$p' "$R" > "$WORK/prefs.before"
+printf '\nRULES-J-NEW-BODY\n' > "$WORK/rules-extra"
+sed '/^## Always-On User Preferences/,$d' "$M/rules/distill.md" > "$WORK/rules.body"
+{ cat "$WORK/rules.body" "$WORK/rules-extra"; sed -n '/^## Always-On User Preferences/,$p' "$M/rules/distill.md"; } > "$M/rules/distill.md.new" && mv "$M/rules/distill.md.new" "$M/rules/distill.md"
+printf '1.2.34\n' > "$M/VERSION"
+run_update "$c" auto
+check "rules/distill.md is updated with the release ('$(first_line "$c")') and the user's preferences survive byte for byte" \
+  bash -c "grep -q '^UPDATED 1.2.33 1.2.34 stable' '$c/update.out' && grep -q RULES-J-NEW-BODY '$R' && sed -n '/^## Always-On User Preferences/,\$p' '$R' | cmp -s - '$WORK/prefs.before' && ! grep -qF '{DISTILL_DIR}' '$R'"
+check "  the sibling profile's rules file is updated too" grep -q RULES-J-NEW-BODY "$c/.claude/rules/distill.md"
+cp "$R" "$WORK/rules.kept"
+sed '/^## Always-On User Preferences/,$d' "$M/rules/distill.md" > "$M/rules/distill.md.new" && mv "$M/rules/distill.md.new" "$M/rules/distill.md"
+printf '\nRULES-WITHOUT-PREFS-SECTION\n' >> "$M/rules/distill.md"
+printf '1.2.345\n' > "$M/VERSION"
+run_update "$c" auto
+check "a released rules file without the preferences heading leaves every rules file untouched; the rest updates ('$(first_line "$c")')" \
+  bash -c "grep -q '^UPDATED 1.2.34 1.2.345 stable' '$c/update.out' && cmp -s '$R' '$WORK/rules.kept' && ! grep -q RULES-WITHOUT '$c/.claude/rules/distill.md'"
+cp "$REPO_ROOT/rules/distill.md" "$M/rules/distill.md"
+# Two names for one dispatcher (a symlinked profile dir; a non-canonical spelling, as
+# Git Bash's /c/... next to C:/...): one target, no "partially updated" loop.
+ln -s ".claude-mûller" "$c/.claude-alias"
+printf '%s\n%s\n' "$c/.claude-alias/commands/distill.md" "$c/./.claude-mûller/commands/distill.md" >> "$s/.command-path"
+printf '1.2.36\n' > "$M/VERSION"
+run_update "$c" auto
+check "a symlinked alias and a non-canonical spelling of one dispatcher are one target ('$(first_line "$c")'), no temp files left" \
+  bash -c "grep -q '^UPDATED 1.2.345 1.2.36 stable' '$c/update.out' && ! ls '$c/.claude-mûller/commands/'*.aura-new.* >/dev/null 2>&1"
+run_update "$c" auto
+check "  and the next run is CURRENT, not a repeated partial update" bash -c "grep -q '^CURRENT 1.2.36 stable' '$c/update.out'"
+
+# No listed dispatcher exists on this machine: the default profile's is used with a
+# notice; with no default either, nothing changes (and .version is not bumped).
+k=$(mktemp -d "$WORK/clients/k.XXXXXX"); install_client "$k"; ks="$k/.aura-distill"; set_autoupdate "$k" true
+printf '%s\n' "/nonexistent-elsewhere/.claude/commands/distill.md" > "$ks/.command-path"
+printf '1.2.37\n' > "$M/VERSION"; printf '\nPATCH-K\n' >> "$M/distill.md"
+run_update "$k" auto
+check "no listed dispatcher here: the default profile's is updated ('$(first_line "$k")') and a notice names it" \
+  bash -c "grep -q '^UPDATED 1.2.36 1.2.37 stable' '$k/update.out' && grep -q PATCH-K '$k/.claude/commands/distill.md' && grep -q '^NOTICE: .*default profile' '$k/update.out'"
+rm "$k/.claude/commands/distill.md"
+printf '1.2.38\n' > "$M/VERSION"
+run_update "$k" check
+check "check reports the same BLOCKED that apply would ('$(first_line "$k")'), never AVAILABLE" \
+  bash -c "grep -q '^BLOCKED stable no /distill command' '$k/update.out'"
+run_update "$k" auto
+check "no dispatcher at all on this machine: '$(first_line "$k")', .version not bumped, nothing created" \
+  bash -c "grep -q '^BLOCKED stable no /distill command' '$k/update.out' && [ \"\$(cat '$ks/.version')\" = 1.2.37 ] && [ ! -e '$k/.claude/commands/distill.md' ]"
+# Two stores on one machine: the default profile uses store A, a work profile store B.
+# With B's dispatcher removed, B's updater must not adopt A's default dispatcher.
+t2=$(mktemp -d "$WORK/clients/twostores.XXXXXX")
+install_client "$t2"
+mkdir -p "$t2/.claude-work"
+env -u AURA_DISTILL_HOME -u CODEX_HOME -u DISTILL_CHANNEL -u AURA_DISTILL_REPO HOME="$t2" AURA_DISTILL_HOME="$t2/storeB" CODEX_HOME="$t2/.codex" \
+  AURA_DISTILL_RAW_ROOT="$RAW" bash "$REPO_ROOT/install.sh" --profile work </dev/null >/dev/null 2>&1
+rm "$t2/.claude-work/commands/distill.md"
+before_a=$(cat "$t2/.claude/commands/distill.md" "$t2/.claude/rules/distill.md" | cksum)
+printf '1.2.39\n' > "$M/VERSION"
+env -u AURA_DISTILL_HOME HOME="$t2" AURA_DISTILL_RAW_ROOT="$RAW" bash "$t2/storeB/bin/distill-update.sh" apply > "$t2/b.out" 2>&1 || true
+check "two stores: B's updater with B's dispatcher removed reports '$(head -1 "$t2/b.out")' and leaves A's dispatcher and rules untouched" \
+  bash -c "grep -q '^BLOCKED stable no /distill command' '$t2/b.out' && [ \"\$(cat '$t2/.claude/commands/distill.md' '$t2/.claude/rules/distill.md' | cksum)\" = '$before_a' ] && grep -qF '$t2/.aura-distill/' '$t2/.claude/commands/distill.md'"
+k2=$(mktemp -d "$WORK/clients/k2.XXXXXX"); mkdir -p "$k2/store/bin"; cp "$REPO_ROOT/bin/distill-update.sh" "$k2/store/bin/"
+printf '1.2.0\n' > "$k2/store/.version"
+env -u AURA_DISTILL_HOME HOME="$k2/home" AURA_DISTILL_RAW_ROOT="$RAW" bash "$k2/store/bin/distill-update.sh" apply > "$k2/out" 2>&1 || true
+check "a store with no list and no ~/.claude never creates a profile or rules file" \
+  bash -c "grep -q '^BLOCKED' '$k2/out' && [ ! -e '$k2/home/.claude' ]"
+
+# The preferences rule, the same in the updater and in install.sh: the section is kept
+# byte for byte unless it equals the shipped template ignoring whitespace.
+TEMPLATE_SECTION=$(sed -n '/^## Always-On User Preferences/,$p' "$REPO_ROOT/rules/distill.md")
+prefs_case() { # <name> <mode: updater|installer> <section text, or MISSING>
+  local h r
+  h=$(mktemp -d "$WORK/clients/p.XXXXXX"); install_client "$h"; set_autoupdate "$h" true
+  r="$h/.claude/rules/distill.md"
+  sed '/^## Always-On User Preferences/,$d' "$r" > "$r.body"
+  if [ "$3" = MISSING ]; then printf 'OLD-FILE-WITHOUT-HEADING\n' > "$r"
+  else { cat "$r.body"; printf '%s\n' "$3" | sed "s|@STORE@|$h/.aura-distill|g"; } > "$r"; fi
+  rm -f "$r.body"
+  sed -n '/^## Always-On User Preferences/,$p' "$r" > "$h/prefs.before"
+  PREFS_SEQ=$((PREFS_SEQ+1)); printf '1.3.%s\n' "$PREFS_SEQ" > "$M/VERSION"
+  if [ "$2" = updater ]; then run_update "$h" auto; else install_client "$h"; fi
+  PREFS_HOME=$h
+}
+PREFS_SEQ=0
+for mode in updater installer; do
+  prefs_case bullets "$mode" "$(printf '## Always-On User Preferences\n\n- Answer in bullet points.\n- Never use emoji.')"
+  check "$mode: bullet-only preferences (no bold line) survive byte for byte" \
+    bash -c "sed -n '/^## Always-On User Preferences/,\$p' '$PREFS_HOME/.claude/rules/distill.md' | cmp -s - '$PREFS_HOME/prefs.before'"
+  prefs_case prose "$mode" "$(printf '## Always-On User Preferences\n\nKeep answers short; ask before large refactors.')"
+  check "$mode: prose preferences survive byte for byte" \
+    bash -c "sed -n '/^## Always-On User Preferences/,\$p' '$PREFS_HOME/.claude/rules/distill.md' | cmp -s - '$PREFS_HOME/prefs.before'"
+  prefs_case nonascii "$mode" "$(printf '## Always-On User Preferences\n\n- Responde en español, sin «adornos» ¿vale? — ûÿ\n')"
+  check "$mode: non-ASCII preferences survive byte for byte" \
+    bash -c "sed -n '/^## Always-On User Preferences/,\$p' '$PREFS_HOME/.claude/rules/distill.md' | cmp -s - '$PREFS_HOME/prefs.before'"
+  prefs_case template "$mode" "$(printf '%s\n\n\n' "$(printf '%s' "$TEMPLATE_SECTION" | sed "s|{DISTILL_DIR}|@STORE@|g; s/\$/  /")")"
+  check "$mode: an untouched template section (whitespace differs) is replaced by the release's" \
+    bash -c "! cmp -s <(sed -n '/^## Always-On User Preferences/,\$p' '$PREFS_HOME/.claude/rules/distill.md') '$PREFS_HOME/prefs.before' && ! sed -n '/^## Always-On User Preferences/,\$p' '$PREFS_HOME/.claude/rules/distill.md' | grep -q '  \$'"
+  prefs_case missing "$mode" MISSING
+  check "$mode: a rules file without the heading is replaced by the release's" \
+    bash -c "! grep -q OLD-FILE-WITHOUT-HEADING '$PREFS_HOME/.claude/rules/distill.md' && grep -q '^## Always-On User Preferences' '$PREFS_HOME/.claude/rules/distill.md'"
+done
+
+rm "$c/.claude/commands/distill.md"   # the user uninstalls /distill from the default profile
+printf '1.2.35\n' > "$M/VERSION"
+run_update "$c" auto
+check "an uninstalled dispatcher stays uninstalled; the sibling profile still updates ('$(first_line "$c")')" \
+  bash -c "grep -q '^UPDATED 1.2.36 1.2.35 stable' '$c/update.out' && [ ! -e '$c/.claude/commands/distill.md' ] && [ \"\$(cat '$s/.version')\" = 1.2.35 ]"
+printf '%s\n' "/nonexistent-elsewhere/.claude/commands/distill.md" >> "$s/.command-path"
+printf '1.2.4\n' > "$M/VERSION"
+run_update "$c" auto
+check "a listed path from another machine is skipped, the others still update ('$(first_line "$c")')" \
+  bash -c "grep -q '^UPDATED 1.2.35 1.2.4 stable' '$c/update.out' && [ ! -e /nonexistent-elsewhere ]"
+
+# =====================================================================
 section "Isolation: nothing escaped the sandbox"
 check "AURA_DISTILL_HOME/CODEX_HOME inherited from the environment were never written to" \
   test ! -e "$CANARY"

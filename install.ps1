@@ -275,7 +275,16 @@ Remove-Item -LiteralPath $Stage -Recurse -Force -ErrorAction SilentlyContinue
 $NoBom = New-Object System.Text.UTF8Encoding($false)
 [System.IO.File]::WriteAllText($versionFile, $PayloadVersion, $NoBom)
 [System.IO.File]::WriteAllText($channelFile, $Channel, $NoBom)
-[System.IO.File]::WriteAllText((Join-Path $DistillDir '.command-path'), ((Join-Path $CmdDir 'distill.md') -replace '\\', '/'), $NoBom)
+# .command-path lists every profile's dispatcher that shares this store (one per line,
+# LF, no BOM); add ours once.
+$cmdPathFile = Join-Path $DistillDir '.command-path'
+$ourCmd = (Join-Path $CmdDir 'distill.md') -replace '\\', '/'
+$cmdLines = @()
+if (Test-Path $cmdPathFile) {
+    $cmdLines = @(([System.IO.File]::ReadAllText($cmdPathFile)).TrimStart([char]0xFEFF) -split "`r?`n" | Where-Object { $_ })
+}
+if ($cmdLines -notcontains $ourCmd) { $cmdLines += $ourCmd }
+[System.IO.File]::WriteAllText($cmdPathFile, (($cmdLines -join "`n") + "`n"), $NoBom)
 
 # Spine
 $spinePath = Join-Path $DistillDir 'SPINE.md'
@@ -300,30 +309,38 @@ if (-not (Test-Path $RulesDir)) { New-Item -ItemType Directory -Force -Path $Rul
 
 # Preserve the user's synced Always-On preferences across updates (like SPINE).
 # /distill writes real content into this section; overwriting it is data loss.
+# Rule (shared by install.sh, install.ps1 and bin/distill-update.sh): the section runs
+# from the heading (at a line start) to the end of the file, and it is kept byte for
+# byte unless it is identical, ignoring whitespace, to the template section of the
+# file being installed. One difference from the updater: when a release's rules file
+# has no preferences heading, the installers still install it (appending a kept
+# section after its body), while the updater leaves every rules file untouched.
 $rulesTarget = Join-Path $RulesDir 'distill.md'
-$prefsMark = '## Always-On User Preferences'
-$preservedPrefs = $null
-if (Test-Path $rulesTarget) {
-    $existing = Get-Content $rulesTarget -Raw
-    $idx = $existing.IndexOf($prefsMark)
-    if ($idx -ge 0) {
-        $section = $existing.Substring($idx)
-        # Only preserve real content (a bold rule line), not the empty template
-        if ($section -match "(?m)^\*\*") { $preservedPrefs = $section }
-    }
+$prefsPattern = '(?m)^## Always-On User Preferences'
+function Get-PrefsSection([string]$Text) {
+    $m = [regex]::Match($Text, $prefsPattern)
+    if ($m.Success) { return $Text.Substring($m.Index) } else { return $null }
 }
 $rulesTmp = [System.IO.Path]::GetTempFileName()
 try {
     Get-File "$Repo/rules/distill.md" $rulesTmp
-    $fresh = (Get-Content $rulesTmp -Raw).Replace('{DISTILL_DIR}', $DistillDir)
+    $fresh = (Get-Content $rulesTmp -Raw).Replace($Placeholder, $DistillDir)
     if ($fresh -match 'Distill') {
+        $preservedPrefs = $null
+        if (Test-Path $rulesTarget) {
+            $section = Get-PrefsSection ([System.IO.File]::ReadAllText($rulesTarget))
+            $freshSection = Get-PrefsSection $fresh
+            if ($null -ne $section -and ($section -replace '\s', '') -ne ([string]$freshSection -replace '\s', '')) {
+                $preservedPrefs = $section
+            }
+        }
         if ($preservedPrefs) {
-            $freshIdx = $fresh.IndexOf($prefsMark)
-            $body = if ($freshIdx -ge 0) { $fresh.Substring(0, $freshIdx) } else { $fresh }
+            $freshMatch = [regex]::Match($fresh, $prefsPattern)
+            $body = if ($freshMatch.Success) { $fresh.Substring(0, $freshMatch.Index) } else { $fresh }
             [System.IO.File]::WriteAllText($rulesTarget, ($body + $preservedPrefs), (New-Object System.Text.UTF8Encoding($false)))
             Write-Done "rules/distill.md ${DIM}(auto-loads every session; your preferences preserved)${RESET}"
         } else {
-            Move-Item -Force $rulesTmp $rulesTarget
+            [System.IO.File]::WriteAllText($rulesTarget, $fresh, (New-Object System.Text.UTF8Encoding($false)))
             Write-Done "rules/distill.md ${DIM}(auto-loads every session)${RESET}"
         }
     } else {

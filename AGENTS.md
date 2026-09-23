@@ -79,6 +79,7 @@ When developing or testing:
 - Run legacy updater compatibility reproductions (captured shipped curl blocks against a local fixture endpoint; no network, no real profiles): `bash tests/updater-compat/run.sh` — decisions they back live in `docs/adr/`
 - Run the legacy endpoint guard before touching any file an updater fetches: `bash tests/updater-compat/check-endpoints.sh` (`--surface stable` for anything headed to `main`)
 - Run deterministic Claude/Codex installer tests: `pwsh tests/test-codex.ps1`
+- Run the Windows update path (install.ps1, then the updater under bash; skips without `pwsh`): `bash tests/updater-compat/windows-smoke.sh`
 - Run a real isolated Codex retrieval test: `pwsh tests/test-codex.ps1 -LiveRetrieval`
 
 ## Issues & PRs

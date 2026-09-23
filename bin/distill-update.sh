@@ -4,7 +4,8 @@
 # The only code that replaces installed aura-distill files after installation.
 # The /distill dispatcher runs it instead of composing its own download commands.
 # It never executes anything it downloads, never installs a different major
-# version, and never touches knowledge files (SPINE, tiers, preferences, inbox).
+# version, and never touches knowledge files (SPINE, tiers, preferences, inbox). The
+# Always-On preferences inside rules/distill.md are preserved by the merge below.
 #
 # Usage: distill-update.sh auto | check | apply
 #   auto   apply when the Auto-update preference is on, otherwise behave like check
@@ -64,13 +65,54 @@ STORE=$(cd "$(dirname "$AURA_UPDATER_SELF")/.." && pwd)
 # Git Bash on Windows: write C:/Users/... (accepted by bash and by the client's file
 # tools) into the installed files, not the MSYS form /c/Users/...
 if command -v cygpath >/dev/null 2>&1; then STORE=$(cygpath -m "$STORE"); fi
-CMD_FILE=$(head -1 "$STORE/.command-path" 2>/dev/null | LC_ALL=C tr -d '\357\273\277\r' || true)
-# A recorded path whose directory does not exist here (a store synced from another
-# machine or user) falls back to the default instead of blocking every update.
-case "$CMD_FILE" in */distill.md) [ -d "$(dirname "$CMD_FILE")" ] || CMD_FILE="" ;; *) CMD_FILE="" ;; esac
-[ -n "$CMD_FILE" ] || CMD_FILE="$HOME/.claude/commands/distill.md"
-# Strip whitespace, CR and a UTF-8 byte-order mark (Windows PowerShell 5.1 writes one).
-read_meta() { LC_ALL=C tr -d '\357\273\277[:space:]' 2>/dev/null < "$1" || true; }
+BOM=$(printf '\357\273\277')
+# .command-path lists one installed dispatcher per line: every Claude profile that
+# shares this store (installers append their own path). Only a leading byte-order
+# mark and trailing CRs are stripped, so non-ASCII paths stay intact. Only listed
+# dispatchers that exist on this machine are updated, so a profile whose distill.md
+# was removed stays uninstalled and a path from another machine is skipped. Paths are
+# canonicalised (symlinks resolved, and the Git Bash /c/... and C:/... forms of one
+# file made equal) before de-duplication, so two names for one file are one target.
+# When no listed dispatcher exists here (or there is no list: a store installed before
+# the list existed), the default profile's dispatcher is updated if it exists, with a
+# notice; with none at all, nothing is updated and the run says so.
+canon() { # <path to an existing file> -> canonical path
+  local d
+  d=$(cd "$(dirname "$1")" 2>/dev/null && pwd -P) || return 1
+  if command -v cygpath >/dev/null 2>&1; then d=$(cygpath -m "$d"); fi
+  printf '%s/%s' "$d" "$(basename "$1")"
+}
+CMD_FILES=()
+LISTED=0
+first=1
+while IFS= read -r line || [ -n "$line" ]; do
+  [ "$first" = 1 ] && line=${line#"$BOM"}; first=0
+  line=${line%$'\r'}
+  case "$line" in */distill.md) ;; *) continue ;; esac
+  LISTED=1
+  [ -f "$line" ] || continue
+  line=$(canon "$line") || continue
+  dup=0; for seen in ${CMD_FILES[@]+"${CMD_FILES[@]}"}; do [ "$seen" = "$line" ] && dup=1; done
+  [ "$dup" = 1 ] || CMD_FILES+=("$line")
+done < <(cat "$STORE/.command-path" 2>/dev/null || true)
+DEFAULT_NOTICE=""
+# The default dispatcher is adopted only if it belongs to THIS store: it names the
+# store path (as install.sh writes it, or with backslashes as install.ps1 does), or
+# still holds the unresolved placeholder (an older updater copied it raw). A default
+# profile installed for another store is never written to.
+STORE_BS=$(printf '%s' "$STORE" | tr '/' '\\')
+default_is_ours() {
+  grep -qF "$STORE/" "$1" 2>/dev/null || grep -qF "$STORE_BS\\" "$1" 2>/dev/null \
+    || grep -qF "$STORE_BS/" "$1" 2>/dev/null || grep -qF "$PLACEHOLDER" "$1" 2>/dev/null
+}
+if [ "${#CMD_FILES[@]}" = 0 ] && [ -f "$HOME/.claude/commands/distill.md" ] \
+   && default_is_ours "$HOME/.claude/commands/distill.md"; then
+  CMD_FILES=("$(canon "$HOME/.claude/commands/distill.md")")
+  [ "$LISTED" = 0 ] || DEFAULT_NOTICE="NOTICE: aura-distill: none of the /distill commands recorded in $STORE/.command-path exists on this machine; the default profile's (${CMD_FILES[0]}) was used. Re-run the installer to record this machine's profiles."
+fi
+# One-word metadata (.channel, .version): drop a leading byte-order mark (Windows
+# PowerShell 5.1 writes one) and all whitespace, including CR.
+read_meta() { local v; v=$(cat "$1" 2>/dev/null || true); v=${v#"$BOM"}; printf '%s' "$v" | tr -d '[:space:]'; }
 CHANNEL=$(read_meta "$STORE/.channel")
 [ "$CHANNEL" = beta ] || CHANNEL=stable
 INSTALLED=$(read_meta "$STORE/.version")
@@ -131,6 +173,7 @@ NOTICE: Your files-only installation stays supported and unchanged. If you want 
 finish() { # <status line>
   printf '%s\n' "$1"
   [ -z "$NOTICES" ] || printf '%s\n' "$NOTICES"
+  [ -z "$DEFAULT_NOTICE" ] || case "$1" in UPDATED*|REPAIRED*) printf '%s\n' "$DEFAULT_NOTICE" ;; esac
   exit 0
 }
 
@@ -175,17 +218,22 @@ fi
 # latent defect 2). Re-installing the same version repairs them; it is not an upgrade,
 # so it runs regardless of the Auto-update preference.
 REPAIR=0
-for t in "$CMD_FILE" "$STORE/distill-process.md" "$STORE/distill-monitor.md"; do
+for t in ${CMD_FILES[@]+"${CMD_FILES[@]}"} "$STORE/distill-process.md" "$STORE/distill-monitor.md"; do
   grep -qF "$PLACEHOLDER" "$t" 2>/dev/null && REPAIR=1
 done
 if [ "$TARGET" = "$INSTALLED" ]; then
   [ "$REPAIR" = 1 ] || finish "CURRENT $TARGET $CHANNEL"
+fi
+# Decided before check/apply diverge, so check never reports AVAILABLE for an update
+# that apply would refuse.
+[ "${#CMD_FILES[@]}" -gt 0 ] || finish "BLOCKED $CHANNEL no /distill command of this store exists on this machine; nothing was changed, re-run the installer"
+if [ "$TARGET" = "$INSTALLED" ]; then
   [ "$MODE" = check ] && finish "AVAILABLE ${INSTALLED:-unknown} $TARGET $CHANNEL"
   MODE=apply
 fi
 
 if [ "$MODE" = auto ]; then
-  if awk '/^## /{on=($0 ~ /^## Auto-update/)} on && /^[ \t]*-[ \t]*enabled:[ \t]*true[ \t]*$/{found=1} END{exit !found}' \
+  if awk '{sub(/\r$/, "")} /^## /{on=($0 ~ /^## Auto-update/)} on && /^[ \t]*-[ \t]*enabled:[ \t]*true[ \t]*$/{found=1} END{exit !found}' \
        "$STORE/feedback/preferences.md" 2>/dev/null; then
     MODE=apply
   else
@@ -213,20 +261,74 @@ for f in distill.md distill-process.md distill-monitor.md bin/distill-update.sh;
   fi
 done
 
-mkdir -p "$(dirname "$CMD_FILE")" "$STORE/bin" "$STORE/data" "$STORE/inbox" || finish "BLOCKED $CHANNEL cannot create directories; nothing was changed"
+# rules/distill.md (the always-on rules) for every profile being updated that has one,
+# merged by the rule install.sh and install.ps1 use: the "Always-On User Preferences"
+# section (heading to end of file) is kept byte for byte and appended to the new
+# file's body unless it is identical, ignoring whitespace, to the new template section. The new file must contain that heading, or no rules file is
+# touched (the rest of the update still applies).
+PREFS_MARK="## Always-On User Preferences"
+RULES_TARGETS=()
+if fetch "$BASE/rules/distill.md" "$WORK/stage/rules.raw" \
+   && grep -q "Distill" "$WORK/stage/rules.raw" && grep -q "^$PREFS_MARK" "$WORK/stage/rules.raw" \
+   && ! grep -q "$SOFTWARE_MARKER" "$WORK/stage/rules.raw"; then
+  sed "s|$PLACEHOLDER|$store_esc|g" "$WORK/stage/rules.raw" > "$WORK/stage/rules.new"
+  i=0
+  for t in ${CMD_FILES[@]+"${CMD_FILES[@]}"}; do
+    rules="$(dirname "$(dirname "$t")")/rules/distill.md"
+    [ -f "$rules" ] || continue
+    i=$((i+1))
+    if grep -q "^$PREFS_MARK" "$rules" \
+       && [ "$(sed -n "/^$PREFS_MARK/,\$p" "$rules" | tr -d '[:space:]')" \
+            != "$(sed -n "/^$PREFS_MARK/,\$p" "$WORK/stage/rules.new" | tr -d '[:space:]')" ]; then
+      sed "/^$PREFS_MARK/,\$d" "$WORK/stage/rules.new" > "$WORK/stage/rules.$i"
+      sed -n "/^$PREFS_MARK/,\$p" "$rules" >> "$WORK/stage/rules.$i"
+    else
+      cp "$WORK/stage/rules.new" "$WORK/stage/rules.$i"
+    fi
+    RULES_TARGETS+=("$rules")
+  done
+fi
+
+# Optional: the store-invariant checker (#78). Installed or refreshed only when the
+# release carries one with the expected header; a 404 or a mismatch is skipped and
+# never removes a copy that is already installed.
+CHECK_STORE=0
+if fetch "$BASE/bin/distill-check-store.sh" "$WORK/stage/bin/distill-check-store.sh" \
+   && sed -n '2p' "$WORK/stage/bin/distill-check-store.sh" | grep -q '^# aura-distill-check-store invariants v' \
+   && ! grep -q "$SOFTWARE_MARKER" "$WORK/stage/bin/distill-check-store.sh" \
+   && bash -n "$WORK/stage/bin/distill-check-store.sh" 2>/dev/null; then
+  CHECK_STORE=1
+fi
+
+mkdir -p "$STORE/bin" "$STORE/data" "$STORE/inbox" || finish "BLOCKED $CHANNEL cannot create directories; nothing was changed"
 # Temp names next to each target (same filesystem), unique per process so two
 # sessions updating one store cannot rename each other's files; then one checked
 # rename per file. The status line is only UPDATED if every rename succeeded.
 N=".aura-new.$$"
-cleanup_new() { rm -f "$CMD_FILE$N" "$STORE/distill-process.md$N" "$STORE/distill-monitor.md$N" "$STORE/bin/distill-update.sh$N" "$STORE/.version$N"; }
-cp "$WORK/stage/distill.md" "$CMD_FILE$N" \
+cleanup_new() {
+  local t; for t in ${CMD_FILES[@]+"${CMD_FILES[@]}"} ${RULES_TARGETS[@]+"${RULES_TARGETS[@]}"}; do rm -f "$t$N"; done
+  rm -f "$STORE/distill-process.md$N" "$STORE/distill-monitor.md$N" "$STORE/bin/distill-update.sh$N" "$STORE/bin/distill-check-store.sh$N" "$STORE/.version$N"
+}
+cmd_ok=1
+for t in ${CMD_FILES[@]+"${CMD_FILES[@]}"}; do cp "$WORK/stage/distill.md" "$t$N" || cmd_ok=0; done
+i=0
+for t in ${RULES_TARGETS[@]+"${RULES_TARGETS[@]}"}; do
+  i=$((i+1)); cp "$WORK/stage/rules.$i" "$t$N" || cmd_ok=0
+done
+[ "$cmd_ok" = 1 ] \
   && cp "$WORK/stage/distill-process.md" "$STORE/distill-process.md$N" \
   && cp "$WORK/stage/distill-monitor.md" "$STORE/distill-monitor.md$N" \
   && cp "$WORK/stage/bin/distill-update.sh" "$STORE/bin/distill-update.sh$N" \
+  && { [ "$CHECK_STORE" = 0 ] || cp "$WORK/stage/bin/distill-check-store.sh" "$STORE/bin/distill-check-store.sh$N"; } \
   && printf '%s\n' "$TARGET" > "$STORE/.version$N" \
   || { cleanup_new; finish "BLOCKED $CHANNEL cannot write the new files; nothing was changed"; }
 chmod +x "$STORE/bin/distill-update.sh$N" 2>/dev/null || true
-for pair in "$CMD_FILE" "$STORE/distill-process.md" "$STORE/distill-monitor.md" "$STORE/bin/distill-update.sh" "$STORE/.version"; do
+OPTIONAL_TARGETS=()
+if [ "$CHECK_STORE" = 1 ]; then
+  chmod +x "$STORE/bin/distill-check-store.sh$N" 2>/dev/null || true
+  OPTIONAL_TARGETS=("$STORE/bin/distill-check-store.sh")
+fi
+for pair in ${CMD_FILES[@]+"${CMD_FILES[@]}"} ${RULES_TARGETS[@]+"${RULES_TARGETS[@]}"} "$STORE/distill-process.md" "$STORE/distill-monitor.md" "$STORE/bin/distill-update.sh" ${OPTIONAL_TARGETS[@]+"${OPTIONAL_TARGETS[@]}"} "$STORE/.version"; do
   if ! mv -f "$pair$N" "$pair" 2>/dev/null; then
     cleanup_new
     finish "BLOCKED $CHANNEL replacing $(basename "$pair") failed; the installation may be partially updated, run the installer to repair it"

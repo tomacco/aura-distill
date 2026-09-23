@@ -11,12 +11,16 @@
 #   SPINE_MAX_LINES (80) SPINE_MAX_BYTES (16000) ENTRY_MAX_BYTES (400)
 #   FILE_MAX_LINES (60)  FILE_MAX_BYTES (6000)
 #
-# C1 SPINE budgets
+# C1 SPINE budgets (an entry = its "- [" line plus any wrapped continuation lines)
 # C2 pointers; catalog equals tree (presence, validated date, pinned, evidence counts,
-#    archived rows' from/hook); evidence_for; collisions; ledger last-event agreement + sha256
-# C3 tier-2 budgets, read_with (inline list, targets, no local/), split_from, oversize
-# C4 (--before only) multiset line conservation, protected blocks, archive identity,
-#    legacy identity, pins, SPINE-hook survival; protected = bullet+block or heading section
+#    archived rows' from/hook); evidence_for; collisions; ledger syntax (known event words
+#    only), last-event agreement + sha256; catalog staleness (full timestamps when both
+#    sides carry them); path containment (D10) of SPINE, catalog and ledger paths; no
+#    symlinks; no legacy archive left inside a tier directory
+# C3 tier-2 budgets, read_with (inline list, contained targets, no local/), split_from, oversize
+# C4 (--before only) multiset line conservation over principle file + evidence twin
+#    combined, protected blocks, archive identity, legacy identity (incl. adopted nested
+#    archives), pins, SPINE-hook survival; protected = bullet+block or heading section
 set -u
 export LC_ALL=C
 
@@ -54,25 +58,64 @@ trim() { nocr | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'; }
 sha() { if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1; else shasum -a 256 "$1" | cut -d' ' -f1; fi; }
 count_lines() { nocr < "$1" | grep -c '' ; }
 count_bytes() { wc -c < "$1" | tr -d ' '; }
-tier_files() { # $1 = root  → relative paths
-  for t in $TIERS; do [ -d "$1/$t" ] && find "$1/$t" -type f -name '*.md'; done | sed "s|^$1/||" | sort
+tier_files() { # $1 = root  → relative paths (a nested <tier>/**/archive/** file is a legacy archive, not a tier file)
+  for t in $TIERS; do [ -d "$1/$t" ] && find "$1/$t" -type f -name '*.md'; done | sed "s|^$1/||" | grep -v '/archive/' | sort
 }
+nested_archives() { for t in $TIERS; do [ -d "$1/$t" ] && find "$1/$t" -type f -name '*.md'; done | sed "s|^$1/||" | grep '/archive/' | sort; return 0; }
 archive_files() { [ -d "$1/archive" ] && find "$1/archive" -type f -name '*.md' ! -name 'LEDGER.md' | sed "s|^$1/||" | sort; return 0; }
 evidence_files() { [ -d "$1/evidence" ] && find "$1/evidence" -type f -name '*.md' | sed "s|^$1/||" | sort; return 0; }
+frontmatter_less() { nocr < "$1" | awk 'NR==1 && $0=="---"{fm=1; next} fm && $0=="---"{fm=0; next} !fm' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'; }   # trimmed body lines
 frontmatter() { nocr < "$1" | awk 'NR==1 && $0!="---"{exit} NR>1 && $0=="---"{exit} NR>1{print}'; }
 fm_value() { frontmatter "$1" | grep "^$2:" | head -1 | sed "s/^$2:[[:space:]]*//"; }
 newest_stamp() { nocr < "$1" | grep -oE 'last_(validated|updated): *[0-9]{4}-[0-9]{2}-[0-9]{2}' | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | sort | tail -1; }
 catalog_row() { grep -F -- "- $2 |" "$1" | head -1 | nocr; }
-is_legacy() { case "${1#archive/}" in */*) return 1 ;; *) return 0 ;; esac; }   # structural: flat under archive/ = legacy
+is_legacy() { case "${1#archive/}" in legacy/*) return 0 ;; */*) return 1 ;; *) return 0 ;; esac; }   # structural: flat under archive/ or under archive/legacy/ = legacy
+# contained <path> <kind>: D10. Relative, no "." or ".." segment, not absolute, no "~", no
+# backslash or drive colon, and inside the allowed roots. kind: tier (a tier directory),
+# archived (archive/<tier>/...), store (tier, archive/ or evidence/), spine (tier or CATALOG.md)
+contained() {
+  local p="$1" first
+  case "$p" in ''|/*|\~*|*\\*|*:*) return 1 ;; esac
+  case "/$p/" in */../*|*/./*|*//*) return 1 ;; esac
+  first=${p%%/*}
+  case "$2" in
+    tier) [ "$first" != "$p" ] && case " $TIERS " in *" $first "*) return 0 ;; esac; return 1 ;;
+    archived) case "$p" in archive/*) contained "${p#archive/}" tier ;; *) return 1 ;; esac ;;
+    spine) [ "$p" = "CATALOG.md" ] && return 0; contained "$p" tier ;;
+    store) case "$first" in archive|evidence) [ "$first" != "$p" ] ;; *) contained "$p" tier ;; esac ;;
+  esac
+}
+EVENT_RE='^- [0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2})?Z)? '
+stamp_newer() { # stamp_newer A B: A later than B; full timestamps compared only when BOTH carry a time
+  case "$1$2" in *T*T*) [ "$1" \> "$2" ] ;; *) [ "${1:0:10}" \> "${2:0:10}" ] ;; esac
+}
 field() { printf '%s' "$1" | sed "s/.*| $2: //; s/ |.*//" | sed 's/[[:space:]]*$//'; }   # field <line> <name>
 # ledger_last_events: "<path> <archive|restore>" for the newest event per path
 # (a top-level function: bash 3.2 cannot parse a case statement inside a process substitution)
 ledger_last_events() {
-  nocr < "$LEDGER" | grep -E '^- [0-9-]+ (archive|restore)' | while IFS= read -r l; do
+  nocr < "$LEDGER" | grep -E "$EVENT_RE"'(archive|restore) ' | while IFS= read -r l; do
     e=$(printf '%s' "$l" | awk '{print $3}'); to=$(field "$l" to)
     if [ "$e" = "archive" ]; then printf '%s %s\n' "${to#archive/}" archive
     elif [ "$e" = "restore" ]; then printf '%s %s\n' "$to" restore; fi
   done | awk '{last[$1]=$2} END{for (k in last) print k, last[k]}'
+}
+# spine_entries <file>: one line per entry, its wrapped continuation lines (any following
+# line that is not blank, a heading, a comment or another "- " item) joined with one space,
+# so the per-entry byte cap covers the whole entry (one joining byte stands in for each newline)
+spine_entries() {
+  nocr < "$1" | awk '
+    function flush() { if (e != "") print e; e = "" }
+    /^- \[/ { flush(); e = $0; next }
+    /^[ \t]*$/ || /^#/ || /^- / || /^<!--/ { flush(); next }
+    { if (e != "") { sub(/^[ \t]+/, ""); e = e " " $0 } }
+    END { flush() }'
+}
+# spine_hook_lines <file>: the hook of each entry's first line, then each continuation line on its own
+spine_hook_lines() {
+  nocr < "$1" | awk '
+    /^- \[/ { inentry = 1; print "E\t" $0; next }
+    /^[ \t]*$/ || /^#/ || /^- / || /^<!--/ { inentry = 0; next }
+    inentry { sub(/^[ \t]+/, ""); print "C\t" $0 }'
 }
 hook_of_entry() { printf '%s' "$1" | sed -E 's/^- \[[^]]*\]\([^)]*\)( *\+ *\[[^]]*\]\([^)]*\))*//' | sed 's/^ *— *//; s/^ *-- *//'; }
 
@@ -85,14 +128,17 @@ if [ ! -f "$SPINE" ]; then fail "SPINE.md missing"; else
   while IFS= read -r line; do
     n=${#line}
     [ "$n" -le "$ENTRY_MAX_BYTES" ] || fail "entry over $ENTRY_MAX_BYTES bytes ($n): ${line:0:60}..."
-  done < <(nocr < "$SPINE" | grep '^- \[')
+  done < <(spine_entries "$SPINE")
   grep -q '](CATALOG.md)' "$SPINE" || fail "SPINE has no catalog line"
 fi
 report C1
 
 # ── C2: pointers, catalog equals tree, evidence_for, collisions, ledger ──────
 if [ -f "$SPINE" ]; then
-  while IFS= read -r p; do [ -f "$STORE/$p" ] || fail "SPINE pointer to missing file: $p"; done \
+  while IFS= read -r p; do
+    contained "$p" spine || { fail "uncontained path in SPINE.md: $p"; continue; }
+    [ -f "$STORE/$p" ] || fail "SPINE pointer to missing file: $p"
+  done \
     < <(nocr < "$SPINE" | grep '^- \[' | grep -o '](\([^)]*\.md\))' | sed 's/^](//;s/)$//' | sort -u)
   while IFS= read -r p; do grep -Fq -- "($p)" "$SPINE" || fail "active file has no SPINE pointer: $p"; done < <(tier_files "$STORE")
 fi
@@ -101,7 +147,10 @@ LEDGER="$STORE/archive/LEDGER.md"
 if [ ! -f "$CAT" ]; then fail "CATALOG.md missing"; else
   while IFS= read -r p; do grep -Fq -- "- $p |" "$CAT" || fail "file not in catalog: $p"; done \
     < <({ tier_files "$STORE"; archive_files "$STORE"; evidence_files "$STORE"; } | sort)
-  while IFS= read -r p; do [ -f "$STORE/$p" ] || fail "catalog line points at missing file: $p"; done \
+  while IFS= read -r p; do
+    contained "$p" store || { fail "uncontained path in CATALOG.md: $p"; continue; }
+    [ -f "$STORE/$p" ] || fail "catalog line points at missing file: $p"
+  done \
     < <(nocr < "$CAT" | grep -o '^- [^|]* |' | sed 's/^- //;s/ |$//')
   # active rows: validated date = newest stamp; pinned flag = lifecycle: pinned
   while IFS= read -r p; do
@@ -132,7 +181,7 @@ if [ ! -f "$CAT" ]; then fail "CATALOG.md missing"; else
     printf '%s' "$row" | grep -q '| from ' || fail "archived row lacks 'from': $a"
     printf '%s' "$row" | grep -q '| hook: ' || fail "archived row lacks 'hook': $a"
     if [ ! -f "$LEDGER" ]; then fail "archive/LEDGER.md missing but $a is not legacy"; continue; fi
-    ev=$(nocr < "$LEDGER" | grep -F -- "| to: $a |" | grep -E '^- [0-9-]+ archive ' | tail -1)
+    ev=$(nocr < "$LEDGER" | grep -F -- "| to: $a |" | grep -E "$EVENT_RE"'archive ' | tail -1)
     if [ -z "$ev" ]; then fail "no ledger archive event for: $a"; continue; fi
     lsha=$(printf '%s' "$ev" | grep -o 'sha256: [0-9a-f]*' | sed 's/sha256: //')
     [ "$lsha" = "$(sha "$STORE/$a")" ] || fail "ledger sha256 does not match archived file: $a"
@@ -141,25 +190,50 @@ if [ ! -f "$CAT" ]; then fail "CATALOG.md missing"; else
     [ "$lhook" = "$chook" ] || fail "catalog hook differs from ledger spine-entry hook: $a"
   done < <(archive_files "$STORE")
 fi
+# ledger syntax: every "- " line is a known event with contained, mutually consistent paths.
+# Unknown event words fail loudly instead of being skipped.
+if [ -f "$LEDGER" ]; then
+  while IFS= read -r l; do
+    if ! printf '%s\n' "$l" | grep -Eq "$EVENT_RE"; then fail "malformed ledger line (no leading date): ${l:0:70}"; continue; fi
+    ev=$(printf '%s' "$l" | sed -E "s/$EVENT_RE//; s/ *\|.*//")
+    case "$ev" in
+      archive|restore|"restore (modified)") ;;
+      *) fail "unknown ledger event '$ev': ${l:0:70}"; continue ;;
+    esac
+    fr=$(field "$l" from); to=$(field "$l" to)
+    contained "$fr" store || { fail "uncontained path in archive/LEDGER.md from: $fr"; continue; }
+    contained "$to" store || { fail "uncontained path in archive/LEDGER.md to: $to"; continue; }
+    if [ "$ev" = archive ]; then
+      { contained "$fr" tier && [ "$to" = "archive/$fr" ]; } || fail "ledger archive line must move X to archive/X: from $fr to $to"
+    else
+      { contained "$to" tier && [ "$fr" = "archive/$to" ]; } || fail "ledger restore line must move archive/X to X: from $fr to $to"
+    fi
+  done < <(nocr < "$LEDGER" | grep '^- ')
+fi
 # ledger last event per path must agree with the tree
 if [ -f "$LEDGER" ]; then
   while read -r x ev; do
     case "$ev" in
       archive) { [ -f "$STORE/archive/$x" ] && [ ! -f "$STORE/$x" ]; } || fail "ledger says archived but tree disagrees: $x" ;;
       restore) { [ -f "$STORE/$x" ] && [ ! -f "$STORE/archive/$x" ]; } || fail "ledger says restored but tree disagrees: $x" ;;
-      *) fail "unknown ledger event '$ev' for $x" ;;
     esac
-  done < <(ledger_last_events | sort)
+  done < <(ledger_last_events | while read -r x ev; do contained "$x" tier && printf '%s %s\n' "$x" "$ev"; done | sort)
 fi
 # catalog rebuilt stamp must not predate the newest ledger event
 if [ -f "$LEDGER" ] && [ -f "$CAT" ]; then
-  rebuilt=$(nocr < "$CAT" | grep -oE 'rebuilt: [0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1 | sed 's/rebuilt: //')
-  newest=$(nocr < "$LEDGER" | grep -oE '^- [0-9]{4}-[0-9]{2}-[0-9]{2}' | sed 's/^- //' | sort | tail -1)
+  # full UTC timestamps (2026-09-11T10:00:00Z) are compared when both sides carry one; a
+  # date-only side is compared by date, which cannot see a same-day move after the rebuild
+  rebuilt=$(nocr < "$CAT" | grep -oE 'rebuilt: [0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2})?Z)?' | head -1 | sed 's/rebuilt: //')
+  newest=$(nocr < "$LEDGER" | grep -oE '^- [0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2})?Z)?' | sed 's/^- //' | sort | tail -1)
   if [ -z "$rebuilt" ]; then fail "catalog has no rebuilt: stamp"
-  elif [ -n "$newest" ] && [ "$newest" \> "$rebuilt" ]; then fail "catalog stale: rebuilt $rebuilt but newest ledger event is $newest"; fi
+  elif [ -n "$newest" ] && stamp_newer "$newest" "$rebuilt"; then fail "catalog stale: rebuilt $rebuilt but newest ledger event is $newest"; fi
 fi
 # collisions: a path may not be both active and archived
 while IFS= read -r p; do [ -f "$STORE/archive/$p" ] && fail "path exists both active and archived: $p"; done < <(tier_files "$STORE")
+# a legacy archive left inside a tier directory must be adopted by migration (D3)
+while IFS= read -r p; do fail "legacy archive inside a tier directory: $p (migration adopts it to archive/legacy/$p)"; done < <(nested_archives "$STORE")
+# every path must resolve inside the store: no symlinks (D10)
+while IFS= read -r l; do fail "symlink in store: ${l#$STORE/}"; done < <(find "$STORE" -type l)
 report C2
 
 # ── C3: tier-2 budgets, read_with, split_from, oversize ──────────────────────
@@ -177,13 +251,17 @@ while IFS= read -r p; do
         while IFS= read -r t; do
           [ -z "$t" ] && continue
           case "$t" in local/*) fail "$p read_with into local/ overlay: $t"; continue ;; esac
+          contained "$t" store || { fail "uncontained path in $p read_with: $t"; continue; }
           [ -f "$STORE/$t" ] || fail "$p read_with target missing: $t"
         done < <(printf '%s\n' "$rw" | tr ',' '\n' | trim) ;;
       *) fail "$p read_with must be an inline list [a.md, b.md]" ;;
     esac
   fi
   sf=$(fm_value "$f" split_from)
-  [ -n "$sf" ] && [ ! -f "$STORE/$sf" ] && fail "$p split_from target missing: $sf"
+  if [ -n "$sf" ]; then
+    if ! contained "$sf" tier; then fail "uncontained path in $p split_from: $sf"
+    elif [ ! -f "$STORE/$sf" ]; then fail "$p split_from target missing: $sf"; fi
+  fi
 done < <(tier_files "$STORE")
 report C3
 
@@ -203,12 +281,14 @@ if [ -n "$BEFORE" ]; then
   }
   while IFS= read -r p; do
     candidates_for "$p"
-    # multiset conservation: each distinct line must appear at least as often as before
+    # multiset conservation over the COMBINED pool: principle file + its pre-existing evidence
+    # twin before, against every candidate after. A line present in both before (a duplicate)
+    # must survive twice; an append that skipped it as "already present" fails here.
     while read -r k line; do
       [ -z "$line" ] && continue
       have=$(grep -Fxc -- "$line" "$cand")
       [ "$have" -ge "$k" ] || fail "line lost from $p (before x$k, after x$have): ${line:0:70}"
-    done < <(trim < "$BEFORE/$p" | grep -v '^$' | sort | uniq -c | sed 's/^ *//')
+    done < <({ trim < "$BEFORE/$p"; [ -f "$BEFORE/evidence/$p" ] && frontmatter_less "$BEFORE/evidence/$p"; } | grep -v '^$' | sort | uniq -c | sed 's/^ *//')
     if grep -q '^lifecycle: pinned' "$BEFORE/$p" && [ ! -f "$STORE/$p" ]; then fail "pinned file was moved: $p"; fi
     if grep -qE '\[NON-NEGOTIABLE[^]]*\]' "$BEFORE/$p" && [ -f "$STORE/archive/$p" ]; then fail "file carrying [NON-NEGOTIABLE] was archived: $p"; fi
   done < <(tier_files "$BEFORE")
@@ -224,18 +304,34 @@ if [ -n "$BEFORE" ]; then
   done < <(evidence_files "$BEFORE")
   # nothing leaves the archive: every pre-existing archive file still exists
   while IFS= read -r a; do [ -f "$STORE/$a" ] || fail "archive file deleted: $a"; done < <(archive_files "$BEFORE")
-  # archived files: non-legacy must equal the original tier file; legacy must equal its own before copy
+  # legacy archives nested inside a tier directory before are adopted byte-identically at archive/legacy/<path>
+  while IFS= read -r n; do
+    if [ ! -f "$STORE/archive/legacy/$n" ]; then fail "nested legacy archive not adopted: $n (expected archive/legacy/$n)"
+    elif [ "$(sha "$STORE/archive/legacy/$n")" != "$(sha "$BEFORE/$n")" ]; then fail "legacy archive file changed: archive/legacy/$n"; fi
+  done < <(nested_archives "$BEFORE")
+  # archived files. Legacy: byte-identical to its own before copy (same path, or the nested path it was
+  # adopted from). Non-legacy: byte-identical to the before copy at the same archive path (already
+  # archived; --before may itself be a migrated store) or to the original tier file (moved in this run),
+  # or else equal to its last ledger archive checksum (edited after migration and before a later move,
+  # or restored, edited and re-archived; its original lines are covered by conservation). A split
+  # child created by this run and archived with its family has no original of its own; its parent must.
   while IFS= read -r a; do
-    rel=${a#archive/}
-    if [ -f "$BEFORE/$a" ]; then
-      [ "$(sha "$STORE/$a")" = "$(sha "$BEFORE/$a")" ] || fail "legacy archive file changed: $a"
-    elif [ ! -f "$BEFORE/$rel" ]; then fail "archived file has no original: $a"
-    elif [ "$(sha "$STORE/$a")" != "$(sha "$BEFORE/$rel")" ]; then
-      # edited after migration and before the move is legitimate ONLY if the ledger checksum matches the file
-      # (its original lines are then covered by the conservation check above)
-      lsha=$([ -f "$LEDGER" ] && nocr < "$LEDGER" | grep -F -- "| to: $a |" | grep -E '^- [0-9-]+ archive ' | tail -1 | grep -o 'sha256: [0-9a-f]*' | sed 's/sha256: //')
-      [ -n "$lsha" ] && [ "$lsha" = "$(sha "$STORE/$a")" ] || fail "archived file differs from original and from its ledger checksum: $a"
+    rel=${a#archive/}; h=$(sha "$STORE/$a")
+    if is_legacy "$a"; then
+      if [ -f "$BEFORE/$a" ]; then [ "$h" = "$(sha "$BEFORE/$a")" ] || fail "legacy archive file changed: $a"
+      elif [ -f "$BEFORE/${a#archive/legacy/}" ] && [ "$a" != "${a#archive/legacy/}" ]; then :   # adoption, checked above
+      else fail "archived file has no original: $a"; fi
+      continue
     fi
+    [ -f "$BEFORE/$a" ] && [ "$h" = "$(sha "$BEFORE/$a")" ] && continue
+    [ -f "$BEFORE/$rel" ] && [ "$h" = "$(sha "$BEFORE/$rel")" ] && continue
+    parent=$(fm_value "$STORE/$a" split_from)
+    if [ ! -f "$BEFORE/$a" ] && [ ! -f "$BEFORE/$rel" ] && \
+       ! { [ -n "$parent" ] && contained "$parent" tier && { [ -f "$BEFORE/$parent" ] || [ -f "$BEFORE/archive/$parent" ]; }; }; then
+      fail "archived file has no original: $a"; continue
+    fi
+    lsha=$([ -f "$LEDGER" ] && nocr < "$LEDGER" | grep -F -- "| to: $a |" | grep -E "$EVENT_RE"'archive ' | tail -1 | grep -o 'sha256: [0-9a-f]*' | sed 's/sha256: //')
+    [ -n "$lsha" ] && [ "$lsha" = "$h" ] || fail "archived file differs from original and from its ledger checksum: $a"
   done < <(archive_files "$STORE")
   # protected bullet + its indented block must survive in an ACTIVE or ARCHIVED file (evidence does not count)
   { tier_files "$STORE"; archive_files "$STORE"; } | while IFS= read -r p; do trim < "$STORE/$p"; done > "$protected_pool"
@@ -256,11 +352,13 @@ if [ -n "$BEFORE" ]; then
   if [ -f "$BEFORE/SPINE.md" ]; then
     scope=(); [ -f "$STORE/SPINE.md" ] && scope+=("$STORE/SPINE.md"); [ -f "$STORE/CATALOG.md" ] && scope+=("$STORE/CATALOG.md")
     while IFS= read -r p; do scope+=("$STORE/$p"); done < <({ tier_files "$STORE"; archive_files "$STORE"; })
-    while IFS= read -r line; do
-      hook=$(hook_of_entry "$line")
+    # a wrapped entry's continuation lines are hook text too; each must survive
+    while IFS="$(printf '\t')" read -r kind line; do
+      if [ "$kind" = E ]; then hook=$(hook_of_entry "$line"); else hook=$line; fi
+      hook=$(printf '%s' "$hook" | sed 's/[[:space:]]*$//')
       [ -n "$hook" ] || continue
       grep -Fq -- "$hook" "${scope[@]}" || fail "SPINE hook lost: ${hook:0:70}"
-    done < <(nocr < "$BEFORE/SPINE.md" | grep '^- \[')
+    done < <(spine_hook_lines "$BEFORE/SPINE.md")
   fi
   rm -f "$cand" "$protected_pool"
   report C4

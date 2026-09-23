@@ -5,9 +5,11 @@
 #    evidence inflating a tier file) reproduced on a synthetic store.
 # 2. store-after --before store-before MUST pass everything: the redesign fixes the
 #    diagnosis without losing a line, a checksum, a protected block, a hook or a pin.
-# 3. Twenty-six tamper cases MUST be caught, each with a non-zero exit; one exemption
-#    case (oversize:), two restore cases (D7 restore obeying D1) and one merged-line
-#    pointer-removal archive MUST pass.
+# 3. Every tamper case MUST be caught, each with a non-zero exit and its named reason;
+#    every fail branch of check-store.sh has at least one dedicated case. The positive
+#    cases (oversize: exemption, two restores, merged-line pointer removal, a preserved
+#    pre-existing duplicate, a timestamped catalog, a re-archive after an edit, an adopted
+#    nested legacy archive) MUST pass.
 set -u
 cd "$(dirname "$0")"
 CHECK=./check-store.sh
@@ -33,12 +35,30 @@ expect_pass() {
   rm -rf "$tmp"
 }
 
+shaf() { if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d" " -f1; else shasum -a 256 "$1" | cut -d" " -f1; fi; }
+# with_before <name> <expected-substring|PASS> <before-base> <commands on $b> <commands on $s>:
+# $b is a copy of <before-base>, $s a copy of store-after; checks $s --before $b
+with_before() {
+  local name="$1" expect="$2" base="$3" bcmds="$4" cmds="$5" tmp out rc
+  tmp=$(mktemp -d); cp -r "$base" "$tmp/b"; cp -r store-after "$tmp/s"
+  ( b="$tmp/b"; eval "$bcmds" ); ( s="$tmp/s"; eval "$cmds" )
+  out=$(bash "$CHECK" "$tmp/s" --before "$tmp/b" 2>&1); rc=$?
+  if [ "$expect" = PASS ]; then
+    if [ $rc -eq 0 ]; then ok "$name"; else bad "$name (rc=$rc)"; echo "$out" | sed 's/^/       /'; fi
+  elif [ $rc -ne 0 ] && echo "$out" | grep -Fq -- "$expect"; then ok "$name"
+  else bad "$name (rc=$rc)"; echo "$out" | sed 's/^/       /'; fi
+  rm -rf "$tmp"
+}
+
 echo "== store-before (expect C1, C2, C3 to fail) =="
 out=$(bash "$CHECK" store-before 2>&1); rc=$?
 echo "$out" | sed 's/^/     /'
 [ $rc -ne 0 ] && ok "before store is rejected" || bad "before store was accepted"
 for c in C1 C2 C3; do
   echo "$out" | grep -q "^$c FAIL" && ok "$c fails on before" || bad "$c did not fail on before"
+done
+for r in "entry over 400 bytes (603)" "SPINE has no catalog line" "CATALOG.md missing" "craft/testing.md has 69 lines (max 60)"; do
+  echo "$out" | grep -Fq -- "$r" && ok "before store diagnosis: $r" || bad "before store diagnosis missing: $r"
 done
 
 echo "== store-after --before store-before (expect all PASS) =="
@@ -164,6 +184,139 @@ expect_pass "archive one target of a merged line by pointer removal (derived led
    sed -i.bak "s| + \[Delta\](projects/delta.md)||" "$s/SPINE.md"; rm -f "$s/SPINE.md.bak";
    sed -i.bak "/^- projects\/delta.md |/d; s/rebuilt: 2026-09-11/rebuilt: 2026-09-12/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak";
    printf -- "- archive/projects/delta.md | Delta webhook relay — retries and dead-letter handling | archived 2026-09-12 | reason: past threshold, no validation observed | from projects/delta.md | hook: %s\n" "$hook" >> "$s/CATALOG.md"'
+
+echo "== round six: lossless append keeps pre-existing duplicates (combined multiset) =="
+DUP='- 2026-05-11 observe: Noor rewrote a sleep(2) into a poll with a 5 s timeout without being asked'
+with_before "duplicate in principle file and twin collapsed to one copy" "line lost from craft/testing.md (before x2, after x1)" store-after \
+  'printf -- "%s\n" "$DUP" >> "$b/craft/testing.md"' \
+  ':'
+with_before "duplicate in principle file and twin survives twice (append skips only lines this plan wrote)" PASS store-after \
+  'printf -- "%s\n" "$DUP" >> "$b/craft/testing.md"' \
+  'printf -- "%s\n" "$DUP" >> "$s/evidence/craft/testing.md"; sed -i.bak "s/| 30 entries/| 31 entries/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+
+echo "== round six: path containment (D10) =="
+tamper "read_with with a .. traversal" "uncontained path in projects/beacon.md read_with: ../../../../etc/hosts" \
+  'sed -i.bak "s|^read_with: \[ops/deploy.md\]|read_with: [ops/deploy.md, ../../../../etc/hosts]|" "$s/projects/beacon.md"; rm -f "$s/projects/beacon.md.bak"'
+tamper "ledger restore to an absolute path" "uncontained path in archive/LEDGER.md to: /etc/hosts" \
+  'printf -- "- 2026-09-10 restore | from: archive/projects/atlas.md | to: /etc/hosts | sha256: 0 | reason: test\n" >> "$s/archive/LEDGER.md"'
+tamper "ledger archive from a .. path" "uncontained path in archive/LEDGER.md from: ../x.md" \
+  'printf -- "- 2026-09-10 archive | from: ../x.md | to: archive/../x.md | sha256: 0 | reason: test | spine-entry: - [X](../x.md) — x\n" >> "$s/archive/LEDGER.md"'
+tamper "split_from starting with ~" "uncontained path in craft/testing-2.md split_from: ~/.ssh/config" \
+  'sed -i.bak "s|^split_from: craft/testing.md|split_from: ~/.ssh/config|" "$s/craft/testing-2.md"; rm -f "$s/craft/testing-2.md.bak"'
+tamper "catalog row with a .. path" "uncontained path in CATALOG.md: ../outside.md" \
+  'printf -- "- ../outside.md | outside the store\n" >> "$s/CATALOG.md"'
+tamper "SPINE pointer to an absolute path" "uncontained path in SPINE.md: /etc/hosts.md" \
+  'printf -- "- [Hosts](/etc/hosts.md) — hosts.\n" >> "$s/SPINE.md"'
+tmp=$(mktemp -d); cp -r store-after "$tmp/s"; ln -s /etc/hosts "$tmp/s/ops/hosts.md" 2>/dev/null
+if [ -L "$tmp/s/ops/hosts.md" ]; then
+  out=$(bash "$CHECK" "$tmp/s" --before store-before 2>&1); rc=$?
+  { [ $rc -ne 0 ] && echo "$out" | grep -Fq -- "symlink in store: ops/hosts.md"; } && ok "symlink out of the store" || { bad "symlink missed (rc=$rc)"; echo "$out" | sed 's/^/       /'; }
+else echo "  skip symlink case (this filesystem does not create symlinks)"; fi
+rm -rf "$tmp"
+
+echo "== round six: ledger syntax, catalog timestamps, wrapped SPINE entries =="
+tamper "unknown ledger event word" "unknown ledger event 'purge'" \
+  'printf -- "- 2026-09-10 purge | from: projects/beacon.md | to: archive/projects/beacon.md | reason: test\n" >> "$s/archive/LEDGER.md"'
+tamper "ledger line without a leading date" "malformed ledger line" \
+  'printf -- "- yesterday archive | from: projects/beacon.md | to: archive/projects/beacon.md | reason: test\n" >> "$s/archive/LEDGER.md"'
+tamper "ledger archive line whose to: is not archive/<from>" "ledger archive line must move X to archive/X" \
+  'printf -- "- 2026-09-10 archive | from: projects/beacon.md | to: archive/projects/comet.md | sha256: 0 | reason: test | spine-entry: - [B](projects/beacon.md) — b\n" >> "$s/archive/LEDGER.md"'
+tamper "ledger restore line whose from: is not archive/<to>" "ledger restore line must move archive/X to X" \
+  'printf -- "- 2026-09-10 restore | from: archive/projects/atlas.md | to: projects/beacon.md | sha256: 0 | reason: test\n" >> "$s/archive/LEDGER.md"'
+tamper "same-day ledger event after a timestamped rebuild" "catalog stale: rebuilt 2026-09-11T10:00:00Z" \
+  'sed -i.bak "s/^- 2026-09-11 archive/- 2026-09-11T12:00:00Z archive/" "$s/archive/LEDGER.md"; sed -i.bak "s/rebuilt: 2026-09-11/rebuilt: 2026-09-11T10:00:00Z/" "$s/CATALOG.md"; rm -f "$s/archive/LEDGER.md.bak" "$s/CATALOG.md.bak"'
+expect_pass "timestamped rebuild after a same-day timestamped ledger event" \
+  'sed -i.bak "s/^- 2026-09-11 archive/- 2026-09-11T12:00:00Z archive/" "$s/archive/LEDGER.md"; sed -i.bak "s/rebuilt: 2026-09-11/rebuilt: 2026-09-11T13:00:00Z/" "$s/CATALOG.md"; rm -f "$s/archive/LEDGER.md.bak" "$s/CATALOG.md.bak"'
+tamper "wrapped SPINE entry over the cap only with its continuation line" "entry over 400 bytes" \
+  '{ printf -- "- [Wrapped](ops/deploy.md) — "; head -c 250 /dev/zero | tr "\0" "y"; printf "\n  "; head -c 200 /dev/zero | tr "\0" "z"; printf "\n"; } >> "$s/SPINE.md"'
+
+echo "== round six: --before is itself a migrated store =="
+with_before "re-archive after restore and edit (ledger checksum), before = migrated store" PASS store-after ':' \
+  'L="$s/archive/LEDGER.md";
+   printf -- "- 2026-09-12 restore | from: archive/projects/atlas.md | to: projects/atlas.md | sha256: %s | reason: user request\n" "$(shaf "$s/archive/projects/atlas.md")" >> "$L";
+   printf -- "\n- 2026-09-12 observe: cutover rescheduled to Q1\n" >> "$s/archive/projects/atlas.md";
+   entry=$(sed -n "s/.*| spine-entry: //p" "$L" | head -1);
+   printf -- "- 2026-09-13 archive | from: projects/atlas.md | to: archive/projects/atlas.md | sha256: %s | reason: past threshold, no validation observed | spine-entry: %s\n" "$(shaf "$s/archive/projects/atlas.md")" "$entry" >> "$L";
+   sed -i.bak "s/rebuilt: 2026-09-11/rebuilt: 2026-09-13/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+with_before "archived file edited without a ledger line, before = migrated store" "archived file differs from original and from its ledger checksum: archive/projects/atlas.md" store-after ':' \
+  'printf "\n" >> "$s/archive/projects/atlas.md"'
+with_before "evidence twin deleted" "evidence twin deleted: evidence/craft/testing.md" store-after ':' \
+  'rm "$s/evidence/craft/testing.md"; sed -i.bak "/evidence\/craft\/testing.md/d" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+
+echo "== round six: legacy archives nested inside a tier directory =="
+NESTED='---
+scope: Old testing notes (rewritten by an earlier compaction)
+recall_count: 0
+---
+- Old: integration suite ran nightly only.'
+with_before "nested <tier>/archive/ file adopted byte-identically at archive/legacy/" PASS store-before \
+  'mkdir -p "$b/craft/archive"; printf "%s\n" "$NESTED" > "$b/craft/archive/old-testing.md"' \
+  'mkdir -p "$s/archive/legacy/craft/archive"; printf "%s\n" "$NESTED" > "$s/archive/legacy/craft/archive/old-testing.md";
+   printf -- "- archive/legacy/craft/archive/old-testing.md | Old testing notes | legacy\n" >> "$s/CATALOG.md"'
+with_before "nested legacy archive left inside the tier directory" "legacy archive inside a tier directory: craft/archive/old-testing.md" store-before \
+  'mkdir -p "$b/craft/archive"; printf "%s\n" "$NESTED" > "$b/craft/archive/old-testing.md"' \
+  'mkdir -p "$s/craft/archive"; printf "%s\n" "$NESTED" > "$s/craft/archive/old-testing.md"'
+with_before "nested legacy archive dropped by migration" "nested legacy archive not adopted: craft/archive/old-testing.md" store-before \
+  'mkdir -p "$b/craft/archive"; printf "%s\n" "$NESTED" > "$b/craft/archive/old-testing.md"' ':'
+with_before "nested legacy archive adopted but rewritten" "legacy archive file changed: archive/legacy/craft/archive/old-testing.md" store-before \
+  'mkdir -p "$b/craft/archive"; printf "%s\n" "$NESTED" > "$b/craft/archive/old-testing.md"' \
+  'mkdir -p "$s/archive/legacy/craft/archive"; printf "%s\nrewritten\n" "$NESTED" > "$s/archive/legacy/craft/archive/old-testing.md";
+   printf -- "- archive/legacy/craft/archive/old-testing.md | Old testing notes | legacy\n" >> "$s/CATALOG.md"'
+
+echo "== round six: dedicated cases for the remaining checker branches =="
+tamper "SPINE.md missing" "SPINE.md missing" 'rm "$s/SPINE.md"'
+tamper "SPINE over the line cap" "lines (max 80)" \
+  'i=0; while [ $i -lt 70 ]; do i=$((i+1)); echo "## Pad $i"; done >> "$s/SPINE.md"'
+tamper "SPINE over the byte cap with every entry under its cap" "bytes (max 16000)" \
+  'i=0; while [ $i -lt 45 ]; do i=$((i+1)); printf -- "- [Pad](ops/deploy.md) — "; head -c 350 /dev/zero | tr "\0" "p"; printf "\n"; done >> "$s/SPINE.md"'
+tamper "SPINE without the catalog line" "SPINE has no catalog line" \
+  'sed -i.bak "/](CATALOG.md)/d" "$s/SPINE.md"; rm -f "$s/SPINE.md.bak"'
+tamper "SPINE pointer to a missing file" "SPINE pointer to missing file: craft/ghost.md" \
+  'printf -- "- [Ghost](craft/ghost.md) — ghost.\n" >> "$s/SPINE.md"'
+tamper "active file without a SPINE pointer" "active file has no SPINE pointer: ops/extra.md" \
+  'printf -- "---\nscope: extra\nlast_validated: 2026-09-01\n---\n- a rule\n" > "$s/ops/extra.md"; printf -- "- ops/extra.md | extra | validated 2026-09-01\n" >> "$s/CATALOG.md"'
+tamper "CATALOG.md missing" "CATALOG.md missing" 'rm "$s/CATALOG.md"'
+tamper "file missing from the catalog" "file not in catalog: ops/deploy.md" \
+  'sed -i.bak "/^- ops\/deploy.md |/d" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+tamper "catalog row for a missing file" "catalog line points at missing file: ops/ghost.md" \
+  'printf -- "- ops/ghost.md | ghost | validated 2026-09-01\n" >> "$s/CATALOG.md"'
+tamper "catalog validated date for an undated file" "catalog claims a validated date for undated file ops/undated.md" \
+  'printf -- "---\nscope: undated\n---\n- a rule\n" > "$s/ops/undated.md"; printf -- "- [Undated](ops/undated.md) — undated.\n" >> "$s/SPINE.md";
+   printf -- "- ops/undated.md | undated | validated 2026-09-01\n" >> "$s/CATALOG.md"'
+tamper "catalog row lacks pinned for a pinned file" "catalog row lacks pinned for projects/comet.md" \
+  'sed -i.bak "s/| validated 2026-05-06 | pinned/| validated 2026-05-06/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+tamper "catalog evidence count wrong" "catalog count wrong for evidence/craft/testing.md" \
+  'sed -i.bak "s/| 30 entries/| 31 entries/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+tamper "evidence twin without evidence_for" "evidence/craft/testing.md has no evidence_for" \
+  'sed -i.bak "/^evidence_for:/d" "$s/evidence/craft/testing.md"; rm -f "$s/evidence/craft/testing.md.bak"'
+tamper "flat archive file not labelled legacy" "flat archive file must be labelled legacy in the catalog: archive/old-warehouse-notes.md" \
+  'sed -i.bak "s/^\(- archive\/old-warehouse-notes.md .*\) | legacy$/\1/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+tamper "archived row without from" "archived row lacks 'from': archive/projects/atlas.md" \
+  'sed -i.bak "s/ | from projects\/atlas.md//" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+tamper "archived row without hook" "archived row lacks 'hook': archive/projects/atlas.md" \
+  'sed -i.bak "s/^\(- archive\/projects\/atlas.md .*\) | hook: .*$/\1/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+tamper "ledger missing with a non-legacy archive" "archive/LEDGER.md missing but archive/projects/atlas.md is not legacy" \
+  'rm "$s/archive/LEDGER.md"'
+tamper "no ledger archive event for an archived file" "no ledger archive event for: archive/projects/atlas.md" \
+  'sed -i.bak "/ archive | from: projects\/atlas.md/d" "$s/archive/LEDGER.md"; rm -f "$s/archive/LEDGER.md.bak"'
+tamper "catalog hook differs from the ledger hook" "catalog hook differs from ledger spine-entry hook: archive/projects/atlas.md" \
+  'sed -i.bak "s/| hook: Atlas data-platform/| hook: Atlas Data-platform/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+tamper "ledger restore event for a file still archived" "ledger says restored but tree disagrees: projects/atlas.md" \
+  'printf -- "- 2026-09-10 restore | from: archive/projects/atlas.md | to: projects/atlas.md | sha256: 0 | reason: user request\n" >> "$s/archive/LEDGER.md"'
+tamper "catalog without a rebuilt stamp" "catalog has no rebuilt: stamp" \
+  'sed -i.bak "s/ rebuilt: 2026-09-11//" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+tamper "tier file over the line cap" "ops/deploy.md has" \
+  'i=0; while [ $i -lt 60 ]; do i=$((i+1)); echo "- pad $i"; done >> "$s/ops/deploy.md"'
+tamper "tier file over the byte cap" "ops/deploy.md is" \
+  '{ head -c 7000 /dev/zero | tr "\0" "b"; printf "\n"; } >> "$s/ops/deploy.md"'
+tamper "pinned file moved" "pinned file was moved: projects/comet.md" \
+  'mkdir -p "$s/archive/projects"; mv "$s/projects/comet.md" "$s/archive/projects/comet.md"'
+tamper "legacy archive file changed" "legacy archive file changed: archive/old-warehouse-notes.md" \
+  'printf "rewritten\n" >> "$s/archive/old-warehouse-notes.md"'
+tamper "archived file with no original" "archived file has no original: archive/projects/zeta.md" \
+  'printf -- "---\nscope: zeta\n---\n- zeta\n" > "$s/archive/projects/zeta.md";
+   printf -- "- 2026-09-10 archive | from: projects/zeta.md | to: archive/projects/zeta.md | sha256: %s | reason: test | spine-entry: - [Zeta](projects/zeta.md) — zeta.\n" "$(shaf "$s/archive/projects/zeta.md")" >> "$s/archive/LEDGER.md";
+   printf -- "- archive/projects/zeta.md | zeta | archived 2026-09-10 | reason: test | from projects/zeta.md | hook: zeta.\n" >> "$s/CATALOG.md"'
 
 echo
 echo "files-only suite: $PASS passed, $FAIL failed"

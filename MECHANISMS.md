@@ -34,7 +34,7 @@ Living document of the mechanisms in aura-distill, their current state, and impr
 |-----------|--------|--------------|------------|
 | Spine auto-load | next release | Managed blocks in Claude `CLAUDE.md` and Codex `AGENTS.md` point to the shared SPINE | Depends on clients loading their global instruction files |
 | Post-distill spine read | v0.2.0 | Dispatcher reads SPINE after sub-agent returns | Only for current session |
-| Bridge detection | v0.3.2 | Step 3b identifies unreachable knowledge | Only suggests — user must act |
+| Bridge detection | v0.3.2 | Step 3d identifies unreachable knowledge | Only suggests — user must act |
 | Bridge escalation | v0.3.2 | Repeated suggestion + frustration → louder prompt | No tracking of "how many times suggested" yet |
 
 ### Future improvements

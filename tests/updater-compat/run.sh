@@ -542,6 +542,22 @@ c=$(new_client 1.1.17 shared); s=$(store_of "$c")
 run_dispatcher fixtures/updaters/dispatcher-v1.1.17.sh "$c" >/dev/null
 boot=$(grep -F 't=$(mktemp) && curl' "$c/.claude/commands/distill.md" | sed -e 's/^ *//' -e "s|https://raw.githubusercontent.com|$BASE|g" -e "s|{DISTILL_DIR}|$s|g")
 HOME="$c" bash -c "$boot" >/dev/null 2>&1 || true
+# The same bootstrap run VERBATIM, placeholder left in (a model that skips step 1's
+# substitution): it must refuse and create nothing, neither a literal "{DISTILL_DIR}"
+# directory in the working directory nor anything in the store.
+verb=$(grep -F 't=$(mktemp) && curl' "$REPO_ROOT/distill.md" | sed -e 's/^ *//' -e "s|https://raw.githubusercontent.com|$BASE|g")
+vcwd=$(mktemp -d "$WORK/clients/verbatim.XXXXXX"); vbefore=$(find "$c" -type f | LC_ALL=C sort | cksum)
+vreq=$(requests_to /bin/distill-update.sh)
+verr=$( cd "$vcwd" && HOME="$c" bash -c "$verb" 2>&1 >/dev/null ) || true
+check "bootstrap template run verbatim (placeholder unsubstituted) refuses and says why" \
+  bash -c "printf '%s' \"\$1\" | grep -q 'store path is still a placeholder'" _ "$verr"
+check "  and creates nothing: no '{DISTILL_DIR}' directory in the working directory, the client unchanged, no download" \
+  bash -c "[ -z \"\$(ls -A '$vcwd')\" ] && [ \"\$(find '$c' -type f | LC_ALL=C sort | cksum)\" = '$vbefore' ] && [ \"\$2\" = \"\$3\" ]" _ x "$vreq" "$(requests_to /bin/distill-update.sh)"
+# A quoted tilde is not expanded: D="~/.aura-distill" would create ./~/.aura-distill/bin/ in the cwd
+tverb=$(printf '%s' "$verb" | sed 's|D="{DISTILL_DIR}"|D="~/.aura-distill"|')
+terr=$( cd "$vcwd" && HOME="$c" bash -c "$tverb" 2>&1 >/dev/null ) || true
+check "bootstrap with a quoted ~ path refuses and creates no './~' directory in the working directory" \
+  bash -c "printf '%s' \"\$1\" | grep -q 'starts with ~' && [ -z \"\$(ls -A '$vcwd')\" ] && [ \"\$2\" = \"\$3\" ]" _ "$terr" "$vreq" "$(requests_to /bin/distill-update.sh)"
 sp=$(cksum < "$s/distill-process.md")
 run_update "$c" check >/dev/null
 check "check mode reports a pending repair ('$(first_line "$c")') and writes nothing" \

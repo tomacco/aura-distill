@@ -72,6 +72,8 @@ This installs:
 | `distill-process.md` | `~/.aura-distill/` | Full process (read by sub-agent) |
 | `SPINE.md` | `~/.aura-distill/` | Shared Claude/Codex knowledge index |
 | `bin/distill-check-store.sh` | `~/.aura-distill/` | Optional store self-check, used when bash is available |
+| `bin/distill-update.sh` | `~/.aura-distill/` | The updater `/distill` runs: follows your release channel, validates before replacing |
+| `.version`, `.channel`, `.command-path` | `~/.aura-distill/` | Installed version, release channel (stable or beta) and where the `/distill` command lives, read by the updater |
 | managed pointer | `~/.claude/CLAUDE.md` | Makes Claude load the shared SPINE |
 | managed pointer | `~/.codex/AGENTS.md` | Makes Codex load the shared SPINE |
 

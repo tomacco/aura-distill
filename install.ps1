@@ -11,7 +11,7 @@
 $ErrorActionPreference = 'Stop'
 
 $Version  = '1.1.23'
-$Build    = '20260515-01'
+$Build    = '20260518-01'
 $RawRoot  = if ($env:AURA_DISTILL_RAW_ROOT) { $env:AURA_DISTILL_RAW_ROOT } else { 'https://raw.githubusercontent.com/tomacco/aura-distill' }
 $BetaManifest = if ($env:AURA_DISTILL_CHANNEL_MANIFEST) { $env:AURA_DISTILL_CHANNEL_MANIFEST } else { "$RawRoot/beta/1.2/channels/manifest.json" }
 $Repo     = if ($env:AURA_DISTILL_REPO) { $env:AURA_DISTILL_REPO } else { "$RawRoot/main" }

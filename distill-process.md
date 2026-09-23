@@ -274,7 +274,7 @@ When frustration is detected, investigate its source honestly:
 - Was it caused by the USER's own gap? (missing knowledge, skipped step, premature optimization) → Encode as a growth opportunity — name it directly but respectfully
 - Was it caused by a MISMATCH between user and agent? (different mental models, communication style clash) → Encode as calibration data for both sides
 
-### Step 1c: Frustration escalation (high-priority reprocessing)
+### Step 1b.1: Frustration escalation (high-priority reprocessing)
 
 When frustration is HIGH (user explicitly said something was important, repeated a correction, or expressed disappointment that a prior instruction wasn't followed), this triggers **priority elevation**:
 
@@ -478,7 +478,7 @@ The user profile is a living document that evolves. It should contain:
 - Knowledge is never discarded. **Archiving is a byte-identical move** to `archive/<tier>/`, recorded in `archive/LEDGER.md` before the move, never a rewrite (the old "denser expression" rule is retired).
 - The principle goes in the tier file; its dated evidence goes in the twin. Protected blocks (`[NON-NEGOTIABLE…]`, `[DIRECTIVE…]`) and lines carrying any Step 1d marker stay in the tier file, whole, verbatim.
 - A file that must always be read with another declares it: `read_with: [ops/deploy.md]` (inline list, contained paths).
-- Never write `X` while `archive/X` exists: that project comes back through `restore`, not by re-creation.
+- Never write `X` while `archive/X` exists: that project comes back through `restore`, not by re-creation. On a pre-1.2 store not yet migrated (Step 0, "Which layout is this store in?"), `restore` is refused, so a learning for `X` has no destination yet: **never drop it**. Queue it as ONE inbox item, written directly in `{DISTILL_DIR}/inbox/` and named `<UTC yyyymmddTHHMMSSZ>-<4 random hex>-archived-<slug>.md`, where `<slug>` is X's file name without its directory or `.md`, lower-cased, with every character outside `a-z0-9` replaced by `-` (for `projects/Atlas v2.md`: `archived-atlas-v2`); never a path, never a `/` or `.` taken from X. Front-matter `origin: session-signal` and `created:`, the format in `distill-monitor.md` "The INBOX". If the learning itself came from an inbox item, do not queue a copy: leave that item where it is (do not delete it as consumed), so a repeated run never duplicates it. Then report: "`X` is archived; run `migrate-store`, then restore `X`. The learning is queued in the inbox at <path>."
 - If the SPINE has no room for a new entry, follow "A new learning when the SPINE is full" (end of this file).
 
 **Validate-on-recall:** When reading any existing knowledge file during distillation (to check for duplicates or to update), validate its content against current reality. If something changed, update it now — this is the cheapest moment to correct drift. Every read is also a maintenance pass. Two exceptions: files under `archive/` are read-only (never edit them, never bump a stamp), and **maintenance reads** (eligibility scans, migration, gc, the Self-check) bump nothing, otherwise a migration would reset every clock on the same day.
@@ -489,7 +489,7 @@ After updating profile files, sync critical preferences to the always-on section
 
 **When to sync** (any one is sufficient):
 - A new preference reached `validated` or `hardened` confidence
-- A preference caused frustration when violated (Step 1c escalation)
+- A preference caused frustration when violated (Step 1b.1 escalation)
 - First distillation (bootstrap — always-on section is empty/placeholder)
 
 **Process:**
@@ -516,7 +516,7 @@ After updating profile files, sync critical preferences to the always-on section
 **Bootstrap (first run):**
 If the always-on section contains only the placeholder comment, extract whatever is known from existing profile/feedback files (even `provisional` confidence) to provide initial calibration. Mark with a comment: `<!-- bootstrapped — will refine with more data -->`.
 
-### Step 3b: Bridge detection (knowledge that needs to reach user files)
+### Step 3d: Bridge detection (knowledge that needs to reach user files)
 
 After encoding, ask for EACH learning: **"Will this knowledge be found at the moment it's needed?"**
 
@@ -737,9 +737,13 @@ Read `{DISTILL_DIR}/.lifecycle`, ignoring a leading UTF-8 byte-order mark and su
 - **`enabled`** (files-only store): run gc Apply ("Maintenance sub-procedures: gc") on the eligible `projects/` files, without per-item questions: ledger line first, byte-identical move, SPINE entry removed, catalog rebuilt. Report every move (with its `[DIRECTIVE…]` marker count), every blocked, exempt and ineligible file, and each prose referrer.
 - **`disabled`**: ask nothing about `projects/`. Report the `projects/` files past their threshold as debt and mention that the user can say "clean up old projects" (a gc preview) or enable the policy.
 
-**Whatever the lifecycle setting**, files in `craft/ ops/ profile/ feedback/` past their threshold keep the ask-first behaviour: "Is [file] still relevant?" If yes, bump `last_updated`; if no, archive it the same way (ledger, move).
+**Whatever the lifecycle setting**, files in `craft/ ops/ profile/ feedback/` past their threshold keep the ask-first behaviour: "Is [file] still relevant?" If yes, bump `last_updated`; if no, archive it the same way (ledger, move) on a migrated store only. On a pre-1.2 store not yet migrated, move nothing: record the answer as an open item and point to `migrate-store`.
 
 A pinned file (`lifecycle: pinned`) and any file carrying `[NON-NEGOTIABLE…]` are never archived automatically. Age alone never means a project ended; the move only says "not validated within its threshold, kept whole in cold storage, findable through the catalog".
+
+### Close of Step 5 (mandatory when Step 5 changed any file)
+
+If this step split, merged, compacted, moved or archived anything, the catalog and the Self-check from Step 4 are out of date. On a files-only store, **rebuild `CATALOG.md` again and re-run the Self-check** now, and put these final results (not Step 4's) in the report, together with the Economics numbers measured after compaction.
 
 ### Tier 2 file format
 
@@ -908,7 +912,7 @@ Archiving `projects/atlas.md` is `mv projects/atlas.md archive/projects/atlas.md
 - `to:` is exactly `archive/` + `from:` for `archive`, and the reverse for `restore`.
 - Fields are separated by ` | ` and parsed from the left; each key appears once; `spine-entry:` is last. A literal `|` inside free text (the SPINE line, `reason:`) is written `\|` and read back as `|`.
 - `sha256:` is over the raw bytes. `sha256-norm:` is the checksum with the frontmatter `recall_count:` line removed: 1.1 clients bump that field on every archive read, so a mismatch confined to it is **drift**, reported and tolerated, not modification. Compute both with `bash "{DISTILL_DIR}/bin/distill-check-store.sh" --hashes "<file>"` when the helper is available (see Self-check), otherwise `sha256sum <file>` or `shasum -a 256 <file>` (PowerShell `Get-FileHash -Algorithm SHA256`) for the raw value and the same command over `awk 'NR==1 && /^---\r?$/ {fm=1; print; next} fm && /^---\r?$/ {fm=0; print; next} fm && /^recall_count:/ {next} {print}' <file>` for the normalised one.
-- **No collision.** A path never exists both as `X` and `archive/X`. A project that comes back is restored, never re-created: refuse to write `X` while `archive/X` exists and report it.
+- **No collision.** A path never exists both as `X` and `archive/X`. A project that comes back is restored, never re-created: refuse to write `X` while `archive/X` exists and report it (on a pre-1.2 store, queue the learning in the inbox as Step 3's encoding rules say; never drop it).
 - **Legacy archives** are structural: a file directly under `archive/` or anywhere under `archive/legacy/` is legacy (written by the pre-1.2 rewrite-style compaction; no ledger line, never identity-checked against a source). A file under `archive/<tier>/` with no ledger `archive` event is **pending adoption**, not corruption: `migrate-store` moves it byte-identically to `archive/legacy/` + **its current store-relative path, leading `archive/` included**: `archive/projects/x.md` → `archive/legacy/archive/projects/x.md` (never `archive/legacy/projects/x.md`, and never a path taken from its `archived_from:` frontmatter). The same applies to any file inside an `archive/` folder nested in a tier directory (`craft/archive/y.md` → `archive/legacy/craft/archive/y.md`). Legacy files are never deleted.
 
 ### The catalog (D4) and scoped misses (D5)

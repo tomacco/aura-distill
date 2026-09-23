@@ -17,7 +17,13 @@ Every PR must be reviewed by a **separate agent in a worktree** before merging. 
 
 ### How to invoke
 
-When a PR is ready for review, the authoring agent spawns:
+When a PR is ready for review, the authoring agent runs the clean reviewer (rule 9):
+
+```
+tests/review/run-clean-review.sh <PR_NUMBER> <a model other than the author's>
+```
+
+If no reviewer profile exists yet, the fallback is an Agent-tool reviewer, which inherits the session's profile and must disclose it (rule 9):
 
 ```
 Agent({
@@ -45,7 +51,7 @@ Anything beyond that contaminates the review.
 
 ## Review prompt template
 
-Copy this prompt verbatim. Fill in only `{PR_NUMBER}`.
+Copy this prompt verbatim. Fill in only `{PR_NUMBER}`. The only permitted addition is one line naming the repository, which `run-clean-review.sh` appends.
 
 ```
 You are reviewing PR #{PR_NUMBER} on an open-source project you have never seen before.
@@ -129,7 +135,7 @@ Return the review as your final message. Do not post it, push, or modify the PR.
 1. **Never self-review in the same context.** If you wrote it, you cannot review it. Period.
 2. **The reviewer's verdict is respected.** If it says BLOCK, you fix the issue before merging (rule 6 defines the only exceptions, after round three). Don't argue with the reviewer in a different context window — fix the code.
 3. **Don't coach the reviewer.** The whole point is an unbiased perspective. If you tell it "pay special attention to the lock file migration," you've already biased it toward approving the migration and looking for small issues instead of questioning whether the approach is right.
-4. **Run tests in the worktree.** The reviewer should execute `./test-sandbox.sh` or equivalent in its isolated copy. If the test harness is unavailable (e.g., missing auth config), note this in the review and evaluate test coverage from code inspection instead.
+4. **Run tests in the worktree.** The reviewer runs the deterministic suites listed in AGENTS.md (Testing) in its isolated copy. It never runs `./test-sandbox.sh` or any other live-model harness: `test-sandbox.sh` points `CLAUDE_CONFIG_DIR` at the real profile and starts nested sessions with permissions skipped. If the test harness is unavailable (e.g., missing auth config), note this in the review and evaluate test coverage from code inspection instead.
 5. **One reviewer per round.** Don't spawn parallel reviewers hoping one will approve. If the first reviewer blocks, fix the issues and request a new review.
 6. **Reviews converge in at most three rounds.** A round is one reviewer's complete report on the PR's current head; each round uses a new reviewer instance with clean context (the model may repeat across rounds, but never the author's — rule 7). A NEEDS DISCUSSION verdict goes to the maintainer and does not count as a round. After the third round, every remaining BLOCK must end in one of three ways before merge:
    - it is fixed as the reviewer prescribed (or, if no fix was prescribed, fixed), and the fix is quoted in the resolution comment;
@@ -140,7 +146,7 @@ Return the review as your final message. Do not post it, push, or modify the PR.
    Commits after the third round are limited to the listed resolutions. Anything beyond them (new behaviour, new files, a changed user-facing surface, or a fix larger than the BLOCK it resolves) starts a new three-round cycle or waits for the maintainer. Path-1 and path-2 resolutions get one **closing check**: a fresh reviewer reads only the diff since round three, confirms each resolution does what the BLOCK asked, and may not raise new BLOCKs except `[HARM]`. A failed closing check sends the PR to the maintainer. Rounds are counted per PR from the merge of the PR that adopted this rule (#104) into `beta/1.2`; earlier rounds count as history, not toward the cap. If none of the three fits, the PR waits for the maintainer. Why: open-ended rounds kept finding new composition issues as a design grew (PR #93 had six rounds and all six returned REQUEST CHANGES), and nothing said when a design was good enough.
 7. **The reviewer runs on a different model from the author, of comparable or greater capability.** If none is available (the author already runs on the most capable model and only one vendor is installed), use the most capable different model and note the downgrade in the review comment. Reviews from the model that wrote the change share its blind spots. Pick the reviewer's model explicitly (for example, the Agent tool's `model` option). For a release gate — cutting a prerelease or promoting a branch to `main` — also use a reviewer from a different vendor or harness when one is installed (for example, Codex). That reviewer reads the full diff being released (for a promotion, `main...beta/<version>`) and its verdict is posted on the release PR; rule 6 applies to it. The authoring agent records the reviewer's model in the review comment. Never use a forked agent (`subagent_type: "fork"`) as a reviewer: it inherits the author's context and model.
 8. **Resolutions are traceable.** The authoring agent posts every review and its resolution as PR comments: each finding, and what changed or why it did not. When a finding is routed to another issue, add it to that issue in the same step. A routing that exists only in a PR comment or an agent's prompt is lost.
-9. **The reviewer's environment carries no author context.** A clean context window is not enough if the reviewer's client auto-loads memory at session start (for example, this project's own `rules/distill.md` loading a maintainer's knowledge store, which may hold the author's reasoning or proposals). Run reviewers with such memory disabled or pointed at an empty store. If that is not possible, the reviewer says so in its report and treats anything loaded that way as background only; the authoring agent records it in the review comment. Never disable it by editing the real profile (`~/.claude/rules/`, `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md` — AGENTS.md "Never touch real user data"). Use a separate config dir that never ran the installer (`CLAUDE_CONFIG_DIR`, as `test-sandbox.sh` does), or a session started from one; a reviewer spawned with the Agent tool inherits the session's profile and takes the disclosure path.
+9. **The reviewer's environment carries no author context.** A clean context window is not enough if the reviewer's client auto-loads memory at session start (for example, this project's own `rules/distill.md` loading a maintainer's knowledge store, which may hold the author's reasoning or proposals). Run reviewers with such memory disabled or pointed at an empty store. If that is not possible, the reviewer says so in its report and treats anything loaded that way as background only; the authoring agent records it in the review comment. Never disable it by editing the real profile (`~/.claude/rules/`, `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md` — AGENTS.md "Never touch real user data"). Use a separate config dir that never ran the installer (`CLAUDE_CONFIG_DIR`), or a session started from one. (`test-sandbox.sh` is not an example: it points `CLAUDE_CONFIG_DIR` at the real profile for auth.) A reviewer spawned with the Agent tool inherits the session's profile and takes the disclosure path. `tests/review/run-clean-review.sh <pr> <model>` does this: it runs the verbatim template headless in a separate reviewer profile (default `~/.claude-reviewer`), in a fresh detached worktree of the PR head, with no MCP servers, auto-memory off and no posting, pushing or merging tools, and refuses a profile that has aura-distill installed.
 
 ## What good looks like
 

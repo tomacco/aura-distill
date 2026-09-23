@@ -19,7 +19,7 @@ Byte and line budgets checked at write time (D1), evidence twins (D2), archive a
 ## 2026-09-23 — Review convergence
 
 **D-2026-09-23-7 · Reviews converge in at most three rounds, reviewers differ from the author's model, resolutions are traceable, and the reviewer's environment carries no author context.** `evidence` · provisional (agent proposal under D-6, adopted through a reviewed PR)
-REVIEW-PROTOCOL.md rules 6–9. Evidence: PR #93 had six review rounds, each REQUEST CHANGES with new blocks. PR #92 needed three rounds, and one of them caught a finding that had been "routed" only in a PR comment and never reached the target issue. The round-two reviewer of #104 disclosed that its session had auto-loaded the maintainer's knowledge store, which held the proposal under review. Revisit if a capped round ships a defect that a fourth round would have caught.
+REVIEW-PROTOCOL.md rules 6–9; the review runs through `tests/review/run-clean-review.sh` in a separate reviewer profile, with the Agent tool as a disclosed fallback (#108). Evidence: PR #93 had six review rounds, each REQUEST CHANGES with new blocks. PR #92 needed three rounds, and one of them caught a finding that had been "routed" only in a PR comment and never reached the target issue. The round-two reviewer of #104 disclosed that its session had auto-loaded the maintainer's knowledge store, which held the proposal under review. Revisit if a capped round ships a defect that a fourth round would have caught.
 
 ## 2026-09-23 — Release and autonomy frame for the files-only edition
 
@@ -34,7 +34,7 @@ A PR may be merged into the `beta/1.2` integration branch by an agent once it ha
 independent review in `REVIEW-PROTOCOL.md` and its test suites. Promotion of `beta/1.2` to `main`
 is the maintainer's call.
 
-**D-2026-09-23-3 · Docs-only changes may go to `main` to publish Pages.** `provisional` (agent reading of D-2 plus the maintainer's request to publish research and release pages)
+**D-2026-09-23-3 · Docs-only changes may go to `main` to publish Pages.** `directive` · active (proposed by an agent; confirmed by the maintainer on 2026-09-23: "Docs only can be merged to main, makes sense")
 GitHub Pages serves `main:/docs`, so a research or release page is only public once it is on `main`.
 A PR that touches only `docs/**` and `CHANGELOG.md` changes nothing an updater fetches, so an agent
 may merge it after review. It still triggers a patch version bump (bump-version.yml does not ignore

@@ -42,11 +42,14 @@ fi
 root="$(git rev-parse --show-toplevel)"
 template="$root/REVIEW-PROTOCOL.md"
 work="$(mktemp -d)"
-trap 'git -C "$root" worktree remove --force "$work/wt" >/dev/null 2>&1 || true; rm -rf "$work"' EXIT
+cleanup(){ git -C "$root" worktree remove --force "$work/wt" >/dev/null 2>&1 || true; rm -rf "$work"; git -C "$root" worktree prune >/dev/null 2>&1 || true; }
+trap cleanup EXIT
+trap 'exit 130' INT TERM
 
 # Detached worktree of the PR head: no local branch is created, so nothing leaks into the repo.
 git -C "$root" fetch -q origin "pull/$pr/head"
 git -C "$root" worktree add -q --detach "$work/wt" FETCH_HEAD
+head_sha="$(git -C "$work/wt" rev-parse HEAD)"
 
 # The prompt is the verbatim template from REVIEW-PROTOCOL.md with only the PR number filled in,
 # plus the repository name (the reviewer's worktree has no gh default repo).
@@ -67,9 +70,11 @@ status=0
     --allowedTools "Read" "Grep" "Glob" "Bash" \
     --disallowedTools "Bash(gh pr comment:*)" "Bash(gh pr review:*)" "Bash(gh pr merge:*)" \
       "Bash(gh pr edit:*)" "Bash(gh pr close:*)" "Bash(gh issue comment:*)" "Bash(gh api:*)" \
-      "Bash(git push:*)" \
+      "Bash(git push:*)" "Bash(./test-sandbox.sh:*)" "Bash(bash test-sandbox.sh:*)" "Bash(bash ./test-sandbox.sh:*)" \
   ) > "$out" || status=$?
 
 cat "$out"
+echo "Reviewed head: $head_sha" >> "$out"
+echo "Reviewed head: $head_sha"
 echo "Reviewer model: $model · profile: $profile · review saved to $out · exit $status" >&2
 exit "$status"

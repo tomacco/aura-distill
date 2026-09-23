@@ -42,6 +42,8 @@ grep -qx 'Bash(git push:\*)' "$t/args" && grep -qx 'Bash(gh pr merge:\*)' "$t/ar
 grep -qx "CLAUDE_CONFIG_DIR=$t/profile" "$t/args" && ok "reviewer profile used" || no "reviewer profile used"
 [ -z "$(git -C "$t/clone" branch --list 'review/*')" ] && ok "no branch leaked" || no "no branch leaked"
 [ "$(git -C "$t/clone" worktree list | wc -l | tr -d ' ')" = 1 ] && ok "worktree removed" || no "worktree removed"
+grep -q "Reviewed head: $(git -C "$t/origin" rev-parse HEAD)" <<<"$out" && ok "reviewed head recorded" || no "reviewed head recorded"
+grep -qx 'Bash(./test-sandbox.sh:\*)' "$t/args" && ok "live harness disallowed" || no "live harness disallowed"
 
 set +e; out="$(run 3 2>/dev/null)"; st=$?; set -e
 [ "$st" = 3 ] && ok "reviewer failure status propagated" || no "reviewer failure status propagated ($st)"

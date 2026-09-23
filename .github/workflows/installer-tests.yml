@@ -71,6 +71,15 @@ jobs:
             echo "tests/updater-compat/run.sh not on this branch yet; skipping."
           fi
 
+      - name: Clean reviewer runner (stubbed, no API calls)
+        if: runner.os == 'Linux'
+        run: |
+          if [ -f tests/review/test-run-clean-review.sh ]; then
+            bash tests/review/test-run-clean-review.sh
+          else
+            echo "tests/review not on this branch; skipping."
+          fi
+
   files-only-store:
     # Files-only memory redesign invariants (#75): synthetic store fixture, no
     # network, no profile dirs. Runs on GNU and BSD toolchains on purpose.

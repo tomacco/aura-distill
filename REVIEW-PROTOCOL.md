@@ -51,7 +51,7 @@ Anything beyond that contaminates the review.
 
 ## Review prompt template
 
-Copy this prompt verbatim. Fill in only `{PR_NUMBER}`.
+Copy this prompt verbatim. Fill in only `{PR_NUMBER}`. The only permitted addition is one line naming the repository, which `run-clean-review.sh` appends.
 
 ```
 You are reviewing PR #{PR_NUMBER} on an open-source project you have never seen before.
@@ -135,7 +135,7 @@ Return the review as your final message. Do not post it, push, or modify the PR.
 1. **Never self-review in the same context.** If you wrote it, you cannot review it. Period.
 2. **The reviewer's verdict is respected.** If it says BLOCK, you fix the issue before merging (rule 6 defines the only exceptions, after round three). Don't argue with the reviewer in a different context window — fix the code.
 3. **Don't coach the reviewer.** The whole point is an unbiased perspective. If you tell it "pay special attention to the lock file migration," you've already biased it toward approving the migration and looking for small issues instead of questioning whether the approach is right.
-4. **Run tests in the worktree.** The reviewer should execute `./test-sandbox.sh` or equivalent in its isolated copy. If the test harness is unavailable (e.g., missing auth config), note this in the review and evaluate test coverage from code inspection instead.
+4. **Run tests in the worktree.** The reviewer runs the deterministic suites listed in AGENTS.md (Testing) in its isolated copy. It never runs `./test-sandbox.sh` or any other live-model harness: `test-sandbox.sh` points `CLAUDE_CONFIG_DIR` at the real profile and starts nested sessions with permissions skipped. If the test harness is unavailable (e.g., missing auth config), note this in the review and evaluate test coverage from code inspection instead.
 5. **One reviewer per round.** Don't spawn parallel reviewers hoping one will approve. If the first reviewer blocks, fix the issues and request a new review.
 6. **Reviews converge in at most three rounds.** A round is one reviewer's complete report on the PR's current head; each round uses a new reviewer instance with clean context (the model may repeat across rounds, but never the author's — rule 7). A NEEDS DISCUSSION verdict goes to the maintainer and does not count as a round. After the third round, every remaining BLOCK must end in one of three ways before merge:
    - it is fixed as the reviewer prescribed (or, if no fix was prescribed, fixed), and the fix is quoted in the resolution comment;

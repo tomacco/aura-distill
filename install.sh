@@ -266,7 +266,7 @@ echo ""
 # ═══ CHANNEL AND PAYLOAD (nothing is written before this block succeeds) ═══
 
 if [ -z "$CHANNEL" ]; then
-    CHANNEL=$(tr -d '[:space:]' 2>/dev/null < "$DISTILL_DIR/.channel" || true)
+    CHANNEL=$(LC_ALL=C tr -d '\357\273\277[:space:]' 2>/dev/null < "$DISTILL_DIR/.channel" || true)
     [ -n "$CHANNEL" ] || CHANNEL="stable"
 fi
 case "$CHANNEL" in

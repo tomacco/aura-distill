@@ -131,7 +131,7 @@ Write-Header
 
 $channelFile = Join-Path $DistillDir '.channel'
 $Channel = if ($env:DISTILL_CHANNEL) { $env:DISTILL_CHANNEL.Trim().ToLower() }
-           elseif (Test-Path $channelFile) { (Get-Content $channelFile -Raw).Trim().ToLower() }
+           elseif (Test-Path $channelFile) { (Get-Content $channelFile -Raw).Trim([char]0xFEFF, ' ', "`r", "`n", "`t").ToLower() }
            else { 'stable' }
 if (-not $Channel) { $Channel = 'stable' }
 if ($Channel -ne 'stable' -and $Channel -ne 'beta') {
@@ -266,9 +266,13 @@ if ($HaveUpdater) {
 }
 Remove-Item -LiteralPath $Stage -Recurse -Force -ErrorAction SilentlyContinue
 
-# Version and channel (read by bin/distill-update.sh)
-Set-Content -Path $versionFile -Value $PayloadVersion -Encoding utf8 -NoNewline
-Set-Content -Path $channelFile -Value $Channel -Encoding utf8 -NoNewline
+# Version, channel and command path (read by bin/distill-update.sh under Git Bash).
+# Written without a byte-order mark: Windows PowerShell 5.1's `-Encoding utf8` adds one,
+# and a BOM-prefixed .channel would no longer read as "beta".
+$NoBom = New-Object System.Text.UTF8Encoding($false)
+[System.IO.File]::WriteAllText($versionFile, $PayloadVersion, $NoBom)
+[System.IO.File]::WriteAllText($channelFile, $Channel, $NoBom)
+[System.IO.File]::WriteAllText((Join-Path $DistillDir '.command-path'), ((Join-Path $CmdDir 'distill.md') -replace '\\', '/'), $NoBom)
 
 # Spine
 $spinePath = Join-Path $DistillDir 'SPINE.md'

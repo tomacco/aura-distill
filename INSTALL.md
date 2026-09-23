@@ -62,6 +62,13 @@ own installer and your typed consent.
 
 ---
 
+Installers also place `bin/distill-update.sh` in the knowledge directory (the
+updater `/distill` runs) and three small metadata files: `.channel`, `.command-path`
+and, once a notice was shown, `.major-notice`. With the manual method below,
+`/distill` installs the updater itself on first use.
+
+---
+
 ## Method 2: Agent-assisted (paste to Claude)
 
 Tell Claude Code:

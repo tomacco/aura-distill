@@ -54,11 +54,13 @@ fi
 trap 'rm -f "$0"' EXIT
 
 STORE=$(cd "$(dirname "$AURA_UPDATER_SELF")/.." && pwd)
-CMD_FILE=$(head -1 "$STORE/.command-path" 2>/dev/null || true)
+CMD_FILE=$(head -1 "$STORE/.command-path" 2>/dev/null | LC_ALL=C tr -d '\357\273\277\r' || true)
 case "$CMD_FILE" in */distill.md) ;; *) CMD_FILE="$HOME/.claude/commands/distill.md" ;; esac
-CHANNEL=$(tr -d '[:space:]' 2>/dev/null < "$STORE/.channel" || true)
+# Strip whitespace, CR and a UTF-8 byte-order mark (Windows PowerShell 5.1 writes one).
+read_meta() { LC_ALL=C tr -d '\357\273\277[:space:]' 2>/dev/null < "$1" || true; }
+CHANNEL=$(read_meta "$STORE/.channel")
 [ "$CHANNEL" = beta ] || CHANNEL=stable
-INSTALLED=$(tr -d '[:space:]' 2>/dev/null < "$STORE/.version" || true)
+INSTALLED=$(read_meta "$STORE/.version")
 
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/aura-distill-update.XXXXXX") || { echo "BLOCKED $CHANNEL cannot create a temporary directory"; exit 0; }
 trap 'rm -rf "$WORK"; rm -f "$0"' EXIT

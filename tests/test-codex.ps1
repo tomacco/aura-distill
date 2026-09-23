@@ -144,6 +144,10 @@ DO-NOT-DELETE
     Assert-True ((Read-Trim (Join-Path $betaAura '.version')) -eq '1.2.0-beta.1') 'beta opt-in installs the version the manifest names'
     Assert-True ((Get-Content (Join-Path $betaAura 'distill-process.md') -Raw).Contains('BETA-ONE-PS')) 'beta payload comes from the pinned tag'
     Assert-True (Test-Path (Join-Path $betaAura 'bin/distill-update.sh')) 'installer places the updater script in the store'
+    $channelBytes = [System.IO.File]::ReadAllBytes((Join-Path $betaAura '.channel'))
+    Assert-True ($channelBytes.Length -eq 4 -and $channelBytes[0] -eq [byte][char]'b') '.channel is written without a BOM or newline (read by bash)'
+    $cmdPath = [System.IO.File]::ReadAllText((Join-Path $betaAura '.command-path'))
+    Assert-True ($cmdPath.EndsWith('/distill.md') -and -not $cmdPath.Contains('\')) '.command-path is written with forward slashes for Git Bash'
     Invoke-ChannelInstall $beta $null
     Assert-True ((Read-Trim (Join-Path $betaAura '.channel')) -eq 'beta') 're-install without DISTILL_CHANNEL keeps the persisted beta choice'
     Invoke-ChannelInstall $beta 'stable'

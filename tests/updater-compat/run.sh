@@ -640,6 +640,11 @@ set_beta prerelease v1.2.0-beta.2 1.2.0-beta.2
 run_update "$c" auto
 check "the manifest moves to beta.2: '$(first_line "$c")', files from the new tag" \
   bash -c "[ \"\$(head -1 '$c/update.out')\" = 'UPDATED 1.2.0-beta.1 1.2.0-beta.2 beta' ] && [ \"\$(tag_line '$c' BETA-TWO)\" = 1 ] && [ \"\$(tag_line '$c' BETA-ONE)\" = 0 ]"
+printf '\357\273\277beta\r\n' > "$s/.channel"; printf '\357\273\2771.2.0-beta.2\r\n' > "$s/.version"
+run_update "$c" auto
+check "store metadata with a UTF-8 BOM and CRLF (as Windows PowerShell 5.1 writes it) still reads as beta: '$(first_line "$c")'" \
+  bash -c "grep -q '^CURRENT 1.2.0-beta.2 beta' '$c/update.out'"
+printf 'beta\n' > "$s/.channel"; printf '1.2.0-beta.2\n' > "$s/.version"
 set_autoupdate "$c" false
 set_beta prerelease v1.2.0-beta.1 1.2.0-beta.1
 run_update "$c" auto

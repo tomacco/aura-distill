@@ -4,6 +4,10 @@ All notable changes to aura-distill.
 
 ## [Unreleased]
 
+## [1.2.0-beta.1] - 2026-09-23 (prerelease, opt-in beta channel)
+
+First release of the files-only edition. Opt in with `install.sh --channel beta` or `$env:DISTILL_CHANNEL='beta'`; stable installs and their auto-updaters stay on 1.1.x. The 1.1.x line never had per-version sections, so this section also carries the 1.1 changes below. Release page: `docs/releases/1.2.0-beta.1/`.
+
 ### Added
 - **Release channels and upgrade protection** (#79, [ADR 0002](docs/adr/0002-release-channels.md)): an opt-in **beta channel** (`install.sh --channel beta`, `$env:DISTILL_CHANNEL='beta'`) that installs the one prerelease tag named by `channels/manifest.json` on `beta/1.2`, remembered in `~/.aura-distill/.channel`; `--channel stable` returns. Updates are now done by a script, `bin/distill-update.sh`, that the `/distill` dispatcher runs instead of composing `curl` commands: it follows the recorded channel, downloads everything to a temp dir and validates it before replacing anything, resolves the store path, and never installs another major version or a software-edition payload. A future software edition is only announced (once, as text, with its requirements and guide); it is never fetched. Both installers now validate the whole payload before writing and require typed consent (`adopt <version>`, interactive terminal only) for a different major. CI guard `tests/updater-compat/check-endpoints.sh` keeps the legacy `main` endpoints files-only, and `check-major-release.sh` checks a major's manifest entry and guide before it may be announced. Sandbox coverage in `tests/updater-compat/run.sh` sections (e) to (i) and `tests/test-codex.ps1`.
 - **Clean reviewer runner: headless early stop** — the runner tells the reviewer the session is headless and fails with status 3 when the review has no `#### Verdict` (a reviewer that started a background command and stopped returned an empty review).
@@ -44,6 +48,10 @@ All notable changes to aura-distill.
 - Staleness review no longer asks about `projects/` files: with the lifecycle on they are archived by move, with it off they are reported (#73). `craft/ ops/ profile/ feedback/` keep the ask-first question.
 
 ### Known risks
+- **Migration is slow and expensive and depends on the agent** (end-to-end run on a copy of a real 98-file store, #80). `migrate-store` took a fresh claude-sonnet-5 agent 99 turns, about 30 minutes and $5.87. It passed every invariant and revert was byte-identical, but a less capable model may not. Run the preview first; the backup and revert are the safety net.
+- **After migration the SPINE sits at its caps** (#80). In the same run the SPINE ended at 80 of 80 lines and 15.6 of 16 KB, so the next distillations must merge or shorten entries to add one. That path is specified (D1) but exercised only in fixtures.
+- **Retrieval after migration reads more, smaller files** (#80). In the same run: 8/8 correct (7/8 unmigrated), median 9.3 s (11.9 s unmigrated), but a median 110k input tokens (94k unmigrated).
+- **The checker parses only ` + `-joined pointers on a SPINE line** (#80). A store whose entries join pointers another way needs its SPINE normalised before migration; the migrating agent has to work around it.
 - **The self-check is agent-executed where bash is missing** (#78). Windows without Git Bash, or an install that `/distill` updated before the helper shipped (re-running the installer fixes it), gets the model-executed checklist instead of the deterministic helper. No PowerShell twin of the checker ships. The report states which path ran.
 - **`/distill` updates do not refresh the Codex block or the Antigravity plugin** (#78): since #113 the updater fetches `rules/distill.md` (preferences preserved) and the optional `bin/distill-check-store.sh`, but the Codex managed block (with its compact retrieval rules) and the plugin files change only when the installer is re-run. `distill-monitor.md`, which the updater does refresh, carries the full retrieval protocol, so those clients degrade rather than break.
 - **A deleted ledger line looks like an old-client archive** (design section 6): both leave an unledgered `archive/<tier>/` file, which `migrate-store` adopts as legacy, keeping its bytes but dropping its checksum history.

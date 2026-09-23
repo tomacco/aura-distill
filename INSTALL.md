@@ -78,6 +78,11 @@ curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill-mon
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/rules/distill.md \
   -o "$PROFILE/rules/distill.md"
 
+# Optional: the store self-check the distiller runs when bash is available
+mkdir -p "$DISTILL_DIR/bin"
+curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/bin/distill-check-store.sh \
+  -o "$DISTILL_DIR/bin/distill-check-store.sh" && chmod +x "$DISTILL_DIR/bin/distill-check-store.sh"
+
 # Resolve the shared-store placeholder in every installed adapter/process file.
 sed -i "s|{DISTILL_DIR}|$DISTILL_DIR|g" \
   "$PROFILE/commands/distill.md" \
@@ -101,10 +106,12 @@ mkdir -p "$HOME/.codex"
 cat > "$DISTILL_DIR/SPINE.md" << 'EOF'
 # Distill Knowledge Index
 
-<!-- This file is managed by aura-distill. Max 80 lines. -->
+<!-- This file is managed by aura-distill. Max 80 lines and 16 KB; 400 bytes per entry. -->
 <!-- Each entry: - [Title](path.md) — when to read this -->
 EOF
 ```
+
+Optional: `echo enabled > "$DISTILL_DIR/.lifecycle"` turns on automatic archiving of stale `projects/` files (off when the file is absent; see "Lifecycle" below).
 
 ### Step 4: Set the version
 
@@ -136,7 +143,8 @@ Before doing any work, read ~/.aura-distill/SPINE.md. If the task matches a SPIN
 
 In Codex's `AGENTS.md`, also tell Codex to read
 `~/.aura-distill/distill-monitor.md` for the complete retrieval and
-memory-pressure behavior.
+memory-pressure behavior, and that when the user asks to distill, clean up (gc),
+restore or migrate the store, it reads `~/.aura-distill/distill-process.md`.
 
 Because the shared store sits outside a repository workspace, sandboxed Codex
 sessions may request permission before writing distilled knowledge. In the CLI,
@@ -191,9 +199,25 @@ If only `~/.claude/` exists, the installer uses it automatically. No `--profile`
 | managed pointer | `~/.claude/CLAUDE.md` | Claude integration |
 | managed pointer | `~/.codex/AGENTS.md` | Codex integration |
 | `inbox/` | `~/.aura-distill/` | Queue: explicit "remember this" saves for the next distill |
-| `data/` | `~/.aura-distill/` | Local diagnostic ledgers (economics, distillation coverage) |
+| `data/` | `~/.aura-distill/` | Local diagnostic ledgers (economics, distillation coverage), lifecycle manifests, migration backups |
+| `bin/distill-check-store.sh` | `~/.aura-distill/` | Optional store self-check (bash). The distiller falls back to a checklist without it |
+| `.lifecycle` | `~/.aura-distill/` | Only when you opt in or out of automatic archiving (absent = off) |
 
-**Total: 5 files + 1 index. No dependencies. No Node.js. No database.**
+Created by `/distill` as the store grows: `CATALOG.md` (complete inventory), `evidence/` (dated history behind each knowledge file), `archive/LEDGER.md` (log of every archive move and restore).
+
+**Total: 5 files + 1 index, plus an optional helper. No dependencies. No Node.js. No database.**
+
+---
+
+## Lifecycle (automatic archiving, off by default)
+
+`install.sh --lifecycle` (PowerShell: `$env:DISTILL_LIFECYCLE = 'on'`) writes `enabled` to `~/.aura-distill/.lifecycle`. From then on each distillation moves `projects/` files that were not validated within their `staleness_threshold` (default 90 days) to `archive/projects/`, unchanged and logged in `archive/LEDGER.md`, without asking. Files with `lifecycle: pinned` in their frontmatter and files carrying a `[NON-NEGOTIABLE]` rule never move. `/distill restore <path>` (or "bring back X") undoes a move. `--no-lifecycle` turns it off, `--remove-lifecycle` deletes the setting; re-running the installer without a flag keeps your choice.
+
+With it off, `/distill` reports stale projects and asks nothing; `/distill gc` always shows a preview first.
+
+## Upgrading a store from before 1.2
+
+Run `/distill migrate-store` (or ask "move my store to the new layout"). It writes a plan and changes nothing; `/distill migrate-store --apply` then backs up the whole knowledge tree to `data/migration/<time>/backup/`, applies the plan and runs the self-check. If it is interrupted, `/distill` refuses to encode until you finish or revert it.
 
 ---
 

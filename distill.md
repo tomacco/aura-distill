@@ -6,6 +6,20 @@
 
 ### Step 0: Pre-flight checks
 
+**Mode (maintenance arguments).** `/distill` may be called with one of these arguments, and a user may ask for the same thing in plain words ("clean up old projects", "bring back Atlas", "move my store to the new layout"):
+
+| Argument | What runs |
+|---|---|
+| `gc [--preview\|--apply]` | Lifecycle clean-up of stale `projects/` files. Preview is the default; run `--apply` only after the user accepted the preview in this conversation |
+| `restore <path>` | Move an archived file back (or copy a legacy archive back) |
+| `migrate-store [--preview\|--apply\|--finish\|--revert]` | One-time move of the store to the files-only layout. Preview is the default; `--apply` only after the user accepted the preview |
+
+With a Mode: run the Status check below, **skip Step 1** (no harvest, no beacon), spawn the sub-agent in Step 2 with `## Mode` set to the argument instead of a harvest, relay its report, and skip the ledgers in Step 3 (a maintenance run distilled no conversation). Plain-language requests map to the same modes (the table in `{DISTILL_DIR}/distill-process.md`, "Requests in plain language").
+
+**Interrupted migration.** If any `{DISTILL_DIR}/data/migration/*/PENDING` exists (`ls {DISTILL_DIR}/data/migration/*/PENDING 2>/dev/null`), a store migration did not finish, and the distiller will not encode until it is finished or reverted. Tell the user:
+> "A store migration was interrupted. I can finish it or revert it to the backup it took; nothing new is encoded until one of the two runs. Which do you prefer?"
+For an ordinary `/distill`, still harvest (Step 1) so nothing is lost: write the harvest as ONE inbox item (`origin: session-signal`, the format in `{DISTILL_DIR}/distill-monitor.md`, "The INBOX") and then run the Mode the user chose. The next distillation consumes it.
+
 Before doing ANYTHING else, run these checks:
 
 **Status check:**
@@ -116,23 +130,27 @@ Agent({
 
 You CANNOT see the original conversation. Everything you know comes from the signal harvest below and from reading the knowledge files on disk.
 
+## Mode
+
+[ONLY for a maintenance run: the argument, e.g. "gc --preview", "restore projects/atlas.md", "migrate-store --apply". Omit this section for an ordinary distillation.]
+
 ## Session Signal Harvest
 
-[INSERT THE FULL HARVEST FROM STEP 1 HERE — failures, corrections, user observations, metadata, ALL OF IT]
+[INSERT THE FULL HARVEST FROM STEP 1 HERE — failures, corrections, user observations, metadata, ALL OF IT. Omit for a maintenance run.]
 
 ## Your Process
 
 Read the full distillation process instructions from:
 {DISTILL_DIR}/distill-process.md
 
-Execute every step:
-0. Discover knowledge structure
+Execute every step (with a Mode: Step 0, then the matching "Maintenance sub-procedures" section instead of 0b to 5):
+0. Discover knowledge structure (incl. contained-path, catalog, ledger and pending-migration checks)
 0b. Consume the INBOX ({DISTILL_DIR}/inbox/) — pre-extracted signals queued by past sessions; delete consumed items only after successful encoding
 1. Process the signals above (they are pre-harvested for you)
 2. Trace each to first principles
 3. Encode at the right layer (write the actual files)
-4. Verify encoding quality + anti-sycophancy check
-5. Run compaction if any tier is over threshold
+4. Verify encoding quality + anti-sycophancy check; enforce the SPINE and file budgets (bytes and lines), rebuild CATALOG.md, run the Self-check
+5. Run compaction if any tier is over threshold; lifecycle per {DISTILL_DIR}/.lifecycle
 
 ## Critical: File Writing
 You MUST be able to Write and Edit files in {DISTILL_DIR}/. If any write is denied, report the error immediately — do not silently skip encoding. The user has pre-authorized writes to this path.
@@ -149,7 +167,8 @@ Return a distillation report:
 - Inbox: K items consumed (0 if none; one line each when K > 0)
 - Learnings encoded: list with file paths
 - User model updates: what changed
-- Tier health: current state
+- Tier health: current state (SPINE lines and bytes, files over cap, catalog state, Self-check result and whether the helper or the checklist ran it)
+- Debt: each count, the total and its delta versus the previous run
 - Economics: tokens written this run (sum of chars/4 across files you wrote), SPINE size in tokens (chars/4), tier-file KB size in tokens (sum over tier files, excludes SPINE and archive/), and the COUNT of files written
 - Flagged tensions: any honesty-vs-comfort conflicts
 - Open questions: anything you couldn't resolve without asking the user
@@ -166,7 +185,7 @@ When the sub-agent completes:
 2. **Record the economics ledger** — append ONE line to `{DISTILL_DIR}/data/economics.jsonl` (create the `data/` directory if missing). Distill optimizes for memory quality AND token economics; a system that never measures its own cost cannot claim to save anything. The line:
 
 ```json
-{"ts":"<ISO-8601 UTC>","distill_tokens":<subagent token total ONLY if the harness surfaced a real usage figure for the spawned agent; otherwise null — this value is usually NOT available to you: default to null, NEVER estimate>,"written_tokens":<from report>,"spine_tokens":<from report>,"kb_tokens":<from report>,"signals":<N>,"files_written":<count from report>}
+{"ts":"<ISO-8601 UTC>","distill_tokens":<subagent token total ONLY if the harness surfaced a real usage figure for the spawned agent; otherwise null — this value is usually NOT available to you: default to null, NEVER estimate>,"written_tokens":<from report>,"spine_tokens":<from report>,"kb_tokens":<from report>,"signals":<N>,"files_written":<count from report>,"debt":<total debt from report, or null>}
 ```
 
    Rules: append-only, one JSON object per line, no rewriting past lines. If a value is unknown, use `null` — never invent numbers. This file is local diagnostic data, not part of the synced knowledge set; distill itself never transmits it.

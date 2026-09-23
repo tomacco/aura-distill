@@ -78,3 +78,30 @@ empty=$(grep -l "$beacon" $(ls -t "$TEST_HOME"/nonexistent/*/*.jsonl 2>/dev/null
 test -z "$empty"
 
 printf 'PASS ledger beacon grep resolves fixtures and survives empty transcript roots\n'
+
+# Files-only runtime (#78): the optional self-check helper is installed and executable,
+# the Codex block routes maintenance requests, and the lifecycle knob follows the
+# token-saver contract (absent = off; flags persist; remove deletes the setting).
+AURA="$TEST_HOME/.aura-distill"
+test -x "$AURA/bin/distill-check-store.sh"
+test "$(sed -n 2p "$AURA/bin/distill-check-store.sh")" = "# aura-distill-check-store invariants v1"
+grep -q 'clean up (gc), restore or migrate the store' "$TEST_HOME/.codex/AGENTS.md"
+grep -q 'Retrieval protocol' "$AURA/distill-monitor.md"
+grep -q 'CATALOG.md' "$TEST_HOME/.claude/rules/distill.md"
+test ! -e "$AURA/.lifecycle"
+lc_install() {
+  env -u AURA_DISTILL_HOME -u CODEX_HOME -u DISTILL_LIFECYCLE HOME="$TEST_HOME" AURA_DISTILL_REPO="$REPO_ROOT" DISTILL_TOKEN_SAVER=off \
+    "$@" </dev/null >/dev/null
+}
+lc_install bash "$INSTALLER" --lifecycle;          test "$(cat "$AURA/.lifecycle")" = enabled
+lc_install bash "$INSTALLER";                      test "$(cat "$AURA/.lifecycle")" = enabled
+lc_install bash "$INSTALLER" --no-lifecycle;       test "$(cat "$AURA/.lifecycle")" = disabled
+lc_install env DISTILL_LIFECYCLE=on bash "$INSTALLER"; test "$(cat "$AURA/.lifecycle")" = enabled
+lc_install bash "$INSTALLER" --remove-lifecycle;   test ! -e "$AURA/.lifecycle"
+# the installed helper passes on a store it has never seen before: an empty fresh store is not
+# files-only yet (no catalog), so it must FAIL C2 cleanly, never crash
+set +e; out=$(bash "$AURA/bin/distill-check-store.sh" "$AURA" 2>&1); rc=$?; set -e
+test "$rc" -eq 1
+printf '%s\n' "$out" | grep -q '^C2 FAIL'
+
+printf 'PASS files-only runtime: helper installed, Codex routing, lifecycle knob\n'

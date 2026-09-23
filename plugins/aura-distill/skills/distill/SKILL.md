@@ -1,6 +1,6 @@
 ---
 name: distill
-description: Retrospective memory and context distillation for Antigravity sessions. Harvests conversation signals, friction, user preferences, and decisions, then executes the distillation pipeline to update tiered knowledge in SPINE.md and domain knowledge files.
+description: Retrospective memory and context distillation for Antigravity sessions. Harvests conversation signals, friction, user preferences, and decisions, then executes the distillation pipeline to update tiered knowledge in SPINE.md and domain knowledge files. Also runs store maintenance on request - clean up old projects (gc), restore an archived file, migrate the store to the files-only layout.
 ---
 
 # Retrospective Distillation for Antigravity (agy)
@@ -16,6 +16,8 @@ description: Retrospective memory and context distillation for Antigravity sessi
 ## Distillation Workflow
 
 ### Step 0: Pre-flight Status & Integrity Checks
+
+0. **Mode.** If the user asked to clean up / archive old projects (`gc`), bring back an archived file (`restore <path>`), or move the store to the new layout (`migrate-store`), this is a maintenance run: do the status check below, SKIP Step 1 (no harvest), and give the sub-agent the mode instead of a signal payload. `gc` and `migrate-store` start with `--preview`; run `--apply` only after the user accepted the preview. The mapping is the "Requests in plain language" table in `{DISTILL_DIR}/distill-process.md`.
 
 1. **Resolve Knowledge Directory `{DISTILL_DIR}`:**
    - Check in order:
@@ -42,6 +44,10 @@ description: Retrospective memory and context distillation for Antigravity sessi
      signal count from `.status` to the sub-agent so it continues where the interrupted run stopped.
    - Otherwise, set `{DISTILL_DIR}/.status` to `running <ISO_TIMESTAMP>` — but only immediately
      before spawning in Step 2, never earlier.
+4. **Interrupted store migration (`{DISTILL_DIR}/data/migration/*/PENDING`):**
+   - If one exists, nothing new is encoded until the migration is finished or reverted. Ask the
+     user which one, and for an ordinary distillation queue this session's harvest as ONE inbox
+     item (format in `{DISTILL_DIR}/distill-monitor.md`, "The INBOX") so it is not lost.
 
 ---
 
@@ -74,7 +80,7 @@ Format these into a clean structured signal payload.
 Spawn an isolated sub-agent using `invoke_subagent` (with `TypeName: 'self'` or `Role: 'Distillation Sub-Agent'`). If sub-agent spawning is unavailable in this session, run the pipeline in an isolated task turn — never inline in the main conversation loop (see the MANDATORY note above).
 
 Provide the sub-agent with:
-1. The harvested signals payload from Step 1.
+1. The harvested signals payload from Step 1 (or, for a maintenance run, the mode, e.g. `gc --preview`).
 2. The full process specification (`{DISTILL_DIR}/distill-process.md`).
 3. The absolute path to `{DISTILL_DIR}`.
 
@@ -101,3 +107,5 @@ Upon completion, output a concise distillation report:
 - **Signals captured:** Count of friction points, decisions, and preferences.
 - **Knowledge files updated:** Specific markdown files modified in `{DISTILL_DIR}`.
 - **SPINE changes:** Any new pointers added to `SPINE.md`.
+- **Store health:** SPINE lines and bytes, debt and its delta, and the self-check result as the sub-agent reported it.
+- For a maintenance run: the plan (preview) or every move made (apply), exactly as reported.

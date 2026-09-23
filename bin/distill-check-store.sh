@@ -1,26 +1,45 @@
 #!/usr/bin/env bash
-# check-store.sh — deterministic invariants for a files-only aura-distill store.
+# aura-distill-check-store invariants v1
 #
-# Usage: check-store.sh <store-dir> [--before <original-store-dir>]
+# distill-check-store.sh — deterministic invariants for a files-only aura-distill store
+# (docs/design-files-only-memory.md, section 5). The one implementation of these checks:
+# CI runs it against tests/files-only/, and the installers copy it to
+# {DISTILL_DIR}/bin/ as an OPTIONAL helper the distiller runs when bash is available
+# (distill-process.md "Self-check"). Nothing at runtime requires it; without bash the
+# distiller follows the same invariants as a checklist. Line 2 is the version marker the
+# runtime matches before it trusts this file; bump it when an invariant changes.
 #
-# Prints one "C<n> PASS|FAIL" line per check group (with indented reasons) and
-# exits 0 only when every group passes. Offline, no profile access, no network,
-# GNU and BSD toolchains. Line comparisons and line counts ignore carriage
-# returns; checksums and byte counts are over raw bytes (byte identity means bytes).
+# Usage: distill-check-store.sh <store-dir> [--before <original-store-dir>]
+#        distill-check-store.sh --print-catalog <store-dir>   CATALOG.md as it should be now (D4), on stdout
+#        distill-check-store.sh --hashes <file>               "sha256 <raw>" and "sha256-norm <norm>" lines
+#
+# Read-only: never writes to either directory (the distiller writes what --print-catalog prints). Prints one "C<n> PASS|FAIL" line per check
+# group (with indented reasons, and indented "note:" lines for tolerated drift) and exits
+# 0 only when every group passes. Offline, no network, GNU and BSD toolchains. Line
+# comparisons and line counts ignore carriage returns; checksums and byte counts are over
+# raw bytes (byte identity means bytes), except that an archived file whose only change is
+# its recall_count: frontmatter line (bumped by 1.1 clients) matches the ledger's
+# sha256-norm: field and is reported as drift, not modification.
 # Caps come from the environment:
 #   SPINE_MAX_LINES (80) SPINE_MAX_BYTES (16000) ENTRY_MAX_BYTES (400)
 #   FILE_MAX_LINES (60)  FILE_MAX_BYTES (6000)
 #
-# C1 SPINE budgets (an entry = its "- [" line plus any wrapped continuation lines)
+# C1 SPINE budgets (an entry = its "- [" line plus any wrapped continuation lines); a
+#    catalog entry line
 # C2 pointers; catalog equals tree (presence, validated date, pinned, evidence counts,
 #    archived rows' from/hook); evidence_for; collisions; ledger syntax (known event words
-#    only), last-event agreement + sha256; catalog staleness (full timestamps when both
-#    sides carry them); path containment (D10) of SPINE, catalog and ledger paths; no
-#    symlinks; no legacy archive left inside a tier directory
+#    only, events appended in non-decreasing date order), last-event agreement + sha256;
+#    catalog staleness (full timestamps when both sides carry them); path containment
+#    (D10) of SPINE, catalog and ledger paths; no symlinks; no legacy archive left inside
+#    a tier directory
 # C3 tier-2 budgets, read_with (inline list, contained targets, no local/), split_from, oversize
 # C4 (--before only) multiset line conservation over principle file + evidence twin
-#    combined, protected blocks, archive identity, legacy identity (incl. adopted nested
-#    archives and unledgered archive/<tier>/ files), pins, SPINE-hook survival; protected = bullet+block or heading section
+#    combined, protected blocks and retrieval-marker lines (never only in evidence),
+#    archive identity, legacy identity (incl. adopted nested archives and unledgered
+#    archive/<tier>/ files), pins, SPINE-hook survival; protected = bullet+block or
+#    heading section carrying [NON-NEGOTIABLE…] or [DIRECTIVE…]; marker = the same shapes
+#    carrying any Step 1d marker ([UPDATED…] [DEPRECATED…] [CORRECTED…] [IMPORTANT…]
+#    [CONTEXT…] [PROVISIONAL…])
 set -u
 export LC_ALL=C
 
@@ -31,31 +50,43 @@ FILE_MAX_LINES=${FILE_MAX_LINES:-60}
 FILE_MAX_BYTES=${FILE_MAX_BYTES:-6000}
 TIERS="craft ops profile projects feedback"
 
-STORE=""; BEFORE=""
+STORE=""; BEFORE=""; MODE=check; HASH_FILE=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --before) BEFORE="$2"; shift 2 ;;
+    --print-catalog) MODE=catalog; shift ;;
+    --hashes) MODE=hashes; HASH_FILE="${2:-}"; shift; [ $# -gt 0 ] && shift ;;
     *) STORE="$1"; shift ;;
   esac
 done
-[ -n "$STORE" ] && [ -d "$STORE" ] || { echo "usage: $0 <store-dir> [--before <dir>]" >&2; exit 2; }
-STORE=$(cd "$STORE" && pwd)
+if [ "$MODE" = hashes ]; then [ -f "$HASH_FILE" ] || { echo "usage: $0 --hashes <file>" >&2; exit 2; }; STORE=.; fi
+[ -n "$STORE" ] && [ -d "$STORE" ] || { echo "usage: $0 <store-dir> [--before <dir>] | --print-catalog <store-dir> | --hashes <file>" >&2; exit 2; }
+# physical paths: a store reached through a symlinked home directory is not itself a symlink finding
+STORE=$(cd "$STORE" && pwd -P)
 if [ -n "$BEFORE" ]; then
   [ -d "$BEFORE" ] || { echo "no such dir: $BEFORE" >&2; exit 2; }
-  BEFORE=$(cd "$BEFORE" && pwd)
+  BEFORE=$(cd "$BEFORE" && pwd -P)
 fi
 
 RC=0
-FAILS=()
+FAILS=(); NOTES=()
 fail() { FAILS+=("$1"); }
+note() { NOTES+=("$1"); }
 report() {
   if [ ${#FAILS[@]} -eq 0 ]; then echo "$1 PASS"; else
     echo "$1 FAIL"; for f in "${FAILS[@]}"; do echo "    - $f"; done; RC=1; fi
-  FAILS=()
+  [ ${#NOTES[@]} -eq 0 ] || for n in "${NOTES[@]}"; do echo "    note: $n"; done
+  FAILS=(); NOTES=()
 }
 nocr() { tr -d '\r'; }
 trim() { nocr | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'; }
-sha() { if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1; else shasum -a 256 "$1" | cut -d' ' -f1; fi; }
+sha_in() { if command -v sha256sum >/dev/null 2>&1; then sha256sum | cut -d' ' -f1; else shasum -a 256 | cut -d' ' -f1; fi; }
+sha() { sha_in < "$1"; }
+# sha_norm <file>: checksum with the frontmatter recall_count: line removed (the field 1.1
+# clients bump on every archive read); bytes are otherwise untouched
+sha_norm() { awk 'NR==1 && /^---\r?$/ {fm=1; print; next} fm && /^---\r?$/ {fm=0; print; next} fm && /^recall_count:/ {next} {print}' "$1" | sha_in; }
+# same_or_drift <file-a> <file-b>: 0 = byte-identical, 1 = differ only in recall_count, 2 = differ
+same_or_drift() { [ "$(sha "$1")" = "$(sha "$2")" ] && return 0; [ "$(sha_norm "$1")" = "$(sha_norm "$2")" ] && return 1; return 2; }
 count_lines() { nocr < "$1" | grep -c '' ; }
 count_bytes() { wc -c < "$1" | tr -d ' '; }
 tier_files() { # $1 = root  → relative paths (a nested <tier>/**/archive/** file is a legacy archive, not a tier file)
@@ -123,6 +154,44 @@ spine_hook_lines() {
 }
 hook_of_entry() { printf '%s' "$1" | sed -E 's/^- \[[^]]*\]\([^)]*\)( *\+ *\[[^]]*\]\([^)]*\))*//' | sed 's/^ *— *//; s/^ *-- *//'; }
 
+# ── modes that print instead of checking ─────────────────────────────────────
+if [ "$MODE" = hashes ]; then
+  printf 'sha256 %s\nsha256-norm %s\n' "$(sha "$HASH_FILE")" "$(sha_norm "$HASH_FILE")"; exit 0
+fi
+if [ "$MODE" = catalog ]; then
+  # D4: every field derived from the tree and the ledger; a literal "|" in free text is "\|"
+  esc() { sed 's/\\|/\x01/g; s/|/\\|/g; s/\x01/\\|/g'; }
+  scope_of() { local sc; sc=$(fm_value "$1" scope); [ -n "$sc" ] || sc=$(nocr < "$1" | grep -m1 '^#' | sed 's/^#* *//'); [ -n "$sc" ] || sc="(no scope)"; printf '%s' "$sc" | esc; }
+  LEDGER="$STORE/archive/LEDGER.md"
+  printf '# Knowledge catalog\n\n<!-- Complete inventory, rebuilt by /distill. Not loaded at session start. rebuilt: %s -->\n\n## active\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  while IFS= read -r p; do
+    f="$STORE/$p"; row="- $p | $(scope_of "$f")"
+    stamp=$(newest_stamp "$f"); [ -n "$stamp" ] && row="$row | validated $stamp"
+    [ "$(fm_value "$f" lifecycle)" = pinned ] && row="$row | pinned"
+    ov=$(fm_value "$f" oversize); [ -n "$ov" ] && row="$row | oversize: $(printf '%s' "$ov" | esc)"
+    printf '%s\n' "$row"
+  done < <(tier_files "$STORE")
+  printf '\n## archived\n'
+  while IFS= read -r a; do
+    f="$STORE/$a"; row="- $a | $(scope_of "$f")"
+    if is_legacy "$a"; then row="$row | legacy"
+    elif [ -f "$LEDGER" ]; then
+      ev=$(nocr < "$LEDGER" | grep -F -- "| to: $a |" | grep -E "$EVENT_RE"'archive ' | tail -1)
+      if [ -n "$ev" ]; then
+        d=$(printf '%s' "$ev" | awk '{print $2}'); row="$row | archived ${d:0:10}"
+        r=$(field "$ev" reason); [ -n "$r" ] && row="$row | reason: $r"
+        row="$row | from $(field "$ev" from) | hook: $(hook_of_entry "$(field "$ev" spine-entry)" | sed 's/[[:space:]]*$//')"
+      fi
+    fi
+    printf '%s\n' "$row"
+  done < <(archive_files "$STORE")
+  printf '\n## evidence\n'
+  while IFS= read -r e; do
+    printf -- '- %s | for %s | %s entries\n' "$e" "$(fm_value "$STORE/$e" evidence_for | esc)" "$(nocr < "$STORE/$e" | grep -c '^- ')"
+  done < <(evidence_files "$STORE")
+  exit 0
+fi
+
 # ── C1: SPINE budgets ────────────────────────────────────────────────────────
 SPINE="$STORE/SPINE.md"
 if [ ! -f "$SPINE" ]; then fail "SPINE.md missing"; else
@@ -133,7 +202,7 @@ if [ ! -f "$SPINE" ]; then fail "SPINE.md missing"; else
     n=${#line}
     [ "$n" -le "$ENTRY_MAX_BYTES" ] || fail "entry over $ENTRY_MAX_BYTES bytes ($n): ${line:0:60}..."
   done < <(spine_entries "$SPINE")
-  grep -q '](CATALOG.md)' "$SPINE" || fail "SPINE has no catalog line"
+  nocr < "$SPINE" | grep -q '^- \[[^]]*\](CATALOG.md)' || fail "SPINE has no catalog line"
 fi
 report C1
 
@@ -194,18 +263,30 @@ if [ ! -f "$CAT" ]; then fail "CATALOG.md missing"; else
     if [ ! -f "$LEDGER" ]; then fail "archive/LEDGER.md missing but $a is not legacy"; continue; fi
     ev=$(nocr < "$LEDGER" | grep -F -- "| to: $a |" | grep -E "$EVENT_RE"'archive ' | tail -1)
     if [ -z "$ev" ]; then fail "no ledger archive event for: $a (unledgered: pending adoption by migrate-store)"; continue; fi
-    lsha=$(printf '%s' "$ev" | grep -o 'sha256: [0-9a-f]*' | sed 's/sha256: //')
-    [ "$lsha" = "$(sha "$STORE/$a")" ] || fail "ledger sha256 does not match archived file: $a"
+    lsha=$(field "$ev" sha256); lnorm=$(field "$ev" sha256-norm)
+    if [ "$lsha" != "$(sha "$STORE/$a")" ]; then
+      # a 1.1 client bumps recall_count: on every archive read; the normalised checksum
+      # (that frontmatter line removed) tells drift from modification (design section 4)
+      if [ -n "$lnorm" ] && [ "$lnorm" = "$(sha_norm "$STORE/$a")" ]; then note "recall_count drift only (tolerated): $a"
+      else fail "ledger sha256 does not match archived file: $a"; fi
+    fi
     lhook=$(hook_of_entry "$(field "$ev" spine-entry)" | sed 's/[[:space:]]*$//')
     chook=$(field "$row" hook)
     [ "$lhook" = "$chook" ] || fail "catalog hook differs from ledger spine-entry hook: $a"
   done < <(archive_files "$STORE")
 fi
 # ledger syntax: every "- " line is a known event with contained, mutually consistent paths.
-# Unknown event words fail loudly instead of being skipped.
+# Unknown event words fail loudly instead of being skipped. "The newest event decides" means
+# the LAST line in the file, so lines must be appended in non-decreasing date order: a merge
+# of two machines' copies (#61) interleaves by timestamp, and an out-of-order line fails here
+# instead of silently changing which event is last.
 if [ -f "$LEDGER" ]; then
+  prev_stamp=""
   while IFS= read -r l; do
     if ! printf '%s\n' "$l" | grep -Eq "$EVENT_RE"; then fail "malformed ledger line (no leading date): ${l:0:70}"; continue; fi
+    stamp=$(printf '%s' "$l" | awk '{print $2}')
+    if [ -n "$prev_stamp" ] && stamp_newer "$prev_stamp" "$stamp"; then fail "ledger events out of order: $stamp appended after $prev_stamp (append order must be date order)"; fi
+    prev_stamp=$stamp
     ev=$(printf '%s' "$l" | sed -E "s/$EVENT_RE//; s/ *\|.*//")
     case "$ev" in
       archive|restore|"restore (modified)") ;;
@@ -248,7 +329,8 @@ while IFS= read -r p; do [ -f "$STORE/archive/$p" ] && fail "path exists both ac
 # a legacy archive left inside a tier directory must be adopted by migration (D3)
 while IFS= read -r p; do fail "legacy archive inside a tier directory: $p (migration adopts it to archive/legacy/$p)"; done < <(nested_archives "$STORE")
 # every path must resolve inside the store: no symlinks (D10)
-while IFS= read -r l; do fail "symlink in store: ${l#$STORE/}"; done < <(find "$STORE" -type l)
+while IFS= read -r l; do fail "symlink in store: ${l#$STORE/}"; done \
+  < <(for d in $TIERS archive evidence SPINE.md CATALOG.md; do [ -e "$STORE/$d" ] || [ -L "$STORE/$d" ] && find "$STORE/$d" -type l; done)
 report C2
 
 # ── C3: tier-2 budgets, read_with, split_from, oversize ──────────────────────
@@ -283,6 +365,8 @@ report C3
 # ── C4: lossless migration (only with --before) ──────────────────────────────
 if [ -n "$BEFORE" ]; then
   cand=$(mktemp); protected_pool=$(mktemp)
+  # same_file <after> <before>: byte-identical, or identical but for a bumped recall_count (noted)
+  same_file() { same_or_drift "$1" "$2"; case $? in 0) return 0 ;; 1) note "recall_count drift only (tolerated): ${1#$STORE/}"; return 0 ;; esac; return 1; }
   # candidate text for original file p: after/p, its evidence twin, its archived copy,
   # its split children (split_from: p) and their evidence twins
   candidates_for() {
@@ -324,14 +408,14 @@ if [ -n "$BEFORE" ]; then
     is_legacy "$a" && continue
     [ -f "$BLEDGER" ] && nocr < "$BLEDGER" | grep -F -- "| to: $a |" | grep -Eq "$EVENT_RE"'archive ' && continue
     if [ ! -f "$STORE/archive/legacy/$a" ]; then fail "unledgered archive not adopted: $a (expected archive/legacy/$a)"
-    elif [ "$(sha "$STORE/archive/legacy/$a")" != "$(sha "$BEFORE/$a")" ]; then fail "legacy archive file changed: archive/legacy/$a"; fi
+    elif ! same_file "$STORE/archive/legacy/$a" "$BEFORE/$a"; then fail "legacy archive file changed: archive/legacy/$a"; fi
   done < <(archive_files "$BEFORE")
   # nothing leaves the archive: every pre-existing archive file still exists (or was adopted)
   while IFS= read -r a; do [ -f "$STORE/$a" ] || [ -f "$STORE/archive/legacy/$a" ] || fail "archive file deleted: $a"; done < <(archive_files "$BEFORE")
   # legacy archives nested inside a tier directory before are adopted byte-identically at archive/legacy/<path>
   while IFS= read -r n; do
     if [ ! -f "$STORE/archive/legacy/$n" ]; then fail "nested legacy archive not adopted: $n (expected archive/legacy/$n)"
-    elif [ "$(sha "$STORE/archive/legacy/$n")" != "$(sha "$BEFORE/$n")" ]; then fail "legacy archive file changed: archive/legacy/$n"; fi
+    elif ! same_file "$STORE/archive/legacy/$n" "$BEFORE/$n"; then fail "legacy archive file changed: archive/legacy/$n"; fi
   done < <(nested_archives "$BEFORE")
   # archived files. Legacy: byte-identical to its own before copy (same path, or the nested path it was
   # adopted from). Non-legacy: byte-identical to the before copy at the same archive path (already
@@ -342,34 +426,38 @@ if [ -n "$BEFORE" ]; then
   while IFS= read -r a; do
     rel=${a#archive/}; h=$(sha "$STORE/$a")
     if is_legacy "$a"; then
-      if [ -f "$BEFORE/$a" ]; then [ "$h" = "$(sha "$BEFORE/$a")" ] || fail "legacy archive file changed: $a"
+      if [ -f "$BEFORE/$a" ]; then same_file "$STORE/$a" "$BEFORE/$a" || fail "legacy archive file changed: $a"
       elif [ -f "$BEFORE/${a#archive/legacy/}" ] && [ "$a" != "${a#archive/legacy/}" ]; then :   # adoption, checked above
       else fail "archived file has no original: $a"; fi
       continue
     fi
-    [ -f "$BEFORE/$a" ] && [ "$h" = "$(sha "$BEFORE/$a")" ] && continue
-    [ -f "$BEFORE/$rel" ] && [ "$h" = "$(sha "$BEFORE/$rel")" ] && continue
+    [ -f "$BEFORE/$a" ] && same_file "$STORE/$a" "$BEFORE/$a" && continue
+    [ -f "$BEFORE/$rel" ] && same_file "$STORE/$a" "$BEFORE/$rel" && continue
     parent=$(fm_value "$STORE/$a" split_from)
     if [ ! -f "$BEFORE/$a" ] && [ ! -f "$BEFORE/$rel" ] && \
        ! { [ -n "$parent" ] && contained "$parent" tier && { [ -f "$BEFORE/$parent" ] || [ -f "$BEFORE/archive/$parent" ]; }; }; then
       fail "archived file has no original: $a"; continue
     fi
-    lsha=$([ -f "$LEDGER" ] && nocr < "$LEDGER" | grep -F -- "| to: $a |" | grep -E "$EVENT_RE"'archive ' | tail -1 | grep -o 'sha256: [0-9a-f]*' | sed 's/sha256: //')
-    [ -n "$lsha" ] && [ "$lsha" = "$h" ] || fail "archived file differs from original and from its ledger checksum: $a"
+    lev=$([ -f "$LEDGER" ] && nocr < "$LEDGER" | grep -F -- "| to: $a |" | grep -E "$EVENT_RE"'archive ' | tail -1)
+    lsha=$(field "$lev" sha256); lnorm=$(field "$lev" sha256-norm)
+    { [ -n "$lsha" ] && [ "$lsha" = "$h" ]; } || { [ -n "$lnorm" ] && [ "$lnorm" = "$(sha_norm "$STORE/$a")" ]; } \
+      || fail "archived file differs from original and from its ledger checksum: $a"
   done < <(archive_files "$STORE")
-  # protected bullet + its indented block must survive in an ACTIVE or ARCHIVED file (evidence does not count)
+  # protected bullet + its indented block, and every line carrying a retrieval marker, must survive in an
+  # ACTIVE or ARCHIVED file (evidence does not count: retrieval never reads it, and the markers steer retrieval)
   { tier_files "$STORE"; archive_files "$STORE"; } | while IFS= read -r p; do trim < "$STORE/$p"; done > "$protected_pool"
   while IFS= read -r p; do
     while IFS= read -r line; do
       [ -z "$line" ] && continue
       grep -Fxq -- "$line" "$protected_pool" || fail "protected block line not in active/archive ($p): ${line:0:70}"
-    done < <(nocr < "$BEFORE/$p" | awk '
+    done < <(nocr < "$BEFORE/$p" | awk -v M='\\[(NON-NEGOTIABLE|DIRECTIVE|UPDATED|DEPRECATED|CORRECTED|IMPORTANT|CONTEXT|PROVISIONAL)[^]]*\\]' '
       /^#+ / { match($0, /^#+/); lvl=RLENGTH; if (insec && lvl<=seclvl) insec=0 }
-      /^#+ .*\[(NON-NEGOTIABLE|DIRECTIVE)[^]]*\]/ {insec=1; seclvl=lvl; print; next}
+      /^#+ / && $0 ~ M {insec=1; seclvl=lvl; print; next}
       insec {print; next}
-      /^- .*\[(NON-NEGOTIABLE|DIRECTIVE)[^]]*\]/ {inblock=1; print; next}
+      /^- / && $0 ~ M {inblock=1; print; next}
       inblock && /^[ \t]+[^ \t]/ {print; next}
-      {inblock=0}' | trim)
+      {inblock=0}
+      $0 ~ M {print}' | trim)
   done < <(tier_files "$BEFORE")
   # every original SPINE hook survives as a substring in SPINE, tier files, archived knowledge files or catalog
   # (never data/, evidence, or the ledger — the ledger holds every hook by construction)

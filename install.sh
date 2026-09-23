@@ -109,6 +109,7 @@ show_section() {
 # ═══ PROFILE DETECTION ═══
 
 # Parse arguments
+LIFECYCLE="${DISTILL_LIFECYCLE:-auto}"   # auto = keep prior choice (absent = disabled); on/off/remove = explicit
 PROFILE_NAME=""
 TOKEN_SAVER="auto"   # auto = keep prior choice (default on for new installs); on/off/remove = explicit
 while [[ $# -gt 0 ]]; do
@@ -118,6 +119,9 @@ while [[ $# -gt 0 ]]; do
         --token-saver) TOKEN_SAVER="on"; shift ;;
         --no-token-saver) TOKEN_SAVER="off"; shift ;;
         --remove-token-saver) TOKEN_SAVER="remove"; shift ;;
+        --lifecycle) LIFECYCLE="on"; shift ;;
+        --no-lifecycle) LIFECYCLE="off"; shift ;;
+        --remove-lifecycle) LIFECYCLE="remove"; shift ;;
         *) shift ;;
     esac
 done
@@ -252,11 +256,26 @@ echo "$VERSION" > "$DISTILL_DIR/.version"
 if [ ! -f "$DISTILL_DIR/SPINE.md" ]; then
     echo "# Distill Knowledge Index" > "$DISTILL_DIR/SPINE.md"
     echo "" >> "$DISTILL_DIR/SPINE.md"
-    echo "<!-- This file is managed by aura-distill. Max 80 lines. -->" >> "$DISTILL_DIR/SPINE.md"
+    echo "<!-- This file is managed by aura-distill. Max 80 lines and 16 KB; 400 bytes per entry. -->" >> "$DISTILL_DIR/SPINE.md"
     echo "<!-- Each entry: - [Title](path.md) — when to read this -->" >> "$DISTILL_DIR/SPINE.md"
     done_msg "SPINE.md ${DIM}(knowledge index)${RESET}"
 else
     skip_msg "SPINE.md ${DIM}(preserved)${RESET}"
+fi
+
+# Optional store self-check helper (files-only layout, docs/design-files-only-memory.md).
+# The distiller runs it when bash is available and falls back to a checklist otherwise;
+# nothing requires it. Validated before it replaces anything; a release without it is skipped.
+CHECK_TMP=$(mktemp)
+if fetch_file "$REPO/bin/distill-check-store.sh" > "$CHECK_TMP" 2>/dev/null \
+   && sed -n '2p' "$CHECK_TMP" | grep -q '^# aura-distill-check-store invariants v'; then
+    mkdir -p "$DISTILL_DIR/bin"
+    chmod +x "$CHECK_TMP"
+    mv -f "$CHECK_TMP" "$DISTILL_DIR/bin/distill-check-store.sh"
+    done_msg "bin/distill-check-store.sh ${DIM}(optional store self-check)${RESET}"
+else
+    rm -f "$CHECK_TMP"
+    skip_msg "bin/distill-check-store.sh ${DIM}(not in this release; the distiller uses its checklist)${RESET}"
 fi
 
 # ═══ KNOWLEDGE RETRIEVAL (rules file) ═══
@@ -356,6 +375,38 @@ case "$TOKEN_SAVER" in
         ;;
 esac
 
+# ═══ LIFECYCLE (opt-in automatic archiving of stale projects/ files) ═══
+# --lifecycle / --no-lifecycle / --remove-lifecycle, or DISTILL_LIFECYCLE=on|off|remove.
+# The choice persists in $DISTILL_DIR/.lifecycle (local to this machine). Absent = disabled.
+
+show_section "Lifecycle"
+
+LC_MARKER="$DISTILL_DIR/.lifecycle"
+case "$LIFECYCLE" in
+    on)
+        echo "enabled" > "$LC_MARKER"
+        done_msg "Lifecycle enabled"
+        info_msg "Each /distill moves projects/ files not validated within their staleness threshold"
+        info_msg "(default 90 days) to archive/, byte-identical and logged in archive/LEDGER.md, without asking."
+        info_msg "Pinned files (lifecycle: pinned) and files with [NON-NEGOTIABLE] rules never move. Undo: /distill restore <path>."
+        ;;
+    off)
+        echo "disabled" > "$LC_MARKER"
+        skip_msg "Lifecycle ${DIM}(off — /distill reports stale projects and asks nothing; enable with --lifecycle)${RESET}"
+        ;;
+    remove)
+        rm -f "$LC_MARKER"
+        skip_msg "Lifecycle ${DIM}(setting removed — defaults to off)${RESET}"
+        ;;
+    *)
+        if [ "$(cat "$LC_MARKER" 2>/dev/null)" = "enabled" ]; then
+            skip_msg "Lifecycle ${DIM}(enabled — kept; turn off with --no-lifecycle)${RESET}"
+        else
+            skip_msg "Lifecycle ${DIM}(off — opt in with --lifecycle; a preview is always one '/distill gc' away)${RESET}"
+        fi
+        ;;
+esac
+
 # ═══ CLAUDE + CODEX INTEGRATION ═══
 
 show_section "Session integration"
@@ -386,7 +437,7 @@ Before doing any work, read $DISTILL_DIR/SPINE.md. When the request or an announ
 EOF
 if [ "$client" = "codex" ]; then
 cat <<EOF
-Read $DISTILL_DIR/distill-monitor.md for the full retrieval and memory-pressure behavior. When the user asks to distill, read $DISTILL_DIR/distill-process.md and run that process in an isolated sub-agent when supported.
+Read $DISTILL_DIR/distill-monitor.md for the full retrieval and memory-pressure behavior. When the user asks to distill, clean up (gc), restore or migrate the store, read $DISTILL_DIR/distill-process.md and run that process in an isolated sub-agent when supported.
 EOF
 fi
 cat <<EOF

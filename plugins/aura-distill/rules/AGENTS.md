@@ -6,7 +6,7 @@ Before doing any work, read `{DISTILL_DIR}/SPINE.md`. When the request or an ann
 
 If `{DISTILL_DIR}/.needs-migration` exists and does not start with "migrated", tell the user to ask you to distill/migrate existing memories before proceeding.
 
-Read `{DISTILL_DIR}/distill-monitor.md` for the full retrieval, knowledge-ownership, INBOX explicit-save, and memory-pressure behavior. That file OWNS those behaviors — apply it as written; do not improvise alternatives or write competing memories in Antigravity's own memory store. When the user asks to distill, invoke this plugin's `distill` skill.
+Read `{DISTILL_DIR}/distill-monitor.md` for the full retrieval (batched reads, `read_with`, contained paths, scoped misses against `CATALOG.md`, read-only archives), knowledge-ownership, INBOX explicit-save, and memory-pressure behavior. That file OWNS those behaviors — apply it as written; do not improvise alternatives or write competing memories in Antigravity's own memory store. When the user asks to distill, clean up (gc), restore or migrate the store, invoke this plugin's `distill` skill.
 
 ## Cognitive markers (apply when reading knowledge)
 

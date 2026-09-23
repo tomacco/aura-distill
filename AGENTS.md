@@ -12,7 +12,7 @@ A first-principles memory system shared by Claude Code, Codex, and Google Antigr
 - GitHub issues — live status, acceptance criteria and blockers.
 - `DECISIONS.md` — why: who decided what, and on what basis.
 
-A PR that changes scope or dependencies updates `ROADMAP.md` and the affected issues in the same PR. A PR that makes or reverses a decision adds a `DECISIONS.md` entry. `NEXT-STEPS.md` is superseded history.
+A PR that changes scope or dependencies updates `ROADMAP.md` in that PR and updates the affected issues at the same time. A PR that makes or reverses a decision adds a `DECISIONS.md` entry. `NEXT-STEPS.md` is superseded history.
 
 ## Architecture
 
@@ -31,7 +31,7 @@ A PR that changes scope or dependencies updates `ROADMAP.md` and the affected is
 
 **NEVER read, write, or test against real Claude/Codex profile directories or `~/.aura-distill` on this machine.**
 
-The one exception is read-only measurement for published research (DECISIONS.md D-2026-09-23-4): copy the store with `cp -R` to a temp dir, work only on the copy, and publish aggregates only (counts, sizes, ratios, pass/fail — never names, content or quotes).
+The one exception is read-only measurement for published research (DECISIONS.md D-2026-09-23-4), covering knowledge stores and session transcripts. Copy the source with `cp -RL` (dereference symlinks) into a `mktemp -d` directory outside the repo. Work only on the copy, never stage or commit it, and delete it when done. Publish aggregates only: counts, sizes, ratios, pass/fail. Never names, content, quotes, project names or session ids.
 
 These directories contain the developer's real distilled knowledge. An errant write, backup, or test run against them risks data loss (this has already happened once — see the `_distill_isolation_bak` incident).
 
@@ -82,7 +82,7 @@ When developing or testing:
 
 ## Branch conventions
 
-- `main` — stable, released (quality gate: REVIEW-PROTOCOL.md). Every merge to `main` reaches installed users through the auto-updaters, so only the maintainer merges to `main`. The one exception: a reviewed PR touching only `docs/**` and `CHANGELOG.md` (Pages publishing; DECISIONS.md D-2026-09-23-3, provisional).
+- `main` — stable, released (quality gate: REVIEW-PROTOCOL.md). Every merge to `main` reaches installed users through the auto-updaters, so only the maintainer merges to `main`. The one exception: a reviewed PR touching only `docs/**` and `CHANGELOG.md` (Pages publishing; DECISIONS.md D-2026-09-23-3, provisional). Such a merge installs no new behaviour, but it still bumps VERSION, so installed users see an update that re-downloads identical files.
 - `beta/1.2` — integration branch for the files-only edition (prerelease `1.2.0-beta.N`). Agents open PRs against it and may merge them after an independent review passes. The maintainer promotes it to `main`.
 - `feature/*` — in-progress work. Base it on `beta/1.2` while that branch exists, unless the change is a docs-only Pages update.
 - `research/*` — experiments and published research (never merged to main directly)

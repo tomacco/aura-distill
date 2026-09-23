@@ -26,7 +26,7 @@ This is a compatibility requirement. It does not claim that any company permits 
 
 The maintainer set how the files-only edition ships ([DECISIONS.md](DECISIONS.md), D-2026-09-23-1 to -5):
 
-- **Track A ships first as an opt-in prerelease**, `1.2.0-beta.N`, built from the `beta/1.2` branch. It installs only with an explicit beta opt-in.
+- **Track A ships first as an opt-in prerelease**, `1.2.0-beta.N`, built from the `beta/1.2` branch. It installs only with an explicit beta opt-in. **No `1.2.0-beta` is published until the beta dispatcher stops treating `main/VERSION` as its update source and refuses downgrades** ([#79](https://github.com/tomacco/aura-distill/issues/79)). Today's dispatcher overwrites itself whenever its version differs from `main`, so it would silently put a beta install back on 1.1.x.
 - **`main`, the Homebrew tap and every existing auto-updater stay on 1.1.x** until the maintainer promotes the beta. Legacy updaters fetch fixed URLs on `main`, so merging to `main` is a release to every installed user.
 - **Agents merge reviewed PRs into `beta/1.2`** once they pass the independent review in [REVIEW-PROTOCOL.md](REVIEW-PROTOCOL.md) and their test suites. Only the maintainer merges `beta/1.2` into `main`.
 - **Every version gets its own release page** under `docs/releases/<version>/`, starting with 1.2.0-beta.1.
@@ -34,7 +34,7 @@ The maintainer set how the files-only edition ships ([DECISIONS.md](DECISIONS.md
 
 ## Evidence since planning
 
-A measurement on copies of one real knowledge store (aggregate numbers only, per D-2026-09-23-4) supports the Track A direction:
+A measurement on 2026-09-23 on copies of one real knowledge store (aggregate numbers only, per D-2026-09-23-4). The figures are not reproducible from this repository by design: the stores are private. The method and caveats are published with the research page below. The measurement supports the Track A direction:
 
 - The auto-loaded index is 49–51 KB, 3.1–3.2× the 16 KB budget proposed in #75 (today's shipped limit is 80 lines, which these indexes meet). 44 of 65 index entries are over 400 bytes.
 - Index bytes grew 57% in seven weeks while the number of entries stayed flat. Entries are growing into digests, not multiplying.
@@ -88,7 +88,7 @@ Users are offered the software major only through #79. The guard closes in Track
 
 ## Execution graph
 
-"Blocked by" means the prerequisite is delivered before implementation of that story starts. Read-only planning may happen earlier. Stages are numbered in dependency order: every blocker sits in an earlier stage.
+"Blocked by" means the prerequisite is delivered before implementation of that story starts. Read-only planning may happen earlier. Stages are numbered in dependency order. Within Track A and Track B every blocker sits in an earlier stage; the independent correctness work (#65) and shared sync (#61) are outside the stage sequence, and #87 waits on both.
 
 - [#62](https://github.com/tomacco/aura-distill/issues/62) closes on the harness and a fresh baseline with a stub where the service will plug in; the final service comparison belongs to #90.
 - [#63](https://github.com/tomacco/aura-distill/issues/63) and [#66](https://github.com/tomacco/aura-distill/issues/66) close on contract and stub tests, so the stories that use them can follow without circular dependencies.

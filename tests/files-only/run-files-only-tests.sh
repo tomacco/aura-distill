@@ -338,6 +338,37 @@ tamper "unescaped | inside a spine-entry hook forges a to: field" "unescaped ' |
 tamper "unescaped | splits a catalog scope into a bogus field" "unescaped ' | ' inside a free-text field of CATALOG.md" \
   'sed -i.bak "s/^- projects\/beacon.md | Beacon notification service/- projects\/beacon.md | Beacon | notification service/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
 
+echo "== cycle 2 round one: the documented backup set is enough for the self-check =="
+# section 3 step 2: SPINE.md, CATALOG.md if present, every tier directory, evidence/**, archive/** (incl. LEDGER.md) — and nothing else
+tmp=$(mktemp -d); mkdir "$tmp/backup"
+for x in SPINE.md CATALOG.md craft ops profile projects feedback evidence archive; do [ -e "store-before/$x" ] && cp -r "store-before/$x" "$tmp/backup/"; done
+out=$(bash "$CHECK" store-after --before "$tmp/backup" 2>&1); rc=$?
+[ $rc -eq 0 ] && ok "store-after passes against exactly the documented backup set" || { bad "backup-set check failed (rc=$rc)"; echo "$out" | sed 's/^/       /'; }
+rm -rf "$tmp"
+
+echo "== cycle 2 round one: an old client archives on a migrated store =="
+FERN='---
+archived_from: projects/fern.md
+archived_on: 2026-09-15
+reason: stale
+recall_count: 0
+---
+# Fern (archived by an old client, no ledger line)'
+with_before "unledgered archive/<tier>/ file on a migrated store is reported pending adoption" "no ledger archive event for: archive/projects/fern.md (unledgered: pending adoption by migrate-store)" store-after \
+  'printf "%s\n" "$FERN" > "$b/archive/projects/fern.md"' \
+  'printf "%s\n" "$FERN" > "$s/archive/projects/fern.md"; printf -- "- archive/projects/fern.md | Fern | archived 2026-09-15 | from projects/fern.md | hook: Fern\n" >> "$s/CATALOG.md"'
+with_before "repeated migrate-store adopts the old-client archive to archive/legacy/" PASS store-after \
+  'printf "%s\n" "$FERN" > "$b/archive/projects/fern.md"' \
+  'mkdir -p "$s/archive/legacy/archive/projects"; printf "%s\n" "$FERN" > "$s/archive/legacy/archive/projects/fern.md";
+   printf -- "- archive/legacy/archive/projects/fern.md | Fern (adopted from archive/projects/fern.md) | legacy\n" >> "$s/CATALOG.md"'
+
+echo "== cycle 2 round one: pointer extraction and field anchoring =="
+tamper "pointer only inside an HTML comment" "active file has no SPINE pointer: ops/extra.md" \
+  'printf -- "---\nscope: extra\nlast_validated: 2026-09-01\n---\n- a rule\n" > "$s/ops/extra.md"; printf -- "- ops/extra.md | extra | validated 2026-09-01\n" >> "$s/CATALOG.md";
+   printf -- "<!-- see [Extra](ops/extra.md) -->\n" >> "$s/SPINE.md"'
+tamper "catalog segment that merely starts with oversize" "unescaped ' | ' inside a free-text field of CATALOG.md" \
+  'sed -i.bak "s/^\(- projects\/beacon.md .*\)$/\1 | oversized notes/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+
 echo
 echo "files-only suite: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ]

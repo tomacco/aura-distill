@@ -144,7 +144,9 @@ if [ -f "$SPINE" ]; then
     [ -f "$STORE/$p" ] || fail "SPINE pointer to missing file: $p"
   done \
     < <(nocr < "$SPINE" | grep '^- \[' | grep -o '](\([^)]*\.md\))' | sed 's/^](//;s/)$//' | sort -u)
-  while IFS= read -r p; do grep -Fq -- "($p)" "$SPINE" || fail "active file has no SPINE pointer: $p"; done < <(tier_files "$STORE")
+  # pointers come only from entry lines ("- [" ...), never from comments or prose
+  spine_ptrs=$(nocr < "$SPINE" | grep '^- \[' | grep -o '](\([^)]*\.md\))' | sed 's/^](//;s/)$//' | sort -u)
+  while IFS= read -r p; do printf '%s\n' "$spine_ptrs" | grep -Fxq -- "$p" || fail "active file has no SPINE pointer: $p"; done < <(tier_files "$STORE")
 fi
 CAT="$STORE/CATALOG.md"
 LEDGER="$STORE/archive/LEDGER.md"
@@ -158,7 +160,7 @@ if [ ! -f "$CAT" ]; then fail "CATALOG.md missing"; else
     < <(nocr < "$CAT" | grep -o '^- [^|]* |' | sed 's/^- //;s/ |$//')
   # row syntax: path | free-text scope | then only known fields (a literal "|" in free text is "\|")
   while IFS= read -r row; do
-    bad_seg=$(segments "$row" | sed 1,2d | grep -vE '^(validated |archived |reason: |from |hook: |pinned$|legacy$|oversize|[0-9]+ entries$)' | head -1)
+    bad_seg=$(segments "$row" | sed 1,2d | grep -vE '^(validated |archived |reason: |from |hook: |pinned$|legacy$|oversize(: |$)|[0-9]+ entries$)' | head -1)
     [ -n "$bad_seg" ] && fail "unescaped ' | ' inside a free-text field of CATALOG.md (write it as '\|'): ${bad_seg:0:60}"
   done < <(nocr < "$CAT" | grep '^- ')
   # active rows: validated date = newest stamp; pinned flag = lifecycle: pinned
@@ -191,7 +193,7 @@ if [ ! -f "$CAT" ]; then fail "CATALOG.md missing"; else
     printf '%s' "$row" | grep -q '| hook: ' || fail "archived row lacks 'hook': $a"
     if [ ! -f "$LEDGER" ]; then fail "archive/LEDGER.md missing but $a is not legacy"; continue; fi
     ev=$(nocr < "$LEDGER" | grep -F -- "| to: $a |" | grep -E "$EVENT_RE"'archive ' | tail -1)
-    if [ -z "$ev" ]; then fail "no ledger archive event for: $a"; continue; fi
+    if [ -z "$ev" ]; then fail "no ledger archive event for: $a (unledgered: pending adoption by migrate-store)"; continue; fi
     lsha=$(printf '%s' "$ev" | grep -o 'sha256: [0-9a-f]*' | sed 's/sha256: //')
     [ "$lsha" = "$(sha "$STORE/$a")" ] || fail "ledger sha256 does not match archived file: $a"
     lhook=$(hook_of_entry "$(field "$ev" spine-entry)" | sed 's/[[:space:]]*$//')

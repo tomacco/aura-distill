@@ -11,6 +11,11 @@ Issues own live status and blockers. `ROADMAP.md` owns scope and sequence. This 
 
 ---
 
+## 2026-09-23 — Files-only memory design
+
+**D-2026-09-23-8 · The files-only edition follows the design in `docs/design-files-only-memory.md`, decisions D1–D10.** `evidence` · provisional (agent design, reviewed on PR #93)
+Byte and line budgets checked at write time (D1), evidence twins (D2), archive as a byte-identical move recorded in a synced ledger (D3), a complete catalog (D4), scoped misses (D5), `read_with` and batched reads (D6), an opt-in lifecycle policy (D7), the 1.x version line (D8), sync classification (D9) and contained paths (D10). The design doc owns the detail; this entry records that it is the adopted basis for #78. Evidence: the diagnosis in #73 and measured aggregates of real stores (design F15). Revisit if #62's measurements move the caps or #78 finds a decision it cannot implement without a format change.
+
 ## 2026-09-23 — Review convergence
 
 **D-2026-09-23-7 · Reviews converge in at most three rounds, reviewers differ from the author's model, resolutions are traceable, and the reviewer's environment carries no author context.** `evidence` · provisional (agent proposal under D-6, adopted through a reviewed PR)

@@ -163,7 +163,7 @@ show_section() {
 # ═══ PROFILE DETECTION ═══
 
 # Parse arguments
-LIFECYCLE="${DISTILL_LIFECYCLE:-auto}"   # auto = keep prior choice (absent = disabled); on/off/remove = explicit
+LIFECYCLE=$(printf '%s' "${DISTILL_LIFECYCLE:-auto}" | tr '[:upper:]' '[:lower:]')   # auto = keep prior choice (absent = disabled); on/off/remove = explicit (any case, like install.ps1)
 PROFILE_NAME=""
 TOKEN_SAVER="auto"   # auto = keep prior choice (default on for new installs); on/off/remove = explicit
 CHANNEL="${DISTILL_CHANNEL:-}"   # empty = keep the persisted choice (stable for new installs)

@@ -110,6 +110,8 @@ lc_install bash "$INSTALLER" --lifecycle;          test "$(cat "$AURA/.lifecycle
 lc_install bash "$INSTALLER";                      test "$(cat "$AURA/.lifecycle")" = enabled
 lc_install bash "$INSTALLER" --no-lifecycle;       test "$(cat "$AURA/.lifecycle")" = disabled
 lc_install env DISTILL_LIFECYCLE=on bash "$INSTALLER"; test "$(cat "$AURA/.lifecycle")" = enabled
+lc_install env DISTILL_LIFECYCLE=OFF bash "$INSTALLER"; test "$(cat "$AURA/.lifecycle")" = disabled   # any case, like install.ps1
+lc_install env DISTILL_LIFECYCLE=On bash "$INSTALLER"; test "$(cat "$AURA/.lifecycle")" = enabled
 lc_install bash "$INSTALLER" --remove-lifecycle;   test ! -e "$AURA/.lifecycle"
 # a .lifecycle written by Windows PowerShell 5.1 may start with a UTF-8 BOM; it still reads as enabled
 printf '\357\273\277enabled' > "$AURA/.lifecycle"

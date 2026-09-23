@@ -11,6 +11,10 @@
 #   C. (runs first, on the pristine pre-1.2 copy) the "migrate first" refusal: with the
 #      lifecycle enabled, `gc --apply` and a legacy `restore` must change nothing and point to
 #      migrate-store; asserted by a tree hash, since this is a prompt rule the checker cannot see.
+#   D. (with ONLY=D, or after C) reverting an interrupted FIRST migration: the store is set to a
+#      scripted PENDING state (store-after on disk, store-before as backup/, a plan listing the
+#      moves and writes); after `migrate-store --revert` it must equal store-before, with no
+#      CATALOG.md, so it is again a pre-1.2 store and the refusals of part C still hold.
 #   B. five retrieval questions, each in a new session, against the migrated store:
 #      a read_with companion, a protected rule, an archived recall, a scoped miss and a
 #      pinned project. Each answer is graded by required phrases; the store must be
@@ -29,7 +33,7 @@
 #   SURFACE=codex: retrieval sessions get the Codex managed block as appended system prompt
 #   REUSE=<work dir of an earlier run>: skip part A and ask the questions against a copy of
 #           that run's migrated store
-#   ONLY=C runs part C alone (cheap)
+#   ONLY=C or ONLY=D runs that part alone (cheap)
 #   KEEP=1 (default) keeps the temp dir, which is always printed; STEP_TIMEOUT=1500 seconds per session
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -125,7 +129,7 @@ bad() { FAIL=$((FAIL+1)); echo "  FAIL $1"; }
 
 ISOLATION="This is an isolated test on a synthetic store. The knowledge directory is $STORE (it stands for {DISTILL_DIR}). Do not read or write anything outside $T. There is no user to ask: where the instructions say to ask or confirm, treat the request in this prompt as the answer."
 
-if [ -z "${REUSE:-}" ]; then
+if [ -z "${REUSE:-}" ] && [ "${ONLY:-}" != D ]; then
 echo "== C. a pre-1.2 store refuses gc and restore until migrated (model: $MODEL) =="
 c_before=$(tree_hash)
 run_agent guard-gc "You are the aura-distill distillation sub-agent. $ISOLATION
@@ -143,7 +147,42 @@ Read $STORE/distill-process.md and follow it for this Mode. Return the report."
 [ "$c_before" = "$(tree_hash)" ] && ok "gc --apply and restore left the pre-1.2 store byte-identical" || bad "a maintenance mode changed the pre-1.2 store"
 [ ! -f "$STORE/CATALOG.md" ] && ok "no catalog was written" || bad "a catalog was written on a pre-1.2 store"
 for n in guard-gc guard-restore; do final "$n" | tr '\n' ' ' | grep -qi 'migrate-store' && ok "$n points to migrate-store" || bad "$n does not point to migrate-store"; done
-if [ "${ONLY:-}" = C ]; then echo; echo "fresh-agent validation ($MODEL, part C): $PASS passed, $FAIL failed"; echo "transcripts: $LOGS"; [ $FAIL -eq 0 ]; exit; fi
+fi
+if [ -z "${REUSE:-}" ] && [ "${ONLY:-}" != C ]; then
+echo "== D. reverting an interrupted first migration leaves a pre-1.2 store (model: $MODEL) =="
+D=$T/revert-store; TS=20260911T100000Z; MIG=$D/data/migration/$TS
+cp -R "$REPO/tests/files-only/store-after" "$D"
+for f in distill-process.md distill-monitor.md; do sed "s|{DISTILL_DIR}|$D|g" "$REPO/$f" > "$D/$f"; done
+mkdir -p "$D/bin" "$MIG"; cp "$REPO/bin/distill-check-store.sh" "$D/bin/"; echo enabled > "$D/.lifecycle"
+cp -R "$REPO/tests/files-only/store-before" "$MIG/backup"
+echo "data/migration/$TS/PLAN.md" > "$MIG/PENDING"
+{ echo "# migrate-store plan — 2026-09-11T10:00:00Z"
+  echo; echo "## Legacy adoptions"; echo "- archive/projects/ember.md → archive/legacy/archive/projects/ember.md"
+  echo; echo "## Lifecycle moves"; echo "- projects/atlas.md → archive/projects/atlas.md (ledger archive line)"
+  echo; echo "## Every path this migration will create or move"
+  for x in archive/legacy/archive/projects/ember.md archive/projects/atlas.md evidence/craft/testing.md craft/testing-2.md CATALOG.md archive/LEDGER.md; do echo "- $x — created"; done
+  for x in SPINE.md craft/testing.md profile/noor.md projects/beacon.md projects/delta.md; do echo "- $x — rewritten in place"; done
+  echo; echo "## Checklist"; for i in "Backup" "PENDING" "Adopt legacy archive" "Evidence twin for craft/testing.md" "Split craft/testing.md" "New SPINE and Index detail" "Lifecycle move of projects/atlas.md" "Rebuild CATALOG.md"; do echo "- [x] $i"; done
+  echo "- [ ] Self-check with --before backup; delete PENDING, write DONE"
+  echo; echo "## Writes"
+  (cd "$D" && for x in archive/legacy/archive/projects/ember.md archive/projects/atlas.md evidence/craft/testing.md craft/testing-2.md CATALOG.md archive/LEDGER.md SPINE.md craft/testing.md profile/noor.md projects/beacon.md projects/delta.md; do echo "- wrote $x sha256 $(shasum -a 256 "$x" | cut -d' ' -f1)"; done)
+} > "$MIG/PLAN.md"
+STORE_SAVED=$STORE; STORE=$D
+run_agent revert "You are the aura-distill distillation sub-agent. This is an isolated test on a synthetic store. The knowledge directory is $D (it stands for {DISTILL_DIR}). Do not read or write anything outside $T. There is no user to ask: the user chose to revert the interrupted migration.
+## Mode
+migrate-store --revert
+## Your process
+Read $D/distill-process.md and follow it for this Mode. Return the report." --add-dir "$D"
+STORE=$STORE_SAVED
+[ ! -f "$D/CATALOG.md" ] && ok "no CATALOG.md after reverting a first migration" || bad "a catalog exists after reverting a first migration"
+same=1; while IFS= read -r f; do cmp -s "$REPO/tests/files-only/store-before/$f" "$D/$f" || { same=0; echo "     differs: $f"; }; done \
+  < <(cd "$REPO/tests/files-only/store-before" && find . -type f | sed 's|^\./||')
+[ $same = 1 ] && ok "every pre-migration file is back byte-identical" || bad "reverted store differs from the backup"
+[ ! -e "$D/archive/projects/atlas.md" ] && [ ! -e "$D/evidence/craft/testing.md" ] && [ ! -e "$D/craft/testing-2.md" ] && ok "paths the migration created are gone" || bad "created paths left behind"
+[ ! -e "$MIG/PENDING" ] && [ -e "$MIG/REVERTED" ] && ok "PENDING removed, REVERTED written" || bad "PENDING/REVERTED markers wrong"
+fi
+if [ -n "${ONLY:-}" ]; then echo; echo "fresh-agent validation ($MODEL, part ${ONLY}): $PASS passed, $FAIL failed"; echo "transcripts: $LOGS"; [ $FAIL -eq 0 ]; exit; fi
+if [ -z "${REUSE:-}" ]; then
 echo "== A. migrate-store (model: $MODEL) =="
 run_agent migrate-preview "You are the aura-distill distillation sub-agent. $ISOLATION
 ## Mode

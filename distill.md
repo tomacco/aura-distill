@@ -43,7 +43,7 @@ If `.status` starts with `running step:` — a prior distillation was interrupte
 If this is the first `/distill` invocation this session, run the version check (see Version Checking section below).
 
 **Memory import check** (the `.needs-migration` flag; unrelated to `migrate-store`, which changes the store layout):
-If `{DISTILL_DIR}/.needs-migration` exists and does NOT start with "migrated", this is the first distill after installation. In addition to normal signal harvesting, the sub-agent must also:
+Ordinary distillation only: with a Mode (gc, restore, migrate-store) skip this check and leave `.needs-migration` in place for the next `/distill`. If `{DISTILL_DIR}/.needs-migration` exists and does NOT start with "migrated", this is the first distill after installation. In addition to normal signal harvesting, the sub-agent must also:
 1. Find all memory files: `find ~/.claude -path "*/memory/*.md" -not -path "*/distill/*"`
 2. Read each one and ingest its content into the appropriate distill tier (craft, ops, profile, feedback, projects)
 3. Create a completion marker: `echo "migrated $(date -u +%Y-%m-%dT%H:%M:%SZ)" > {DISTILL_DIR}/.migrated`

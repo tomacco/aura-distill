@@ -22,6 +22,7 @@ cat > "$t/bin/claude" <<'STUB'
 #!/usr/bin/env bash
 printf '%s\n' "$@" > "$STUB_ARGS"
 echo "CLAUDE_CONFIG_DIR=$CLAUDE_CONFIG_DIR" >> "$STUB_ARGS"
+if [ -n "${STUB_NOVERDICT:-}" ]; then echo "waiting for a background task"; exit 0; fi
 echo "#### Verdict"; echo "APPROVE (stub)"
 exit "${STUB_EXIT:-0}"
 STUB
@@ -48,6 +49,11 @@ grep -qx 'Bash(./test-sandbox.sh:\*)' "$t/args" && ok "live harness disallowed" 
 set +e; out="$(run 3 2>/dev/null)"; st=$?; set -e
 [ "$st" = 3 ] && ok "reviewer failure status propagated" || no "reviewer failure status propagated ($st)"
 grep -q 'APPROVE (stub)' <<<"$out" && ok "output kept on failure" || no "output kept on failure"
+
+set +e; out="$( cd "$t/clone" && CLAUDE_BIN="$t/bin/claude" REVIEWER_PROFILE="$t/profile" REVIEW_OUT_DIR="$t/out" STUB_ARGS="$t/args" STUB_NOVERDICT=1 bash "$runner" 7 m 2>/dev/null)"; st=$?; set -e
+[ "$st" = 3 ] && ok "missing verdict fails with status 3" || no "missing verdict fails with status 3 ($st)"
+grep -q 'waiting for a background task' <<<"$out" && ok "early-stop output still printed" || no "early-stop output still printed"
+grep -q 'finish the full report before stopping' "$t/args" && ok "headless line appended" || no "headless line appended"
 
 set +e; ( cd "$t/clone" && CLAUDE_BIN="$t/bin/claude" REVIEWER_PROFILE="$t/profile" bash "$runner" 7 ) >/dev/null 2>&1; st=$?; set -e
 [ "$st" = 2 ] && ok "model argument required" || no "model argument required ($st)"

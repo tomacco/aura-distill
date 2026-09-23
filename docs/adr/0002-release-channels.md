@@ -23,6 +23,7 @@ Two gaps were left. There was no way to install or follow a beta at all: the dis
 - downloads all four files (dispatcher, process, monitor, itself) to a temp dir, validates each, resolves the store placeholder, and only then renames them into place with per-process temp names; `.version` is renamed last. Any failure before the renames leaves every installed file untouched; a failed rename (for example two sessions updating one store) is reported as `BLOCKED ... may be partially updated`, never as `UPDATED`;
 - repairs (status `REPAIRED`; `check` only reports it), at the same version and regardless of the Auto-update preference, installed files that an older updater copied with the store placeholder unresolved (ADR 0001 latent defect 2), so a legacy client that adopts the bridge is clean after its first `/distill`;
 - reads `.channel`, `.version` and `.command-path` tolerating a UTF-8 byte-order mark and CRLF (Windows PowerShell 5.1 writes both; `install.ps1` now writes these files without them);
+- also installs or refreshes the optional store checker `bin/distill-check-store.sh` (#78) when the release carries one whose second line is `# aura-distill-check-store invariants v…`; a missing or mismatched checker is skipped without failing the update and never removes an installed copy;
 - never touches knowledge (SPINE, tiers, preferences, inbox);
 - runs from a temp copy of itself, so replacing its own file works on Windows too.
 

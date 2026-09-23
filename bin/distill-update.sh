@@ -231,6 +231,17 @@ for f in distill.md distill-process.md distill-monitor.md bin/distill-update.sh;
   fi
 done
 
+# Optional: the store-invariant checker (#78). Installed or refreshed only when the
+# release carries one with the expected header; a 404 or a mismatch is skipped and
+# never removes a copy that is already installed.
+CHECK_STORE=0
+if fetch "$BASE/bin/distill-check-store.sh" "$WORK/stage/bin/distill-check-store.sh" \
+   && sed -n '2p' "$WORK/stage/bin/distill-check-store.sh" | grep -q '^# aura-distill-check-store invariants v' \
+   && ! grep -q "$SOFTWARE_MARKER" "$WORK/stage/bin/distill-check-store.sh" \
+   && bash -n "$WORK/stage/bin/distill-check-store.sh" 2>/dev/null; then
+  CHECK_STORE=1
+fi
+
 [ "$FALLBACK" = 0 ] || mkdir -p "$(dirname "${CMD_FILES[0]}")" || finish "BLOCKED $CHANNEL cannot create directories; nothing was changed"
 mkdir -p "$STORE/bin" "$STORE/data" "$STORE/inbox" || finish "BLOCKED $CHANNEL cannot create directories; nothing was changed"
 # Temp names next to each target (same filesystem), unique per process so two
@@ -239,7 +250,7 @@ mkdir -p "$STORE/bin" "$STORE/data" "$STORE/inbox" || finish "BLOCKED $CHANNEL c
 N=".aura-new.$$"
 cleanup_new() {
   local t; for t in ${CMD_FILES[@]+"${CMD_FILES[@]}"}; do rm -f "$t$N"; done
-  rm -f "$STORE/distill-process.md$N" "$STORE/distill-monitor.md$N" "$STORE/bin/distill-update.sh$N" "$STORE/.version$N"
+  rm -f "$STORE/distill-process.md$N" "$STORE/distill-monitor.md$N" "$STORE/bin/distill-update.sh$N" "$STORE/bin/distill-check-store.sh$N" "$STORE/.version$N"
 }
 cmd_ok=1
 for t in ${CMD_FILES[@]+"${CMD_FILES[@]}"}; do cp "$WORK/stage/distill.md" "$t$N" || cmd_ok=0; done
@@ -247,10 +258,16 @@ for t in ${CMD_FILES[@]+"${CMD_FILES[@]}"}; do cp "$WORK/stage/distill.md" "$t$N
   && cp "$WORK/stage/distill-process.md" "$STORE/distill-process.md$N" \
   && cp "$WORK/stage/distill-monitor.md" "$STORE/distill-monitor.md$N" \
   && cp "$WORK/stage/bin/distill-update.sh" "$STORE/bin/distill-update.sh$N" \
+  && { [ "$CHECK_STORE" = 0 ] || cp "$WORK/stage/bin/distill-check-store.sh" "$STORE/bin/distill-check-store.sh$N"; } \
   && printf '%s\n' "$TARGET" > "$STORE/.version$N" \
   || { cleanup_new; finish "BLOCKED $CHANNEL cannot write the new files; nothing was changed"; }
 chmod +x "$STORE/bin/distill-update.sh$N" 2>/dev/null || true
-for pair in ${CMD_FILES[@]+"${CMD_FILES[@]}"} "$STORE/distill-process.md" "$STORE/distill-monitor.md" "$STORE/bin/distill-update.sh" "$STORE/.version"; do
+OPTIONAL_TARGETS=()
+if [ "$CHECK_STORE" = 1 ]; then
+  chmod +x "$STORE/bin/distill-check-store.sh$N" 2>/dev/null || true
+  OPTIONAL_TARGETS=("$STORE/bin/distill-check-store.sh")
+fi
+for pair in ${CMD_FILES[@]+"${CMD_FILES[@]}"} "$STORE/distill-process.md" "$STORE/distill-monitor.md" "$STORE/bin/distill-update.sh" ${OPTIONAL_TARGETS[@]+"${OPTIONAL_TARGETS[@]}"} "$STORE/.version"; do
   if ! mv -f "$pair$N" "$pair" 2>/dev/null; then
     cleanup_new
     finish "BLOCKED $CHANNEL replacing $(basename "$pair") failed; the installation may be partially updated, run the installer to repair it"

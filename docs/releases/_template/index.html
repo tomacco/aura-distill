@@ -1,0 +1,235 @@
+<!doctype html>
+<!--
+  RELEASE PAGE TEMPLATE. How to use it: docs/releases/README.md.
+  Copy this folder to docs/releases/<version>/ and fill every <!- - SLOT: … - -> block.
+  Every English block has a Spanish twin (data-lang="es"); fill both, written by hand, never machine-inserted.
+  When you are done, run the placeholder check in docs/releases/README.md (step 4); it must print nothing.
+  SLOT comments are not rendered; you may keep or delete them.
+-->
+<!-- SLOT: title — the version in data-title-en, data-title-es and <title> -->
+<html lang="en" data-title-en="Aura Distill X.Y.Z — what changes" data-title-es="Aura Distill X.Y.Z — qué cambia">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aura Distill X.Y.Z — what changes</title>
+<!-- SLOT: description — the one-sentence answer, English -->
+<meta name="description" content="{{ONE_SENTENCE_ANSWER_EN}}">
+<meta property="og:title" content="Aura Distill X.Y.Z">
+<meta property="og:description" content="{{ONE_SENTENCE_ANSWER_EN}}">
+<meta property="og:type" content="article">
+<!-- SLOT: version in the canonical URL -->
+<meta property="og:url" content="https://tomacco.github.io/aura-distill/releases/X.Y.Z/">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;500;800&family=Archivo:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/ne-editorial.css">
+<link rel="stylesheet" href="../releases.css">
+<script>
+/* language before paint: ?lang= → saved choice → navigator.language → en */
+(function(){
+  var d = document.documentElement, lang = null, theme = null;
+  try { lang = localStorage.getItem('ne-lang'); theme = localStorage.getItem('ne-theme'); } catch(e){}
+  var q = (location.search.match(/[?&]lang=(en|es)\b/) || [])[1];
+  if (q) lang = q;
+  if (lang !== 'en' && lang !== 'es') lang = ((navigator.language || '').toLowerCase().indexOf('es') === 0) ? 'es' : 'en';
+  d.lang = lang;
+  if (theme === 'dark' || theme === 'light') d.setAttribute('data-theme', theme);
+})();
+</script>
+</head>
+<body>
+<div class="ne-page">
+  <header class="ne-top">
+    <div class="ne-l"><span class="ne-star" aria-hidden="true">✦</span><a href="../"><span data-lang="en">Releases</span><span data-lang="es">Versiones</span></a>
+      <nav class="ne-nav" aria-label="Sections">
+        <a href="#install"><span data-lang="en">Install</span><span data-lang="es">Instalar</span></a>
+        <a href="#risks"><span data-lang="en">Risks</span><span data-lang="es">Riesgos</span></a>
+        <a href="#changelog">Changelog</a>
+        <a href="#rollback"><span data-lang="en">Roll back</span><span data-lang="es">Volver atrás</span></a>
+        <a href="#review"><span data-lang="en">Review</span><span data-lang="es">Revisión</span></a>
+      </nav>
+    </div>
+    <div class="ne-r">
+      <button id="lang-en" type="button" aria-pressed="true">EN</button><button id="lang-es" type="button" aria-pressed="false">ES</button>
+      <button id="theme" type="button">dark</button>
+    </div>
+  </header>
+  <nav class="ne-nav-m" aria-label="Sections">
+    <a href="#install"><span data-lang="en">Install</span><span data-lang="es">Instalar</span></a>
+    <a href="#risks"><span data-lang="en">Risks</span><span data-lang="es">Riesgos</span></a>
+    <a href="#rollback"><span data-lang="en">Roll back</span><span data-lang="es">Volver atrás</span></a>
+  </nav>
+
+  <div class="ne-kicker">
+    <span><a href="../">← <span data-lang="en">All releases</span><span data-lang="es">Todas las versiones</span></a></span>
+    <!-- SLOT: date — release date, ISO order in EN (2026-10-01), day first in ES (01-10-2026) -->
+    <span data-lang="en">Released YYYY-MM-DD</span><span data-lang="es">Publicada el DD-MM-YYYY</span>
+    <!-- SLOT: channel — keep ONE badge.
+         stable: <span class="ne-badge"><span data-lang="en">stable</span><span data-lang="es">estable</span></span>
+         beta:   <span class="ne-badge ne-badge--outline">beta</span> -->
+    <span class="ne-badge ne-badge--outline">beta</span>
+    <!-- SLOT: release PR link -->
+    <span><a href="https://github.com/tomacco/aura-distill/pull/NNN">PR #NNN</a></span>
+  </div>
+
+  <!-- SLOT: version — the short version as the wordmark (e.g. 1.2.0). Put "-beta.N" in the kicker badge
+       and in the h1, not here: it has to fit one line at 360px. -->
+  <div class="ne-wordmark ne-reveal">X.Y.Z</div>
+  <div class="ne-tag ne-reveal ne-reveal--2">
+    <!-- SLOT: one-sentence answer — what changes for the reader, in one plain sentence (≤ 20 words). EN + ES. -->
+    <h1><span data-lang="en">{{One sentence: what changes for you.}}</span><span data-lang="es">{{Una frase: qué cambia para ti.}}</span></h1>
+    <a class="ne-arrow" href="#changes" aria-label="Skip to what changes">↓</a>
+  </div>
+
+  <div class="ne-answer" id="changes">
+    <!-- SLOT: lead — two sentences: who should install this and who should wait. EN + ES. -->
+    <p class="ne-lead" data-lang="en">{{Who this version is for, and who should wait.}}</p>
+    <p class="ne-lead" data-lang="es">{{Para quién es esta versión y quién debería esperar.}}</p>
+
+    <!-- SLOT: stats (optional) — 1 to 3 measured numbers, each with a unit and n in the sub-line, linked in section 04 (evidence).
+         Delete the whole .ne-stats block if the release has no measured number. Never invent one. -->
+    <div class="ne-stats">
+      <div class="ne-stat"><div class="ne-big ne-num-tab">00<sup>%</sup></div><div class="ne-lab"><span data-lang="en">{{what was measured}}</span><span data-lang="es">{{qué se midió}}</span></div><div class="ne-sub"><span data-lang="en">{{unit · n = ?}}</span><span data-lang="es">{{unidad · n = ?}}</span></div></div>
+      <div class="ne-stat"><div class="ne-big ne-num-tab">0</div><div class="ne-lab"><span data-lang="en">{{known risks}}</span><span data-lang="es">{{riesgos conocidos}}</span></div><div class="ne-sub"><span data-lang="en">{{listed in section 02}}</span><span data-lang="es">{{en la sección 02}}</span></div></div>
+    </div>
+
+    <!-- SLOT: what changes for you — 3 to 5 numbered takeaways, one change each, from the reader's side
+         ("you can now…", "X no longer…"). Source: CHANGELOG [Unreleased] ### Added / ### Changed / ### Fixed. -->
+    <ul class="ne-takeaways">
+      <li><b>01</b><p data-lang="en"><b>{{Change, in a few words.}}</b> {{What it means for you, one sentence. (#issue)}}</p><p data-lang="es"><b>{{El cambio, en pocas palabras.}}</b> {{Qué significa para ti, en una frase. (#issue)}}</p></li>
+      <li><b>02</b><p data-lang="en"><b>{{Change.}}</b> {{What it means for you.}}</p><p data-lang="es"><b>{{Cambio.}}</b> {{Qué significa para ti.}}</p></li>
+      <li><b>03</b><p data-lang="en"><b>{{Change.}}</b> {{What it means for you.}}</p><p data-lang="es"><b>{{Cambio.}}</b> {{Qué significa para ti.}}</p></li>
+    </ul>
+  </div>
+
+  <!-- 01 INSTALL -->
+  <section class="ne-section" id="install">
+    <div class="ne-sec"><h2><span data-lang="en">Install or upgrade</span><span data-lang="es">Instalar o actualizar</span></h2><span class="ne-idx">01</span></div>
+    <!-- SLOT: install intro — one sentence. EN + ES. -->
+    <p class="ne-intro" data-lang="en">{{Run one command. Your knowledge in ~/.aura-distill/ is kept.}}</p>
+    <p class="ne-intro" data-lang="es">{{Ejecuta un comando. Tu conocimiento en ~/.aura-distill/ se conserva.}}</p>
+
+    <!-- SLOT: install-stable — keep for a STABLE release, delete for a beta. These are the commands on the
+         landing page; copy them from docs/index.html if they changed. -->
+    <div class="ne-code"><div class="ne-code-h"><span>macOS · Homebrew</span><span class="ne-code-meta"><button class="ne-copy" type="button" data-copy>copy</button></span></div>
+<pre><code><span class="ne-p">$ </span>brew install tomacco/aura-distill/aura-distill &amp;&amp; aura-distill install</code></pre></div>
+    <div class="ne-code"><div class="ne-code-h"><span>macOS · Linux · WSL</span><span class="ne-code-meta"><button class="ne-copy" type="button" data-copy>copy</button></span></div>
+<pre><code><span class="ne-p">$ </span>curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh | bash</code></pre></div>
+    <div class="ne-code"><div class="ne-code-h"><span>Windows · PowerShell</span><span class="ne-code-meta"><button class="ne-copy" type="button" data-copy>copy</button></span></div>
+<pre><code><span class="ne-p">&gt; </span>irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1 | iex</code></pre></div>
+
+    <!-- SLOT: install-beta — keep for a BETA release (both blocks and the "Beta is opt-in" note), delete for a stable one. Copy the exact opt-in command from
+         the release PR / README of the beta branch. Never guess a flag. The Homebrew tap stays on stable. -->
+    <div class="ne-code"><div class="ne-code-h"><span><span data-lang="en">beta · macOS · Linux · WSL</span><span data-lang="es">beta · macOS · Linux · WSL</span></span><span class="ne-code-meta"><button class="ne-copy" type="button" data-copy>copy</button></span></div>
+<pre><code><span class="ne-p">$ </span>{{BETA_INSTALL_COMMAND_SH}}</code></pre></div>
+    <div class="ne-code"><div class="ne-code-h"><span><span data-lang="en">beta · Windows · PowerShell</span><span data-lang="es">beta · Windows · PowerShell</span></span><span class="ne-code-meta"><button class="ne-copy" type="button" data-copy>copy</button></span></div>
+<pre><code><span class="ne-p">&gt; </span>{{BETA_INSTALL_COMMAND_PS1}}</code></pre></div>
+    <div class="ne-note"><b data-lang="en">Beta is opt-in.</b><b data-lang="es">La beta es opcional.</b> <span data-lang="en">Auto-updates and Homebrew stay on the stable line. You only get this version if you run the command above.</span><span data-lang="es">Las actualizaciones automáticas y Homebrew siguen en la línea estable. Solo tendrás esta versión si ejecutas el comando de arriba.</span></div>
+  </section>
+
+  <!-- 02 KNOWN RISKS (required: never delete this section) -->
+  <section class="ne-section" id="risks">
+    <div class="ne-sec"><h2><span data-lang="en">Known risks</span><span data-lang="es">Riesgos conocidos</span></h2><span class="ne-idx">02</span></div>
+    <!-- SLOT: known risks — REQUIRED. One <li> per entry under "### Known risks" in CHANGELOG [Unreleased] for this
+         version (REVIEW-PROTOCOL.md rule 6). Name the risk, who it affects, what to do about it, and link the PR/issue
+         that tracks it. If the changelog lists none, delete the <ol> and keep the "None known" note below.
+         If the changelog lists any, delete the "None known" note. -->
+    <ol class="ne-steps">
+      <li><b>01</b><div><h4><span data-lang="en">{{Risk, in a few words}}</span><span data-lang="es">{{El riesgo, en pocas palabras}}</span></h4>
+        <p data-lang="en">{{Who it affects, when it shows up, and what to do. Tracked in #NNN.}}</p>
+        <p data-lang="es">{{A quién afecta, cuándo aparece y qué hacer. Seguimiento en #NNN.}}</p></div></li>
+    </ol>
+    <div class="ne-note ne-note--strong"><b data-lang="en">None known.</b><b data-lang="es">Ninguno conocido.</b> <span data-lang="en">The changelog for this version lists no known risks. If you hit a problem, <a href="https://github.com/tomacco/aura-distill/issues/new">open an issue</a>.</span><span data-lang="es">El changelog de esta versión no lista riesgos conocidos. Si encuentras un problema, <a href="https://github.com/tomacco/aura-distill/issues/new">abre un issue</a>.</span></div>
+  </section>
+
+  <!-- 03 WHAT STAYS THE SAME -->
+  <section class="ne-section" id="same">
+    <div class="ne-sec"><h2><span data-lang="en">What stays the same</span><span data-lang="es">Qué sigue igual</span></h2><span class="ne-idx">03</span></div>
+    <!-- SLOT: what stays the same — 2 to 5 bullets. What a user might worry about that did NOT change
+         (their knowledge files, commands, clients supported, privacy). Only claims you can point to in the diff. -->
+    <div class="ne-prose">
+      <ul data-lang="en">
+        <li>{{Your knowledge in ~/.aura-distill/ is not rewritten.}}</li>
+        <li>{{The /distill command works as before.}}</li>
+      </ul>
+      <ul data-lang="es">
+        <li>{{Tu conocimiento en ~/.aura-distill/ no se reescribe.}}</li>
+        <li>{{El comando /distill funciona igual que antes.}}</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 04 MEASURED EVIDENCE -->
+  <section class="ne-section" id="evidence">
+    <div class="ne-sec"><h2><span data-lang="en">Measured evidence</span><span data-lang="es">Evidencia medida</span></h2><span class="ne-idx">04</span></div>
+    <!-- SLOT: evidence — one row per measurement behind a claim on this page: what, result, link to the research page,
+         test suite or CI run. Aggregates only (DECISIONS D-2026-09-23-4). If nothing was measured, replace the
+         panel with a note saying so. -->
+    <div class="ne-panel"><ul class="ne-rows">
+      <li><span class="ne-k"><span data-lang="en">{{Test suite}}</span><span data-lang="es">{{Batería de pruebas}}</span></span><span class="ne-v"><a href="#">{{result}}</a></span></li>
+      <li><span class="ne-k"><span data-lang="en">{{Research page}}</span><span data-lang="es">{{Página de investigación}}</span></span><span class="ne-v"><a href="#">{{read}}</a></span></li>
+    </ul></div>
+  </section>
+
+  <!-- 05 FULL CHANGELOG -->
+  <section class="ne-section" id="changelog">
+    <div class="ne-sec"><h2>Changelog</h2><span class="ne-idx">05</span></div>
+    <!-- SLOT: changelog excerpt — the CHANGELOG.md section for this version, copied as written (English only is fine
+         for the excerpt itself; keep the Spanish intro line). Convert Markdown bullets to <li>, `code` to <code>. -->
+    <p class="ne-intro" data-lang="en">The changelog entry for this version, as written. <a href="https://github.com/tomacco/aura-distill/blob/main/CHANGELOG.md">Full CHANGELOG.md</a>.</p>
+    <p class="ne-intro" data-lang="es">La entrada del changelog de esta versión, tal como está escrita (en inglés). <a href="https://github.com/tomacco/aura-distill/blob/main/CHANGELOG.md">CHANGELOG.md completo</a>.</p>
+    <div class="ne-prose">
+      <h3>Added</h3>
+      <ul><li>{{…}}</li></ul>
+      <h3>Changed</h3>
+      <ul><li>{{…}}</li></ul>
+      <h3>Fixed</h3>
+      <ul><li>{{…}}</li></ul>
+      <h3>Known risks</h3>
+      <ul><li>{{… or "None."}}</li></ul>
+    </div>
+  </section>
+
+  <!-- 06 ROLL BACK / OPT OUT -->
+  <section class="ne-section" id="rollback">
+    <div class="ne-sec"><h2><span data-lang="en">Roll back or opt out</span><span data-lang="es">Volver atrás o salir</span></h2><span class="ne-idx">06</span></div>
+    <!-- SLOT: rollback — how to return to the previous version (beta: back to stable) and how to turn off any new
+         behaviour this version adds. Commands with copy buttons. Say plainly whether rolling back touches knowledge. -->
+    <p class="ne-intro" data-lang="en">{{To go back to stable, run the stable installer again. Your knowledge files are not touched.}}</p>
+    <p class="ne-intro" data-lang="es">{{Para volver a la versión estable, ejecuta de nuevo el instalador estable. Tus archivos de conocimiento no se tocan.}}</p>
+    <div class="ne-code"><div class="ne-code-h"><span><span data-lang="en">back to stable · macOS · Linux · WSL</span><span data-lang="es">volver a estable · macOS · Linux · WSL</span></span><span class="ne-code-meta"><button class="ne-copy" type="button" data-copy>copy</button></span></div>
+<pre><code><span class="ne-p">$ </span>curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh | bash</code></pre></div>
+    <div class="ne-code"><div class="ne-code-h"><span><span data-lang="en">back to stable · Windows</span><span data-lang="es">volver a estable · Windows</span></span><span class="ne-code-meta"><button class="ne-copy" type="button" data-copy>copy</button></span></div>
+<pre><code><span class="ne-p">&gt; </span>irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1 | iex</code></pre></div>
+    <!-- SLOT: opt-out (optional) — one row per new behaviour that can be switched off, with the switch. -->
+    <dl class="ne-dl">
+      <dt>{{feature}}</dt>
+      <dd data-lang="en">{{How to turn it off.}}</dd>
+      <dd data-lang="es">{{Cómo desactivarlo.}}</dd>
+    </dl>
+  </section>
+
+  <!-- 07 REVIEW TRAIL -->
+  <section class="ne-section" id="review">
+    <div class="ne-sec"><h2><span data-lang="en">Review trail</span><span data-lang="es">Registro de revisión</span></h2><span class="ne-idx">07</span></div>
+    <!-- SLOT: review trail — one row per PR in this release: PR, review rounds, reviewer model(s) (REVIEW-PROTOCOL.md
+         rule 7: different from the author's; name the release-gate reviewer from another vendor if one ran),
+         and the final verdict. Include the release PR itself. -->
+    <p class="ne-intro" data-lang="en">Every change in this version was reviewed by a model other than the one that wrote it. One row per pull request.</p>
+    <p class="ne-intro" data-lang="es">Cada cambio de esta versión lo revisó un modelo distinto del que lo escribió. Una fila por pull request.</p>
+    <div class="ne-tbl"><table>
+      <thead><tr><th>PR</th><th><span data-lang="en">rounds</span><span data-lang="es">rondas</span></th><th><span data-lang="en">author model</span><span data-lang="es">modelo autor</span></th><th><span data-lang="en">reviewer model</span><span data-lang="es">modelo revisor</span></th><th><span data-lang="en">verdict</span><span data-lang="es">veredicto</span></th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://github.com/tomacco/aura-distill/pull/NNN">#NNN</a><span class="ne-sub">{{title}}</span></td><td>{{3}}</td><td>{{model}}</td><td>{{model}}</td><td>{{APPROVE}}</td></tr>
+        <tr><td><a href="https://github.com/tomacco/aura-distill/pull/NNN">#NNN</a><span class="ne-sub"><span data-lang="en">release gate</span><span data-lang="es">control de publicación</span></span></td><td>{{1}}</td><td>{{model}}</td><td>{{other vendor}}</td><td>{{APPROVE}}</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- SLOT: footer date -->
+  <footer class="ne-footer"><span>Aura Distill X.Y.Z · YYYY-MM-DD</span><span><a href="../"><span data-lang="en">all releases</span><span data-lang="es">todas las versiones</span></a> · <a href="https://github.com/tomacco/aura-distill">github</a> · MIT</span></footer>
+</div>
+<script src="../releases.js"></script>
+</body>
+</html>

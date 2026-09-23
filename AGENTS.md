@@ -42,6 +42,7 @@ When developing or testing:
 - The Homebrew formula (`homebrew/Formula/aura-distill.rb`) is NOT auto-bumped: it pins
   a tagged release tarball + sha256, so updating it requires cutting a git tag and
   recomputing the hash (manual release step)
+- Every release gets a page under docs/releases/ — see docs/releases/README.md
 
 ## Key conventions
 

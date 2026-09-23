@@ -1,0 +1,22 @@
+/* Release pages: small additions on top of ../assets/ne-editorial.css. No hue, no radii. */
+
+/* wordmarks here are version numbers or 8–9 letter words: keep them on one line at 360px */
+.ne-wordmark{font-size:clamp(40px,12.5vw,150px)}
+
+/* release list: one row per release, stacks on phones */
+.rl{list-style:none;margin:0 0 18px;padding:0;border-top:var(--ne-rule)}
+.rl li{display:grid;grid-template-columns:minmax(0,11rem) minmax(0,1fr) auto;gap:6px 22px;align-items:baseline;padding:16px 0;border-bottom:var(--ne-rule)}
+.rl .rl-v{font-family:var(--ne-display);font-weight:800;font-size:clamp(22px,3.2vw,30px);letter-spacing:-.03em;line-height:1.05;overflow-wrap:anywhere}
+.rl .rl-v a{text-decoration:none}
+.rl .rl-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-bottom:6px;font-size:var(--ne-fs-micro);letter-spacing:.12em;text-transform:uppercase;color:var(--ne-ink-3)}
+.rl .rl-sum{max-width:64ch;font-size:15px}
+.rl .rl-go{white-space:nowrap}
+@media (max-width:720px){.rl li{grid-template-columns:minmax(0,1fr)}.rl .rl-go{justify-self:start;margin-top:4px}}
+
+/* copy button in a code header */
+.ne-code .ne-code-h{align-items:center}
+.ne-copy{background:none;border:var(--ne-rule);color:var(--ne-ink);font:600 10.5px/1 var(--ne-text);letter-spacing:.14em;text-transform:uppercase;padding:5px 8px;cursor:pointer;transition:background .15s,color .15s}
+.ne-copy:hover{background:var(--ne-ink);color:var(--ne-paper)}
+.ne-code-h .ne-code-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+
+@media (prefers-reduced-motion:reduce){.ne-copy{transition:none}}

@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en" data-title-en="Releases — Aura Distill" data-title-es="Versiones — Aura Distill">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Releases — Aura Distill</title>
+<meta name="description" content="Every Aura Distill version, newest first: what changed for you, which channel it ships on, and what risks it carries.">
+<meta property="og:title" content="Aura Distill releases">
+<meta property="og:description" content="Every version, newest first, with what changed for you and the risks it ships with.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tomacco.github.io/aura-distill/releases/">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;500;800&family=Archivo:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/ne-editorial.css">
+<link rel="stylesheet" href="releases.css">
+<script>
+(function(){
+  var d = document.documentElement, lang = null, theme = null;
+  try { lang = localStorage.getItem('ne-lang'); theme = localStorage.getItem('ne-theme'); } catch(e){}
+  var q = (location.search.match(/[?&]lang=(en|es)\b/) || [])[1];
+  if (q) lang = q;
+  if (lang !== 'en' && lang !== 'es') lang = ((navigator.language || '').toLowerCase().indexOf('es') === 0) ? 'es' : 'en';
+  d.lang = lang;
+  if (theme === 'dark' || theme === 'light') d.setAttribute('data-theme', theme);
+})();
+</script>
+</head>
+<body>
+<div class="ne-page">
+  <header class="ne-top">
+    <div class="ne-l"><span class="ne-star" aria-hidden="true">✦</span><a href="../">Aura Distill</a>
+      <nav class="ne-nav" aria-label="Site">
+        <a href="./" aria-current="page"><span data-lang="en">Releases</span><span data-lang="es">Versiones</span></a>
+        <a href="../research/"><span data-lang="en">Research</span><span data-lang="es">Investigación</span></a>
+        <a href="https://github.com/tomacco/aura-distill/blob/main/CHANGELOG.md">Changelog</a>
+      </nav>
+    </div>
+    <div class="ne-r">
+      <button id="lang-en" type="button" aria-pressed="true">EN</button><button id="lang-es" type="button" aria-pressed="false">ES</button>
+      <button id="theme" type="button">dark</button>
+    </div>
+  </header>
+  <nav class="ne-nav-m" aria-label="Site">
+    <a href="../research/"><span data-lang="en">Research</span><span data-lang="es">Investigación</span></a>
+    <a href="https://github.com/tomacco/aura-distill/blob/main/CHANGELOG.md">Changelog</a>
+  </nav>
+
+  <div class="ne-kicker">
+    <span><a href="../">← Aura Distill</a></span>
+    <span data-lang="en">Updated 2026-09-23</span><span data-lang="es">Actualizado el 23-09-2026</span>
+    <span data-lang="en">Newest first</span><span data-lang="es">La más reciente primero</span>
+  </div>
+  <div class="ne-wordmark ne-reveal"><span data-lang="en">Releases</span><span data-lang="es">Versiones</span></div>
+  <div class="ne-tag ne-reveal ne-reveal--2">
+    <h1><span data-lang="en">One page per version: what changed for you, and what could go wrong.</span><span data-lang="es">Una página por versión: qué cambia para ti y qué podría fallar.</span></h1>
+    <a class="ne-arrow" href="#list" aria-label="Skip to the list">↓</a>
+  </div>
+
+  <div class="ne-answer">
+    <p class="ne-lead" data-lang="en">The version you get today is 1.1.24, on the stable line. From 1.2.0-beta.1 on, every version gets its own page here, with its known risks listed.</p>
+    <p class="ne-lead" data-lang="es">La versión que instalas hoy es la 1.1.24, de la línea estable. A partir de 1.2.0-beta.1, cada versión tendrá aquí su propia página, con sus riesgos conocidos.</p>
+    <div class="ne-stats">
+      <div class="ne-stat"><div class="ne-big ne-num-tab">1.1.24</div><div class="ne-lab"><span data-lang="en">Current stable</span><span data-lang="es">Estable actual</span></div><div class="ne-sub"><span data-lang="en">What the installers fetch from main</span><span data-lang="es">Lo que descargan los instaladores desde main</span></div></div>
+      <div class="ne-stat"><div class="ne-big ne-num-tab">25</div><div class="ne-lab"><span data-lang="en">Versions in the 1.1 line</span><span data-lang="es">Versiones en la línea 1.1</span></div><div class="ne-sub"><span data-lang="en">1.1.0 to 1.1.24 · 2026-05-18 to 2026-09-23</span><span data-lang="es">1.1.0 a 1.1.24 · 18-05-2026 a 23-09-2026</span></div></div>
+    </div>
+    <ul class="ne-takeaways">
+      <li><b>01</b><p data-lang="en"><b>Stable</b> is what installers and auto-updates give you. <b>Beta</b> is opt-in only; nothing moves you onto it without you asking.</p><p data-lang="es"><b>Estable</b> es lo que te dan el instalador y las actualizaciones automáticas. <b>Beta</b> solo se instala si lo pides; nada te cambia a ella sin tu permiso.</p></li>
+      <li><b>02</b><p data-lang="en">Each page opens with one sentence on what changes for you, then lists what stays the same, the known risks, and how to go back.</p><p data-lang="es">Cada página empieza con una frase sobre qué cambia para ti y después indica qué sigue igual, los riesgos conocidos y cómo volver atrás.</p></li>
+      <li><b>03</b><p data-lang="en">The 1.1 line has no per-version pages. Its patch numbers go up automatically on every merge, so it gets one summary below instead.</p><p data-lang="es">La línea 1.1 no tiene páginas por versión. Su número de parche sube solo con cada merge, así que abajo tiene un único resumen.</p></li>
+    </ul>
+  </div>
+
+  <!-- 01 LIST -->
+  <section class="ne-section" id="list">
+    <div class="ne-sec"><h2><span data-lang="en">All releases</span><span data-lang="es">Todas las versiones</span></h2><span class="ne-idx">01</span></div>
+    <!-- RELEASE LIST: newest first. One <li> per release; copy the pattern below.
+         Channel badge: stable = <span class="ne-badge">stable</span>,
+                        beta   = <span class="ne-badge ne-badge--outline">beta</span>. -->
+    <ul class="rl">
+      <li>
+        <div class="rl-v"><a href="#line-1-1">1.1.x</a></div>
+        <div>
+          <div class="rl-meta"><span class="ne-badge"><span data-lang="en">stable</span><span data-lang="es">estable</span></span><span class="ne-nw">2026-05-18 → 2026-09-23</span><span data-lang="en">Stable line · summary</span><span data-lang="es">Línea estable · resumen</span></div>
+          <p class="rl-sum" data-lang="en">Saving on request (INBOX), a record of every distillation and what it cost, lighter helper agents (Token Saver), a Google Antigravity connector, and an installer fix that stopped wiping your preferences.</p>
+          <p class="rl-sum" data-lang="es">Guardar cuando lo pides (INBOX), un registro de cada destilación y de su coste, agentes auxiliares más ligeros (Token Saver), un conector para Google Antigravity y un arreglo del instalador, que antes borraba tus preferencias.</p>
+        </div>
+        <a class="ne-link rl-go" href="#line-1-1"><span data-lang="en">Read summary</span><span data-lang="es">Leer resumen</span></a>
+      </li>
+    </ul>
+  </section>
+
+  <!-- 02 THE 1.1 LINE -->
+  <section class="ne-section" id="line-1-1">
+    <div class="ne-sec"><h2><span data-lang="en">1.1.x, the stable line</span><span data-lang="es">1.1.x, la línea estable</span></h2><span class="ne-idx">02</span></div>
+    <p class="ne-intro" data-lang="en">A look back at what the 1.1 line shipped, taken from the <code>[Unreleased]</code> section of <a href="https://github.com/tomacco/aura-distill/blob/main/CHANGELOG.md">CHANGELOG.md</a> on <code>main</code> at 1.1.24. The changelog was not split by version during 1.1, so this is one summary for the whole line, not a page per patch.</p>
+    <p class="ne-intro" data-lang="es">Un repaso de lo que trajo la línea 1.1, tomado de la sección <code>[Unreleased]</code> de <a href="https://github.com/tomacco/aura-distill/blob/main/CHANGELOG.md">CHANGELOG.md</a> en <code>main</code> en la 1.1.24. Durante la 1.1 el changelog no se separó por versión, así que es un solo resumen para toda la línea, no una página por parche.</p>
+
+    <div class="ne-subhead"><span class="ne-badge ne-badge--outline"><span data-lang="en">Changed</span><span data-lang="es">Cambios</span></span><h3><span data-lang="en">What 1.1 changed for you</span><span data-lang="es">Qué cambió para ti con la 1.1</span></h3></div>
+    <ol class="ne-steps">
+      <li><b>01</b><div><h4><span data-lang="en">"Remember this" is saved right away</span><span data-lang="es">"Recuerda esto" se guarda en el momento</span></h4>
+        <p data-lang="en">When you ask the agent to remember something, it writes a small file to <code>~/.aura-distill/inbox/</code> and shows you the path. The next <code>/distill</code> processes it and deletes it only after it is saved as knowledge. (INBOX, #47)</p>
+        <p data-lang="es">Cuando le pides al agente que recuerde algo, escribe un archivo pequeño en <code>~/.aura-distill/inbox/</code> y te muestra la ruta. El siguiente <code>/distill</code> lo procesa y lo borra solo después de guardarlo como conocimiento. (INBOX, #47)</p></div></li>
+      <li><b>02</b><div><h4><span data-lang="en">Every distillation leaves a record, including its cost</span><span data-lang="es">Cada destilación deja un registro, con su coste</span></h4>
+        <p data-lang="en">Each <code>/distill</code> adds one line to <code>data/distill-ledger.jsonl</code> (which conversation, when, how many signals) and one to <code>data/economics.jsonl</code> (tokens and file sizes). Both stay on your machine and are never synced or sent. (#46)</p>
+        <p data-lang="es">Cada <code>/distill</code> añade una línea a <code>data/distill-ledger.jsonl</code> (qué conversación, cuándo, cuántas señales) y otra a <code>data/economics.jsonl</code> (tokens y tamaños de archivo). Los dos se quedan en tu equipo y nunca se sincronizan ni se envían. (#46)</p></div></li>
+      <li><b>03</b><div><h4><span data-lang="en">Two lighter helper agents (Token Saver)</span><span data-lang="es">Dos agentes auxiliares más ligeros (Token Saver)</span></h4>
+        <p data-lang="en"><code>scribe</code> handles text-only jobs and starts about 14 times lighter than a default helper; <code>scout</code> reads code without being able to change it, about 3.5 times lighter. You can turn them on, off or remove them with installer flags, and the choice survives updates.</p>
+        <p data-lang="es"><code>scribe</code> hace trabajos solo de texto y arranca unas 14 veces más ligero que un agente auxiliar normal; <code>scout</code> lee código sin poder cambiarlo, unas 3,5 veces más ligero. Puedes activarlos, desactivarlos o quitarlos con opciones del instalador, y la elección se mantiene al actualizar.</p></div></li>
+      <li><b>04</b><div><h4><span data-lang="en">Google Antigravity can use the same knowledge</span><span data-lang="es">Google Antigravity puede usar el mismo conocimiento</span></h4>
+        <p data-lang="en">A plugin lets Antigravity read and distill into the shared <code>~/.aura-distill/</code> store, with Time Index scripts for its transcripts. The installer does not set it up yet; that is a follow-up on #67.</p>
+        <p data-lang="es">Un plugin permite que Antigravity lea y destile en el almacén compartido <code>~/.aura-distill/</code>, con scripts de Time Index para sus transcripciones. El instalador todavía no lo configura; eso queda pendiente en #67.</p></div></li>
+      <li><b>05</b><div><h4><span data-lang="en">Updating no longer wipes your preferences</span><span data-lang="es">Actualizar ya no borra tus preferencias</span></h4>
+        <p data-lang="en">An update used to overwrite <code>rules/distill.md</code> and reset your "Always-On User Preferences" to the empty template. Both installers now keep that section, and leave the file alone if the download fails.</p>
+        <p data-lang="es">Antes, una actualización sobrescribía <code>rules/distill.md</code> y dejaba tus "Always-On User Preferences" como la plantilla vacía. Ahora los dos instaladores conservan esa sección y no tocan el archivo si la descarga falla.</p></div></li>
+    </ol>
+
+    <div class="ne-pair">
+      <div>
+        <h3><span data-lang="en">Also in 1.1</span><span data-lang="es">También en la 1.1</span></h3>
+        <ul data-lang="en">
+          <li>Model-routing groundwork in <code>capabilities/</code>: a task taxonomy, a routing policy and a measurement method. No per-model scores.</li>
+          <li>A token-saving page, <a href="../token-saving.html">token-saving.html</a>.</li>
+          <li>Research pages: <a href="../research/token-economics.html">token economics</a>, <a href="../research/model-routing.html">model routing</a>, <a href="../research/local-models.html">local models</a>, <a href="../research/local-decision-models.html">local decision models</a>, <a href="../research/files-only-redesign.html">files-only redesign</a>. None of them changes behaviour.</li>
+        </ul>
+        <ul data-lang="es">
+          <li>Base para elegir modelo según la tarea, en <code>capabilities/</code>: una clasificación de tareas, una política de elección y un método de medición. Sin puntuaciones por modelo.</li>
+          <li>Una página sobre ahorro de tokens, <a href="../token-saving.html">token-saving.html</a>.</li>
+          <li>Páginas de investigación: <a href="../research/token-economics.html">economía de tokens</a>, <a href="../research/model-routing.html">elección de modelo</a>, <a href="../research/local-models.html">modelos locales</a>, <a href="../research/local-decision-models.html">modelos locales de decisión</a>, <a href="../research/files-only-redesign.html">rediseño solo con archivos</a>. Ninguna cambia el comportamiento.</li>
+        </ul>
+      </div>
+      <div>
+        <h3><span data-lang="en">Privacy</span><span data-lang="es">Privacidad</span></h3>
+        <ul data-lang="en">
+          <li>Token Saver collects nothing; it only writes local files.</li>
+          <li>Standing policy: any future telemetry must be opt-in, aggregate-only, and have a published schema.</li>
+        </ul>
+        <ul data-lang="es">
+          <li>Token Saver no recoge nada; solo escribe archivos locales.</li>
+          <li>Política vigente: cualquier telemetría futura tendrá que ser opcional, solo con datos agregados y con un esquema publicado.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="ne-note"><b data-lang="en">Known risks.</b><b data-lang="es">Riesgos conocidos.</b> <span data-lang="en">The 1.1 changelog has no Known risks section. Listing known risks became a release rule with 1.2 (REVIEW-PROTOCOL.md rule 6), so from 1.2.0-beta.1 on, each version's page lists them.</span><span data-lang="es">El changelog de la 1.1 no tiene sección de riesgos conocidos. Listarlos pasó a ser una regla de publicación con la 1.2 (regla 6 de REVIEW-PROTOCOL.md), así que desde 1.2.0-beta.1 la página de cada versión los incluye.</span></div>
+
+    <div class="ne-actions">
+      <a class="ne-btn ne-btn--solid" href="https://github.com/tomacco/aura-distill/blob/main/CHANGELOG.md"><span data-lang="en">Full changelog</span><span data-lang="es">Changelog completo</span> →</a>
+      <a class="ne-btn" href="../"><span data-lang="en">Install</span><span data-lang="es">Instalar</span></a>
+    </div>
+  </section>
+
+  <footer class="ne-footer"><span>Aura Distill · <span data-lang="en">releases</span><span data-lang="es">versiones</span> · 2026-09-23</span><span><a href="../research/"><span data-lang="en">research</span><span data-lang="es">investigación</span></a> · <a href="https://github.com/tomacco/aura-distill">github</a> · MIT</span></footer>
+</div>
+<script src="releases.js"></script>
+</body>
+</html>

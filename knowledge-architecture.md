@@ -152,7 +152,7 @@ The last line naming a path is its state; lines are appended in date order. A re
 
 **Read-only.** No client edits an archived file or bumps a stamp inside it. `sha256-norm:` (the checksum without a `recall_count:` frontmatter line) lets a 1.2 client tell a 1.1 client's `recall_count` bump (drift) from a real modification.
 
-**Legacy archives.** Files written by the old rewrite-style compaction have no ledger line. A file directly under `archive/` or under `archive/legacy/` is legacy. An unledgered file under `archive/<tier>/` is adopted by `migrate-store` to `archive/legacy/<its original path>`, byte-identically. Legacy files are never deleted; restoring one copies it back to an active file and leaves it in place.
+**Legacy archives.** Files written by the old rewrite-style compaction have no ledger line. A file directly under `archive/` or under `archive/legacy/` is legacy. An unledgered file under `archive/<tier>/` is adopted by `migrate-store` to `archive/legacy/<its current path>` (`archive/projects/x.md` → `archive/legacy/archive/projects/x.md`), byte-identically. Legacy files are never deleted; restoring one copies it back to an active file and leaves it in place.
 
 **Finding archived knowledge.** `CATALOG.md` at the store root lists every file (active, archived with the original hook and reason, evidence with its entry count). It is not auto-loaded. When a request refers back to something no SPINE hook matches, the reader searches the catalog; an archived hit is read and reported as archived, and no hit is reported as a scoped miss ("not proof it was never distilled").
 

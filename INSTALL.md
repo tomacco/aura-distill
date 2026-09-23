@@ -144,7 +144,11 @@ Before doing any work, read ~/.aura-distill/SPINE.md. If the task matches a SPIN
 In Codex's `AGENTS.md`, also tell Codex to read
 `~/.aura-distill/distill-monitor.md` for the complete retrieval and
 memory-pressure behavior, and that when the user asks to distill, clean up (gc),
-restore or migrate the store, it reads `~/.aura-distill/distill-process.md`.
+restore or migrate the store, it reads `~/.aura-distill/distill-process.md`. The
+installers also put the short retrieval rules (batched reads, `read_with`, the
+`archive/` fallback and the scoped-miss answer against `CATALOG.md`) into the
+Codex block itself; copy them from `install.sh` (`integration_block`) if you want
+the same behaviour.
 
 Because the shared store sits outside a repository workspace, sandboxed Codex
 sessions may request permission before writing distilled knowledge. In the CLI,

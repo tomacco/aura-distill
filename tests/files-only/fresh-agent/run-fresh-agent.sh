@@ -14,17 +14,25 @@
 #      byte-identical afterwards (retrieval writes nothing, archives are read-only).
 #
 # Not run in CI: it needs a logged-in `claude` CLI and costs model tokens. It never reads
-# or writes a real knowledge store: the agent runs with --setting-sources local (no user
-# CLAUDE.md or rules), no MCP, no session persistence, from a temp working directory, and
-# on macOS inside sandbox-exec with the real stores and profile instruction files denied.
+# or writes a real knowledge store: the agent never loads user settings or the user's
+# CLAUDE.md and rules (--setting-sources local or project, from a temp working directory),
+# has no MCP servers and no session persistence, and on macOS runs inside sandbox-exec with
+# the real stores and profile instruction files denied.
 #
 # Usage: tests/files-only/fresh-agent/run-fresh-agent.sh
-#   MODEL=sonnet (default) | opus | haiku   KEEP=1 keeps the temp dir (always printed)
-#   STEP_TIMEOUT=1500 seconds per agent session
+#   MODEL=sonnet (default) | opus | haiku
+#   SURFACE=claude (default): retrieval sessions load the shipped rules/distill.md and the
+#           Claude managed block as the working directory's CLAUDE.md, as Claude Code does
+#   SURFACE=codex: retrieval sessions get the Codex managed block as appended system prompt
+#   REUSE=<work dir of an earlier run>: skip part A and ask the questions against a copy of
+#           that run's migrated store
+#   KEEP=1 (default) keeps the temp dir, which is always printed; STEP_TIMEOUT=1500 seconds per session
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
 REPO=$(cd "$HERE/../../.." && pwd)
 MODEL=${MODEL:-sonnet}
+SURFACE=${SURFACE:-claude}
+case "$SURFACE" in claude|codex) ;; *) echo "SURFACE must be claude or codex" >&2; exit 2 ;; esac
 STEP_TIMEOUT=${STEP_TIMEOUT:-1500}
 command -v claude >/dev/null 2>&1 || { echo "claude CLI not found" >&2; exit 2; }
 command -v python3 >/dev/null 2>&1 || { echo "python3 not found (used to read the transcripts)" >&2; exit 2; }
@@ -33,7 +41,12 @@ T=$(mktemp -d "${TMPDIR:-/tmp}/aura-fresh-agent.XXXXXX")
 T=$(cd "$T" && pwd -P)
 STORE="$T/store"; WORK="$T/work"; LOGS="$T/logs"
 mkdir -p "$WORK" "$LOGS"
-cp -R "$REPO/tests/files-only/store-before" "$STORE"
+if [ -n "${REUSE:-}" ]; then
+  [ -d "$REUSE/store/data/migration" ] || { echo "REUSE=$REUSE has no migrated store" >&2; exit 2; }
+  cp -R "$REUSE/store" "$STORE"
+else
+  cp -R "$REPO/tests/files-only/store-before" "$STORE"
+fi
 # "Install" the runtime into the synthetic store exactly as the installers do
 for f in distill-process.md distill-monitor.md; do
   sed "s|{DISTILL_DIR}|$STORE|g" "$REPO/$f" > "$STORE/$f"
@@ -41,7 +54,7 @@ done
 mkdir -p "$STORE/bin" "$STORE/data" "$STORE/inbox"
 cp "$REPO/bin/distill-check-store.sh" "$STORE/bin/"; chmod +x "$STORE/bin/distill-check-store.sh"
 echo enabled > "$STORE/.lifecycle"
-echo "idle $(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$STORE/.status"
+[ -n "${REUSE:-}" ] || echo "idle $(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$STORE/.status"
 echo "work dir: $T"
 
 SANDBOX=()
@@ -54,11 +67,12 @@ if command -v sandbox-exec >/dev/null 2>&1; then
 fi
 
 # run_agent <name> <prompt> [extra claude args...]: one fresh session, stream-json transcript in $LOGS/<name>.jsonl
+# SOURCES=project loads $WORK/CLAUDE.md (the Claude surface); the default loads no instruction file
 run_agent() {
   local name=$1 prompt=$2; shift 2
   ( cd "$WORK" && env -u CLAUDECODE -u CLAUDE_CODE_ENTRYPOINT -u CLAUDE_CODE_SESSION_ID -u CLAUDE_CODE_CHILD_SESSION \
       -u CLAUDE_CODE_MESSAGING_SOCKET -u CLAUDE_CODE_MESSAGING_TOKEN -u AURA_DISTILL_HOME ENABLE_CLAUDEAI_MCP_SERVERS=false \
-      ${SANDBOX[@]+"${SANDBOX[@]}"} claude -p "$prompt" --model "$MODEL" --setting-sources local \
+      ${SANDBOX[@]+"${SANDBOX[@]}"} claude -p "$prompt" --model "$MODEL" --setting-sources "${SOURCES:-local}" \
       --strict-mcp-config --mcp-config '{"mcpServers":{}}' --no-session-persistence \
       --dangerously-skip-permissions --disallowedTools WebFetch WebSearch --add-dir "$STORE" \
       --output-format stream-json --verbose "$@" < /dev/null > "$LOGS/$name.jsonl" 2> "$LOGS/$name.err" ) &
@@ -106,6 +120,7 @@ bad() { FAIL=$((FAIL+1)); echo "  FAIL $1"; }
 
 ISOLATION="This is an isolated test on a synthetic store. The knowledge directory is $STORE (it stands for {DISTILL_DIR}). Do not read or write anything outside $T. There is no user to ask: where the instructions say to ask or confirm, treat the request in this prompt as the answer."
 
+if [ -z "${REUSE:-}" ]; then
 echo "== A. migrate-store (model: $MODEL) =="
 run_agent migrate-preview "You are the aura-distill distillation sub-agent. $ISOLATION
 ## Mode
@@ -136,17 +151,26 @@ out=$(bash "$REPO/bin/distill-check-store.sh" "$STORE" --before "$REPO/tests/fil
 [ -f "$STORE/archive/legacy/archive/projects/ember.md" ] && ok "unledgered archive adopted as legacy" || bad "ember not adopted"
 [ -f "$STORE/projects/comet.md" ] && ok "pinned Comet stayed active" || bad "pinned Comet moved"
 echo "     SPINE: $(wc -l < "$STORE/SPINE.md" | tr -d ' ') lines, $(wc -c < "$STORE/SPINE.md" | tr -d ' ') bytes (was 21 lines, 2576 bytes)"
+else
+  echo "== A. skipped: reusing the migrated store of $REUSE =="
+fi
 
-echo "== B. retrieval in fresh sessions =="
-RETRIEVAL_PROMPT="# Aura Distill shared knowledge (test harness)
-$ISOLATION
-Before doing any work, read $STORE/SPINE.md. When the request or an announced action matches a SPINE entry, read the linked file before responding and apply it.
-Read $STORE/distill-monitor.md for the full retrieval and memory-pressure behavior. When the user asks to distill, clean up (gc), restore or migrate the store, read $STORE/distill-process.md and run that process in an isolated sub-agent when supported."
+echo "== B. retrieval in fresh sessions (surface: $SURFACE) =="
+# The integration text each client really gets, resolved to the synthetic store: the managed
+# block comes from install.sh's own integration_block function (the shipped bytes, not a copy)
+managed_block() { ( DISTILL_DIR=$STORE; MANAGED_START='<!-- aura-distill:start -->'; MANAGED_END='<!-- aura-distill:end -->'
+  eval "$(sed -n '/^integration_block() {/,/^}/p' "$REPO/install.sh")"; integration_block "$1" ); }
+if [ "$SURFACE" = claude ]; then
+  { managed_block claude; printf '\n'; sed "s|{DISTILL_DIR}|$STORE|g" "$REPO/rules/distill.md"; } > "$WORK/CLAUDE.md"
+  SURFACE_ARGS=(); export SOURCES=project
+else
+  SURFACE_ARGS=(--append-system-prompt "$(managed_block codex)"); export SOURCES=local
+fi
 before=$(tree_hash)
 # ask <name> <question> <regex>...: every regex must match the answer (case-insensitive, extended)
 ask() {
   local name=$1 q=$2; shift 2
-  run_agent "$name" "$q" --append-system-prompt "$RETRIEVAL_PROMPT"
+  run_agent "$name" "$q" ${SURFACE_ARGS[@]+"${SURFACE_ARGS[@]}"}
   local ans; ans=$(final "$name")
   printf '%s\n' "$ans" > "$LOGS/$name.answer.txt"
   local miss=""
@@ -169,7 +193,8 @@ after=$(tree_hash)
 [ "$before" = "$after" ] && ok "retrieval left the store byte-identical (archives read-only)" || bad "retrieval changed the store"
 
 echo
-echo "fresh-agent validation ($MODEL): $PASS passed, $FAIL failed"
+unset SOURCES
+echo "fresh-agent validation ($MODEL, $SURFACE surface): $PASS passed, $FAIL failed"
 echo "transcripts and answers: $LOGS"
 [ "${KEEP:-1}" = 1 ] || rm -rf "$T"
 [ $FAIL -eq 0 ]

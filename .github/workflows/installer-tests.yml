@@ -1,6 +1,7 @@
 name: Installer tests
 
-# Deterministic CI for install.sh / install.ps1. The install-behavior job
+# Deterministic CI for install.sh / install.ps1 plus the files-only store
+# invariants (tests/files-only). The install-behavior job
 # depends on tests that install from the local checkout (AURA_DISTILL_REPO
 # override) into throwaway temp homes — no network, no real profile dirs.
 # It is guarded by file existence so this workflow is safe to merge before
@@ -81,4 +82,33 @@ jobs:
             bash tests/updater-compat/run.sh
           else
             echo "tests/updater-compat/run.sh not on this branch yet; skipping."
+          fi
+
+      - name: Clean reviewer runner (stubbed, no API calls)
+        if: runner.os == 'Linux'
+        run: |
+          if [ -f tests/review/test-run-clean-review.sh ]; then
+            bash tests/review/test-run-clean-review.sh
+          else
+            echo "tests/review not on this branch; skipping."
+          fi
+
+  files-only-store:
+    # Files-only memory redesign invariants (#75): synthetic store fixture, no
+    # network, no profile dirs. Runs on GNU and BSD toolchains on purpose.
+    name: Files-only store checks (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Files-only suite
+        run: |
+          if [ -f tests/files-only/run-files-only-tests.sh ]; then
+            bash tests/files-only/run-files-only-tests.sh
+          else
+            echo "tests/files-only not on this branch; skipping."
           fi

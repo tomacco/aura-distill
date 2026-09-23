@@ -24,8 +24,9 @@ A PR that changes scope or dependencies updates `ROADMAP.md` in that PR and upda
 - `bin/distill-update.sh` — The updater the dispatcher runs (installed to `{DISTILL_DIR}/bin/`): follows the channel in `.channel`, validates before replacing, never crosses a major
 - `channels/manifest.json` — Channel manifest: the beta pointer (served from `beta/1.2`) and the software-edition announcement (read from `main`); see `docs/adr/0002-release-channels.md`
 - `knowledge-architecture.md` — Tier system design doc
+- `docs/design-files-only-memory.md` — files-only memory redesign (#75): layout, budgets, lifecycle, migration, guarantees
 - `install.sh` / `install.ps1` — User-facing installers
-- `tests/` — A/B test scenarios, cognitive bias tests, persona-based methodology tests
+- `tests/` — A/B test scenarios, cognitive bias tests, persona-based methodology tests; `tests/files-only/` — synthetic before/after stores and the files-only invariant checker (#75)
 - `docs/` — GitHub Pages site (landing, research); `docs/adr/` — architecture decision records (published with the site)
 - `dashboard/` — Analytics dashboard
 
@@ -54,6 +55,7 @@ When developing or testing:
 - The Homebrew formula (`homebrew/Formula/aura-distill.rb`) is NOT auto-bumped: it pins
   a tagged release tarball + sha256, so updating it requires cutting a git tag and
   recomputing the hash (manual release step)
+- Every release gets a page under `docs/releases/` (added to `main` by PR #107; procedure in `docs/releases/README.md` there)
 
 ## Key conventions
 
@@ -72,6 +74,8 @@ When developing or testing:
 - Run persona tests: `./tests/scenarios/methodology/run-persona-test.sh`
 - Run integration tests: `./test-sandbox.sh`
 - Run Antigravity Time Index parity + hostile-input tests: `./tests/antigravity/run-parity-test.sh` (and the connector runners `run-antigravity-connector-tests.sh` / `.ps1`)
+- Run the files-only store invariants (thin SPINE, catalog completeness, lossless migration; #75): `bash tests/files-only/run-files-only-tests.sh` — design in `docs/design-files-only-memory.md` (about 100 checks; about two minutes locally, about five minutes on CI macOS, several times longer on Windows Git Bash because of process-spawn cost)
+- Run the clean-reviewer runner's stubbed test (no API calls): `bash tests/review/test-run-clean-review.sh`
 - Run legacy updater compatibility reproductions (captured shipped curl blocks against a local fixture endpoint; no network, no real profiles): `bash tests/updater-compat/run.sh` — decisions they back live in `docs/adr/`
 - Run the legacy endpoint guard before touching any file an updater fetches: `bash tests/updater-compat/check-endpoints.sh` (`--surface stable` for anything headed to `main`)
 - Run deterministic Claude/Codex installer tests: `pwsh tests/test-codex.ps1`
@@ -85,7 +89,7 @@ When developing or testing:
 
 ## Branch conventions
 
-- `main` — stable, released (quality gate: REVIEW-PROTOCOL.md). Every merge to `main` reaches installed users through the auto-updaters, so only the maintainer merges to `main`. The one exception: a reviewed PR touching only `docs/**` and `CHANGELOG.md` (Pages publishing; DECISIONS.md D-2026-09-23-3, provisional). Such a merge installs no new behaviour, but it still bumps VERSION, so installed users see an update that re-downloads identical files.
+- `main` — stable, released (quality gate: REVIEW-PROTOCOL.md). Every merge to `main` reaches installed users through the auto-updaters, so only the maintainer merges to `main`. The one exception: a reviewed PR touching only `docs/**` and `CHANGELOG.md` (Pages publishing; DECISIONS.md D-2026-09-23-3). Such a merge installs no new behaviour, but it still bumps VERSION, so installed users see an update that re-downloads identical files.
 - `beta/1.2` — integration branch for the files-only edition (prerelease `1.2.0-beta.N`). Agents open PRs against it and may merge them after an independent review passes. The maintainer promotes it to `main`.
 - `feature/*` — in-progress work. Base it on `beta/1.2` while that branch exists, unless the change is a docs-only Pages update.
 - `research/*` — experiments and published research (never merged to main directly)

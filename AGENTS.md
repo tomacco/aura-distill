@@ -6,6 +6,14 @@ This is the canonical guide for anyone — human or AI agent, whatever the tool 
 
 A first-principles memory system shared by Claude Code, Codex, and Google Antigravity (agy). Users install it via `install.sh` or `install.ps1`, which places knowledge in `~/.aura-distill/` and adds client adapters. Claude can trigger it with `/distill`; Codex users ask it to distill; Antigravity loads it as a skill (installer wiring pending — see #67).
 
+## Plans and decisions
+
+- `ROADMAP.md` — scope and sequence of planned work (files-only redesign, then the opt-in software major).
+- GitHub issues — live status, acceptance criteria and blockers.
+- `DECISIONS.md` — why: who decided what, and on what basis.
+
+A PR that changes scope or dependencies updates `ROADMAP.md` in that PR and updates the affected issues at the same time. A PR that makes or reverses a decision adds a `DECISIONS.md` entry. `NEXT-STEPS.md` is superseded history.
+
 ## Architecture
 
 - `distill.md` — Dispatcher (runs in main context, harvests signals, spawns sub-agent)
@@ -24,6 +32,8 @@ A first-principles memory system shared by Claude Code, Codex, and Google Antigr
 ## CRITICAL: Never touch real user data
 
 **NEVER read, write, or test against real Claude/Codex profile directories or `~/.aura-distill` on this machine.**
+
+The one exception is read-only measurement for published research (DECISIONS.md D-2026-09-23-4), covering knowledge stores and session transcripts. Copy the source with `cp -RL` (dereference symlinks) into a `mktemp -d` directory outside the repo. Work only on the copy, never stage or commit it, and delete it when done. Publish aggregates only: counts, sizes, ratios, pass/fail. Never names, content, quotes, project names or session ids.
 
 These directories contain the developer's real distilled knowledge. An errant write, backup, or test run against them risks data loss (this has already happened once — see the `_distill_isolation_bak` incident).
 
@@ -70,11 +80,12 @@ When developing or testing:
 ## Issues & PRs
 
 - **Every PR must reference a GitHub issue** (`Closes #N` for full resolution, `Part of #N` for partial work). No orphan PRs — if no issue exists for the work, create one first.
-- Every PR must be reviewed by an independent agent before merging. See `REVIEW-PROTOCOL.md`.
+- Every PR must be reviewed by an independent agent before merging. See `REVIEW-PROTOCOL.md`. A PR *passes* review when a round returns APPROVE, or when it converges under REVIEW-PROTOCOL.md rule 6.
 - The authoring agent spawns a reviewer in a worktree with zero shared context. The reviewer gets only product context — never the author's reasoning, known limitations, or focus suggestions. This is structural, not optional: shared context makes self-review biased by definition.
 
 ## Branch conventions
 
-- `main` — stable, released (quality gate: REVIEW-PROTOCOL.md)
-- `feature/*` — in-progress work
+- `main` — stable, released (quality gate: REVIEW-PROTOCOL.md). Every merge to `main` reaches installed users through the auto-updaters, so only the maintainer merges to `main`. The one exception: a reviewed PR touching only `docs/**` and `CHANGELOG.md` (Pages publishing; DECISIONS.md D-2026-09-23-3, provisional). Such a merge installs no new behaviour, but it still bumps VERSION, so installed users see an update that re-downloads identical files.
+- `beta/1.2` — integration branch for the files-only edition (prerelease `1.2.0-beta.N`). Agents open PRs against it and may merge them after an independent review passes. The maintainer promotes it to `main`.
+- `feature/*` — in-progress work. Base it on `beta/1.2` while that branch exists, unless the change is a docs-only Pages update.
 - `research/*` — experiments and published research (never merged to main directly)

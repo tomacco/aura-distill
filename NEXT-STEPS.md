@@ -1,5 +1,7 @@
 # Next Steps (updated 2026-06-03)
 
+> **Superseded by [ROADMAP.md](ROADMAP.md) (2026-09-10).** Kept as history; do not plan from this file.
+
 ## Done this session
 
 - [x] Merged research/decision-fatigue to main (#12)

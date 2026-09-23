@@ -11,7 +11,8 @@
   <a href="https://tomacco.github.io/aura-distill/"><strong>Live Demo</strong></a> ·
   <a href="https://tomacco.github.io/aura-distill/research/"><strong>Research</strong></a> ·
   <a href="#installation">Install</a> ·
-  <a href="#results">Results</a>
+  <a href="#results">Results</a> ·
+  <a href="ROADMAP.md">Roadmap</a>
 </p>
 
 ---

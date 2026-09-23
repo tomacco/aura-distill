@@ -325,3 +325,11 @@ html[lang="es"] [data-lang="en"],html:not([lang="es"]) [data-lang="es"]{display:
 .ne-steps .ne-kv dt{font-size:var(--ne-fs-micro);letter-spacing:.12em;text-transform:uppercase;color:var(--ne-ink-3);padding-top:3px}
 .ne-steps .ne-kv dd{margin:0 0 4px}
 @media (max-width:600px){.ne-steps .ne-kv{grid-template-columns:1fr}.ne-steps .ne-kv dd{margin-bottom:8px}}
+/* status marks for adopted / open items */
+.ne-st{font-style:normal;font-weight:600;font-size:.72em;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid currentColor}
+.ne-st-row{margin-bottom:6px}
+.ne-response{border-left:6px solid var(--ne-ink);padding:6px 0 6px 12px;margin:-4px 0 18px;font-size:14.5px;max-width:74ch}
+.ne-response b{text-transform:uppercase;letter-spacing:.08em;font-size:var(--ne-fs-label)}
+/* narrow phones: no sticky first column, let headers and labels wrap so numbers stay visible */
+@media (max-width:400px){.ne-tbl th:first-child,.ne-tbl td:first-child{position:static;white-space:normal;min-width:11ch}.ne-tbl th{white-space:normal}.ne-tbl th,.ne-tbl td{padding:8px 8px}}
+.ne-kicker .meta span{white-space:nowrap}

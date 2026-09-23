@@ -33,6 +33,35 @@ If you have multiple profiles, the script will list them and ask you to choose (
 
 ---
 
+## Beta channel (opt-in)
+
+The next release line (1.2) is published as prereleases first. Stable installs never
+receive them. To opt in:
+
+```bash
+curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/beta/1.2/install.sh | bash -s -- --channel beta
+```
+
+```powershell
+$env:DISTILL_CHANNEL = 'beta'; irm https://raw.githubusercontent.com/tomacco/aura-distill/beta/1.2/install.ps1 | iex
+```
+
+The installer reads the beta manifest (`channels/manifest.json` on `beta/1.2`) and
+installs the files of the one prerelease tag it names, for example `v1.2.0-beta.1`,
+never the moving branch. The choice is saved in `~/.aura-distill/.channel`, and
+`/distill` updates then follow published betas only. To pin the installer script as
+well, replace `beta/1.2` in the URL with the tag.
+
+**Back to stable:** run the same command with `--channel stable`
+(`$env:DISTILL_CHANNEL = 'stable'` on Windows). Use this beta-aware installer, not
+the one on `main`: until 1.2 is promoted, the `main` installer does not know about
+channels and would leave the beta choice in place. Your knowledge is never touched.
+
+Updates never cross a major version, on either channel. A different major needs its
+own installer and your typed consent.
+
+---
+
 ## Method 2: Agent-assisted (paste to Claude)
 
 Tell Claude Code:

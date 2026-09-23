@@ -11,6 +11,19 @@ Issues own live status and blockers. `ROADMAP.md` owns scope and sequence. This 
 
 ---
 
+## 2026-09-23 — Release channels (#79)
+
+**D-2026-09-23-7 · Beta installs and updates come from a tag named by a manifest on `beta/1.2`.** `provisional` (authoring agent, #79; ADR 0002)
+The beta payload is always a pinned prerelease tag; the moving branch only hosts the one-line pointer. Rejected: raw files from the branch (every merge would ship), the Releases API (rate limits, "latest" could be a v2), Pages (served from `main`). Consequence: `beta/1.2` must never be deleted or renamed while beta installs exist.
+
+**D-2026-09-23-8 · Updating is a script; the dispatcher prose only runs it.** `provisional` (authoring agent, #79; ADR 0002)
+`bin/distill-update.sh` makes every safety decision from fetched content and its own line major, never from `.version` or from model judgement. The prose forbids improvised downloads, but no guarantee depends on the prose.
+
+**D-2026-09-23-9 · The manifest never carries `software.base`, and `main/VERSION` is the only stable version.** `provisional` (authoring agent, #79; amends ADR 0001)
+The files-only line only ever learns a software edition's version, requirements and guide.
+
+---
+
 ## 2026-09-23 — Release and autonomy frame for the files-only edition
 
 **D-2026-09-23-1 · Beta is an opt-in prerelease, not a merge to main.** `directive` · active

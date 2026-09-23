@@ -13,6 +13,8 @@ A first-principles memory system shared by Claude Code, Codex, and Google Antigr
 - `distill-monitor.md` — Session-start monitor (minimal, loaded via the client integration)
 - `plugins/aura-distill/` — Antigravity (agy) plugin, laid out per Antigravity's discovery contract: `plugin.json` (marker), `skills/distill/SKILL.md` (the distill workflow), `rules/AGENTS.md` (thin pointer to the canonical `distill-monitor.md` + Antigravity-specific Time Index)
 - `bin/distill-recent-agy.sh` / `.ps1` — Antigravity Time Index over brain transcripts (output-identical twins; parity enforced by `tests/antigravity/run-parity-test.sh`)
+- `bin/distill-update.sh` — The updater the dispatcher runs (installed to `{DISTILL_DIR}/bin/`): follows the channel in `.channel`, validates before replacing, never crosses a major
+- `channels/manifest.json` — Channel manifest: the beta pointer (served from `beta/1.2`) and the software-edition announcement (read from `main`); see `docs/adr/0002-release-channels.md`
 - `knowledge-architecture.md` — Tier system design doc
 - `install.sh` / `install.ps1` — User-facing installers
 - `tests/` — A/B test scenarios, cognitive bias tests, persona-based methodology tests
@@ -61,6 +63,7 @@ When developing or testing:
 - Run integration tests: `./test-sandbox.sh`
 - Run Antigravity Time Index parity + hostile-input tests: `./tests/antigravity/run-parity-test.sh` (and the connector runners `run-antigravity-connector-tests.sh` / `.ps1`)
 - Run legacy updater compatibility reproductions (captured shipped curl blocks against a local fixture endpoint; no network, no real profiles): `bash tests/updater-compat/run.sh` — decisions they back live in `docs/adr/`
+- Run the legacy endpoint guard before touching any file an updater fetches: `bash tests/updater-compat/check-endpoints.sh` (`--surface stable` for anything headed to `main`)
 - Run deterministic Claude/Codex installer tests: `pwsh tests/test-codex.ps1`
 - Run a real isolated Codex retrieval test: `pwsh tests/test-codex.ps1 -LiveRetrieval`
 

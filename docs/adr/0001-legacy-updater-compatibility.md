@@ -1,6 +1,6 @@
 # ADR 0001: Legacy updater compatibility before a software major
 
-- Status: proposed (discovery output for [#76](https://github.com/tomacco/aura-distill/issues/76), part of [#74](https://github.com/tomacco/aura-distill/issues/74); implementation belongs to #79)
+- Status: proposed (discovery output for [#76](https://github.com/tomacco/aura-distill/issues/76), part of [#74](https://github.com/tomacco/aura-distill/issues/74); implementation belongs to #79; the channel manifest schema and the beta channel are amended by [ADR 0002](0002-release-channels.md))
 - Date: 2026-09-11
 - Reproductions: `bash tests/updater-compat/run.sh`
 
@@ -32,7 +32,7 @@ Everything in this section was verified in the repository on 2026-09-11 at `orig
 
 ### Release mechanics
 
-- **Every content merge to `main` is live immediately.** `.github/workflows/bump-version.yml` runs on push to `main`, bumps the patch number, rewrites `VERSION`, `install.sh`, `install.ps1`, `README.md`, `docs/header.svg`, `docs/index.html`, and pushes a `[version-bump]` commit. Content therefore reaches the raw URLs before `VERSION` changes, in two commits a few seconds apart. There is no staging branch, no release approval step, and no way to hold content back from the raw URLs once merged.
+- **Every merge to `main` is live at the raw URLs immediately; most also bump `VERSION`.** `.github/workflows/bump-version.yml` runs on push to `main` unless every changed path is in its `paths-ignore` list (version-synced files, `.github/**`, `research/**`, and since #79 `docs/adr/**` and `tests/**`), bumps the patch number, rewrites `VERSION`, `install.sh`, `install.ps1`, `README.md`, `docs/header.svg`, `docs/index.html`, and pushes a `[version-bump]` commit. Content therefore reaches the raw URLs before `VERSION` changes, in two commits a few seconds apart. There is no staging branch, no release approval step, and no way to hold content back from the raw URLs once merged.
 - **Tags and releases.** There is exactly one tag, `v1.0.0` (commit `7dcbd7f`, 2026-05-17, whose `VERSION` file reads `1.0.1`), and one GitHub release with the same name and no assets. Seventy-six commits and nineteen `[version-bump]` commits have shipped since without a tag. `CHANGELOG.md` has carried an `[Unreleased]` section for the entire 1.x line; the auto-update mechanism itself is listed under 0.5.0.
 - **Raw caching.** `raw.githubusercontent.com` answered `Cache-Control: max-age=300` for `main/VERSION` on 2026-09-11. Each file is cached independently, so a client can observe a fresh `VERSION` with stale content files, or the reverse.
 - **The pre-rename URL still works.** `https://raw.githubusercontent.com/tomacco/claude-distill/main/VERSION` returned HTTP 200 on 2026-09-11. Clients installed before the rename (commit `0292f23`, 2026-05-17) keep using that host path.
@@ -48,7 +48,7 @@ Built from `git log -p -- distill.md` (VERSION read from the same commit):
 | `012baaa` 2026-05-17 | 0.9.14 | Store paths become `{DISTILL_DIR}` (resolved by `install.sh` at install time). Dispatcher path stays hardcoded `~/.claude/commands/distill.md`. |
 | `0292f23` 2026-05-17 | 1.0.0 | URLs move to `tomacco/aura-distill/main/...`. This is the block in tag `v1.0.0`. |
 | `6797a19` 2026-07-31 | 1.1.10 | Store default moves to `~/.aura-distill`; block unchanged. Installers gain `AURA_DISTILL_REPO` and local-path fetch. |
-| `87a6b64` 2026-08-02 | 1.1.14 | Adds `mkdir -p {DISTILL_DIR}/data {DISTILL_DIR}/inbox`. Current block (1.1.17). |
+| `87a6b64` 2026-08-02 | 1.1.14 | Adds `mkdir -p {DISTILL_DIR}/data {DISTILL_DIR}/inbox`. Block unchanged since, through 1.1.23. |
 
 Across every version, the client's decision is "is `main/VERSION` different from my `.version`?", and its action is "overwrite my three files from `main`". No shipped client can distinguish a patch from a major.
 
@@ -111,7 +111,8 @@ The following raw paths are legacy endpoints. Whatever they serve must be safe f
 - `.../main/install.sh`, `.../main/install.ps1`, `.../main/INSTALL.md`
 - `.../main/rules/distill.md`, `.../main/agents/scribe.md`, `.../main/agents/scout.md`
 - the same paths under `https://raw.githubusercontent.com/tomacco/claude-distill/main/` (rename redirect; the repository must never be renamed again without a redirect)
-- `https://github.com/tomacco/aura-distill/archive/refs/tags/v1.0.0.tar.gz` and the `tomacco/aura-distill` Homebrew tap formula named `aura-distill`
+- `https://github.com/tomacco/aura-distill/archive/refs/tags/v1.0.0.tar.gz` and the Homebrew tap: `brew install tomacco/aura-distill/aura-distill` resolves to the separate repository [`tomacco/homebrew-aura-distill`](https://github.com/tomacco/homebrew-aura-distill), `Formula/aura-distill.rb`, not to the in-repo copy under `homebrew/`. Both copies pin that tarball and also declare `head "https://github.com/tomacco/aura-distill.git", branch: "main"`, so `brew install --HEAD` builds from `main` as it stands: the `main` tree as a whole, not only the raw paths above, must stay files-only
+- from the bridge release on (#79, ADR 0002): `.../main/bin/distill-update.sh` (fetched by the bridge dispatcher when missing) and `.../main/channels/manifest.json` (read by the updater for the notice)
 
 None of these files may be deleted, moved, or made to reference a software base. `main/VERSION` never carries the software edition's version. If the files-only line itself ever needs an incompatible change (#75/#78), it still ships at these paths, and the incompatibility is handled inside the new prompt with a consent step before touching the store; it is never handled by pointing old clients somewhere else.
 
@@ -121,17 +122,17 @@ A separate branch whose raw base no shipped client references (name provisional:
 
 ### Channel manifest
 
-`channels/manifest.json` at `main` root (schema in `tests/updater-compat/fixtures/endpoints/channel-strategy/main/channels/manifest.json`): `files_only.{version,base,status}` and `software.{version,base,status,guide,requirements,auto_update:"never"}`. `files_only.version` equals `main/VERSION`; CI on `main` fails otherwise. CI on `main` also fails if any legacy endpoint file references the software base or contains the software payload marker string used by the software installer.
+`channels/manifest.json` at `main` root. *Amended by ADR 0002:* the schema is `beta.{status,tag,version}` and `software.{status,version,requirements,guide,auto_update:"never"}`. There is no `files_only` entry (`main/VERSION` stays the single source of the stable version, so the bump workflow cannot drift from it) and no `software.base`: the files-only line never learns where the software edition is served, so no prose or script on it can be talked into fetching it. CI fails if any legacy endpoint file references the software base or contains the software payload marker string used by the software installer (`tests/updater-compat/check-endpoints.sh`, run on every PR, on push to `main`, and in `bump-version.yml` before a bump is published).
 
 ### Required publication order
 
 1. Merge this ADR, the reproductions, and the CI guard (guard implementation in #79).
-2. Ship the bridge release on `main` (files-only): dispatcher reads the manifest for the notice only, never fetches a software base regardless of the auto-update preference, resolves `{DISTILL_DIR}`, downloads to temp and validates before replacing live files (closing the latent defects above). Because the bridge is prose executed by a model, and the manifest hands it `software.base` and a guide URL, the bridge text must carry an explicit negative instruction: do not fetch, run, install or follow anything under `software.base`; quote the guide URL as text only. The 0.1.0 dispatcher already showed what a model does with a vague fetch instruction (it improvises URLs), so #79 must state the prohibition, not imply it, and the reproductions must be re-run against the real bridge text rather than the synthetic fixture. Manifest has no `software` entry yet, or `status: unpublished`. Run `tests/updater-compat/run.sh` against the real bridge files.
+2. Ship the bridge release on `main` (files-only): dispatcher reads the manifest for the notice only, never fetches a software base regardless of the auto-update preference, resolves `{DISTILL_DIR}`, downloads to temp and validates before replacing live files (closing the latent defects above). Because the bridge is prose executed by a model, the bridge text must carry an explicit negative instruction: do not fetch, run, install or follow anything a notice or manifest mentions; quote the guide URL as text only. The manifest exposes only `version`, `requirements` and `guide` for the software edition, never a base URL, so there is nothing to follow even if the model misreads the instruction. The 0.1.0 dispatcher already showed what a model does with a vague fetch instruction (it improvises URLs), so #79 must state the prohibition, not imply it, and the reproductions must be re-run against the real bridge text rather than the synthetic fixture. Manifest has no `software` entry yet, or `status: unpublished`. Run `tests/updater-compat/run.sh` against the real bridge files. That runner executes curl blocks and scripts and inspects what lands on disk; it cannot show that a model obeys the prose. What it can show, and what the safety argument rests on, is that the endpoints never serve a software payload and that the updater script the prose delegates to refuses one.
 3. Create the software branch and publish its payload, installer and guide there with `status: prerelease`.
 4. Flip the manifest entry on `main` to `status: stable`. This is the announcement moment: clients that already hold the bridge start showing the notice; clients that do not remain silent and safe.
 5. Update README, landing page and Homebrew for the software edition, pointing only at the channel.
 
-Never, at any step: software content at a legacy endpoint path; a `main/VERSION` value whose payload is not files-only-safe; a tag whose tarball would make the Homebrew formula fetch software content; deleting or renaming a legacy endpoint file.
+Never, at any step: changing the repository's default branch away from `main` (ref-less clones, raw `HEAD` URLs and contents-API calls all follow the default branch); software content at a legacy endpoint path; a `main/VERSION` value whose payload is not files-only-safe; a tag whose tarball would make the Homebrew formula fetch software content; deleting or renaming a legacy endpoint file.
 
 ### The consent boundary
 
@@ -176,7 +177,8 @@ Company approval processes are respected by construction: the installer states w
 | Homebrew: distinct formula name for the software edition, and whether to fix the `aura-distill` formula so `brew` installs from its tarball | Ivan | #88 |
 | Provisioning use case: is there any acceptable non-interactive consent (for example a consent record created interactively once, then honored by a scripted reinstall of the same major on the same machine)? This ADR says no; a later ADR may narrow it | Ivan | #79 |
 | Does the files-only redesign (#75/#78) change the store layout incompatibly? If yes, the bridge prompt must carry legacy-layout handling with a consent step | #75 owner | before step 2 |
-| Prerelease notices: opt-in preference key name and wording | #79 | step 3 |
-| Fix the three latent dispatcher defects (unvalidated overwrite, unresolved `{DISTILL_DIR}`, hardcoded `~/.claude/commands`) in the bridge; one issue per defect or one bridge issue | Ivan | step 2 |
+| Prerelease notices: opt-in preference key name and wording | #79 | answered by ADR 0002: installing the beta channel is the opt-in; no separate key |
+| Fix the three latent dispatcher defects (unvalidated overwrite, unresolved `{DISTILL_DIR}`, hardcoded `~/.claude/commands`) in the bridge; one issue per defect or one bridge issue | Ivan | addressed in #79 by `bin/distill-update.sh` (stages and validates, resolves the placeholder, reads `.command-path`) |
+| Coexistence: after a user adopts the software edition, a files-only dispatcher on the same store (another client, or a profile that kept 1.x with auto-update on) keeps replacing the shared `distill-process.md`/`distill-monitor.md`. Does the software installer retire the files-only updater (for example by writing a store marker the updater honours), or do the editions keep separate stores? | #88 owner | before step 4 |
 | Independent review of this ADR and the reproductions (acceptance criterion 5 of #76): done on PR #94 per REVIEW-PROTOCOL.md (verdict REQUEST CHANGES; one isolation defect in the runner and four factual corrections, all addressed in the same PR; the decision itself was upheld). Remaining: Ivan's acceptance of the decision before #79 starts | Ivan | before #79 starts |
 | This ADR is published with the GitHub Pages site (`docs/` is the Pages root); confirm that is intended or move `docs/adr/` out of the published tree | Ivan | before merge |

@@ -3,12 +3,23 @@
 #
 # Usage:
 #   irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1 | iex
+#
+# Release channel (docs/adr/0002), persisted in the knowledge directory:
+#   $env:DISTILL_CHANNEL = 'beta'    -> opt in to published beta releases
+#   $env:DISTILL_CHANNEL = 'stable'  -> back to the stable line (the default)
 
 $ErrorActionPreference = 'Stop'
 
 $Version  = '1.1.23'
 $Build    = '20260515-01'
-$Repo     = if ($env:AURA_DISTILL_REPO) { $env:AURA_DISTILL_REPO } else { 'https://raw.githubusercontent.com/tomacco/aura-distill/main' }
+$RawRoot  = if ($env:AURA_DISTILL_RAW_ROOT) { $env:AURA_DISTILL_RAW_ROOT } else { 'https://raw.githubusercontent.com/tomacco/aura-distill' }
+$BetaManifest = if ($env:AURA_DISTILL_CHANNEL_MANIFEST) { $env:AURA_DISTILL_CHANNEL_MANIFEST } else { "$RawRoot/beta/1.2/channels/manifest.json" }
+$Repo     = if ($env:AURA_DISTILL_REPO) { $env:AURA_DISTILL_REPO } else { "$RawRoot/main" }
+# This installer belongs to the files-only line with this major version. It never
+# installs another major without typed consent, and never a software edition.
+$LineMajor = 1
+$SoftwareMarker = 'AURA_SOFTWARE_' + 'MAJOR_PAYLOAD'
+$Placeholder = '{DISTILL' + '_DIR}'
 
 # Resolve home (works on PS 5.1 and PS 7+, Windows and cross-platform)
 $ClaudeHome  = if ($env:USERPROFILE) { Join-Path $env:USERPROFILE '.claude' } else { Join-Path $HOME '.claude' }
@@ -88,16 +99,119 @@ function Get-File {
     }
 }
 
+# Consent boundary for a payload whose major differs from this installer's line
+# (docs/adr/0001, "The consent boundary"). Runs before anything is written. Consent
+# needs a human at a console typing the exact phrase; redirected input or output,
+# a non-interactive host or any other answer keeps the current installation.
+function Request-MajorConsent {
+    param([string]$Target)
+    Write-Host ''
+    Write-Host "  ${BOLD}aura-distill v$Target is a major change from the v$LineMajor line this installer belongs to.${RESET}"
+    Write-Host '  Read the release notes before continuing: https://github.com/tomacco/aura-distill/releases'
+    Write-Host '  Your current installation and knowledge stay as they are unless you consent here.'
+    $interactive = [Environment]::UserInteractive -and -not [Console]::IsInputRedirected -and -not [Console]::IsOutputRedirected
+    if (-not $interactive) {
+        Write-Host '  No interactive terminal: consent cannot be given here. Kept your current installation. Nothing was installed or changed.'
+        return $false
+    }
+    $answer = Read-Host "  Type ""adopt $Target"" to continue, or press Enter to keep your current installation"
+    if ($answer -ne "adopt $Target") {
+        Write-Host '  Kept your current installation. Nothing was installed or changed.'
+        return $false
+    }
+    return $true
+}
+
 # === MAIN ===
 
 Write-Header
+
+# === CHANNEL AND PAYLOAD (nothing is written before this block succeeds) ===
+# Refusals stop the script without closing the caller's session under `irm | iex`.
+
+$channelFile = Join-Path $DistillDir '.channel'
+$Channel = if ($env:DISTILL_CHANNEL) { $env:DISTILL_CHANNEL.Trim().ToLower() }
+           elseif (Test-Path $channelFile) { (Get-Content $channelFile -Raw).Trim().ToLower() }
+           else { 'stable' }
+if (-not $Channel) { $Channel = 'stable' }
+if ($Channel -ne 'stable' -and $Channel -ne 'beta') {
+    Write-Fail "Unknown channel '$Channel' (use `$env:DISTILL_CHANNEL='stable' or 'beta'). Nothing was changed."
+    if ($PSCommandPath) { exit 1 }; return
+}
+
+$Stage = Join-Path ([System.IO.Path]::GetTempPath()) ('aura-distill-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Force -Path $Stage | Out-Null
+$payloadError = $null
+try {
+    if ($Channel -eq 'beta' -and -not $env:AURA_DISTILL_REPO) {
+        $manifestFile = Join-Path $Stage 'manifest.json'
+        try { Get-File $BetaManifest $manifestFile } catch { throw 'Could not read the beta channel manifest.' }
+        try { $beta = (Get-Content $manifestFile -Raw | ConvertFrom-Json).beta } catch { $beta = $null }
+        if (-not $beta) { throw 'The beta channel manifest is missing or malformed.' }
+        switch ([string]$beta.status) {
+            'prerelease' { }
+            'stable' { }
+            'unpublished' { throw 'No beta release is published yet.' }
+            'closed' { throw "The beta channel is closed. Install stable with `$env:DISTILL_CHANNEL='stable'." }
+            default { throw 'The beta channel manifest is missing or malformed.' }
+        }
+        $betaTag = [string]$beta.tag
+        if ($betaTag -cnotmatch '^v[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$' -or $betaTag.Substring(1) -ne [string]$beta.version) {
+            throw 'The beta channel manifest names an invalid release.'
+        }
+        $Repo = "$RawRoot/$betaTag"
+    }
+
+    # Download the whole payload to a temp dir and validate it before touching
+    # anything: a failed or partial download must leave an existing install intact.
+    $PayloadVersion = ''
+    try {
+        Get-File "$Repo/VERSION" (Join-Path $Stage 'VERSION')
+        $PayloadVersion = (Get-Content (Join-Path $Stage 'VERSION') -Raw).Trim()
+    } catch { }
+    $valid = $PayloadVersion -cmatch '^[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$'
+    foreach ($f in @('distill.md', 'distill-process.md', 'distill-monitor.md')) {
+        $dest = Join-Path $Stage $f
+        try { Get-File "$Repo/$f" $dest } catch { $valid = $false; continue }
+        $body = Get-Content $dest -Raw
+        if (-not $body -or -not $body.StartsWith('# ')) { $valid = $false }
+        elseif ($body.Contains($SoftwareMarker)) {
+            throw "$Repo serves a software-edition payload. This files-only installer never installs it; use that edition's own installer."
+        }
+    }
+    if (-not $valid) { throw "Download failed or returned invalid files from $Repo." }
+    if ($Channel -eq 'stable' -and $PayloadVersion.Contains('-') -and -not $env:AURA_DISTILL_REPO) {
+        throw "The stable endpoint reports a prerelease ($PayloadVersion); refusing."
+    }
+} catch {
+    $payloadError = $_.Exception.Message
+}
+if ($payloadError) {
+    Remove-Item -LiteralPath $Stage -Recurse -Force -ErrorAction SilentlyContinue
+    Write-Fail "$payloadError Nothing was changed."
+    if ($PSCommandPath) { exit 1 }; return
+}
+if ($PayloadVersion.Split('.')[0] -ne [string]$LineMajor) {
+    if (-not (Request-MajorConsent $PayloadVersion)) {
+        Remove-Item -LiteralPath $Stage -Recurse -Force -ErrorAction SilentlyContinue
+        if ($PSCommandPath) { exit 2 }; return
+    }
+}
+# Optional in older payloads (main before the 1.2 line has no updater script).
+$UpdaterStage = Join-Path $Stage 'distill-update.sh'
+$HaveUpdater = $false
+try {
+    Get-File "$Repo/bin/distill-update.sh" $UpdaterStage
+    $updaterLines = Get-Content $UpdaterStage
+    $HaveUpdater = ($updaterLines.Count -gt 1) -and ($updaterLines[1] -like '# aura-distill-updater*') -and -not ((Get-Content $UpdaterStage -Raw).Contains($SoftwareMarker))
+} catch { $HaveUpdater = $false }
 
 # Detect existing installation
 $existingVersion = ''
 $versionFile = Join-Path $DistillDir '.version'
 if (Test-Path $versionFile) {
     $existingVersion = (Get-Content $versionFile -Raw).Trim()
-    Write-Info "Existing installation: v$existingVersion -> v$Version"
+    Write-Info "Existing installation: v$existingVersion -> v$PayloadVersion ($Channel channel)"
     Write-Host ''
 }
 
@@ -127,24 +241,34 @@ if ((Test-Path $LegacyDistillDir) -and ($LegacyDistillDir -ne $DistillDir) -and 
     Write-Info "Shared store was already seeded; $LegacyDistillDir left untouched (set AURA_DISTILL_HOME for an isolated profile)"
 }
 
-Get-File "$Repo/distill.md"          (Join-Path $CmdDir 'distill.md')
+function Install-CoreFile {
+    param([string]$Name, [string]$Target)
+    $resolved = (Get-Content (Join-Path $Stage $Name) -Raw).Replace($Placeholder, $DistillDir)
+    $tmpTarget = "$Target.aura-new"
+    [System.IO.File]::WriteAllText($tmpTarget, $resolved, (New-Object System.Text.UTF8Encoding($false)))
+    Move-Item -Force -LiteralPath $tmpTarget -Destination $Target
+}
+Install-CoreFile 'distill.md' (Join-Path $CmdDir 'distill.md')
 Write-Done "distill.md ${DIM}(command)${RESET}"
 
-Get-File "$Repo/distill-process.md"  (Join-Path $DistillDir 'distill-process.md')
+Install-CoreFile 'distill-process.md' (Join-Path $DistillDir 'distill-process.md')
 Write-Done "distill-process.md ${DIM}(process engine)${RESET}"
 
-Get-File "$Repo/distill-monitor.md"  (Join-Path $DistillDir 'distill-monitor.md')
+Install-CoreFile 'distill-monitor.md' (Join-Path $DistillDir 'distill-monitor.md')
 Write-Done "distill-monitor.md ${DIM}(session monitor)${RESET}"
 
-foreach ($resolvedFile in @((Join-Path $CmdDir 'distill.md'),
-                            (Join-Path $DistillDir 'distill-process.md'),
-                            (Join-Path $DistillDir 'distill-monitor.md'))) {
-    $resolved = (Get-Content $resolvedFile -Raw).Replace('{DISTILL_DIR}', $DistillDir)
-    [System.IO.File]::WriteAllText($resolvedFile, $resolved, (New-Object System.Text.UTF8Encoding($false)))
+if ($HaveUpdater) {
+    $binDir = Join-Path $DistillDir 'bin'
+    if (-not (Test-Path $binDir)) { New-Item -ItemType Directory -Force -Path $binDir | Out-Null }
+    Copy-Item -Force -LiteralPath $UpdaterStage -Destination (Join-Path $binDir 'distill-update.sh.aura-new')
+    Move-Item -Force -LiteralPath (Join-Path $binDir 'distill-update.sh.aura-new') -Destination (Join-Path $binDir 'distill-update.sh')
+    Write-Done "bin/distill-update.sh ${DIM}(updater; follows the $Channel channel)${RESET}"
 }
+Remove-Item -LiteralPath $Stage -Recurse -Force -ErrorAction SilentlyContinue
 
-# Version
-Set-Content -Path $versionFile -Value $Version -Encoding utf8 -NoNewline
+# Version and channel (read by bin/distill-update.sh)
+Set-Content -Path $versionFile -Value $PayloadVersion -Encoding utf8 -NoNewline
+Set-Content -Path $channelFile -Value $Channel -Encoding utf8 -NoNewline
 
 # Spine
 $spinePath = Join-Path $DistillDir 'SPINE.md'
@@ -357,12 +481,12 @@ Write-Host ''
 Write-Host "  ${GREEN}${BOLD}Installed${RESET}"
 Write-Host "  ${DIM}Zero dependencies. Just files.${RESET}"
 Write-Host ''
-Write-Host "  ${DIM}Version:  ${RESET}v$Version"
+Write-Host "  ${DIM}Version:  ${RESET}v$PayloadVersion ${DIM}($Channel channel)${RESET}"
 Write-Host "  ${DIM}Command:  ${RESET}/distill"
 Write-Host "  ${DIM}Knowledge:${RESET} $DistillDir"
 Write-Host ''
 if ($existingVersion) {
-    Write-Host "  ${CYAN}Upgraded${RESET} v$existingVersion -> v$Version"
+    Write-Host "  ${CYAN}Upgraded${RESET} v$existingVersion -> v$PayloadVersion"
     Write-Host ''
     $TsAnnounced = Join-Path $DistillDir '.token-saver-announced'
     if ((Test-Path $TsMarker) -and ((Get-Content $TsMarker -Raw).Trim() -eq 'enabled') -and -not (Test-Path $TsAnnounced)) {
@@ -375,6 +499,11 @@ if ($existingVersion) {
         Write-Host ''
         Set-Content -Path $TsAnnounced -Value '1' -Encoding utf8 -NoNewline
     }
+}
+if ($Channel -eq 'beta') {
+    Write-Host "  ${BOLD}Beta channel.${RESET} /distill updates follow published beta releases only."
+    Write-Host "  ${DIM}Back to stable: `$env:DISTILL_CHANNEL='stable'; re-run this installer${RESET}"
+    Write-Host ''
 }
 Write-Host "  ${DIM}Uninstall (keeps your learnings):${RESET}"
 Write-Host "    ${DIM}Remove Claude adapters and the managed aura-distill blocks from CLAUDE.md and ~/.codex/AGENTS.md; keep ~/.aura-distill for your learnings.${RESET}"

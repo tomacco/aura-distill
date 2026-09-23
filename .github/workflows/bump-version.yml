@@ -15,6 +15,11 @@ on:
       # Research folders publish measurements, not shipped behaviour — a version
       # bump there would widen VERSION/Homebrew-formula drift for no user change.
       - 'research/**'
+      # Architecture decision records and test suites are not fetched by any
+      # updater or installer; bumping VERSION for them would make every
+      # auto-updating client re-download identical files.
+      - 'docs/adr/**'
+      - 'tests/**'
 
 jobs:
   bump:
@@ -57,6 +62,15 @@ jobs:
           done
 
           echo "new_version=$new_version" >> $GITHUB_ENV
+
+      - name: Legacy endpoint guard (docs/adr/0001, 0002)
+        # main is the frozen files-only surface every shipped updater reads. Refuse
+        # to publish a VERSION bump (the signal old clients act on) if the tree
+        # could hand them anything else.
+        run: |
+          if [ -f tests/updater-compat/check-endpoints.sh ]; then
+            bash tests/updater-compat/check-endpoints.sh --surface stable
+          fi
 
       - name: Commit and push
         run: |

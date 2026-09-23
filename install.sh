@@ -10,7 +10,16 @@ set -e
 VERSION="1.1.23"
 
 BUILD="20260518-01"
-REPO="${AURA_DISTILL_REPO:-https://raw.githubusercontent.com/tomacco/aura-distill/main}"
+# Release channels (docs/adr/0002): stable = the files-only line at main (default);
+# beta = an opt-in prerelease, fetched from the tag named by the beta manifest.
+RAW_ROOT="${AURA_DISTILL_RAW_ROOT:-https://raw.githubusercontent.com/tomacco/aura-distill}"
+BETA_MANIFEST="${AURA_DISTILL_CHANNEL_MANIFEST:-$RAW_ROOT/beta/1.2/channels/manifest.json}"
+REPO="${AURA_DISTILL_REPO:-$RAW_ROOT/main}"
+# This installer belongs to the files-only line with this major version. It never
+# installs another major without typed consent, and never a software edition.
+LINE_MAJOR=1
+SOFTWARE_MARKER="AURA_SOFTWARE_""MAJOR_PAYLOAD"
+PLACEHOLDER="{DISTILL""_DIR}"
 # Profile paths are set dynamically after profile detection (see below)
 PROFILE_DIR=""
 AURA_DIR="${AURA_DISTILL_HOME:-$HOME/.aura-distill}"
@@ -73,6 +82,51 @@ fetch_file() {
   if [ -f "$source" ]; then cat "$source"; else curl -fsL "$source"; fi
 }
 
+# Reads "key": "value" from one top-level object of a channel manifest (one key per
+# line; the layout tests/updater-compat/check-endpoints.sh enforces). Same parser
+# as bin/distill-update.sh.
+manifest_get() { # <file> <section> <key>
+  awk -v sec="$2" -v key="$3" '
+    /^[ \t]*"[A-Za-z_]+"[ \t]*:[ \t]*\{/ {
+      if (depth == 1) { s = $0; sub(/^[ \t]*"/, "", s); sub(/".*/, "", s); cur = s }
+      depth++; next
+    }
+    /^[ \t]*\{[ \t]*$/ { depth++; next }
+    /^[ \t]*\}[ \t]*,?[ \t]*$/ { depth--; if (depth <= 1) cur = ""; next }
+    depth == 2 && cur == sec {
+      k = $0; sub(/^[ \t]*"/, "", k); sub(/".*/, "", k)
+      if (k == key) {
+        v = $0; sub(/^[^:]*:[ \t]*/, "", v); sub(/[ \t]*,?[ \t]*$/, "", v)
+        if (v ~ /^".*"$/) v = substr(v, 2, length(v) - 2)
+        print v; exit
+      }
+    }' "$1" 2>/dev/null | tr -cd '[:print:]' | cut -c1-300
+}
+
+# Consent boundary for a payload whose major differs from this installer's line
+# (docs/adr/0001, "The consent boundary"). Runs before anything is written. Consent
+# needs a human at a terminal typing the exact phrase; no terminal, a redirected
+# output, an empty answer, a timeout or any other answer keeps the current install.
+# The answer is read from /dev/tty because `curl ... | bash` makes stdin the script.
+major_consent() { # <target-version>
+    local target=$1 answer=""
+    echo ""
+    printf "  ${BOLD}aura-distill v%s is a major change from the v%s line this installer belongs to.${RESET}\n" "$target" "$LINE_MAJOR"
+    printf "  Read the release notes before continuing: https://github.com/tomacco/aura-distill/releases\n"
+    printf "  Your current installation and knowledge stay as they are unless you consent here.\n"
+    if [ ! -t 1 ] || ! { : </dev/tty; } 2>/dev/null; then
+        printf "  No interactive terminal: consent cannot be given here. Kept your current installation. Nothing was installed or changed.\n"
+        return 1
+    fi
+    printf '  Type "adopt %s" to continue, or press Enter to keep your current installation: ' "$target"
+    read -r -t 300 answer </dev/tty || answer=""
+    if [ "$answer" != "adopt $target" ]; then
+        printf "  Kept your current installation. Nothing was installed or changed.\n"
+        return 1
+    fi
+    return 0
+}
+
 # ═══ HEADER ANIMATION ═══
 
 show_header() {
@@ -111,10 +165,13 @@ show_section() {
 # Parse arguments
 PROFILE_NAME=""
 TOKEN_SAVER="auto"   # auto = keep prior choice (default on for new installs); on/off/remove = explicit
+CHANNEL="${DISTILL_CHANNEL:-}"   # empty = keep the persisted choice (stable for new installs)
 while [[ $# -gt 0 ]]; do
     case $1 in
         --profile) PROFILE_NAME="$2"; shift 2 ;;
         --profile=*) PROFILE_NAME="${1#*=}"; shift ;;
+        --channel) CHANNEL="${2:-}"; shift; [ $# -gt 0 ] && shift ;;
+        --channel=*) CHANNEL="${1#*=}"; shift ;;
         --token-saver) TOKEN_SAVER="on"; shift ;;
         --no-token-saver) TOKEN_SAVER="off"; shift ;;
         --remove-token-saver) TOKEN_SAVER="remove"; shift ;;
@@ -206,11 +263,89 @@ LEGACY_DISTILL_DIR="$PROFILE_DIR/distill"
 info_msg "Installing to: ${PROFILE_DIR}"
 echo ""
 
+# ═══ CHANNEL AND PAYLOAD (nothing is written before this block succeeds) ═══
+
+if [ -z "$CHANNEL" ]; then
+    CHANNEL=$(tr -d '[:space:]' 2>/dev/null < "$DISTILL_DIR/.channel" || true)
+    [ -n "$CHANNEL" ] || CHANNEL="stable"
+fi
+case "$CHANNEL" in
+    stable|beta) ;;
+    *) fail_msg "Unknown channel '$CHANNEL' (use --channel stable or --channel beta). Nothing was changed."; exit 1 ;;
+esac
+
+STAGE=$(mktemp -d)
+trap 'rm -rf "$STAGE"' EXIT
+
+if [ "$CHANNEL" = "beta" ] && [ -z "${AURA_DISTILL_REPO:-}" ]; then
+    if ! fetch_file "$BETA_MANIFEST" > "$STAGE/manifest.json" 2>/dev/null; then
+        fail_msg "Could not read the beta channel manifest. Nothing was changed."
+        exit 1
+    fi
+    BETA_STATUS=$(manifest_get "$STAGE/manifest.json" beta status)
+    BETA_TAG=$(manifest_get "$STAGE/manifest.json" beta tag)
+    BETA_VERSION=$(manifest_get "$STAGE/manifest.json" beta version)
+    case "$BETA_STATUS" in
+        prerelease|stable) ;;
+        unpublished) fail_msg "No beta release is published yet. Nothing was changed."; exit 1 ;;
+        closed) fail_msg "The beta channel is closed. Install stable with --channel stable. Nothing was changed."; exit 1 ;;
+        *) fail_msg "The beta channel manifest is missing or malformed. Nothing was changed."; exit 1 ;;
+    esac
+    if ! printf '%s' "$BETA_TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$' \
+       || [ "${BETA_TAG#v}" != "$BETA_VERSION" ]; then
+        fail_msg "The beta channel manifest names an invalid release. Nothing was changed."
+        exit 1
+    fi
+    REPO="$RAW_ROOT/$BETA_TAG"
+fi
+
+# Download the whole payload to a temp dir and validate it before touching
+# anything: a failed or partial download must leave an existing install intact.
+payload_ok=1
+if fetch_file "$REPO/VERSION" > "$STAGE/VERSION" 2>/dev/null; then
+    PAYLOAD_VERSION=$(tr -d '[:space:]' < "$STAGE/VERSION")
+else
+    PAYLOAD_VERSION=""
+fi
+if ! printf '%s' "$PAYLOAD_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$'; then
+    payload_ok=0
+fi
+for f in distill.md distill-process.md distill-monitor.md; do
+    if ! fetch_file "$REPO/$f" > "$STAGE/$f" 2>/dev/null || [ ! -s "$STAGE/$f" ] \
+       || ! head -1 "$STAGE/$f" | grep -q '^# '; then
+        payload_ok=0
+    fi
+done
+if [ "$payload_ok" != 1 ]; then
+    fail_msg "Download failed or returned invalid files from $REPO. Nothing was changed."
+    exit 1
+fi
+if grep -q "$SOFTWARE_MARKER" "$STAGE"/distill.md "$STAGE"/distill-process.md "$STAGE"/distill-monitor.md; then
+    fail_msg "$REPO serves a software-edition payload. This files-only installer never installs it; use that edition's own installer. Nothing was changed."
+    exit 1
+fi
+case "$CHANNEL:$PAYLOAD_VERSION" in
+    stable:*-*) if [ -z "${AURA_DISTILL_REPO:-}" ]; then
+            fail_msg "The stable endpoint reports a prerelease ($PAYLOAD_VERSION); refusing. Nothing was changed."
+            exit 1
+        fi ;;
+esac
+if [ "${PAYLOAD_VERSION%%.*}" != "$LINE_MAJOR" ]; then
+    major_consent "$PAYLOAD_VERSION" || exit 2
+fi
+# Optional in older payloads (main before the 1.2 line has no updater script).
+HAVE_UPDATER=0
+if fetch_file "$REPO/bin/distill-update.sh" > "$STAGE/distill-update.sh" 2>/dev/null \
+   && sed -n '2p' "$STAGE/distill-update.sh" | grep -q '^# aura-distill-updater' \
+   && ! grep -q "$SOFTWARE_MARKER" "$STAGE/distill-update.sh"; then
+    HAVE_UPDATER=1
+fi
+
 # Detect existing installation
 EXISTING_VERSION=""
 if [ -f "$DISTILL_DIR/.version" ]; then
     EXISTING_VERSION=$(cat "$DISTILL_DIR/.version")
-    info_msg "Existing installation: v${EXISTING_VERSION} → v${VERSION}"
+    info_msg "Existing installation: v${EXISTING_VERSION} → v${PAYLOAD_VERSION} (${CHANNEL} channel)"
     echo ""
 fi
 
@@ -234,19 +369,30 @@ fi
 
 # Download core files and resolve {DISTILL_DIR} to actual path
 
-fetch_file "$REPO/distill.md" | sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" > "$CMD_DIR/distill.md"
+install_core() { # <staged file> <target>
+    sed "s|$PLACEHOLDER|$DISTILL_DIR|g" "$1" > "$2.aura-new" && mv -f "$2.aura-new" "$2"
+}
+install_core "$STAGE/distill.md" "$CMD_DIR/distill.md"
 done_msg "distill.md ${DIM}(command)${RESET}"
 
-
-fetch_file "$REPO/distill-process.md" | sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" > "$DISTILL_DIR/distill-process.md"
+install_core "$STAGE/distill-process.md" "$DISTILL_DIR/distill-process.md"
 done_msg "distill-process.md ${DIM}(process engine)${RESET}"
 
-
-fetch_file "$REPO/distill-monitor.md" | sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" > "$DISTILL_DIR/distill-monitor.md"
+install_core "$STAGE/distill-monitor.md" "$DISTILL_DIR/distill-monitor.md"
 done_msg "distill-monitor.md ${DIM}(session monitor)${RESET}"
 
-# Version
-echo "$VERSION" > "$DISTILL_DIR/.version"
+if [ "$HAVE_UPDATER" = 1 ]; then
+    mkdir -p "$DISTILL_DIR/bin"
+    cp "$STAGE/distill-update.sh" "$DISTILL_DIR/bin/distill-update.sh.aura-new"
+    chmod +x "$DISTILL_DIR/bin/distill-update.sh.aura-new"
+    mv -f "$DISTILL_DIR/bin/distill-update.sh.aura-new" "$DISTILL_DIR/bin/distill-update.sh"
+    done_msg "bin/distill-update.sh ${DIM}(updater; follows the ${CHANNEL} channel)${RESET}"
+fi
+
+# Version, channel and where the command lives (read by bin/distill-update.sh)
+echo "$PAYLOAD_VERSION" > "$DISTILL_DIR/.version"
+echo "$CHANNEL" > "$DISTILL_DIR/.channel"
+echo "$CMD_DIR/distill.md" > "$DISTILL_DIR/.command-path"
 
 # Spine
 if [ ! -f "$DISTILL_DIR/SPINE.md" ]; then
@@ -466,12 +612,12 @@ echo ""
 printf "  ${GREEN}${BOLD}Installed${RESET}\n"
 printf "  ${DIM}Zero dependencies. Just files.${RESET}\n"
 echo ""
-printf "  ${DIM}Version:  ${RESET}v${VERSION}\n"
+printf "  ${DIM}Version:  ${RESET}v${PAYLOAD_VERSION} ${DIM}(${CHANNEL} channel)${RESET}\n"
 printf "  ${DIM}Command:  ${RESET}/distill\n"
 printf "  ${DIM}Knowledge:${RESET} ~/.aura-distill/\n"
 echo ""
 if [ -n "$EXISTING_VERSION" ]; then
-    printf "  ${CYAN}Upgraded${RESET} v${EXISTING_VERSION} → v${VERSION}\n"
+    printf "  ${CYAN}Upgraded${RESET} v${EXISTING_VERSION} → v${PAYLOAD_VERSION}\n"
     echo ""
     if [ "$(cat "$TS_MARKER" 2>/dev/null)" = "enabled" ] && [ ! -f "$DISTILL_DIR/.token-saver-announced" ]; then
         printf "  ${BOLD}${PURPLE}NEW — Token Saver${RESET}\n"
@@ -483,6 +629,11 @@ if [ -n "$EXISTING_VERSION" ]; then
         echo ""
         touch "$DISTILL_DIR/.token-saver-announced"
     fi
+fi
+if [ "$CHANNEL" = "beta" ]; then
+    printf "  ${BOLD}Beta channel.${RESET} /distill updates follow published beta releases only.\n"
+    printf "  ${DIM}Back to stable: re-run this installer with --channel stable${RESET}\n"
+    echo ""
 fi
 printf "  ${DIM}Uninstall (keeps your learnings):${RESET}\n"
 printf "    ${DIM}rm -f ~/.claude/commands/distill.md ~/.claude/rules/distill.md; remove aura-distill managed blocks from CLAUDE.md and ~/.codex/AGENTS.md${RESET}\n"

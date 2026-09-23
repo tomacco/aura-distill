@@ -95,6 +95,95 @@ DO-NOT-DELETE
     Invoke-TestInstall $partial
     Assert-True ((Get-Content (Join-Path $partial '.claude/CLAUDE.md') -Raw).Contains('DO-NOT-DELETE')) 'partial legacy block cannot delete later user content'
 
+    # Release channels (docs/adr/0002) against a local raw-root fixture laid out like
+    # raw.githubusercontent.com: main/, beta/1.2/channels/manifest.json, <tag>/.
+    $rawRoot = New-TestHome; $homes.Add($rawRoot)
+    $payload = @('VERSION','distill.md','distill-process.md','distill-monitor.md','rules/distill.md','agents/scribe.md','agents/scout.md','bin/distill-update.sh','channels/manifest.json')
+    function Copy-Payload([string]$Dest) {
+        foreach ($f in $payload) {
+            $target = Join-Path $Dest $f
+            New-Item -ItemType Directory -Force -Path (Split-Path -Parent $target) | Out-Null
+            Copy-Item (Join-Path $RepoRoot $f) $target
+        }
+    }
+    Copy-Payload (Join-Path $rawRoot 'main')
+    Set-Content (Join-Path $rawRoot 'main/VERSION') '1.2.0' -NoNewline
+    $tagDir = Join-Path $rawRoot 'v1.2.0-beta.1'
+    Copy-Payload $tagDir
+    Set-Content (Join-Path $tagDir 'VERSION') '1.2.0-beta.1' -NoNewline
+    Add-Content (Join-Path $tagDir 'distill-process.md') "`nBETA-ONE-PS"
+    $betaManifest = Join-Path $rawRoot 'beta/1.2/channels/manifest.json'
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $betaManifest) | Out-Null
+    function Set-BetaManifest([string]$Status, [string]$Tag, [string]$Ver) {
+        $m = [ordered]@{ schema = 2; beta = [ordered]@{ status = $Status; tag = $Tag; version = $Ver };
+                         software = [ordered]@{ status = 'unpublished'; version = ''; requirements = ''; guide = ''; auto_update = 'never' } }
+        ($m | ConvertTo-Json -Depth 5) | Set-Content $betaManifest
+    }
+    function Invoke-ChannelInstall([string]$TestHome, [string]$Channel) {
+        $env:USERPROFILE = $TestHome
+        $env:CODEX_HOME = Join-Path $TestHome '.codex'
+        $env:AURA_DISTILL_HOME = Join-Path $TestHome '.aura-distill'
+        $env:AURA_DISTILL_REPO = $null
+        $env:AURA_DISTILL_RAW_ROOT = $rawRoot
+        $env:DISTILL_CHANNEL = $Channel
+        $env:DISTILL_TOKEN_SAVER = 'off'
+        try { & (Join-Path $RepoRoot 'install.ps1') *> $null } finally {
+            $env:DISTILL_CHANNEL = $null; $env:AURA_DISTILL_RAW_ROOT = $null
+        }
+    }
+    function Read-Trim([string]$Path) { if (Test-Path $Path) { (Get-Content $Path -Raw).Trim() } else { '' } }
+
+    $beta = New-TestHome; $homes.Add($beta)
+    $betaAura = Join-Path $beta '.aura-distill'
+    Set-BetaManifest 'unpublished' '' ''
+    Invoke-ChannelInstall $beta 'beta'
+    Assert-True (-not (Test-Path $betaAura)) 'beta opt-in with no published beta writes nothing'
+    Set-BetaManifest 'prerelease' 'v1.2.0-beta.1' '1.2.0-beta.1'
+    Invoke-ChannelInstall $beta 'beta'
+    Assert-True ((Read-Trim (Join-Path $betaAura '.channel')) -eq 'beta') 'beta opt-in records the beta channel'
+    Assert-True ((Read-Trim (Join-Path $betaAura '.version')) -eq '1.2.0-beta.1') 'beta opt-in installs the version the manifest names'
+    Assert-True ((Get-Content (Join-Path $betaAura 'distill-process.md') -Raw).Contains('BETA-ONE-PS')) 'beta payload comes from the pinned tag'
+    Assert-True (Test-Path (Join-Path $betaAura 'bin/distill-update.sh')) 'installer places the updater script in the store'
+    Invoke-ChannelInstall $beta $null
+    Assert-True ((Read-Trim (Join-Path $betaAura '.channel')) -eq 'beta') 're-install without DISTILL_CHANNEL keeps the persisted beta choice'
+    Invoke-ChannelInstall $beta 'stable'
+    Assert-True ((Read-Trim (Join-Path $betaAura '.channel')) -eq 'stable') 'opt-out records the stable channel'
+    Assert-True ((Read-Trim (Join-Path $betaAura '.version')) -eq '1.2.0') 'opt-out installs the stable version from main'
+    Assert-True (-not (Get-Content (Join-Path $betaAura 'distill-process.md') -Raw).Contains('BETA-ONE-PS')) 'opt-out replaces the beta payload'
+    Set-BetaManifest 'prerelease' 'v2.0.0-beta.1' '2.0.0-beta.1'
+    Invoke-ChannelInstall $beta 'beta'
+    Assert-True ((Read-Trim (Join-Path $betaAura '.channel')) -eq 'stable') 'a beta manifest naming a tag that does not exist changes nothing'
+
+    # Consent boundary: a cross-major payload with piped input is refused, nothing changes.
+    $guarded = New-TestHome; $homes.Add($guarded)
+    Invoke-ChannelInstall $guarded 'stable'
+    $guardedAura = Join-Path $guarded '.aura-distill'
+    $before = (Get-Content (Join-Path $guardedAura 'distill-process.md') -Raw)
+    Set-Content (Join-Path $rawRoot 'main/VERSION') '2.0.0' -NoNewline
+    $pwshPath = (Get-Process -Id $PID).Path
+    $env:USERPROFILE = $guarded; $env:CODEX_HOME = Join-Path $guarded '.codex'; $env:AURA_DISTILL_HOME = $guardedAura
+    $env:AURA_DISTILL_REPO = $null; $env:AURA_DISTILL_RAW_ROOT = $rawRoot; $env:DISTILL_TOKEN_SAVER = 'off'
+    $gateOut = 'adopt 2.0.0' | & $pwshPath -NoProfile -File (Join-Path $RepoRoot 'install.ps1') 2>&1 | Out-String
+    $gateExit = $LASTEXITCODE
+    $env:AURA_DISTILL_RAW_ROOT = $null
+    Assert-True ($gateExit -eq 2) 'cross-major payload with piped consent exits 2'
+    Assert-True ($gateOut -match 'No interactive terminal') 'cross-major refusal explains why'
+    Assert-True ((Read-Trim (Join-Path $guardedAura '.version')) -eq '1.2.0') 'cross-major refusal keeps the installed version'
+    Assert-True ((Get-Content (Join-Path $guardedAura 'distill-process.md') -Raw) -eq $before) 'cross-major refusal keeps installed files'
+
+    # A failed download leaves an existing installation untouched.
+    Set-Content (Join-Path $rawRoot 'main/VERSION') '1.2.1' -NoNewline
+    Remove-Item (Join-Path $rawRoot 'main/distill-monitor.md')
+    Invoke-ChannelInstall $guarded 'stable'
+    Assert-True ((Read-Trim (Join-Path $guardedAura '.version')) -eq '1.2.0') 'failed download keeps the installed version'
+    Assert-True ((Get-Content (Join-Path $guardedAura 'distill-process.md') -Raw) -eq $before) 'failed download keeps installed files'
+
+    # A software-edition payload is refused even under a 1.x VERSION.
+    Copy-Item (Join-Path $RepoRoot 'distill-monitor.md') (Join-Path $rawRoot 'main/distill-monitor.md')
+    Add-Content (Join-Path $rawRoot 'main/distill-process.md') ("`n" + 'AURA_SOFTWARE_' + 'MAJOR_PAYLOAD')
+    Invoke-ChannelInstall $guarded 'stable'
+    Assert-True ((Get-Content (Join-Path $guardedAura 'distill-process.md') -Raw) -eq $before) 'software-edition payload is refused'
+
     if ($LiveRetrieval) {
         $live = New-TestHome; $homes.Add($live); Invoke-TestInstall $live
         $liveAura = Join-Path $live '.aura-distill'
@@ -125,6 +214,8 @@ DO-NOT-DELETE
     $env:AURA_DISTILL_HOME = $null
     $env:AURA_DISTILL_REPO = $null
     $env:DISTILL_TOKEN_SAVER = $null
+    $env:DISTILL_CHANNEL = $null
+    $env:AURA_DISTILL_RAW_ROOT = $null
     foreach ($testPath in $homes) {
         Remove-Item -LiteralPath $testPath -Recurse -Force -ErrorAction SilentlyContinue
         if (Test-Path -LiteralPath $testPath) { Write-Warning "Could not remove isolated test directory: $testPath" }

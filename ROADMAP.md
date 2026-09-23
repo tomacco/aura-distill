@@ -36,18 +36,18 @@ The maintainer set how the files-only edition ships ([DECISIONS.md](DECISIONS.md
 
 A measurement on copies of one real knowledge store (aggregate numbers only, per D-2026-09-23-4) supports the Track A direction:
 
-- The auto-loaded index is 49–51 KB, 3.1–3.2× its 16 KB budget. 44 of 65 index entries are over 400 bytes.
+- The auto-loaded index is 49–51 KB, 3.1–3.2× the 16 KB budget proposed in #75 (today's shipped limit is 80 lines, which these indexes meet). 44 of 65 index entries are over 400 bytes.
 - Index bytes grew 57% in seven weeks while the number of entries stayed flat. Entries are growing into digests, not multiplying.
 - Dated observations are about 6.5% of tier-file content. Splitting oversized entries, not adding separate evidence copies, is the main remedy.
 - The lifecycle rules as drafted would archive 2 files. Cross-reference blocking protects 18 of 23 project files.
 - 18 nested legacy archives have no ledger entry. As things stand they would block migration, so migration needs a path for them.
 
-Details: [files-only redesign research](docs/research/files-only-redesign.html) (being published).
+Details: the files-only redesign research page (`docs/research/files-only-redesign.html`, published separately) and PR #93.
 
 ## Start here
 
 - [#75](https://github.com/tomacco/aura-distill/issues/75): decide the files-only structure, migration and honest guarantees. Delivered for review as PR #93 (review requested changes; not yet merged).
-- [#76](https://github.com/tomacco/aura-distill/issues/76): audit legacy updater paths and choose safe release channels. Delivered as PR #94 and [ADR 0001](docs/adr/0001-legacy-updater-compatibility.md); merged into `beta/1.2`, and PR #94 stays open against `main` until promotion.
+- [#76](https://github.com/tomacco/aura-distill/issues/76): audit legacy updater paths and choose safe release channels. Delivered as PR #94 and [ADR 0001](docs/adr/0001-legacy-updater-compatibility.md) (status: proposed, awaiting the maintainer's acceptance); merged into `beta/1.2`, and PR #94 stays open against `main` until promotion.
 - [#77](https://github.com/tomacco/aura-distill/issues/77): review the latency and quality protocol. [#62](https://github.com/tomacco/aura-distill/issues/62) then builds the harness and a fresh baseline.
 - [#65](https://github.com/tomacco/aura-distill/issues/65): diagnose, as independent work, whether the shared corpus and scopes really diverge. Knowledge intentionally kept local-only must stay excluded.
 - [#41](https://github.com/tomacco/aura-distill/issues/41): thin-index work can start now; agree the final format with #75. Batching reads ([#64](https://github.com/tomacco/aura-distill/issues/64)) follows the file contract and the benchmark baseline.
@@ -128,7 +128,7 @@ The existing productization gate in #61 also blocks the service transports. File
 | Uncertainty | Decision owner | Evidence and exit condition |
 |---|---|---|
 | Files-only structure and guarantees | #75 | Synthetic before/after stores, fresh-agent interpretation, and reviewed format, lifecycle and recovery decisions. |
-| Old auto-updaters bypassing a future major gate | #76 | Matrix of released update paths, reproductions of skipped releases, and an ADR on safe channels and publication order. Delivered as ADR 0001 in `beta/1.2`. |
+| Old auto-updaters bypassing a future major gate | #76 | Matrix of released update paths, reproductions of skipped releases, and an ADR on safe channels and publication order. Delivered as ADR 0001 in `beta/1.2` (status: proposed). |
 | Retrieval speed in practice | #77, #62 | Calibrated traces, a natural-batching baseline, endpoints and thresholds fixed in advance, and an independently reviewed experiment. |
 | Runtime, storage, local versus server authority | #81 | Evidence from real clients and protocols, dependency and startup tradeoffs, reviewed versioned contracts, and what changed since ARCHITECTURE-V2. |
 | Pending evidence versus published memory | #81, #85 | An explicit state machine for acknowledgement, visibility and retry; crash and concurrency fixtures. |

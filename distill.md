@@ -223,11 +223,12 @@ On the FIRST invocation of `/distill` in a session:
 4. Act on the first line of its output:
    - `CURRENT ...` → say nothing.
    - `UPDATED <old> <new> <channel>` → say "aura-distill updated: v<old> → v<new> (<channel> channel)".
+   - `REPAIRED <version> <channel>` → say "aura-distill: repaired the installed v<version> files (store paths were unresolved)".
    - `AVAILABLE <old> <new> <channel>` → ask: "aura-distill update available: v<old> → v<new> (<channel> channel). Want me to update now? (You can also say 'always keep it updated' and I won't ask again.)"
      - yes/update → run `bash "{DISTILL_DIR}/bin/distill-update.sh" apply` and report its first line the same way.
      - "always keep it updated" or similar → save the preference (below), then run `apply`.
      - no/later → continue with the current version; don't ask again this session.
-   - `BLOCKED <channel> <reason>` → say "aura-distill: update skipped (<reason>). Nothing was changed." and continue.
+   - `BLOCKED <channel> <reason>` → say "aura-distill: update skipped (<reason>)." and continue.
 5. Show every line that starts with `NOTICE:` to the user verbatim, without the prefix, as plain information. Do not ask a question about it.
 
 Rules for this section, no exceptions:

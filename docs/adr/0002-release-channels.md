@@ -21,7 +21,7 @@ Two gaps were left. There was no way to install or follow a beta at all: the dis
 - keys every safety decision on content it just fetched and on its own constant `LINE_MAJOR=1`, never on `.version` (ADR 0001 section c showed `.version` can lie);
 - refuses any target whose major differs from 1, any prerelease served by the stable endpoint, and any file carrying the software payload marker;
 - downloads all four files (dispatcher, process, monitor, itself) to a temp dir, validates each, resolves the store placeholder, and only then renames them into place with per-process temp names; `.version` is renamed last. Any failure before the renames leaves every installed file untouched; a failed rename (for example two sessions updating one store) is reported as `BLOCKED ... may be partially updated`, never as `UPDATED`;
-- repairs, at the same version and regardless of the Auto-update preference, installed files that an older updater copied with the store placeholder unresolved (ADR 0001 latent defect 2), so a legacy client that adopts the bridge is clean after its first `/distill`;
+- repairs (status `REPAIRED`; `check` only reports it), at the same version and regardless of the Auto-update preference, installed files that an older updater copied with the store placeholder unresolved (ADR 0001 latent defect 2), so a legacy client that adopts the bridge is clean after its first `/distill`;
 - reads `.channel`, `.version` and `.command-path` tolerating a UTF-8 byte-order mark and CRLF (Windows PowerShell 5.1 writes both; `install.ps1` now writes these files without them);
 - never touches knowledge (SPINE, tiers, preferences, inbox);
 - runs from a temp copy of itself, so replacing its own file works on Windows too.

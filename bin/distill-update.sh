@@ -9,6 +9,7 @@
 # Usage: distill-update.sh auto | check | apply
 #   auto   apply when the Auto-update preference is on, otherwise behave like check
 #   check  report only; the one thing it writes is .major-notice (a notice was shown)
+#          (a same-version repair is reported as AVAILABLE, not performed)
 #   apply  download everything to a temp dir, validate every file, then replace
 #          the installed files; any failure leaves every installed file untouched
 #
@@ -16,6 +17,8 @@
 #   CURRENT <version> <channel>
 #   AVAILABLE <installed> <target> <channel>
 #   UPDATED <installed> <target> <channel>
+#   REPAIRED <version> <channel>   (same version re-installed: an older updater had
+#                                   left the store path unresolved in the files)
 #   BLOCKED <channel> <reason>
 # followed by zero or more "NOTICE: ..." lines meant to be shown to the user as text.
 #
@@ -49,13 +52,23 @@ if [ -z "${AURA_UPDATER_SELF:-}" ]; then
   self_dir=$(cd "$(dirname "$0")" && pwd)
   copy=$(mktemp "${TMPDIR:-/tmp}/aura-distill-updater.XXXXXX") || { echo "BLOCKED unknown cannot create a temporary file"; exit 0; }
   cat "$0" > "$copy"
-  AURA_UPDATER_SELF="$self_dir/$(basename "$0")" exec bash "$copy" "$@"
+  AURA_UPDATER_SELF="$self_dir/$(basename "$0")" AURA_UPDATER_COPY="$copy" exec bash "$copy" "$@"
 fi
-trap 'rm -f "$0"' EXIT
+# Only ever delete the temporary copy, never the installed script (for example if
+# AURA_UPDATER_SELF leaked into the caller's environment).
+SELF_COPY=""
+[ "${AURA_UPDATER_COPY:-}" = "$0" ] && SELF_COPY=$0
+trap 'rm -f "$SELF_COPY"' EXIT
 
 STORE=$(cd "$(dirname "$AURA_UPDATER_SELF")/.." && pwd)
+# Git Bash on Windows: write C:/Users/... (accepted by bash and by the client's file
+# tools) into the installed files, not the MSYS form /c/Users/...
+if command -v cygpath >/dev/null 2>&1; then STORE=$(cygpath -m "$STORE"); fi
 CMD_FILE=$(head -1 "$STORE/.command-path" 2>/dev/null | LC_ALL=C tr -d '\357\273\277\r' || true)
-case "$CMD_FILE" in */distill.md) ;; *) CMD_FILE="$HOME/.claude/commands/distill.md" ;; esac
+# A recorded path whose directory does not exist here (a store synced from another
+# machine or user) falls back to the default instead of blocking every update.
+case "$CMD_FILE" in */distill.md) [ -d "$(dirname "$CMD_FILE")" ] || CMD_FILE="" ;; *) CMD_FILE="" ;; esac
+[ -n "$CMD_FILE" ] || CMD_FILE="$HOME/.claude/commands/distill.md"
 # Strip whitespace, CR and a UTF-8 byte-order mark (Windows PowerShell 5.1 writes one).
 read_meta() { LC_ALL=C tr -d '\357\273\277[:space:]' 2>/dev/null < "$1" || true; }
 CHANNEL=$(read_meta "$STORE/.channel")
@@ -63,7 +76,7 @@ CHANNEL=$(read_meta "$STORE/.channel")
 INSTALLED=$(read_meta "$STORE/.version")
 
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/aura-distill-update.XXXXXX") || { echo "BLOCKED $CHANNEL cannot create a temporary directory"; exit 0; }
-trap 'rm -rf "$WORK"; rm -f "$0"' EXIT
+trap 'rm -rf "$WORK"; rm -f "$SELF_COPY"' EXIT
 
 fetch() { # <url-or-local-path> <dest>
   if [ -f "$1" ]; then cp "$1" "$2"; else curl -fsSL --max-time 30 "$1" -o "$2" 2>/dev/null; fi
@@ -167,6 +180,7 @@ for t in "$CMD_FILE" "$STORE/distill-process.md" "$STORE/distill-monitor.md"; do
 done
 if [ "$TARGET" = "$INSTALLED" ]; then
   [ "$REPAIR" = 1 ] || finish "CURRENT $TARGET $CHANNEL"
+  [ "$MODE" = check ] && finish "AVAILABLE ${INSTALLED:-unknown} $TARGET $CHANNEL"
   MODE=apply
 fi
 
@@ -191,7 +205,7 @@ for f in distill.md distill-process.md distill-monitor.md bin/distill-update.sh;
     finish "BLOCKED $CHANNEL $f is a software-edition payload; the files-only updater never installs it; nothing was changed"
   fi
   if [ "$f" = bin/distill-update.sh ]; then
-    sed -n '2p' "$raw" | grep -q '^# aura-distill-updater' || finish "BLOCKED $CHANNEL $f failed validation; nothing was changed"
+    { sed -n '2p' "$raw" | grep -q '^# aura-distill-updater' && bash -n "$raw" 2>/dev/null; } || finish "BLOCKED $CHANNEL $f failed validation; nothing was changed"
     mv "$raw" "$WORK/stage/$f"
   else
     head -1 "$raw" | grep -q '^# ' || finish "BLOCKED $CHANNEL $f failed validation; nothing was changed"
@@ -218,4 +232,5 @@ for pair in "$CMD_FILE" "$STORE/distill-process.md" "$STORE/distill-monitor.md" 
     finish "BLOCKED $CHANNEL replacing $(basename "$pair") failed; the installation may be partially updated, run the installer to repair it"
   fi
 done
+[ "$TARGET" = "$INSTALLED" ] && finish "REPAIRED $TARGET $CHANNEL"
 finish "UPDATED ${INSTALLED:-unknown} $TARGET $CHANNEL"

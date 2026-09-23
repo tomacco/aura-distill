@@ -332,4 +332,5 @@ html[lang="es"] [data-lang="en"],html:not([lang="es"]) [data-lang="es"]{display:
 .ne-response b{text-transform:uppercase;letter-spacing:.08em;font-size:var(--ne-fs-label)}
 /* narrow phones: no sticky first column, let headers and labels wrap so numbers stay visible */
 @media (max-width:400px){.ne-tbl th:first-child,.ne-tbl td:first-child{position:static;white-space:normal;min-width:11ch}.ne-tbl th{white-space:normal}.ne-tbl th,.ne-tbl td{padding:8px 8px}}
+.ne-kicker .meta{display:inline-flex;flex-wrap:wrap;gap:0 6px}
 .ne-kicker .meta span{white-space:nowrap}

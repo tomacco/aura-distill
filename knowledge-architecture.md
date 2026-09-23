@@ -15,32 +15,35 @@ Knowledge accumulates. A user who runs `/distill` weekly for six months will hav
 ```
 ┌─────────────────────────────────────────────┐
 │  TIER 1: THE SPINE (always in context)      │
-│  Max 80 lines. Index only. No content.      │
+│  80 lines and 16 KB. Index only.            │
 │  "What exists and where to find it"         │
 └─────────────────┬───────────────────────────┘
-                  │ LLM reads on-demand
+                  │ LLM reads on-demand (batched)
                   ▼
 ┌─────────────────────────────────────────────┐
 │  TIER 2: ACTIVE KNOWLEDGE (files on disk)   │
-│  Max 60 lines per file. Current, relevant.  │
+│  60 lines and 6 KB per file.                │
 │  "What I need when working in this area"    │
+│  + evidence/ twin: its dated history        │
 └─────────────────┬───────────────────────────┘
-                  │ Compaction promotes here
+                  │ Lifecycle MOVES whole files
                   ▼
 ┌─────────────────────────────────────────────┐
-│  TIER 3: ARCHIVE (compressed history)       │
-│  No size limit. Summarized. Rarely read.    │
-│  "What was true, for forensic reference"    │
+│  TIER 3: ARCHIVE (byte-identical, read-only)│
+│  No size limit. Ledger-recorded moves.      │
+│  Found through CATALOG.md on a miss.        │
 └─────────────────────────────────────────────┘
 ```
+
+Since 1.2 the store follows the files-only design (`docs/design-files-only-memory.md`, decisions D1 to D10). The runtime rules live in `distill-process.md` ("Files-only layout: formats and rules") and `distill-monitor.md` ("Retrieval protocol"); this document explains the shape.
 
 ---
 
 ## Tier 1: The Spine
 
-**File:** `MEMORY.md` (or whatever the user's index file is called)
+**File:** `SPINE.md` at the store root.
 
-**Hard limit:** 80 lines maximum. This is the ONLY file that gets auto-loaded into every session context.
+**Hard limits:** 80 lines **and** 16,000 bytes; each entry (its `- [` line plus any wrapped continuation lines) at most 400 bytes. Compaction starts at 60 lines or 12,000 bytes and shortens entries longest first toward 200 bytes until the file is back under that target (or every entry is at 200 bytes); the hard caps are the limit no run may finish above. The first cap hit binds, and the distiller enforces it in the same run: "flag" is not a terminal state. This is the ONLY knowledge file that gets auto-loaded into every session context. Line caps alone let entries fatten into digests (a real store reached 80 lines and 39 KB).
 
 **What it contains:**
 - One-line pointers to Tier 2 files (path + relevance hook)
@@ -69,8 +72,10 @@ Knowledge accumulates. A user who runs `/distill` weekly for six months will hav
 
 **Rules:**
 - Never put knowledge content in the spine. Only pointers.
-- Each line must fit in ~150 characters (path + hook)
-- When the spine approaches 80 lines, trigger compaction (merge related entries, archive stale ones)
+- Each entry fits its byte budget; a hook keeps the distinctive nouns (project, tool and error names) that make retrieval fire.
+- When an entry is cut or merged, its entire original hook is appended to its target file under `## Index detail (moved from SPINE <date>)`. Nothing is lost; the next distillation of that domain folds it into principles.
+- Related files may share one line: `- [Beacon](projects/beacon.md) + [Delta](projects/delta.md) — hook`. A split file's continuation always shares its parent's line.
+- Exactly one line points at `CATALOG.md`. No list of archived names ever enters the spine.
 
 ---
 
@@ -78,7 +83,7 @@ Knowledge accumulates. A user who runs `/distill` weekly for six months will hav
 
 **Location:** Subdirectories organized by layer (craft/, ops/, profile/, projects/, feedback/)
 
-**Hard limit:** 60 lines per file. If a file grows beyond this, it must be split into focused sub-files or compacted.
+**Hard limit:** 60 lines and 6,000 bytes per file (compact at 45 lines or 4,500 bytes). Splitting is the primary remedy: `craft/x-2.md` with `split_from: craft/x.md` continues `craft/x.md` and shares its SPINE line. A file that cannot be split without breaking one atomic block may declare `oversize: <reason>`: exempt from the byte cap, listed in the catalog, reported every run.
 
 **What it contains:**
 - Actionable knowledge that's currently relevant
@@ -118,6 +123,10 @@ The `origin` field tracks WHERE a decision came from:
 
 When `origin: directive` and `evidence_says` disagree, both are recorded honestly. The system executes the directive but never forgets the evidence. This enables future revisiting when context changes (authority leaves, scale shifts, refactoring window).
 
+**Optional frontmatter:** `last_validated`, `read_with: [ops/deploy.md]` (files always read together with this one, inline list, one extra batch, depth one), `lifecycle: pinned` (never archived automatically), `split_from`, `oversize`.
+
+**Evidence twins.** `evidence/craft/testing.md` (frontmatter `evidence_for: craft/testing.md`) holds the dated record behind the principles: confirmations, corrections, observations, one `- YYYY-MM-DD …` line each. It is append-only, never compacted, never in the SPINE and not read during ordinary retrieval. The principle file keeps the principle, its `confidence:` counts, its `last_validated:` date and one `Evidence:` citation line. Lines that carry a protected marker (`[NON-NEGOTIABLE…]`, `[DIRECTIVE…]`) or a retrieval marker (`[UPDATED…]`, `[DEPRECATED…]`, `[CORRECTED…]`, `[IMPORTANT…]`, `[CONTEXT…]`, `[PROVISIONAL…]`) never move to evidence: retrieval depends on seeing them.
+
 **Rules:**
 - One topic per file. "Testing" and "Code review" are separate files, not sections of one mega-file.
 - Every file must be navigable from the spine. No orphan files.
@@ -125,49 +134,33 @@ When `origin: directive` and `evidence_says` disagree, both are recorded honestl
 
 ---
 
-## Tier 3: Archive (compressed, never deleted)
+## Tier 3: Archive (moved whole, never rewritten, never deleted)
 
-**Location:** `archive/` subdirectory
+**Location:** `archive/<tier>/<name>.md` — the file's own path under `archive/`.
 
 **No size limit.** This is cold storage — but NOT a graveyard.
 
-**What it contains:**
-- Knowledge that was once in Tier 2 but is no longer frequently accessed
-- Historical context for forensic investigation
-- Superseded learnings (kept for the "why did we change?" trail)
+**Critical rule: move, never rewrite.** Archiving `projects/atlas.md` is `mv projects/atlas.md archive/projects/atlas.md`. The bytes do not change, so the move is verifiable by checksum and reversible by one move back. (Before 1.2, archiving meant a rewrite into "denser expression"; it cost a compression pass per file, so it rarely happened, and it changed the wording it was meant to keep.)
 
-**File format:**
+**The ledger.** `archive/LEDGER.md` is append-only and synced. Every archive and restore adds one line, written before the move, carrying the checksum, the reason and the full SPINE line that was removed:
 
 ```markdown
----
-archived_from: [original Tier 2 path]
-archived_on: [date]
-reason: [superseded|stale|merged|project-ended]
-recall_count: [times this was accessed since archiving — starts at 0]
----
-
-[Original content, possibly summarized]
+- 2026-09-11T10:31:00Z archive | from: projects/atlas.md | to: archive/projects/atlas.md | sha256: 12c1… | sha256-norm: 12c1… | reason: past threshold, no validation observed | spine-entry: - [Atlas](projects/atlas.md) — Atlas data-platform migration …
 ```
 
-**Critical rule: Compress, never discard.**
+The last line naming a path is its state; lines are appended in date order. A restore re-adds the saved SPINE entry (within budget) and moves the file back.
 
-The goal is ZERO information loss. When moving knowledge from Tier 2 to Tier 3:
-- Keep all principles intact
-- Compress examples into shorter forms (remove context that's obvious from the principle)
-- Preserve the "why" for every learning
-- Maintain traceability (what was the original file, when was it active)
+**Read-only.** No client edits an archived file or bumps a stamp inside it. `sha256-norm:` (the checksum without a `recall_count:` frontmatter line) lets a 1.2 client tell a 1.1 client's `recall_count` bump (drift) from a real modification.
 
-A Tier 3 file is not "less important" — it's "less frequently needed." The information hierarchy is:
+**Legacy archives.** Files written by the old rewrite-style compaction have no ledger line. A file directly under `archive/` or under `archive/legacy/` is legacy. An unledgered file under `archive/<tier>/` is adopted by `migrate-store` to `archive/legacy/<its current path>` (`archive/projects/x.md` → `archive/legacy/archive/projects/x.md`), byte-identically. Legacy files are never deleted; restoring one copies it back to an active file and leaves it in place.
 
-```
-Tier 1 (spine): WHAT exists and WHERE to find it
-Tier 2 (active): Full detail for currently relevant knowledge
-Tier 3 (archive): Full detail for rarely needed knowledge, more densely expressed
-```
+**Finding archived knowledge.** `CATALOG.md` at the store root lists every file (active, archived with the original hook and reason, evidence with its entry count). It is not auto-loaded. When a request refers back to something no SPINE hook matches, the reader searches the catalog; an archived hit is read and reported as archived, and no hit is reported as a scoped miss ("not proof it was never distilled").
 
-Alongside the tiers, two non-tier directories exist: `inbox/` (a pre-tier queue — items explicitly saved mid-session, consumed into the pipeline by the next distillation) and `data/` (local diagnostic ledgers — economics and distillation coverage — never part of the synced knowledge set).
+**Coming back.** There is no `recall_count` promotion any more. When a project comes back, the user asks to restore it ("bring back Atlas"), or the next distillation restores a file the session worked on. A path never exists both active and archived.
 
-**Promotion back to Tier 2:** If a Tier 3 file gets accessed 3+ times (`recall_count`), that's a signal it should be promoted back to Tier 2 — it's clearly still relevant.
+Alongside the tiers, other directories exist: `evidence/` (twins, above), `inbox/` (a pre-tier queue — items explicitly saved mid-session, consumed into the pipeline by the next distillation), `local/` (a machine-local overlay with its own `local/SPINE.md`, never synced, never cataloged) and `data/` (local diagnostics, lifecycle manifests and migration backups — never part of the synced knowledge set).
+
+**Sync classification.** Shared: the tier directories, `evidence/`, `archive/` including the ledger (byte-exact: no line-ending normalisation, or every checksum breaks), `CATALOG.md` (rebuilt on conflict). Local, never synced: `local/`, `.lifecycle`, `data/`, and `bin/` (installed scripts the distiller executes; a synced copy must never be run).
 
 ---
 
@@ -222,34 +215,43 @@ This creates a trust signal: files validated recently can be used with high conf
 
 Compaction is part of the `/distill` process. Every distillation run should check tier health.
 
-**Cardinal rule: Compaction COMPRESSES — it never discards.** Moving knowledge to a lower tier means expressing it more densely, not deleting it. The principle, the "why," and the traceability must survive every compaction pass.
+**Cardinal rule: Compaction never discards.** Tightening prose inside an active file is allowed; dropping a principle, its "why" or its traceability is not. Moving a file to Tier 3 is a byte-identical move, never a compression, and dated evidence moves to the evidence twin, never away.
 
 ### Spine compaction (Tier 1)
 
-Triggered when the spine exceeds 60 lines (giving 20 lines of headroom before hitting the 80-line hard cap).
+Triggered at 60 lines or 12,000 bytes; the hard caps (80 lines, 16,000 bytes, 400 bytes per entry) are enforced in the same run.
 
 Actions:
-1. Merge entries that point to the same domain (e.g., three separate "testing" entries → one broader pointer)
-2. Entries whose Tier 2 files haven't been validated in 3+ months → flag for staleness review (NOT auto-archive)
-3. Group entries under fewer, broader headings
+1. Shorten entries over 400 bytes, then the longest entries toward 200 bytes while the file is over 12,000 bytes; each cut hook goes verbatim to its target file's `## Index detail`
+2. Reclaim lines while over 60: split children share their parent's line; blank lines go; same-tier entries on one topic merge into a multi-pointer line
+3. Never archive a file to make room and never ask about the index
 
 ### File compaction (Tier 2)
 
-Triggered when any Tier 2 file exceeds 45 lines (giving 15 lines of headroom before the 60-line cap).
+Triggered at 45 lines or 4,500 bytes.
 
 Actions:
-1. Split into focused sub-files if the file covers multiple distinct topics
-2. Compress verbose explanations into tighter formulations (keep principles, tighten prose)
-3. Move superseded content to Tier 3 (with full compression, never deletion)
-4. Update the spine pointer if the file was split
+1. Split by `## ` section into `<name>-2.md` (primary remedy; protected and marker blocks stay whole)
+2. Move dated observation lines to the evidence twin
+3. Compress verbose explanations into tighter formulations (keep principles, tighten prose; never a protected or marker line)
+4. Update the spine line if the file was split
 
-### Staleness review
+### Lifecycle (opt-in) and staleness
 
-During each distillation, check `last_validated` on Tier 2 files:
-- Files not validated in > `staleness_threshold` days get flagged
-- The user is asked: "Is [file] still relevant? Should we compress it to Tier 3?"
-- If yes → compress and archive. If still relevant → validate and bump `last_validated`
-- **Never suggest deletion.** If something was true once, the compressed version belongs in Tier 3.
+Persisted in `.lifecycle` (`enabled` / `disabled`, absent = disabled; local to the machine; installer flags `--lifecycle` / `--no-lifecycle` / `--remove-lifecycle`).
+
+| Rule | Detail |
+|---|---|
+| Activity stamp | Newest of frontmatter `last_validated`, `last_updated` and every per-principle `last_validated`. No stamp at all: ineligible, reported. Reads are not observed, so missing activity counts as unknown |
+| Eligible | A `projects/` file whose activity stamp is older than its `staleness_threshold` (default 90 days) |
+| Exempt | `lifecycle: pinned`; any `[NON-NEGOTIABLE…]` marker; everything outside `projects/` (those keep the ask-first staleness question) |
+| Blocked | Named in another active file's `read_with` (recorded with its reason) |
+| Referenced in prose | Not blocking; the report lists the referrers; readers find it at `archive/<same path>` |
+| Action | Ledger line, byte-identical move, SPINE entry removed, catalog rebuilt; `[DIRECTIVE…]` moves are listed with their marker count |
+| Preview | `/distill gc` shows the plan and changes nothing; `--apply` executes it |
+| Restore | `/distill restore <path>`: ledger line, move back, saved SPINE entry re-added within budget |
+
+When enabled, Step 5 of every distillation applies it without per-item questions. When disabled, the distiller reports the debt and asks nothing. Age alone never means a project ended: the move says "not validated within its threshold, kept whole, findable through the catalog". **Never suggest deletion.**
 
 ---
 
@@ -270,22 +272,26 @@ Do NOT read a Tier 2 file when:
 - You're just doing a quick task that doesn't benefit from deep context
 - You've already read it this session (unless it was updated)
 
+Read all matched Tier 2 files in one batch of parallel reads, then their `read_with:` companions in one more batch. Serialize only when a file decides what to read next.
+
 ### When to read a Tier 3 file
 
 Less frequently than Tier 2, but NOT "almost never." Read a Tier 3 file when:
-- A Tier 2 file explicitly references archived context
+- A Tier 2 file references a path that now lives at `archive/<same path>`
+- The user refers back to something no SPINE hook matches and its catalog row is archived
 - The user asks "why did we stop doing X?" or "what was the old approach?"
 - You're investigating a regression that might relate to a past learning
-- The spine mentions an archived topic that's now relevant again
 
-**On every Tier 3 access:** Increment `recall_count` in the file's frontmatter. If it reaches 3, flag for promotion back to Tier 2.
+**Archived files are read-only.** Reading one changes nothing (no `recall_count`, no stamp). If the user is working on it again, restore it.
 
-### Validate-on-read (all tiers)
+### Validate-on-read (active tiers)
 
-Every time you read a knowledge file, perform a lightweight validation:
+Every time you read an active knowledge file, perform a lightweight validation:
 1. Does this still match the current state of the codebase/project/user?
 2. If you notice something outdated, update it NOW — this is the cheapest time to fix it.
 3. Update `last_validated` in the frontmatter.
+
+Not for `archive/` (read-only) and not for maintenance reads (eligibility scans, migration, gc and self-checks read without re-stamping, or they would reset every clock).
 
 This keeps the knowledge system self-healing. Every read is also a micro-maintenance pass.
 
@@ -317,8 +323,9 @@ Never restructure without permission. Always show the proposed layout first.
 ## Example: Mature Knowledge Structure
 
 ```
-memory/
-├── MEMORY.md                        ← THE SPINE (Tier 1, auto-loaded)
+~/.aura-distill/
+├── SPINE.md                         ← THE SPINE (Tier 1, auto-loaded)
+├── CATALOG.md                       ← complete inventory (not auto-loaded)
 ├── craft/
 │   ├── review-principles.md         ← Tier 2
 │   ├── testing-philosophy.md        ← Tier 2
@@ -334,7 +341,10 @@ memory/
 │   └── beta.md                      ← Tier 2
 ├── feedback/
 │   └── collaboration-prefs.md       ← Tier 2
+├── evidence/
+│   └── craft/testing-philosophy.md  ← evidence twin (append-only)
 └── archive/
-    ├── old-deploy-v1.md             ← Tier 3
-    └── project-gamma-closed.md      ← Tier 3
+    ├── LEDGER.md                    ← append-only move log
+    ├── projects/gamma.md            ← Tier 3 (moved byte-identically)
+    └── legacy/old-deploy-v1.md      ← pre-1.2 rewritten archive
 ```

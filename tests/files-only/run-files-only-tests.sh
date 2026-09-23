@@ -6,13 +6,16 @@
 # 2. store-after --before store-before MUST pass everything: the redesign fixes the
 #    diagnosis without losing a line, a checksum, a protected block, a hook or a pin.
 # 3. Every tamper case MUST be caught, each with a non-zero exit and its named reason;
-#    every fail branch of check-store.sh has at least one dedicated case. The positive
-#    cases (oversize: exemption, two restores, merged-line pointer removal, a preserved
-#    pre-existing duplicate, a timestamped catalog, a re-archive after an edit, an adopted
-#    nested legacy archive) MUST pass.
+#    every fail branch of bin/distill-check-store.sh has at least one dedicated case. The
+#    positive cases (oversize: exemption, two restores, merged-line pointer removal, a
+#    preserved pre-existing duplicate, a timestamped catalog, a re-archive after an edit, an
+#    adopted nested legacy archive, escaped pipes, repeated adoption, recall_count drift)
+#    MUST pass.
+# The checker under test is the shipped file (bin/distill-check-store.sh, the same bytes the
+# installers copy to {DISTILL_DIR}/bin/), never a copy.
 set -u
 cd "$(dirname "$0")"
-CHECK=./check-store.sh
+CHECK=../../bin/distill-check-store.sh
 PASS=0; FAIL=0
 ok()  { PASS=$((PASS+1)); echo "  ok   $1"; }
 bad() { FAIL=$((FAIL+1)); echo "  FAIL $1"; }
@@ -368,6 +371,102 @@ tamper "pointer only inside an HTML comment" "active file has no SPINE pointer: 
    printf -- "<!-- see [Extra](ops/extra.md) -->\n" >> "$s/SPINE.md"'
 tamper "catalog segment that merely starts with oversize" "unescaped ' | ' inside a free-text field of CATALOG.md" \
   'sed -i.bak "s/^\(- projects\/beacon.md .*\)$/\1 | oversized notes/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+
+echo "== #78 handoff: retrieval markers never move to evidence =="
+tamper "[PROVISIONAL] bullet demoted to evidence only" "protected block line not in active/archive (projects/beacon.md): - [PROVISIONAL]" \
+  'mkdir -p "$s/evidence/projects"; grep "PROVISIONAL\] Email digest" "$s/projects/beacon.md" > "$s/e.tmp";
+   sed -i.bak "/PROVISIONAL\] Email digest/d" "$s/projects/beacon.md"; rm -f "$s/projects/beacon.md.bak";
+   { printf -- "---\nevidence_for: projects/beacon.md\n---\n"; cat "$s/e.tmp"; } > "$s/evidence/projects/beacon.md"; rm -f "$s/e.tmp";
+   printf -- "- evidence/projects/beacon.md | for projects/beacon.md | 1 entries\n" >> "$s/CATALOG.md"'
+tamper "dated [UPDATED date] bullet demoted to evidence only" "protected block line not in active/archive (ops/deploy.md): - [UPDATED 2026-07-20]" \
+  'mkdir -p "$s/evidence/ops"; grep "UPDATED 2026-07-20\]" "$s/ops/deploy.md" > "$s/e.tmp";
+   sed -i.bak "/UPDATED 2026-07-20\]/d" "$s/ops/deploy.md"; rm -f "$s/ops/deploy.md.bak";
+   { printf -- "---\nevidence_for: ops/deploy.md\n---\n"; cat "$s/e.tmp"; } > "$s/evidence/ops/deploy.md"; rm -f "$s/e.tmp";
+   printf -- "- evidence/ops/deploy.md | for ops/deploy.md | 1 entries\n" >> "$s/CATALOG.md"'
+
+echo "== #78 handoff: ledger append order is date order =="
+tamper "ledger line appended out of date order" "ledger events out of order: 2026-09-10 appended after 2026-09-12" \
+  'entry=$(sed -n "s/.*| spine-entry: //p" "$s/archive/LEDGER.md" | head -1); h=$(shaf "$s/archive/projects/atlas.md");
+   printf -- "- 2026-09-12 restore | from: archive/projects/atlas.md | to: projects/atlas.md | sha256: %s | reason: user request\n" "$h" >> "$s/archive/LEDGER.md";
+   printf -- "- 2026-09-10 archive | from: projects/atlas.md | to: archive/projects/atlas.md | sha256: %s | reason: past threshold | spine-entry: %s\n" "$h" "$entry" >> "$s/archive/LEDGER.md";
+   sed -i.bak "s/rebuilt: 2026-09-11/rebuilt: 2026-09-12/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+expect_pass "restore then re-archive appended in date order" \
+  'entry=$(sed -n "s/.*| spine-entry: //p" "$s/archive/LEDGER.md" | head -1); h=$(shaf "$s/archive/projects/atlas.md");
+   printf -- "- 2026-09-12 restore | from: archive/projects/atlas.md | to: projects/atlas.md | sha256: %s | reason: user request\n" "$h" >> "$s/archive/LEDGER.md";
+   printf -- "- 2026-09-12T18:00:00Z archive | from: projects/atlas.md | to: archive/projects/atlas.md | sha256: %s | reason: user request | spine-entry: %s\n" "$h" "$entry" >> "$s/archive/LEDGER.md";
+   sed -i.bak "s/rebuilt: 2026-09-11/rebuilt: 2026-09-12T18:05:00Z/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+
+echo "== #78 handoff: the catalog line is an entry line =="
+tamper "catalog link only in prose, not on an entry line" "SPINE has no catalog line" \
+  'sed -i.bak "s|^- \[Catalog\](CATALOG.md) — |See [Catalog](CATALOG.md) — |" "$s/SPINE.md"; rm -f "$s/SPINE.md.bak"'
+
+echo "== #78 handoff: recall_count bumped by a 1.1 client is drift, not modification =="
+# new archive ledger lines carry sha256-norm: (checksum with the frontmatter recall_count: line removed)
+NORM_LEDGER='h=$(shaf "$s/archive/projects/atlas.md"); sed -i.bak "s/| sha256: $h |/| sha256: $h | sha256-norm: $h |/" "$s/archive/LEDGER.md"; rm -f "$s/archive/LEDGER.md.bak"'
+BUMP='sed -i.bak "s/^staleness_threshold: 90$/staleness_threshold: 90\nrecall_count: 1/" "$s/archive/projects/atlas.md"; rm -f "$s/archive/projects/atlas.md.bak"'
+expect_pass "archived file whose only change is a bumped recall_count (sha256-norm matches)" "$NORM_LEDGER; $BUMP"
+tamper "bumped recall_count plus a real edit" "ledger sha256 does not match archived file: archive/projects/atlas.md" \
+  "$NORM_LEDGER; $BUMP; printf -- \"- edited\\n\" >> \"\$s/archive/projects/atlas.md\""
+tamper "bumped recall_count on a ledger line without sha256-norm (1.2 lines always carry it)" "ledger sha256 does not match archived file: archive/projects/atlas.md" "$BUMP"
+expect_pass "legacy archive whose only change is a bumped recall_count" \
+  'sed -i.bak "s/^recall_count: 1$/recall_count: 2/" "$s/archive/legacy/archive/projects/ember.md"; rm -f "$s/archive/legacy/archive/projects/ember.md.bak"'
+
+echo "== #78: the shipped helper's --print-catalog output is a catalog the checker accepts =="
+REBUILD='bash "$CHECK" --print-catalog "$s" > "$s/cat.tmp" && mv "$s/cat.tmp" "$s/CATALOG.md"'
+expect_pass "rebuilt catalog of store-after" "$REBUILD"
+PIPE_SCOPE='sed -i.bak "s/^scope: Delta webhook relay — retries and dead-letter handling$/scope: Delta webhook relay | retries and dead-letter/" "$X/projects/delta.md"; rm -f "$X/projects/delta.md.bak"'
+with_before "rebuilt catalog after a pipe in a scope and an escaped ledger reason" PASS store-after \
+  "X=\$b; $PIPE_SCOPE" \
+  "X=\$s; $PIPE_SCOPE"'; sed -i.bak "/^- 2026-09-11 archive/s/reason: past threshold, no validation observed/reason: past threshold \\\\| no validation observed/" "$s/archive/LEDGER.md"; rm -f "$s/archive/LEDGER.md.bak";
+   grep -q "scope: Delta webhook relay | retries" "$s/projects/delta.md" && grep -q "past threshold \\\\| no" "$s/archive/LEDGER.md" || echo "SETUP FAILED" > "$s/ops/setup-failed.md"; '"$REBUILD"'; grep -q "Delta webhook relay \\\\| retries" "$s/CATALOG.md" || echo "ESCAPE MISSING" > "$s/ops/escape-missing.md"'
+tmp=$(mktemp -d); cp -r store-after "$tmp/s"
+out=$(bash "$CHECK" --hashes "$tmp/s/archive/projects/atlas.md"); want=$(shaf "$tmp/s/archive/projects/atlas.md")
+sed -i.bak "s/^staleness_threshold: 90$/staleness_threshold: 90\nrecall_count: 3/" "$tmp/s/archive/projects/atlas.md"
+out2=$(bash "$CHECK" --hashes "$tmp/s/archive/projects/atlas.md")
+{ echo "$out" | grep -qx "sha256 $want" && echo "$out" | grep -qx "sha256-norm $want" && echo "$out2" | grep -qx "sha256-norm $want" && ! echo "$out2" | grep -qx "sha256 $want"; } \
+  && ok "--hashes prints raw and recall_count-normalised checksums" || { bad "--hashes output wrong"; echo "$out"; echo "$out2"; }
+rm -rf "$tmp"
+
+echo "== #78 handoff: legacy restore is a copy; the legacy file stays =="
+LEGACY_RESTORE='L="$s/archive/legacy/archive/projects/ember.md";
+   { printf -- "---\nscope: Ember carrier-rate import (restored from a legacy archive)\nrestored_from: archive/legacy/archive/projects/ember.md\nlast_updated: 2026-09-12\n---\n"; awk "f>=2{print} /^---\$/{f++}" "$L"; } > "$s/projects/ember.md";
+   printf -- "- [Ember](projects/ember.md) — Ember carrier-rate import, restored from the legacy archive. Read when working on carrier rates.\n" >> "$s/SPINE.md"'
+expect_pass "legacy restore copies the content to projects/ember.md" "$LEGACY_RESTORE; $REBUILD"
+tamper "legacy restore done as a move (legacy file gone)" "archive file deleted: archive/projects/ember.md" \
+  "$LEGACY_RESTORE; rm \"\$s/archive/legacy/archive/projects/ember.md\"; $REBUILD"
+
+echo "== #78 round one: the local overlay's SPINE points only inside local/ =="
+LOCAL_OK='mkdir -p "$s/local/ops"; printf -- "---\nscope: vpn\n---\n- office VPN profile\n" > "$s/local/ops/vpn.md";
+   printf -- "# Local index\n\n- [VPN](local/ops/vpn.md) — office VPN on this laptop.\n" > "$s/local/SPINE.md"'
+expect_pass "local/SPINE.md pointing inside local/ (never cataloged)" "$LOCAL_OK"
+tamper "local/SPINE.md pointing out of the overlay" "local/SPINE.md may point only inside local/: ops/deploy.md" \
+  "$LOCAL_OK"'; printf -- "- [Deploy](ops/deploy.md) — shared file.\n" >> "$s/local/SPINE.md"'
+tamper "local/SPINE.md with a .. traversal" "local/SPINE.md may point only inside local/: local/../../x.md" \
+  "$LOCAL_OK"'; printf -- "- [X](local/../../x.md) — x.\n" >> "$s/local/SPINE.md"'
+tamper "local/SPINE.md pointer to a missing file" "local/SPINE.md pointer to missing file: local/ops/ghost.md" \
+  "$LOCAL_OK"'; printf -- "- [Ghost](local/ops/ghost.md) — ghost.\n" >> "$s/local/SPINE.md"'
+tamper "synced SPINE pointing into local/" "uncontained path in SPINE.md: local/ops/vpn.md" \
+  "$LOCAL_OK"'; printf -- "- [VPN](local/ops/vpn.md) — vpn.\n" >> "$s/SPINE.md"'
+
+echo "== #78 round one: a new store is born in the files-only layout =="
+tmp=$(mktemp -d); mkdir -p "$tmp/s"
+printf -- "# Distill Knowledge Index\n\n<!-- managed -->\n\n- [Catalog](CATALOG.md) — complete inventory; not loaded at start.\n" > "$tmp/s/SPINE.md"
+printf -- "# Knowledge catalog\n\n<!-- Complete inventory, rebuilt by /distill. Not loaded at session start. rebuilt: 2026-09-23T10:00:00Z -->\n\n## active\n\n## archived\n\n## evidence\n" > "$tmp/s/CATALOG.md"
+out=$(bash "$CHECK" "$tmp/s" 2>&1); rc=$?
+[ $rc -eq 0 ] && ok "an empty installer-shaped store passes" || { bad "empty installer-shaped store fails (rc=$rc)"; echo "$out" | sed 's/^/       /'; }
+rm -rf "$tmp"
+
+echo "== #78 round two: the evidence twin of a file a 1.1 client archived, adopted as legacy =="
+EMBER_TWIN='mkdir -p "$s/evidence/projects"; printf -- "---\nevidence_for: projects/ember.md\n---\n- 2026-05-02 observe: rates import ran twice on the DST weekend\n" > "$s/evidence/projects/ember.md";
+   printf -- "- evidence/projects/ember.md | for projects/ember.md | 1 entries\n" >> "$s/CATALOG.md"'
+expect_pass "twin of an adopted legacy archive is accepted (noted, not an orphan)" "$EMBER_TWIN"
+tmp=$(mktemp -d); cp -r store-after "$tmp/s"; ( s="$tmp/s"; eval "$EMBER_TWIN" )
+out=$(bash "$CHECK" "$tmp/s" 2>&1)
+echo "$out" | grep -Fq "note: evidence twin of an adopted legacy archive: evidence/projects/ember.md" && ok "the adopted twin is reported as a note" || { bad "no note for the adopted twin"; echo "$out" | sed 's/^/       /'; }
+rm -rf "$tmp"
+tamper "twin whose file exists nowhere, not even as an adopted legacy archive" "orphan evidence: evidence/projects/fern.md" \
+  'mkdir -p "$s/evidence/projects"; printf -- "---\nevidence_for: projects/fern.md\n---\n- 2026-05-02 observe: x\n" > "$s/evidence/projects/fern.md";
+   printf -- "- evidence/projects/fern.md | for projects/fern.md | 1 entries\n" >> "$s/CATALOG.md"'
 
 echo
 echo "files-only suite: $PASS passed, $FAIL failed"

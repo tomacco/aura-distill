@@ -23,10 +23,11 @@ A PR that changes scope or dependencies updates `ROADMAP.md` in that PR and upda
 - `bin/distill-recent-agy.sh` / `.ps1` — Antigravity Time Index over brain transcripts (output-identical twins; parity enforced by `tests/antigravity/run-parity-test.sh`)
 - `bin/distill-update.sh` — The updater the dispatcher runs (installed to `{DISTILL_DIR}/bin/`): follows the channel in `.channel`, validates before replacing, never crosses a major
 - `channels/manifest.json` — Channel manifest: the beta pointer (served from `beta/1.2`) and the software-edition announcement (read from `main`); see `docs/adr/0002-release-channels.md`
-- `knowledge-architecture.md` — Tier system design doc
-- `docs/design-files-only-memory.md` — files-only memory redesign (#75): layout, budgets, lifecycle, migration, guarantees
+- `knowledge-architecture.md` — Tier system design doc (files-only layout since 1.2: byte budgets, evidence twins, archive-as-move with `archive/LEDGER.md`, `CATALOG.md`, lifecycle)
+- `docs/design-files-only-memory.md` — files-only memory redesign (#75, implemented by #78): layout, budgets, lifecycle, migration, guarantees
+- `bin/distill-check-store.sh` — the store invariant checker (C1–C4), also installed to `{DISTILL_DIR}/bin/` as the distiller's OPTIONAL self-check helper (`--print-catalog`, `--hashes`); the runtime falls back to a checklist without bash. Line 2 is a version marker the runtime matches
 - `install.sh` / `install.ps1` — User-facing installers
-- `tests/` — A/B test scenarios, cognitive bias tests, persona-based methodology tests; `tests/files-only/` — synthetic before/after stores and the files-only invariant checker (#75)
+- `tests/` — A/B test scenarios, cognitive bias tests, persona-based methodology tests; `tests/files-only/` — synthetic before/after stores, the invariant suite over `bin/distill-check-store.sh` (#75, #78) and `fresh-agent/`, a manual live-model validation of the runtime instructions
 - `docs/` — GitHub Pages site (landing, research); `docs/adr/` — architecture decision records (published with the site)
 - `dashboard/` — Analytics dashboard
 
@@ -60,8 +61,9 @@ When developing or testing:
 ## Key conventions
 
 - All distill files use `{DISTILL_DIR}` as a placeholder — `install.sh` resolves it to the actual path via `sed`
-- The SPINE (Tier 1) is the auto-loaded index — max 80 lines, pointers only
-- Tier 2 files are max 60 lines each, one topic per file
+- The SPINE (Tier 1) is the auto-loaded index — max 80 lines and 16,000 bytes, 400 bytes per entry, pointers only, plus one line pointing at `CATALOG.md`
+- Tier 2 files are max 60 lines and 6,000 bytes each, one topic per file; dated evidence goes to `evidence/<same path>`
+- Archiving is a byte-identical move to `archive/<same path>`, logged first in `archive/LEDGER.md`; archives are read-only
 - The `rules/distill.md` always-on section is capped at 15 lines of preferences
 
 ## Testing
@@ -74,7 +76,8 @@ When developing or testing:
 - Run persona tests: `./tests/scenarios/methodology/run-persona-test.sh`
 - Run integration tests: `./test-sandbox.sh`
 - Run Antigravity Time Index parity + hostile-input tests: `./tests/antigravity/run-parity-test.sh` (and the connector runners `run-antigravity-connector-tests.sh` / `.ps1`)
-- Run the files-only store invariants (thin SPINE, catalog completeness, lossless migration; #75): `bash tests/files-only/run-files-only-tests.sh` — design in `docs/design-files-only-memory.md` (about 100 checks; about two minutes locally, about five minutes on CI macOS, several times longer on Windows Git Bash because of process-spawn cost)
+- Run the files-only store invariants (thin SPINE, catalog completeness, lossless migration; #75, #78): `bash tests/files-only/run-files-only-tests.sh` — design in `docs/design-files-only-memory.md` (126 checks; about three minutes locally, longer on CI macOS and several times longer on Windows Git Bash because of process-spawn cost)
+- Validate the runtime instructions with a fresh live agent (manual; needs a logged-in `claude` CLI, costs tokens, never touches a real store): `bash tests/files-only/fresh-agent/run-fresh-agent.sh` — migrates the synthetic store and answers five retrieval questions; record its summary in the PR that changes the instructions
 - Run the clean-reviewer runner's stubbed test (no API calls): `bash tests/review/test-run-clean-review.sh`
 - Run legacy updater compatibility reproductions (captured shipped curl blocks against a local fixture endpoint; no network, no real profiles): `bash tests/updater-compat/run.sh` — decisions they back live in `docs/adr/`
 - Run the legacy endpoint guard before touching any file an updater fetches: `bash tests/updater-compat/check-endpoints.sh` (`--surface stable` for anything headed to `main`)

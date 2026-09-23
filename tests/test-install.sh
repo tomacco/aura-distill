@@ -91,3 +91,53 @@ empty=$(grep -l "$beacon" $(ls -t "$TEST_HOME"/nonexistent/*/*.jsonl 2>/dev/null
 test -z "$empty"
 
 printf 'PASS ledger beacon grep resolves fixtures and survives empty transcript roots\n'
+
+# Files-only runtime (#78): the optional self-check helper is installed and executable,
+# the Codex block routes maintenance requests, and the lifecycle knob follows the
+# token-saver contract (absent = off; flags persist; remove deletes the setting).
+AURA="$TEST_HOME/.aura-distill"
+test -x "$AURA/bin/distill-check-store.sh"
+test "$(sed -n 2p "$AURA/bin/distill-check-store.sh")" = "# aura-distill-check-store invariants v1"
+grep -q 'clean up (gc), restore or migrate the store' "$TEST_HOME/.codex/AGENTS.md"
+grep -q 'Retrieval protocol' "$AURA/distill-monitor.md"
+grep -q 'CATALOG.md' "$TEST_HOME/.claude/rules/distill.md"
+test ! -e "$AURA/.lifecycle"
+lc_install() {
+  env -u AURA_DISTILL_HOME -u CODEX_HOME -u DISTILL_LIFECYCLE -u DISTILL_CHANNEL -u AURA_DISTILL_RAW_ROOT -u AURA_DISTILL_CHANNEL_MANIFEST HOME="$TEST_HOME" AURA_DISTILL_REPO="$REPO_ROOT" DISTILL_TOKEN_SAVER=off \
+    "$@" </dev/null >/dev/null
+}
+lc_install bash "$INSTALLER" --lifecycle;          test "$(cat "$AURA/.lifecycle")" = enabled
+lc_install bash "$INSTALLER";                      test "$(cat "$AURA/.lifecycle")" = enabled
+lc_install bash "$INSTALLER" --no-lifecycle;       test "$(cat "$AURA/.lifecycle")" = disabled
+lc_install env DISTILL_LIFECYCLE=on bash "$INSTALLER"; test "$(cat "$AURA/.lifecycle")" = enabled
+lc_install env DISTILL_LIFECYCLE=OFF bash "$INSTALLER"; test "$(cat "$AURA/.lifecycle")" = disabled   # any case, like install.ps1
+lc_install env DISTILL_LIFECYCLE=On bash "$INSTALLER"; test "$(cat "$AURA/.lifecycle")" = enabled
+lc_install bash "$INSTALLER" --remove-lifecycle;   test ! -e "$AURA/.lifecycle"
+# a .lifecycle written by Windows PowerShell 5.1 may start with a UTF-8 BOM; it still reads as enabled
+printf '\357\273\277enabled' > "$AURA/.lifecycle"
+env -u AURA_DISTILL_HOME -u CODEX_HOME -u DISTILL_LIFECYCLE -u DISTILL_CHANNEL -u AURA_DISTILL_RAW_ROOT -u AURA_DISTILL_CHANNEL_MANIFEST HOME="$TEST_HOME" \
+  AURA_DISTILL_REPO="$REPO_ROOT" DISTILL_TOKEN_SAVER=off bash "$INSTALLER" </dev/null > "$TEST_HOME/lc.out" 2>&1
+grep -q 'enabled — kept' "$TEST_HOME/lc.out"
+rm -f "$AURA/.lifecycle"
+# This home was seeded from a legacy (pre-1.2) store: its copied SPINE is preserved and no
+# catalog is added, so it stays a store for migrate-store, and the helper reports it cleanly
+test ! -e "$AURA/CATALOG.md"
+set +e; out=$(bash "$AURA/bin/distill-check-store.sh" "$AURA" 2>&1); rc=$?; set -e
+test "$rc" -eq 1
+printf '%s\n' "$out" | grep -q '^C2 FAIL'
+# A fresh install is born in the files-only layout: SPINE catalog line + an empty, stamped
+# CATALOG.md, and the shipped checker passes on it (never "unmigrated")
+FRESH_HOME=$(mktemp -d)
+env -u AURA_DISTILL_HOME -u CODEX_HOME -u DISTILL_LIFECYCLE -u DISTILL_CHANNEL -u AURA_DISTILL_RAW_ROOT -u AURA_DISTILL_CHANNEL_MANIFEST \
+  HOME="$FRESH_HOME" AURA_DISTILL_REPO="$REPO_ROOT" DISTILL_TOKEN_SAVER=off bash "$INSTALLER" </dev/null >/dev/null
+FRESH="$FRESH_HOME/.aura-distill"
+grep -q '^- \[Catalog\](CATALOG.md)' "$FRESH/SPINE.md"
+grep -Eq 'rebuilt: [0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z' "$FRESH/CATALOG.md"
+out=$(bash "$FRESH/bin/distill-check-store.sh" "$FRESH" 2>&1) || { printf '%s\n' "$out" >&2; echo "FAIL fresh store does not pass the checker" >&2; exit 1; }
+before_cat=$(sha256sum "$FRESH/CATALOG.md")
+env -u AURA_DISTILL_HOME -u CODEX_HOME -u DISTILL_LIFECYCLE -u DISTILL_CHANNEL -u AURA_DISTILL_RAW_ROOT -u AURA_DISTILL_CHANNEL_MANIFEST \
+  HOME="$FRESH_HOME" AURA_DISTILL_REPO="$REPO_ROOT" DISTILL_TOKEN_SAVER=off bash "$INSTALLER" </dev/null >/dev/null
+test "$before_cat" = "$(sha256sum "$FRESH/CATALOG.md")"   # reinstall never rewrites the catalog
+rm -rf "$FRESH_HOME"
+
+printf 'PASS files-only runtime: helper installed, Codex routing, lifecycle knob\n'

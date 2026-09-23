@@ -45,6 +45,31 @@ try {
     Assert-True (Test-Path (Join-Path $aura 'data')) 'fresh install creates the data dir'
     Assert-True ((Get-Content (Join-Path $aura 'distill-process.md') -Raw).Contains('Step 0b: Consume the INBOX')) 'process engine carries inbox consumption'
     Assert-True ((Get-Content (Join-Path $aura 'distill-monitor.md') -Raw).Contains('user-explicit')) 'monitor carries explicit-save instructions'
+    # Files-only runtime (#78): optional self-check helper, maintenance routing, lifecycle knob.
+    $checkHelper = Join-Path $aura 'bin/distill-check-store.sh'
+    Assert-True (Test-Path $checkHelper) 'optional store self-check helper is installed'
+    Assert-True (@(Get-Content $checkHelper -TotalCount 2)[1] -eq '# aura-distill-check-store invariants v1') 'self-check helper carries its version marker'
+    Assert-True ((Get-Content $codexAgents -Raw).Contains('clean up (gc), restore or migrate the store')) 'Codex block routes maintenance requests to the process'
+    Assert-True ((Get-Content (Join-Path $aura 'distill-monitor.md') -Raw).Contains('Retrieval protocol')) 'monitor carries the retrieval protocol'
+    Assert-True (-not (Test-Path (Join-Path $aura '.lifecycle'))) 'lifecycle is off (absent) by default'
+    Assert-True ((Get-Content (Join-Path $aura 'SPINE.md') -Raw) -match '(?m)^- \[Catalog\]\(CATALOG\.md\)') 'fresh SPINE carries the catalog line'
+    $freshCatalog = Join-Path $aura 'CATALOG.md'
+    Assert-True ((Test-Path $freshCatalog) -and ((Get-Content $freshCatalog -Raw) -match 'rebuilt: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z')) 'fresh install creates a stamped empty CATALOG.md'
+    $bash = Get-Command bash -ErrorAction SilentlyContinue
+    if ($bash -and -not $IsWindows) {
+        & bash $checkHelper $aura *> $null
+        Assert-True ($LASTEXITCODE -eq 0) 'fresh store passes the shipped checker'
+    }
+    try {
+        $env:DISTILL_LIFECYCLE = 'on'; Invoke-TestInstall $fresh
+        Assert-True ((Get-Content (Join-Path $aura '.lifecycle') -Raw).Trim() -eq 'enabled') 'DISTILL_LIFECYCLE=on enables the lifecycle'
+        $env:DISTILL_LIFECYCLE = $null; Invoke-TestInstall $fresh
+        Assert-True ((Get-Content (Join-Path $aura '.lifecycle') -Raw).Trim() -eq 'enabled') 'lifecycle choice persists across reinstall'
+        $env:DISTILL_LIFECYCLE = 'off'; Invoke-TestInstall $fresh
+        Assert-True ((Get-Content (Join-Path $aura '.lifecycle') -Raw).Trim() -eq 'disabled') 'DISTILL_LIFECYCLE=off disables the lifecycle'
+        $env:DISTILL_LIFECYCLE = 'remove'; Invoke-TestInstall $fresh
+        Assert-True (-not (Test-Path (Join-Path $aura '.lifecycle'))) 'DISTILL_LIFECYCLE=remove deletes the setting'
+    } finally { $env:DISTILL_LIFECYCLE = $null }
 
     # Idempotence and preservation of unrelated client guidance.
     Add-Content $claudeMd "`n# user-owned Claude guidance"

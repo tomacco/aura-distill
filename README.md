@@ -68,9 +68,10 @@ This installs:
 | File | Location | Purpose |
 |------|----------|---------|
 | `distill.md` | `~/.claude/commands/` | The `/distill` slash command |
-| `distill.md` | `~/.claude/rules/` | Knowledge retrieval (18 lines, auto-loads every session) |
+| `distill.md` | `~/.claude/rules/` | Knowledge retrieval (about 85 lines, auto-loads every session) |
 | `distill-process.md` | `~/.aura-distill/` | Full process (read by sub-agent) |
 | `SPINE.md` | `~/.aura-distill/` | Shared Claude/Codex knowledge index |
+| `bin/distill-check-store.sh` | `~/.aura-distill/` | Optional store self-check, used when bash is available |
 | managed pointer | `~/.claude/CLAUDE.md` | Makes Claude load the shared SPINE |
 | managed pointer | `~/.codex/AGENTS.md` | Makes Codex load the shared SPINE |
 
@@ -93,6 +94,16 @@ you type /distill
 
 Mid-session, say **"remember this"** and the item is saved immediately to `~/.aura-distill/inbox/` — it survives even if you never run `/distill` in that session; the next distillation encodes it properly.
 
+Store maintenance, by command or in plain words (Codex and Antigravity users just ask):
+
+| Command | Plain words | What it does |
+|---|---|---|
+| `/distill gc` | "clean up old projects" | Preview which stale `projects/` files would move to the archive; `--apply` moves them (byte-identical, logged) |
+| `/distill restore <path>` | "bring back Atlas" | Moves an archived file back and re-adds its index entry |
+| `/distill migrate-store` | "move my store to the new layout" | One-time move of a pre-1.2 store: preview, full backup, apply, self-check, finish or revert |
+
+Automatic clean-up is **off** unless you install with `--lifecycle` (`$env:DISTILL_LIFECYCLE='on'`).
+
 ### What makes it different from memory.md
 
 | memory.md | distill |
@@ -100,7 +111,7 @@ Mid-session, say **"remember this"** and the item is saved immediately to `~/.au
 | Saves "user said don't modify shared factory" | Encodes "blast radius awareness: never modify shared infra for one consumer" |
 | Flat file, linear reading | Tiered: SPINE index → domain files → archive |
 | No staleness detection | `[UPDATED]` tags + `staleness_threshold` metadata |
-| Grows until it hits 200-line cap | Compacts: archive old knowledge, never drops it |
+| Grows until it hits 200-line cap | Byte-budgeted index; stale projects move whole to an archive you can search and restore |
 | Same response regardless of context | Retrieves by relevance (SPINE hooks match current task) |
 
 ### Knowledge markers
@@ -122,22 +133,24 @@ Mid-session, say **"remember this"** and the item is saved immediately to `~/.au
 ├── .claude/CLAUDE.md               ← managed pointer for Claude
 ├── .codex/AGENTS.md                ← managed pointer for Codex
 └── .aura-distill/                  ← shared, client-neutral knowledge
-    ├── SPINE.md                     ← tier 1: index (max 80 lines)
+    ├── SPINE.md                     ← tier 1: index (80 lines and 16 KB)
+    ├── CATALOG.md                   ← complete inventory, read only on a miss
     ├── distill-process.md           ← the distillation process
     ├── craft/                       ← tier 2: discipline knowledge
     ├── ops/                         ← tier 2: operational knowledge
     ├── profile/                     ← tier 2: user model
     ├── projects/                    ← tier 2: project context
     ├── feedback/                    ← tier 2: preferences
-    ├── archive/                     ← tier 3: compressed history
+    ├── evidence/                    ← dated history behind each tier-2 file
+    ├── archive/                     ← tier 3: files moved whole + LEDGER.md
     ├── inbox/                       ← queue: explicit saves for the next distill
     └── data/                        ← local diagnostics (economics + distill ledgers)
 ```
 
 **Three tiers** — inspired by biological memory:
-- **Tier 1 (Spine):** Always loaded. Max 80 lines. Pointers with relevance hooks.
-- **Tier 2 (Active):** Read on demand when task matches. Max 60 lines per file.
-- **Tier 3 (Archive):** Compressed history. Promoted back when recalled. Never deleted.
+- **Tier 1 (Spine):** Always loaded. Max 80 lines and 16 KB, 400 bytes per entry, enforced every run. Pointers with relevance hooks.
+- **Tier 2 (Active):** Read on demand when task matches, in one batch. Max 60 lines and 6 KB per file; dated evidence lives in a twin under `evidence/`.
+- **Tier 3 (Archive):** Whole files moved byte-identically and logged in `archive/LEDGER.md`. Read-only, found through `CATALOG.md`, restored on request. Never deleted.
 
 ---
 

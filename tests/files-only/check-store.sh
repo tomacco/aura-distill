@@ -20,7 +20,7 @@
 # C3 tier-2 budgets, read_with (inline list, contained targets, no local/), split_from, oversize
 # C4 (--before only) multiset line conservation over principle file + evidence twin
 #    combined, protected blocks, archive identity, legacy identity (incl. adopted nested
-#    archives), pins, SPINE-hook survival; protected = bullet+block or heading section
+#    archives and unledgered archive/<tier>/ files), pins, SPINE-hook survival; protected = bullet+block or heading section
 set -u
 export LC_ALL=C
 
@@ -89,7 +89,11 @@ EVENT_RE='^- [0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2})?Z)? '
 stamp_newer() { # stamp_newer A B: A later than B; full timestamps compared only when BOTH carry a time
   case "$1$2" in *T*T*) [ "$1" \> "$2" ] ;; *) [ "${1:0:10}" \> "${2:0:10}" ] ;; esac
 }
-field() { printf '%s' "$1" | sed "s/.*| $2: //; s/ |.*//" | sed 's/[[:space:]]*$//'; }   # field <line> <name>
+# segments <line>: a ledger or catalog line split on " | " from the left. A literal "|" inside a
+# free-text field (hook, reason, scope) is written "\|" (D3/D4), so " \| " never splits.
+segments() { printf '%s\n' "$1" | awk '{ n = split($0, a, / \| /); for (i = 1; i <= n; i++) print a[i] }'; }
+# field <line> <name>: the value of the FIRST segment that starts with "<name>: "
+field() { segments "$1" | awk -v k="$2: " 'index($0, k) == 1 { print substr($0, length(k) + 1); exit }' | sed 's/[[:space:]]*$//'; }
 # ledger_last_events: "<path> <archive|restore>" for the newest event per path
 # (a top-level function: bash 3.2 cannot parse a case statement inside a process substitution)
 ledger_last_events() {
@@ -152,6 +156,11 @@ if [ ! -f "$CAT" ]; then fail "CATALOG.md missing"; else
     [ -f "$STORE/$p" ] || fail "catalog line points at missing file: $p"
   done \
     < <(nocr < "$CAT" | grep -o '^- [^|]* |' | sed 's/^- //;s/ |$//')
+  # row syntax: path | free-text scope | then only known fields (a literal "|" in free text is "\|")
+  while IFS= read -r row; do
+    bad_seg=$(segments "$row" | sed 1,2d | grep -vE '^(validated |archived |reason: |from |hook: |pinned$|legacy$|oversize|[0-9]+ entries$)' | head -1)
+    [ -n "$bad_seg" ] && fail "unescaped ' | ' inside a free-text field of CATALOG.md (write it as '\|'): ${bad_seg:0:60}"
+  done < <(nocr < "$CAT" | grep '^- ')
   # active rows: validated date = newest stamp; pinned flag = lifecycle: pinned
   while IFS= read -r p; do
     row=$(catalog_row "$CAT" "$p"); [ -n "$row" ] || continue
@@ -185,8 +194,8 @@ if [ ! -f "$CAT" ]; then fail "CATALOG.md missing"; else
     if [ -z "$ev" ]; then fail "no ledger archive event for: $a"; continue; fi
     lsha=$(printf '%s' "$ev" | grep -o 'sha256: [0-9a-f]*' | sed 's/sha256: //')
     [ "$lsha" = "$(sha "$STORE/$a")" ] || fail "ledger sha256 does not match archived file: $a"
-    lhook=$(hook_of_entry "$(printf '%s' "$ev" | sed 's/.*| spine-entry: //')" | sed 's/[[:space:]]*$//')
-    chook=$(printf '%s' "$row" | sed 's/.*| hook: //' | sed 's/[[:space:]]*$//')
+    lhook=$(hook_of_entry "$(field "$ev" spine-entry)" | sed 's/[[:space:]]*$//')
+    chook=$(field "$row" hook)
     [ "$lhook" = "$chook" ] || fail "catalog hook differs from ledger spine-entry hook: $a"
   done < <(archive_files "$STORE")
 fi
@@ -200,6 +209,10 @@ if [ -f "$LEDGER" ]; then
       archive|restore|"restore (modified)") ;;
       *) fail "unknown ledger event '$ev': ${l:0:70}"; continue ;;
     esac
+    # each segment after the event is a known key, and no key repeats (a forged "| to: ..." inside a hook repeats "to")
+    bad_seg=$(segments "$l" | sed 1d | grep -vE '^(from|to|sha256|sha256-norm|reason|spine-entry): ' | head -1)
+    [ -z "$bad_seg" ] && bad_seg=$(segments "$l" | sed 1d | sed 's/: .*//' | sort | uniq -d | head -1)
+    if [ -n "$bad_seg" ]; then fail "unescaped ' | ' inside a free-text field of archive/LEDGER.md (write it as '\|'): ${bad_seg:0:60}"; continue; fi
     fr=$(field "$l" from); to=$(field "$l" to)
     contained "$fr" store || { fail "uncontained path in archive/LEDGER.md from: $fr"; continue; }
     contained "$to" store || { fail "uncontained path in archive/LEDGER.md to: $to"; continue; }
@@ -302,8 +315,17 @@ if [ -n "$BEFORE" ]; then
       [ "$have" -ge "$k" ] || fail "line lost from $e (before x$k, after x$have): ${line:0:70}"
     done < <(trim < "$BEFORE/$e" | grep -v '^$' | sort | uniq -c | sed 's/^ *//')
   done < <(evidence_files "$BEFORE")
-  # nothing leaves the archive: every pre-existing archive file still exists
-  while IFS= read -r a; do [ -f "$STORE/$a" ] || fail "archive file deleted: $a"; done < <(archive_files "$BEFORE")
+  # every archive file with no ledger archive event at migration time (the real-store shape:
+  # archive/<tier>/x.md from the old compaction, no ledger) is adopted byte-identically at archive/legacy/<path>
+  BLEDGER="$BEFORE/archive/LEDGER.md"
+  while IFS= read -r a; do
+    is_legacy "$a" && continue
+    [ -f "$BLEDGER" ] && nocr < "$BLEDGER" | grep -F -- "| to: $a |" | grep -Eq "$EVENT_RE"'archive ' && continue
+    if [ ! -f "$STORE/archive/legacy/$a" ]; then fail "unledgered archive not adopted: $a (expected archive/legacy/$a)"
+    elif [ "$(sha "$STORE/archive/legacy/$a")" != "$(sha "$BEFORE/$a")" ]; then fail "legacy archive file changed: archive/legacy/$a"; fi
+  done < <(archive_files "$BEFORE")
+  # nothing leaves the archive: every pre-existing archive file still exists (or was adopted)
+  while IFS= read -r a; do [ -f "$STORE/$a" ] || [ -f "$STORE/archive/legacy/$a" ] || fail "archive file deleted: $a"; done < <(archive_files "$BEFORE")
   # legacy archives nested inside a tier directory before are adopted byte-identically at archive/legacy/<path>
   while IFS= read -r n; do
     if [ ! -f "$STORE/archive/legacy/$n" ]; then fail "nested legacy archive not adopted: $n (expected archive/legacy/$n)"
@@ -350,7 +372,7 @@ if [ -n "$BEFORE" ]; then
   # every original SPINE hook survives as a substring in SPINE, tier files, archived knowledge files or catalog
   # (never data/, evidence, or the ledger — the ledger holds every hook by construction)
   if [ -f "$BEFORE/SPINE.md" ]; then
-    scope=(); [ -f "$STORE/SPINE.md" ] && scope+=("$STORE/SPINE.md"); [ -f "$STORE/CATALOG.md" ] && scope+=("$STORE/CATALOG.md")
+    scope=(); [ -f "$STORE/SPINE.md" ] && scope+=("$STORE/SPINE.md"); [ -f "$STORE/CATALOG.md" ] && { sed 's/\\|/|/g' "$STORE/CATALOG.md" > "$cand"; scope+=("$cand"); }   # catalog unescaped (D4)
     while IFS= read -r p; do scope+=("$STORE/$p"); done < <({ tier_files "$STORE"; archive_files "$STORE"; })
     # a wrapped entry's continuation lines are hook text too; each must survive
     while IFS="$(printf '\t')" read -r kind line; do

@@ -318,6 +318,26 @@ tamper "archived file with no original" "archived file has no original: archive/
    printf -- "- 2026-09-10 archive | from: projects/zeta.md | to: archive/projects/zeta.md | sha256: %s | reason: test | spine-entry: - [Zeta](projects/zeta.md) — zeta.\n" "$(shaf "$s/archive/projects/zeta.md")" >> "$s/archive/LEDGER.md";
    printf -- "- archive/projects/zeta.md | zeta | archived 2026-09-10 | reason: test | from projects/zeta.md | hook: zeta.\n" >> "$s/CATALOG.md"'
 
+echo "== round seven: unledgered archive/<tier>/ files (the real-store shape) are adopted =="
+tamper "unledgered archive/<tier>/ file left in place" "unledgered archive not adopted: archive/projects/ember.md (expected archive/legacy/archive/projects/ember.md)" \
+  'mv "$s/archive/legacy/archive/projects/ember.md" "$s/archive/projects/ember.md"; sed -i.bak "s|^- archive/legacy/archive/projects/ember.md |- archive/projects/ember.md |" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+tamper "unledgered archive adopted but rewritten" "legacy archive file changed: archive/legacy/archive/projects/ember.md" \
+  'printf "rewritten\n" >> "$s/archive/legacy/archive/projects/ember.md"'
+tamper "legacy archive file with no original" "archived file has no original: archive/stray.md" \
+  'printf -- "---\nscope: stray\n---\n- stray\n" > "$s/archive/stray.md"; printf -- "- archive/stray.md | stray | legacy\n" >> "$s/CATALOG.md"'
+
+echo "== round seven: a literal | in a free-text field is written \\| and parsed from the left =="
+expect_pass "escaped \| in a ledger reason and in a hook (ledger and catalog)" \
+  'sed -i.bak "/^- 2026-09-11 archive/s/reason: past threshold, no validation observed/reason: past threshold \\\\| no validation observed/; /^- 2026-09-11 archive/s/\$/ \\\\| see also Comet/" "$s/archive/LEDGER.md";
+   sed -i.bak "/^- archive\/projects\/atlas.md /s/reason: past threshold, no validation observed/reason: past threshold \\\\| no validation observed/; /^- archive\/projects\/atlas.md /s/\$/ \\\\| see also Comet/" "$s/CATALOG.md";
+   rm -f "$s/archive/LEDGER.md.bak" "$s/CATALOG.md.bak"'
+tamper "unescaped | inside a spine-entry hook forges a to: field" "unescaped ' | ' inside a free-text field of archive/LEDGER.md" \
+  'sed -i.bak "/^- 2026-09-11 archive/s/\$/ | to: archive\/projects\/comet.md/" "$s/archive/LEDGER.md";
+   sed -i.bak "/^- archive\/projects\/atlas.md /s/\$/ | to: archive\/projects\/comet.md/" "$s/CATALOG.md";
+   rm -f "$s/archive/LEDGER.md.bak" "$s/CATALOG.md.bak"'
+tamper "unescaped | splits a catalog scope into a bogus field" "unescaped ' | ' inside a free-text field of CATALOG.md" \
+  'sed -i.bak "s/^- projects\/beacon.md | Beacon notification service/- projects\/beacon.md | Beacon | notification service/" "$s/CATALOG.md"; rm -f "$s/CATALOG.md.bak"'
+
 echo
 echo "files-only suite: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ]

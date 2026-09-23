@@ -18,12 +18,17 @@ EOF
 printf '# Legacy SPINE\n' > "$TEST_HOME/.claude/distill/SPINE.md"
 printf 'LEGACY-KNOWLEDGE\n' > "$TEST_HOME/.claude/distill/craft/legacy.md"
 
+# Isolation: never inherit AURA_DISTILL_HOME / CODEX_HOME (or a channel choice) from
+# the calling shell; the installer would otherwise write outside TEST_HOME.
+ISOLATE="env -u AURA_DISTILL_HOME -u CODEX_HOME -u DISTILL_CHANNEL -u AURA_DISTILL_RAW_ROOT -u AURA_DISTILL_CHANNEL_MANIFEST"
 run_install() {
   if [ -n "${AURA_INSTALL_SCRIPT_B64:-}" ]; then
-    HOME="$TEST_HOME" AURA_DISTILL_REPO="$REPO_ROOT" DISTILL_TOKEN_SAVER=off \
+    $ISOLATE HOME="$TEST_HOME" AURA_DISTILL_HOME="$TEST_HOME/.aura-distill" CODEX_HOME="$TEST_HOME/.codex" \
+      AURA_DISTILL_REPO="$REPO_ROOT" \
       bash -c "$(printf '%s' "$AURA_INSTALL_SCRIPT_B64" | base64 -d)" </dev/null >/dev/null
   else
-    HOME="$TEST_HOME" AURA_DISTILL_REPO="$REPO_ROOT" DISTILL_TOKEN_SAVER=off \
+    $ISOLATE HOME="$TEST_HOME" AURA_DISTILL_HOME="$TEST_HOME/.aura-distill" CODEX_HOME="$TEST_HOME/.codex" \
+      AURA_DISTILL_REPO="$REPO_ROOT" \
       bash "$INSTALLER" </dev/null >/dev/null
   fi
 }
@@ -51,6 +56,14 @@ test -d "$TEST_HOME/.aura-distill/inbox"
 grep -q 'Step 0b: Consume the INBOX' "$TEST_HOME/.aura-distill/distill-process.md"
 grep -q 'user-explicit' "$TEST_HOME/.aura-distill/distill-monitor.md"
 grep -q 'INBOX' "$TEST_HOME/.claude/rules/distill.md"
+
+# Release channels (#79): a default install records the stable channel, the payload
+# version and the command path, and places the updater script the dispatcher runs.
+test "$(cat "$TEST_HOME/.aura-distill/.channel")" = stable
+test "$(cat "$TEST_HOME/.aura-distill/.version")" = "$(tr -d '[:space:]' < "$REPO_ROOT/VERSION")"
+test "$(cat "$TEST_HOME/.aura-distill/.command-path")" = "$TEST_HOME/.claude/commands/distill.md"
+test -x "$TEST_HOME/.aura-distill/bin/distill-update.sh"
+grep -q "$TEST_HOME/.aura-distill/bin/distill-update.sh\" auto" "$TEST_HOME/.claude/commands/distill.md"
 
 before_claude=$(sha256sum "$TEST_HOME/.claude/CLAUDE.md")
 before_codex=$(sha256sum "$TEST_HOME/.codex/AGENTS.md")

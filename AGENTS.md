@@ -21,6 +21,8 @@ A PR that changes scope or dependencies updates `ROADMAP.md` in that PR and upda
 - `distill-monitor.md` — Session-start monitor (minimal, loaded via the client integration)
 - `plugins/aura-distill/` — Antigravity (agy) plugin, laid out per Antigravity's discovery contract: `plugin.json` (marker), `skills/distill/SKILL.md` (the distill workflow), `rules/AGENTS.md` (thin pointer to the canonical `distill-monitor.md` + Antigravity-specific Time Index)
 - `bin/distill-recent-agy.sh` / `.ps1` — Antigravity Time Index over brain transcripts (output-identical twins; parity enforced by `tests/antigravity/run-parity-test.sh`)
+- `bin/distill-update.sh` — The updater the dispatcher runs (installed to `{DISTILL_DIR}/bin/`): follows the channel in `.channel`, validates before replacing, never crosses a major
+- `channels/manifest.json` — Channel manifest: the beta pointer (served from `beta/1.2`) and the software-edition announcement (read from `main`); see `docs/adr/0002-release-channels.md`
 - `knowledge-architecture.md` — Tier system design doc (files-only layout since 1.2: byte budgets, evidence twins, archive-as-move with `archive/LEDGER.md`, `CATALOG.md`, lifecycle)
 - `docs/design-files-only-memory.md` — files-only memory redesign (#75, implemented by #78): layout, budgets, lifecycle, migration, guarantees
 - `bin/distill-check-store.sh` — the store invariant checker (C1–C4), also installed to `{DISTILL_DIR}/bin/` as the distiller's OPTIONAL self-check helper (`--print-catalog`, `--hashes`); the runtime falls back to a checklist without bash. Line 2 is a version marker the runtime matches
@@ -54,6 +56,7 @@ When developing or testing:
 - The Homebrew formula (`homebrew/Formula/aura-distill.rb`) is NOT auto-bumped: it pins
   a tagged release tarball + sha256, so updating it requires cutting a git tag and
   recomputing the hash (manual release step)
+- Every release gets a page under `docs/releases/` (added to `main` by PR #107; procedure in `docs/releases/README.md` there)
 
 ## Key conventions
 
@@ -75,7 +78,9 @@ When developing or testing:
 - Run Antigravity Time Index parity + hostile-input tests: `./tests/antigravity/run-parity-test.sh` (and the connector runners `run-antigravity-connector-tests.sh` / `.ps1`)
 - Run the files-only store invariants (thin SPINE, catalog completeness, lossless migration; #75, #78): `bash tests/files-only/run-files-only-tests.sh` — design in `docs/design-files-only-memory.md` (117 checks; about three minutes locally, longer on CI macOS and several times longer on Windows Git Bash because of process-spawn cost)
 - Validate the runtime instructions with a fresh live agent (manual; needs a logged-in `claude` CLI, costs tokens, never touches a real store): `bash tests/files-only/fresh-agent/run-fresh-agent.sh` — migrates the synthetic store and answers five retrieval questions; record its summary in the PR that changes the instructions
+- Run the clean-reviewer runner's stubbed test (no API calls): `bash tests/review/test-run-clean-review.sh`
 - Run legacy updater compatibility reproductions (captured shipped curl blocks against a local fixture endpoint; no network, no real profiles): `bash tests/updater-compat/run.sh` — decisions they back live in `docs/adr/`
+- Run the legacy endpoint guard before touching any file an updater fetches: `bash tests/updater-compat/check-endpoints.sh` (`--surface stable` for anything headed to `main`)
 - Run deterministic Claude/Codex installer tests: `pwsh tests/test-codex.ps1`
 - Run a real isolated Codex retrieval test: `pwsh tests/test-codex.ps1 -LiveRetrieval`
 
@@ -87,7 +92,7 @@ When developing or testing:
 
 ## Branch conventions
 
-- `main` — stable, released (quality gate: REVIEW-PROTOCOL.md). Every merge to `main` reaches installed users through the auto-updaters, so only the maintainer merges to `main`. The one exception: a reviewed PR touching only `docs/**` and `CHANGELOG.md` (Pages publishing; DECISIONS.md D-2026-09-23-3, provisional). Such a merge installs no new behaviour, but it still bumps VERSION, so installed users see an update that re-downloads identical files.
+- `main` — stable, released (quality gate: REVIEW-PROTOCOL.md). Every merge to `main` reaches installed users through the auto-updaters, so only the maintainer merges to `main`. The one exception: a reviewed PR touching only `docs/**` and `CHANGELOG.md` (Pages publishing; DECISIONS.md D-2026-09-23-3). Such a merge installs no new behaviour, but it still bumps VERSION, so installed users see an update that re-downloads identical files.
 - `beta/1.2` — integration branch for the files-only edition (prerelease `1.2.0-beta.N`). Agents open PRs against it and may merge them after an independent review passes. The maintainer promotes it to `main`.
 - `feature/*` — in-progress work. Base it on `beta/1.2` while that branch exists, unless the change is a docs-only Pages update.
 - `research/*` — experiments and published research (never merged to main directly)

@@ -22,6 +22,19 @@ jobs:
       - name: bash -n install.sh
         run: bash -n install.sh
 
+      - name: bash -n bin/distill-update.sh
+        run: if [ -f bin/distill-update.sh ]; then bash -n bin/distill-update.sh; fi
+
+      - name: Legacy endpoint guard (docs/adr/0001, 0002)
+        # Stable surface when the change targets main (a PR into main, or a push
+        # to main); beta surface otherwise (prerelease VERSION values allowed).
+        run: |
+          if [ -f tests/updater-compat/check-endpoints.sh ]; then
+            target="${GITHUB_BASE_REF:-$GITHUB_REF_NAME}"
+            surface=beta; [ "$target" = main ] && surface=stable
+            bash tests/updater-compat/check-endpoints.sh --surface "$surface"
+          fi
+
       - name: PowerShell parser on install.ps1
         shell: pwsh
         run: |
@@ -69,6 +82,15 @@ jobs:
             bash tests/updater-compat/run.sh
           else
             echo "tests/updater-compat/run.sh not on this branch yet; skipping."
+          fi
+
+      - name: Clean reviewer runner (stubbed, no API calls)
+        if: runner.os == 'Linux'
+        run: |
+          if [ -f tests/review/test-run-clean-review.sh ]; then
+            bash tests/review/test-run-clean-review.sh
+          else
+            echo "tests/review not on this branch; skipping."
           fi
 
   files-only-store:

@@ -20,6 +20,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TEST_HOME=$(mktemp -d)
 TEST_CLAUDE_DIR="$TEST_HOME/.claude"
+# Installers write knowledge to the shared store (~/.aura-distill since 1.1.10).
+TEST_STORE="$TEST_HOME/.aura-distill"
 # Auth config dir (must have valid API token). Override with DISTILL_TEST_CONFIG.
 REAL_CONFIG_DIR="${DISTILL_TEST_CONFIG:-$HOME/.claude}"
 CLAUDE_BIN="node /opt/homebrew/opt/claude-code-npm/libexec/lib/node_modules/@anthropic-ai/claude-code/cli.js"
@@ -105,6 +107,14 @@ run_sandbox() {
   rm -f "$output_file"
 }
 
+# Install from this checkout into the sandbox only: never the network, never an
+# AURA_DISTILL_HOME/CODEX_HOME exported by the calling shell.
+run_installer() {
+  env -u AURA_DISTILL_HOME -u CODEX_HOME -u DISTILL_CHANNEL \
+    HOME="$TEST_HOME" AURA_DISTILL_HOME="$TEST_STORE" CODEX_HOME="$TEST_HOME/.codex" \
+    AURA_DISTILL_REPO="$SCRIPT_DIR" bash "$SCRIPT_DIR/install.sh" < /dev/null 2>&1 || true
+}
+
 setup_test_env() {
   echo ""
   printf "  ${BOLD}Setting up test environment${RESET}\n"
@@ -131,7 +141,7 @@ test_install_fresh() {
   TESTS_RUN=$((TESTS_RUN + 1))
 
   # Run install.sh with test HOME so it writes to $TEST_HOME/.claude/
-  HOME="$TEST_HOME" bash "$SCRIPT_DIR/install.sh" < /dev/null 2>&1 || true
+  run_installer
 
   # Verify core files
   if [ -f "$TEST_CLAUDE_DIR/commands/distill.md" ]; then
@@ -141,30 +151,30 @@ test_install_fresh() {
   fi
   TESTS_RUN=$((TESTS_RUN + 1))
 
-  if [ -f "$TEST_CLAUDE_DIR/distill/distill-process.md" ]; then
+  if [ -f "$TEST_STORE/distill-process.md" ]; then
     pass "distill-process.md installed"
   else
     fail "distill-process.md not found"
   fi
   TESTS_RUN=$((TESTS_RUN + 1))
 
-  if [ -f "$TEST_CLAUDE_DIR/distill/distill-monitor.md" ]; then
+  if [ -f "$TEST_STORE/distill-monitor.md" ]; then
     pass "distill-monitor.md installed"
   else
     fail "distill-monitor.md not found"
   fi
   TESTS_RUN=$((TESTS_RUN + 1))
 
-  if [ -f "$TEST_CLAUDE_DIR/distill/SPINE.md" ]; then
+  if [ -f "$TEST_STORE/SPINE.md" ]; then
     pass "SPINE.md created"
   else
     fail "SPINE.md not found"
   fi
   TESTS_RUN=$((TESTS_RUN + 1))
 
-  if [ -f "$TEST_CLAUDE_DIR/distill/.version" ]; then
+  if [ -f "$TEST_STORE/.version" ]; then
     local ver
-    ver=$(cat "$TEST_CLAUDE_DIR/distill/.version")
+    ver=$(cat "$TEST_STORE/.version")
     if [ "$ver" = "$(cat "$SCRIPT_DIR/VERSION" | tr -d '[:space:]')" ]; then
       pass "Version file correct ($ver)"
     else
@@ -178,7 +188,7 @@ test_install_fresh() {
   # Verify directory structure
   local expected_dirs=("craft" "ops" "profile" "projects" "feedback" "archive")
   for dir in "${expected_dirs[@]}"; do
-    if [ -d "$TEST_CLAUDE_DIR/distill/$dir" ]; then
+    if [ -d "$TEST_STORE/$dir" ]; then
       pass "Directory $dir/ created"
     else
       fail "Directory $dir/ missing"
@@ -216,14 +226,14 @@ test_install_upgrade() {
   TESTS_RUN=$((TESTS_RUN + 1))
 
   # Pre-populate SPINE with some content
-  echo "# My Custom Knowledge" > "$TEST_CLAUDE_DIR/distill/SPINE.md"
-  echo "- [patterns](craft/patterns.md) — coding patterns" >> "$TEST_CLAUDE_DIR/distill/SPINE.md"
+  echo "# My Custom Knowledge" > "$TEST_STORE/SPINE.md"
+  echo "- [patterns](craft/patterns.md) — coding patterns" >> "$TEST_STORE/SPINE.md"
 
   # Run install again
-  HOME="$TEST_HOME" bash "$SCRIPT_DIR/install.sh" < /dev/null 2>&1 || true
+  run_installer
 
   # SPINE should be preserved (not overwritten)
-  if grep -q "My Custom Knowledge" "$TEST_CLAUDE_DIR/distill/SPINE.md"; then
+  if grep -q "My Custom Knowledge" "$TEST_STORE/SPINE.md"; then
     pass "SPINE.md preserved on upgrade"
   else
     fail "SPINE.md was overwritten on upgrade"
@@ -250,14 +260,14 @@ test_install_with_existing_memories() {
   echo "Project uses Kotlin" > "$TEST_CLAUDE_DIR/memory/context.md"
 
   # Remove migration flag if exists from prior test
-  rm -f "$TEST_CLAUDE_DIR/distill/.migrated"
-  rm -f "$TEST_CLAUDE_DIR/distill/.needs-migration"
+  rm -f "$TEST_STORE/.migrated"
+  rm -f "$TEST_STORE/.needs-migration"
 
   # Run install
-  HOME="$TEST_HOME" bash "$SCRIPT_DIR/install.sh" < /dev/null 2>&1 || true
+  run_installer
 
   # Should set .needs-migration flag
-  if [ -f "$TEST_CLAUDE_DIR/distill/.needs-migration" ]; then
+  if [ -f "$TEST_STORE/.needs-migration" ]; then
     pass "Migration flag set when existing memories found"
   else
     fail "Migration flag not set despite existing memories"
@@ -269,8 +279,8 @@ test_directive_origin_tracking() {
   TESTS_RUN=$((TESTS_RUN + 1))
 
   # Test that knowledge files with origin: directive are handled properly
-  mkdir -p "$TEST_CLAUDE_DIR/distill/ops"
-  cat > "$TEST_CLAUDE_DIR/distill/ops/infra-decisions.md" << 'KNOWLEDGE'
+  mkdir -p "$TEST_STORE/ops"
+  cat > "$TEST_STORE/ops/infra-decisions.md" << 'KNOWLEDGE'
 ---
 domain: ops
 scope: Infrastructure decisions
@@ -300,23 +310,23 @@ test_uninstall_preserves_knowledge() {
   TESTS_RUN=$((TESTS_RUN + 1))
 
   # Create some knowledge files
-  mkdir -p "$TEST_CLAUDE_DIR/distill/craft"
-  echo "# Kotlin Patterns" > "$TEST_CLAUDE_DIR/distill/craft/kotlin-patterns.md"
-  echo "- Use sealed classes for state" >> "$TEST_CLAUDE_DIR/distill/craft/kotlin-patterns.md"
+  mkdir -p "$TEST_STORE/craft"
+  echo "# Kotlin Patterns" > "$TEST_STORE/craft/kotlin-patterns.md"
+  echo "- Use sealed classes for state" >> "$TEST_STORE/craft/kotlin-patterns.md"
 
   # Simulate uninstall (what the install.sh footer suggests)
   rm -f "$TEST_CLAUDE_DIR/commands/distill.md"
-  rm -rf "$TEST_CLAUDE_DIR/distill/server"
+  rm -rf "$TEST_STORE/server"
 
   # Knowledge should survive
-  if [ -f "$TEST_CLAUDE_DIR/distill/craft/kotlin-patterns.md" ]; then
+  if [ -f "$TEST_STORE/craft/kotlin-patterns.md" ]; then
     pass "Knowledge files preserved after uninstall"
   else
     fail "Knowledge files deleted on uninstall"
   fi
   TESTS_RUN=$((TESTS_RUN + 1))
 
-  if [ -f "$TEST_CLAUDE_DIR/distill/SPINE.md" ]; then
+  if [ -f "$TEST_STORE/SPINE.md" ]; then
     pass "SPINE.md preserved after uninstall"
   else
     fail "SPINE.md deleted on uninstall"
@@ -346,7 +356,7 @@ test_sandbox_behavior_with_distill() {
   TESTS_RUN=$((TESTS_RUN + 1))
 
   # Install distill to test HOME
-  HOME="$TEST_HOME" bash "$SCRIPT_DIR/install.sh" < /dev/null 2>&1 || true
+  run_installer
 
   local result
   result=$(run_sandbox "Read the file $TEST_CLAUDE_DIR/CLAUDE.md. Do you see distill instructions? Report what behavior they tell you to follow. Keep it under 50 words." 45)
@@ -400,11 +410,11 @@ main() {
       test_install_with_existing_memories
       ;;
     directive)
-      HOME="$TEST_HOME" bash "$SCRIPT_DIR/install.sh" < /dev/null 2>&1 || true
+      run_installer
       test_directive_origin_tracking
       ;;
     uninstall)
-      HOME="$TEST_HOME" bash "$SCRIPT_DIR/install.sh" < /dev/null 2>&1 || true
+      run_installer
       test_uninstall_preserves_knowledge
       ;;
     behavior)

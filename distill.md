@@ -233,7 +233,7 @@ Updates are done by the updater script that ships with aura-distill, never by do
 On the FIRST invocation of `/distill` in a session:
 
 1. The store directory is `{DISTILL_DIR}`. If that path still appears as a literal placeholder in curly braces (an older updater copied this file without resolving it), use `~/.aura-distill` if that directory exists, otherwise `~/.claude/distill`, everywhere this section names the store.
-2. If `{DISTILL_DIR}/bin/distill-update.sh` does not exist (older versions did not ship it), install it with exactly this command, then continue:
+2. If `{DISTILL_DIR}/bin/distill-update.sh` does not exist (older versions did not ship it), install it with this command (the only change allowed is the store path, replaced as step 1 says), then continue:
 
    ```bash
    t=$(mktemp) && curl -fsSL --max-time 30 https://raw.githubusercontent.com/tomacco/aura-distill/main/bin/distill-update.sh -o "$t" && sed -n 2p "$t" | grep -q '^# aura-distill-updater' && mkdir -p "{DISTILL_DIR}/bin" && mv "$t" "{DISTILL_DIR}/bin/distill-update.sh"; rm -f "$t"

@@ -270,7 +270,9 @@ echo ""
 # ═══ CHANNEL AND PAYLOAD (nothing is written before this block succeeds) ═══
 
 if [ -z "$CHANNEL" ]; then
-    CHANNEL=$(LC_ALL=C tr -d '\357\273\277[:space:]' 2>/dev/null < "$DISTILL_DIR/.channel" || true)
+    CHANNEL=$(cat "$DISTILL_DIR/.channel" 2>/dev/null || true)
+    CHANNEL=${CHANNEL#$(printf '\357\273\277')}   # a leading byte-order mark only (PS 5.1)
+    CHANNEL=$(printf '%s' "$CHANNEL" | tr -d '[:space:]')
     [ -n "$CHANNEL" ] || CHANNEL="stable"
 fi
 case "$CHANNEL" in
@@ -402,7 +404,12 @@ fi
 # Version, channel and where the command lives (read by bin/distill-update.sh)
 echo "$PAYLOAD_VERSION" > "$DISTILL_DIR/.version"
 echo "$CHANNEL" > "$DISTILL_DIR/.channel"
-echo "$CMD_DIR/distill.md" > "$DISTILL_DIR/.command-path"
+# .command-path lists every profile's dispatcher that shares this store; add ours once.
+if ! grep -qxF "$CMD_DIR/distill.md" "$DISTILL_DIR/.command-path" 2>/dev/null; then
+    [ ! -s "$DISTILL_DIR/.command-path" ] || [ -z "$(tail -c1 "$DISTILL_DIR/.command-path")" ] \
+        || echo >> "$DISTILL_DIR/.command-path"
+    echo "$CMD_DIR/distill.md" >> "$DISTILL_DIR/.command-path"
+fi
 
 # Spine. A new store is born in the files-only layout (#78): the SPINE carries its catalog
 # line and an empty CATALOG.md is created with it, so migrate-store is only ever needed for a
@@ -459,17 +466,23 @@ mkdir -p "$RULES_DIR"
 
 # Preserve the user's synced Always-On preferences across updates (like SPINE).
 # /distill writes real content into this section; overwriting it is data loss.
+# Rule (shared by install.sh, install.ps1 and bin/distill-update.sh): the section runs
+# from the heading to the end of the file, and it is kept byte for byte unless it is
+# identical, ignoring whitespace, to the template section of the file being installed.
+# One difference from the updater: when a release's rules file has no preferences
+# heading, the installers still install it (appending a kept section after its body),
+# while the updater leaves every rules file untouched.
 PREFS_MARK="## Always-On User Preferences"
 PREFS_TMP=""
-if [ -f "$RULES_DIR/distill.md" ] && grep -q "^$PREFS_MARK" "$RULES_DIR/distill.md" \
-   && grep -A 30 "^$PREFS_MARK" "$RULES_DIR/distill.md" | grep -q "^\*\*"; then
-    PREFS_TMP=$(mktemp)
-    sed -n "/^$PREFS_MARK/,\$p" "$RULES_DIR/distill.md" > "$PREFS_TMP"
-fi
-
 RULES_TMP=$(mktemp)
 if fetch_file "$REPO/rules/distill.md" | sed "s|$PLACEHOLDER|$DISTILL_DIR_SED|g" > "$RULES_TMP" \
    && grep -q "Distill" "$RULES_TMP"; then
+    if [ -f "$RULES_DIR/distill.md" ] && grep -q "^$PREFS_MARK" "$RULES_DIR/distill.md" \
+       && [ "$(sed -n "/^$PREFS_MARK/,\$p" "$RULES_DIR/distill.md" | tr -d '[:space:]')" \
+            != "$(sed -n "/^$PREFS_MARK/,\$p" "$RULES_TMP" | tr -d '[:space:]')" ]; then
+        PREFS_TMP=$(mktemp)
+        sed -n "/^$PREFS_MARK/,\$p" "$RULES_DIR/distill.md" > "$PREFS_TMP"
+    fi
     if [ -n "$PREFS_TMP" ]; then
         # Build the merged file in a temp and move it into place atomically —
         # never truncate the live file before the merge is complete.
@@ -485,7 +498,7 @@ if fetch_file "$REPO/rules/distill.md" | sed "s|$PLACEHOLDER|$DISTILL_DIR_SED|g"
     fi
     rm -f "$RULES_TMP"
 else
-    rm -f "$RULES_TMP" "$PREFS_TMP"
+    rm -f "$RULES_TMP"
     warn_msg "rules/distill.md download failed — existing file left untouched"
 fi
 

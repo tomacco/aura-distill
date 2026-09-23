@@ -79,7 +79,7 @@ When developing or testing:
 ## Issues & PRs
 
 - **Every PR must reference a GitHub issue** (`Closes #N` for full resolution, `Part of #N` for partial work). No orphan PRs — if no issue exists for the work, create one first.
-- Every PR must be reviewed by an independent agent before merging. See `REVIEW-PROTOCOL.md`.
+- Every PR must be reviewed by an independent agent before merging. See `REVIEW-PROTOCOL.md`. A PR *passes* review when a round returns APPROVE, or when it converges under REVIEW-PROTOCOL.md rule 6.
 - The authoring agent spawns a reviewer in a worktree with zero shared context. The reviewer gets only product context — never the author's reasoning, known limitations, or focus suggestions. This is structural, not optional: shared context makes self-review biased by definition.
 
 ## Branch conventions

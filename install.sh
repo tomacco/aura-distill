@@ -426,17 +426,20 @@ mkdir -p "$RULES_DIR"
 
 # Preserve the user's synced Always-On preferences across updates (like SPINE).
 # /distill writes real content into this section; overwriting it is data loss.
+# Rule (shared by install.sh, install.ps1 and bin/distill-update.sh): the section runs
+# from the heading to the end of the file, and it is kept byte for byte unless it is
+# identical, ignoring whitespace, to the template section of the file being installed.
 PREFS_MARK="## Always-On User Preferences"
 PREFS_TMP=""
-if [ -f "$RULES_DIR/distill.md" ] && grep -q "^$PREFS_MARK" "$RULES_DIR/distill.md" \
-   && grep -A 30 "^$PREFS_MARK" "$RULES_DIR/distill.md" | grep -q "^\*\*"; then
-    PREFS_TMP=$(mktemp)
-    sed -n "/^$PREFS_MARK/,\$p" "$RULES_DIR/distill.md" > "$PREFS_TMP"
-fi
-
 RULES_TMP=$(mktemp)
 if fetch_file "$REPO/rules/distill.md" | sed "s|$PLACEHOLDER|$DISTILL_DIR_SED|g" > "$RULES_TMP" \
    && grep -q "Distill" "$RULES_TMP"; then
+    if [ -f "$RULES_DIR/distill.md" ] && grep -q "^$PREFS_MARK" "$RULES_DIR/distill.md" \
+       && [ "$(sed -n "/^$PREFS_MARK/,\$p" "$RULES_DIR/distill.md" | tr -d '[:space:]')" \
+            != "$(sed -n "/^$PREFS_MARK/,\$p" "$RULES_TMP" | tr -d '[:space:]')" ]; then
+        PREFS_TMP=$(mktemp)
+        sed -n "/^$PREFS_MARK/,\$p" "$RULES_DIR/distill.md" > "$PREFS_TMP"
+    fi
     if [ -n "$PREFS_TMP" ]; then
         # Build the merged file in a temp and move it into place atomically —
         # never truncate the live file before the merge is complete.
@@ -452,7 +455,7 @@ if fetch_file "$REPO/rules/distill.md" | sed "s|$PLACEHOLDER|$DISTILL_DIR_SED|g"
     fi
     rm -f "$RULES_TMP"
 else
-    rm -f "$RULES_TMP" "$PREFS_TMP"
+    rm -f "$RULES_TMP"
     warn_msg "rules/distill.md download failed — existing file left untouched"
 fi
 

@@ -309,30 +309,36 @@ if (-not (Test-Path $RulesDir)) { New-Item -ItemType Directory -Force -Path $Rul
 
 # Preserve the user's synced Always-On preferences across updates (like SPINE).
 # /distill writes real content into this section; overwriting it is data loss.
+# Rule (shared by install.sh, install.ps1 and bin/distill-update.sh): the section runs
+# from the heading (at a line start) to the end of the file, and it is kept byte for
+# byte unless it is identical, ignoring whitespace, to the template section of the
+# file being installed.
 $rulesTarget = Join-Path $RulesDir 'distill.md'
-$prefsMark = '## Always-On User Preferences'
-$preservedPrefs = $null
-if (Test-Path $rulesTarget) {
-    $existing = Get-Content $rulesTarget -Raw
-    $idx = $existing.IndexOf($prefsMark)
-    if ($idx -ge 0) {
-        $section = $existing.Substring($idx)
-        # Only preserve real content (a bold rule line), not the empty template
-        if ($section -match "(?m)^\*\*") { $preservedPrefs = $section }
-    }
+$prefsPattern = '(?m)^## Always-On User Preferences'
+function Get-PrefsSection([string]$Text) {
+    $m = [regex]::Match($Text, $prefsPattern)
+    if ($m.Success) { return $Text.Substring($m.Index) } else { return $null }
 }
 $rulesTmp = [System.IO.Path]::GetTempFileName()
 try {
     Get-File "$Repo/rules/distill.md" $rulesTmp
-    $fresh = (Get-Content $rulesTmp -Raw).Replace('{DISTILL_DIR}', $DistillDir)
+    $fresh = (Get-Content $rulesTmp -Raw).Replace($Placeholder, $DistillDir)
     if ($fresh -match 'Distill') {
+        $preservedPrefs = $null
+        if (Test-Path $rulesTarget) {
+            $section = Get-PrefsSection ([System.IO.File]::ReadAllText($rulesTarget))
+            $freshSection = Get-PrefsSection $fresh
+            if ($null -ne $section -and ($section -replace '\s', '') -ne ([string]$freshSection -replace '\s', '')) {
+                $preservedPrefs = $section
+            }
+        }
         if ($preservedPrefs) {
-            $freshIdx = $fresh.IndexOf($prefsMark)
-            $body = if ($freshIdx -ge 0) { $fresh.Substring(0, $freshIdx) } else { $fresh }
+            $freshMatch = [regex]::Match($fresh, $prefsPattern)
+            $body = if ($freshMatch.Success) { $fresh.Substring(0, $freshMatch.Index) } else { $fresh }
             [System.IO.File]::WriteAllText($rulesTarget, ($body + $preservedPrefs), (New-Object System.Text.UTF8Encoding($false)))
             Write-Done "rules/distill.md ${DIM}(auto-loads every session; your preferences preserved)${RESET}"
         } else {
-            Move-Item -Force $rulesTmp $rulesTarget
+            [System.IO.File]::WriteAllText($rulesTarget, $fresh, (New-Object System.Text.UTF8Encoding($false)))
             Write-Done "rules/distill.md ${DIM}(auto-loads every session)${RESET}"
         }
     } else {

@@ -46,5 +46,13 @@ if command -v cygpath >/dev/null 2>&1; then
     bash -c "! grep -qF '$(cygpath -u "$store")/' '$cmd' '$store/distill-process.md' '$store/distill-monitor.md'"
 fi
 check "no stderr from the updater" test ! -s "$T/update.err"
+if command -v cygpath >/dev/null 2>&1; then
+  # The same dispatcher listed twice, as C:/... (install.ps1) and /c/... (Git Bash).
+  cygpath -u "$(head -1 "$store/.command-path")" >> "$store/.command-path"
+  printf '1.1.92\n' > "$raw/main/VERSION"
+  HOME="$home" AURA_DISTILL_RAW_ROOT="$(mixed "$raw")" bash "$store/bin/distill-update.sh" apply >"$T/update2.out" 2>&1 || true
+  echo "  updater (C:/ and /c/ forms listed): $(head -1 "$T/update2.out")"
+  check "Git Bash: C:/ and /c/ spellings of one dispatcher are one target" grep -q '^UPDATED 1.1.91 1.1.92 stable' "$T/update2.out"
+fi
 printf 'windows-smoke: %d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

@@ -68,10 +68,19 @@ BOM=$(printf '\357\273\277')
 # .command-path lists one installed dispatcher per line: every Claude profile that
 # shares this store (installers append their own path). Only a leading byte-order
 # mark and trailing CRs are stripped, so non-ASCII paths stay intact. Only listed
-# dispatchers that exist are updated: a profile whose distill.md was removed stays
-# uninstalled, and a path from another machine or user is skipped. Only a store with
-# no list at all (installed before the list existed) falls back to the default
-# profile's dispatcher, which may be created.
+# dispatchers that exist on this machine are updated, so a profile whose distill.md
+# was removed stays uninstalled and a path from another machine is skipped. Paths are
+# canonicalised (symlinks resolved, and the Git Bash /c/... and C:/... forms of one
+# file made equal) before de-duplication, so two names for one file are one target.
+# When no listed dispatcher exists here (or there is no list: a store installed before
+# the list existed), the default profile's dispatcher is updated if it exists, with a
+# notice; with none at all, nothing is updated and the run says so.
+canon() { # <path to an existing file> -> canonical path
+  local d
+  d=$(cd "$(dirname "$1")" 2>/dev/null && pwd -P) || return 1
+  if command -v cygpath >/dev/null 2>&1; then d=$(cygpath -m "$d"); fi
+  printf '%s/%s' "$d" "$(basename "$1")"
+}
 CMD_FILES=()
 LISTED=0
 first=1
@@ -81,11 +90,15 @@ while IFS= read -r line || [ -n "$line" ]; do
   case "$line" in */distill.md) ;; *) continue ;; esac
   LISTED=1
   [ -f "$line" ] || continue
+  line=$(canon "$line") || continue
   dup=0; for seen in ${CMD_FILES[@]+"${CMD_FILES[@]}"}; do [ "$seen" = "$line" ] && dup=1; done
   [ "$dup" = 1 ] || CMD_FILES+=("$line")
 done < <(cat "$STORE/.command-path" 2>/dev/null || true)
-FALLBACK=0
-if [ "$LISTED" = 0 ]; then CMD_FILES=("$HOME/.claude/commands/distill.md"); FALLBACK=1; fi
+DEFAULT_NOTICE=""
+if [ "${#CMD_FILES[@]}" = 0 ] && [ -f "$HOME/.claude/commands/distill.md" ]; then
+  CMD_FILES=("$(canon "$HOME/.claude/commands/distill.md")")
+  [ "$LISTED" = 0 ] || DEFAULT_NOTICE="NOTICE: aura-distill: none of the /distill commands recorded in $STORE/.command-path exists on this machine; the default profile's (${CMD_FILES[0]}) was used. Re-run the installer to record this machine's profiles."
+fi
 # One-word metadata (.channel, .version): drop a leading byte-order mark (Windows
 # PowerShell 5.1 writes one) and all whitespace, including CR.
 read_meta() { local v; v=$(cat "$1" 2>/dev/null || true); v=${v#"$BOM"}; printf '%s' "$v" | tr -d '[:space:]'; }
@@ -149,6 +162,7 @@ NOTICE: Your files-only installation stays supported and unchanged. If you want 
 finish() { # <status line>
   printf '%s\n' "$1"
   [ -z "$NOTICES" ] || printf '%s\n' "$NOTICES"
+  [ -z "$DEFAULT_NOTICE" ] || case "$1" in UPDATED*|REPAIRED*) printf '%s\n' "$DEFAULT_NOTICE" ;; esac
   exit 0
 }
 
@@ -231,10 +245,10 @@ for f in distill.md distill-process.md distill-monitor.md bin/distill-update.sh;
   fi
 done
 
-# rules/distill.md (the always-on rules) for every profile being updated, merged the
-# way install.sh does it: a user's filled "Always-On User Preferences" section (the
-# heading plus a bold rule line within 30 lines) is kept byte for byte and appended
-# to the new file's body. The new file must contain that heading, or no rules file is
+# rules/distill.md (the always-on rules) for every profile being updated that has one,
+# merged by the rule install.sh and install.ps1 use: the "Always-On User Preferences"
+# section (heading to end of file) is kept byte for byte and appended to the new
+# file's body unless it is identical, ignoring whitespace, to the new template section. The new file must contain that heading, or no rules file is
 # touched (the rest of the update still applies).
 PREFS_MARK="## Always-On User Preferences"
 RULES_TARGETS=()
@@ -245,10 +259,11 @@ if fetch "$BASE/rules/distill.md" "$WORK/stage/rules.raw" \
   i=0
   for t in ${CMD_FILES[@]+"${CMD_FILES[@]}"}; do
     rules="$(dirname "$(dirname "$t")")/rules/distill.md"
-    [ -f "$rules" ] || [ "$FALLBACK" = 1 ] || continue
+    [ -f "$rules" ] || continue
     i=$((i+1))
-    if [ -f "$rules" ] && grep -q "^$PREFS_MARK" "$rules" \
-       && grep -A 30 "^$PREFS_MARK" "$rules" | grep -q "^\*\*"; then
+    if grep -q "^$PREFS_MARK" "$rules" \
+       && [ "$(sed -n "/^$PREFS_MARK/,\$p" "$rules" | tr -d '[:space:]')" \
+            != "$(sed -n "/^$PREFS_MARK/,\$p" "$WORK/stage/rules.new" | tr -d '[:space:]')" ]; then
       sed "/^$PREFS_MARK/,\$d" "$WORK/stage/rules.new" > "$WORK/stage/rules.$i"
       sed -n "/^$PREFS_MARK/,\$p" "$rules" >> "$WORK/stage/rules.$i"
     else
@@ -269,7 +284,7 @@ if fetch "$BASE/bin/distill-check-store.sh" "$WORK/stage/bin/distill-check-store
   CHECK_STORE=1
 fi
 
-[ "$FALLBACK" = 0 ] || mkdir -p "$(dirname "${CMD_FILES[0]}")" || finish "BLOCKED $CHANNEL cannot create directories; nothing was changed"
+[ "${#CMD_FILES[@]}" -gt 0 ] || finish "BLOCKED $CHANNEL no /distill command of this store exists on this machine; nothing was changed (re-run the installer)"
 mkdir -p "$STORE/bin" "$STORE/data" "$STORE/inbox" || finish "BLOCKED $CHANNEL cannot create directories; nothing was changed"
 # Temp names next to each target (same filesystem), unique per process so two
 # sessions updating one store cannot rename each other's files; then one checked
@@ -283,7 +298,7 @@ cmd_ok=1
 for t in ${CMD_FILES[@]+"${CMD_FILES[@]}"}; do cp "$WORK/stage/distill.md" "$t$N" || cmd_ok=0; done
 i=0
 for t in ${RULES_TARGETS[@]+"${RULES_TARGETS[@]}"}; do
-  i=$((i+1)); mkdir -p "$(dirname "$t")" && cp "$WORK/stage/rules.$i" "$t$N" || cmd_ok=0
+  i=$((i+1)); cp "$WORK/stage/rules.$i" "$t$N" || cmd_ok=0
 done
 [ "$cmd_ok" = 1 ] \
   && cp "$WORK/stage/distill-process.md" "$STORE/distill-process.md$N" \

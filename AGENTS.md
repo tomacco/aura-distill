@@ -53,7 +53,7 @@ When developing or testing:
 - The Homebrew formula (`homebrew/Formula/aura-distill.rb`) is NOT auto-bumped: it pins
   a tagged release tarball + sha256, so updating it requires cutting a git tag and
   recomputing the hash (manual release step)
-- Every release gets a page under docs/releases/ — see docs/releases/README.md
+- Every release gets a page under `docs/releases/` (added to `main` by PR #107; procedure in `docs/releases/README.md` there)
 
 ## Key conventions
 
@@ -73,6 +73,7 @@ When developing or testing:
 - Run integration tests: `./test-sandbox.sh`
 - Run Antigravity Time Index parity + hostile-input tests: `./tests/antigravity/run-parity-test.sh` (and the connector runners `run-antigravity-connector-tests.sh` / `.ps1`)
 - Run the files-only store invariants (thin SPINE, catalog completeness, lossless migration; #75): `bash tests/files-only/run-files-only-tests.sh` — design in `docs/design-files-only-memory.md` (about 100 checks; about two minutes locally, about five minutes on CI macOS, several times longer on Windows Git Bash because of process-spawn cost)
+- Run the clean-reviewer runner's stubbed test (no API calls): `bash tests/review/test-run-clean-review.sh`
 - Run legacy updater compatibility reproductions (captured shipped curl blocks against a local fixture endpoint; no network, no real profiles): `bash tests/updater-compat/run.sh` — decisions they back live in `docs/adr/`
 - Run deterministic Claude/Codex installer tests: `pwsh tests/test-codex.ps1`
 - Run a real isolated Codex retrieval test: `pwsh tests/test-codex.ps1 -LiveRetrieval`

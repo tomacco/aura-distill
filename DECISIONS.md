@@ -34,7 +34,7 @@ A PR may be merged into the `beta/1.2` integration branch by an agent once it ha
 independent review in `REVIEW-PROTOCOL.md` and its test suites. Promotion of `beta/1.2` to `main`
 is the maintainer's call.
 
-**D-2026-09-23-3 · Docs-only changes may go to `main` to publish Pages.** `provisional` (agent reading of D-2 plus the maintainer's request to publish research and release pages)
+**D-2026-09-23-3 · Docs-only changes may go to `main` to publish Pages.** `directive` · active (proposed by an agent; confirmed by the maintainer on 2026-09-23: "Docs only can be merged to main, makes sense")
 GitHub Pages serves `main:/docs`, so a research or release page is only public once it is on `main`.
 A PR that touches only `docs/**` and `CHANGELOG.md` changes nothing an updater fetches, so an agent
 may merge it after review. It still triggers a patch version bump (bump-version.yml does not ignore

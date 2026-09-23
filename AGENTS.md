@@ -53,6 +53,7 @@ When developing or testing:
 - The Homebrew formula (`homebrew/Formula/aura-distill.rb`) is NOT auto-bumped: it pins
   a tagged release tarball + sha256, so updating it requires cutting a git tag and
   recomputing the hash (manual release step)
+- Every release gets a page under docs/releases/ — see docs/releases/README.md
 
 ## Key conventions
 
@@ -84,7 +85,7 @@ When developing or testing:
 
 ## Branch conventions
 
-- `main` — stable, released (quality gate: REVIEW-PROTOCOL.md). Every merge to `main` reaches installed users through the auto-updaters, so only the maintainer merges to `main`. The one exception: a reviewed PR touching only `docs/**` and `CHANGELOG.md` (Pages publishing; DECISIONS.md D-2026-09-23-3, provisional). Such a merge installs no new behaviour, but it still bumps VERSION, so installed users see an update that re-downloads identical files.
+- `main` — stable, released (quality gate: REVIEW-PROTOCOL.md). Every merge to `main` reaches installed users through the auto-updaters, so only the maintainer merges to `main`. The one exception: a reviewed PR touching only `docs/**` and `CHANGELOG.md` (Pages publishing; DECISIONS.md D-2026-09-23-3). Such a merge installs no new behaviour, but it still bumps VERSION, so installed users see an update that re-downloads identical files.
 - `beta/1.2` — integration branch for the files-only edition (prerelease `1.2.0-beta.N`). Agents open PRs against it and may merge them after an independent review passes. The maintainer promotes it to `main`.
 - `feature/*` — in-progress work. Base it on `beta/1.2` while that branch exists, unless the change is a docs-only Pages update.
 - `research/*` — experiments and published research (never merged to main directly)

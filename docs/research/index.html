@@ -189,6 +189,13 @@
                 <div class="paper-desc">Can a small local judgment model replace the frontier model&rsquo;s knowledge-index read? A zero-model control, three routing architectures, a relevance gate, and an option-budget sweep &mdash; plus the arithmetic that killed a distillation pre-filter before it was built.</div>
                 <div class="paper-finding">Headline: the turn that reads the knowledge index costs 21,247 tokens &mdash; the largest fixed cost of a session, and 5.9&times; the 3.6k this project last published for the same index. A zero-model BM25 router beats the local model at routing and cuts 70% of those tokens end to end; the model wins only at judging one candidate at a time.</div>            </a>
 
+            <a href="files-only-redesign.html" class="paper-card">
+                <div class="paper-status status-ongoing">2 real stores &middot; 10 sessions &middot; design under review &middot; EN / ES</div>
+                <div class="paper-title">Files-Only Memory Redesign, Measured on Real Stores</div>
+                <div class="paper-desc">The files-only redesign (#75, PR #93) gives the knowledge index a byte budget, moves dated history to evidence files, archives by moving and adds an opt-in lifecycle. Before it ships, its assumptions meet two real stores and ten real sessions.</div>
+                <div class="paper-finding">Headline: the index every session reads first is a 51 KB digest, 3.2&times; its budget, up 57% in seven weeks with no new entries. But moving dated history fixes 3 of 56 oversize files (splitting does the work), the lifecycle would archive 2 of 23 project files, and the existing nested archive would block migration.</div>
+            </a>
+
             <a href="model-routing.html" class="paper-card">
                 <div class="paper-status status-complete">6 archetypes &times; 3 tiers &middot; Cost economics</div>
                 <div class="paper-title">Best Model for Everything? Model Routing</div>

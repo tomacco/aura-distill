@@ -62,6 +62,15 @@ jobs:
             echo "tests/test-install.sh not on this branch yet; skipping."
           fi
 
+      - name: Legacy updater compatibility reproductions (docs/adr/0001)
+        if: runner.os == 'Linux'
+        run: |
+          if [ -f tests/updater-compat/run.sh ]; then
+            bash tests/updater-compat/run.sh
+          else
+            echo "tests/updater-compat/run.sh not on this branch yet; skipping."
+          fi
+
   files-only-store:
     # Files-only memory redesign invariants (#75): synthetic store fixture, no
     # network, no profile dirs. Runs on GNU and BSD toolchains on purpose.

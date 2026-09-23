@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "files_only": {
+    "version": "1.2.0",
+    "base": "https://raw.githubusercontent.com/tomacco/aura-distill/main",
+    "status": "stable"
+  },
+  "software": {
+    "version": "2.0.0",
+    "base": "https://raw.githubusercontent.com/tomacco/aura-distill/software-2.x",
+    "status": "stable",
+    "guide": "https://github.com/tomacco/aura-distill/blob/software-2.x/UPGRADE.md",
+    "requirements": ["local service process", "storage migration of the knowledge store"],
+    "auto_update": "never"
+  }
+}

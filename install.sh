@@ -266,7 +266,9 @@ echo ""
 # ═══ CHANNEL AND PAYLOAD (nothing is written before this block succeeds) ═══
 
 if [ -z "$CHANNEL" ]; then
-    CHANNEL=$(LC_ALL=C tr -d '\357\273\277[:space:]' 2>/dev/null < "$DISTILL_DIR/.channel" || true)
+    CHANNEL=$(cat "$DISTILL_DIR/.channel" 2>/dev/null || true)
+    CHANNEL=${CHANNEL#$(printf '\357\273\277')}   # a leading byte-order mark only (PS 5.1)
+    CHANNEL=$(printf '%s' "$CHANNEL" | tr -d '[:space:]')
     [ -n "$CHANNEL" ] || CHANNEL="stable"
 fi
 case "$CHANNEL" in
@@ -398,7 +400,12 @@ fi
 # Version, channel and where the command lives (read by bin/distill-update.sh)
 echo "$PAYLOAD_VERSION" > "$DISTILL_DIR/.version"
 echo "$CHANNEL" > "$DISTILL_DIR/.channel"
-echo "$CMD_DIR/distill.md" > "$DISTILL_DIR/.command-path"
+# .command-path lists every profile's dispatcher that shares this store; add ours once.
+if ! grep -qxF "$CMD_DIR/distill.md" "$DISTILL_DIR/.command-path" 2>/dev/null; then
+    [ ! -s "$DISTILL_DIR/.command-path" ] || [ -z "$(tail -c1 "$DISTILL_DIR/.command-path")" ] \
+        || echo >> "$DISTILL_DIR/.command-path"
+    echo "$CMD_DIR/distill.md" >> "$DISTILL_DIR/.command-path"
+fi
 
 # Spine
 if [ ! -f "$DISTILL_DIR/SPINE.md" ]; then

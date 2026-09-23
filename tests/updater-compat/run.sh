@@ -824,6 +824,46 @@ sed 's/"version": "2.0.0"/"version": "1.9.0"/' "$SYN/channels/manifest.json" > "
 check "major-release check rejects an entry that is not a new major" bash -c "! bash '$HERE/check-major-release.sh' '$T/m.json' '$SYN/docs/upgrade/2.0.0.md' >/dev/null"
 
 # =====================================================================
+section "(j) Store metadata: non-ASCII paths, byte-order marks, CRLF, several profiles"
+serve_bridge
+M=$(served_main)
+c=$(mktemp -d "$WORK/clients/j.XXXXXX")
+mkdir -p "$c/.claude" "$c/.claude-mûller"
+install_client "$c" --profile mûller
+s="$c/.aura-distill"
+check "a --profile install whose path contains 'û' records it intact" \
+  bash -c "grep -qxF '$c/.claude-mûller/commands/distill.md' '$s/.command-path'"
+seed_knowledge "$c"; set_autoupdate "$c" true
+printf '\357\273\277%s\r\n' "$c/.claude-mûller/commands/distill.md" > "$s/.command-path"
+printf '1.2.1\n' > "$M/VERSION"; printf '\nPATCH-J1\n' >> "$M/distill.md"
+run_update "$c" auto
+check "BOM + CRLF .command-path with a non-ASCII path: the 'û' profile's dispatcher is updated ('$(first_line "$c")')" \
+  bash -c "grep -q '^UPDATED 1.2.0 1.2.1 stable' '$c/update.out' && grep -q PATCH-J1 '$c/.claude-mûller/commands/distill.md'"
+check "  and nothing is written into the default profile" test ! -e "$c/.claude/commands/distill.md"
+# CRLF preferences (a Windows editor): the opt-in must still count.
+printf -- '---\r\ndomain: feedback\r\n---\r\n\r\n## Auto-update\r\n- enabled: true\r\n' > "$s/feedback/preferences.md"
+printf '1.2.2\n' > "$M/VERSION"
+run_update "$c" auto
+check "a CRLF preferences.md with 'enabled: true' still auto-applies ('$(first_line "$c")')" \
+  bash -c "grep -q '^UPDATED 1.2.1 1.2.2 stable' '$c/update.out'"
+# Two profiles on one store: both dispatchers are listed and both are updated.
+install_client "$c" --profile default
+check "a second profile's install appends its dispatcher to .command-path (2 entries, no duplicates)" \
+  bash -c "[ \"\$(grep -c . '$s/.command-path')\" = 2 ] && grep -qxF '$c/.claude/commands/distill.md' '$s/.command-path'"
+install_client "$c" --profile default
+check "  re-installing the same profile adds nothing" bash -c "[ \"\$(grep -c . '$s/.command-path')\" = 2 ]"
+set_autoupdate "$c" true
+printf '1.2.3\n' > "$M/VERSION"; printf '\nPATCH-J3\n' >> "$M/distill.md"
+run_update "$c" auto
+check "one update refreshes every listed profile's dispatcher ('$(first_line "$c")')" \
+  bash -c "grep -q '^UPDATED 1.2.2 1.2.3 stable' '$c/update.out' && grep -q PATCH-J3 '$c/.claude/commands/distill.md' && grep -q PATCH-J3 '$c/.claude-mûller/commands/distill.md'"
+printf '%s\n' "/nonexistent-elsewhere/.claude/commands/distill.md" >> "$s/.command-path"
+printf '1.2.4\n' > "$M/VERSION"
+run_update "$c" auto
+check "a listed path from another machine is skipped, the others still update ('$(first_line "$c")')" \
+  bash -c "grep -q '^UPDATED 1.2.3 1.2.4 stable' '$c/update.out' && [ ! -e /nonexistent-elsewhere ]"
+
+# =====================================================================
 section "Isolation: nothing escaped the sandbox"
 check "AURA_DISTILL_HOME/CODEX_HOME inherited from the environment were never written to" \
   test ! -e "$CANARY"

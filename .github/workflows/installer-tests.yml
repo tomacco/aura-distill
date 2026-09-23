@@ -75,6 +75,15 @@ jobs:
             echo "tests/test-install.sh not on this branch yet; skipping."
           fi
 
+      - name: Update path through install.ps1 and bash (Git Bash on Windows)
+        # install.ps1, then the installed bin/distill-update.sh under bash, as
+        # /distill runs it from Claude Code on Windows.
+        shell: bash
+        run: |
+          if [ -f tests/updater-compat/windows-smoke.sh ]; then
+            bash tests/updater-compat/windows-smoke.sh
+          fi
+
       - name: Legacy updater compatibility reproductions (docs/adr/0001)
         if: runner.os == 'Linux'
         run: |

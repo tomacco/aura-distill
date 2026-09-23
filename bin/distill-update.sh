@@ -64,13 +64,26 @@ STORE=$(cd "$(dirname "$AURA_UPDATER_SELF")/.." && pwd)
 # Git Bash on Windows: write C:/Users/... (accepted by bash and by the client's file
 # tools) into the installed files, not the MSYS form /c/Users/...
 if command -v cygpath >/dev/null 2>&1; then STORE=$(cygpath -m "$STORE"); fi
-CMD_FILE=$(head -1 "$STORE/.command-path" 2>/dev/null | LC_ALL=C tr -d '\357\273\277\r' || true)
-# A recorded path whose directory does not exist here (a store synced from another
-# machine or user) falls back to the default instead of blocking every update.
-case "$CMD_FILE" in */distill.md) [ -d "$(dirname "$CMD_FILE")" ] || CMD_FILE="" ;; *) CMD_FILE="" ;; esac
-[ -n "$CMD_FILE" ] || CMD_FILE="$HOME/.claude/commands/distill.md"
-# Strip whitespace, CR and a UTF-8 byte-order mark (Windows PowerShell 5.1 writes one).
-read_meta() { LC_ALL=C tr -d '\357\273\277[:space:]' 2>/dev/null < "$1" || true; }
+BOM=$(printf '\357\273\277')
+# .command-path lists one installed dispatcher per line: every Claude profile that
+# shares this store (installers append their own path). Only a leading byte-order
+# mark and trailing CRs are stripped, so non-ASCII paths stay intact. A path whose
+# directory does not exist here (a store synced from another machine or user) is
+# skipped; with none left, the default profile's dispatcher is updated.
+CMD_FILES=()
+first=1
+while IFS= read -r line || [ -n "$line" ]; do
+  [ "$first" = 1 ] && line=${line#"$BOM"}; first=0
+  line=${line%$'\r'}
+  case "$line" in */distill.md) ;; *) continue ;; esac
+  [ -d "$(dirname "$line")" ] || continue
+  dup=0; for seen in ${CMD_FILES[@]+"${CMD_FILES[@]}"}; do [ "$seen" = "$line" ] && dup=1; done
+  [ "$dup" = 1 ] || CMD_FILES+=("$line")
+done < <(cat "$STORE/.command-path" 2>/dev/null || true)
+[ "${#CMD_FILES[@]}" -gt 0 ] || CMD_FILES=("$HOME/.claude/commands/distill.md")
+# One-word metadata (.channel, .version): drop a leading byte-order mark (Windows
+# PowerShell 5.1 writes one) and all whitespace, including CR.
+read_meta() { local v; v=$(cat "$1" 2>/dev/null || true); v=${v#"$BOM"}; printf '%s' "$v" | tr -d '[:space:]'; }
 CHANNEL=$(read_meta "$STORE/.channel")
 [ "$CHANNEL" = beta ] || CHANNEL=stable
 INSTALLED=$(read_meta "$STORE/.version")
@@ -175,7 +188,7 @@ fi
 # latent defect 2). Re-installing the same version repairs them; it is not an upgrade,
 # so it runs regardless of the Auto-update preference.
 REPAIR=0
-for t in "$CMD_FILE" "$STORE/distill-process.md" "$STORE/distill-monitor.md"; do
+for t in "${CMD_FILES[@]}" "$STORE/distill-process.md" "$STORE/distill-monitor.md"; do
   grep -qF "$PLACEHOLDER" "$t" 2>/dev/null && REPAIR=1
 done
 if [ "$TARGET" = "$INSTALLED" ]; then
@@ -185,7 +198,7 @@ if [ "$TARGET" = "$INSTALLED" ]; then
 fi
 
 if [ "$MODE" = auto ]; then
-  if awk '/^## /{on=($0 ~ /^## Auto-update/)} on && /^[ \t]*-[ \t]*enabled:[ \t]*true[ \t]*$/{found=1} END{exit !found}' \
+  if awk '{sub(/\r$/, "")} /^## /{on=($0 ~ /^## Auto-update/)} on && /^[ \t]*-[ \t]*enabled:[ \t]*true[ \t]*$/{found=1} END{exit !found}' \
        "$STORE/feedback/preferences.md" 2>/dev/null; then
     MODE=apply
   else
@@ -213,20 +226,25 @@ for f in distill.md distill-process.md distill-monitor.md bin/distill-update.sh;
   fi
 done
 
-mkdir -p "$(dirname "$CMD_FILE")" "$STORE/bin" "$STORE/data" "$STORE/inbox" || finish "BLOCKED $CHANNEL cannot create directories; nothing was changed"
+mkdir -p "$(dirname "${CMD_FILES[0]}")" "$STORE/bin" "$STORE/data" "$STORE/inbox" || finish "BLOCKED $CHANNEL cannot create directories; nothing was changed"
 # Temp names next to each target (same filesystem), unique per process so two
 # sessions updating one store cannot rename each other's files; then one checked
 # rename per file. The status line is only UPDATED if every rename succeeded.
 N=".aura-new.$$"
-cleanup_new() { rm -f "$CMD_FILE$N" "$STORE/distill-process.md$N" "$STORE/distill-monitor.md$N" "$STORE/bin/distill-update.sh$N" "$STORE/.version$N"; }
-cp "$WORK/stage/distill.md" "$CMD_FILE$N" \
+cleanup_new() {
+  local t; for t in "${CMD_FILES[@]}"; do rm -f "$t$N"; done
+  rm -f "$STORE/distill-process.md$N" "$STORE/distill-monitor.md$N" "$STORE/bin/distill-update.sh$N" "$STORE/.version$N"
+}
+cmd_ok=1
+for t in "${CMD_FILES[@]}"; do cp "$WORK/stage/distill.md" "$t$N" || cmd_ok=0; done
+[ "$cmd_ok" = 1 ] \
   && cp "$WORK/stage/distill-process.md" "$STORE/distill-process.md$N" \
   && cp "$WORK/stage/distill-monitor.md" "$STORE/distill-monitor.md$N" \
   && cp "$WORK/stage/bin/distill-update.sh" "$STORE/bin/distill-update.sh$N" \
   && printf '%s\n' "$TARGET" > "$STORE/.version$N" \
   || { cleanup_new; finish "BLOCKED $CHANNEL cannot write the new files; nothing was changed"; }
 chmod +x "$STORE/bin/distill-update.sh$N" 2>/dev/null || true
-for pair in "$CMD_FILE" "$STORE/distill-process.md" "$STORE/distill-monitor.md" "$STORE/bin/distill-update.sh" "$STORE/.version"; do
+for pair in "${CMD_FILES[@]}" "$STORE/distill-process.md" "$STORE/distill-monitor.md" "$STORE/bin/distill-update.sh" "$STORE/.version"; do
   if ! mv -f "$pair$N" "$pair" 2>/dev/null; then
     cleanup_new
     finish "BLOCKED $CHANNEL replacing $(basename "$pair") failed; the installation may be partially updated, run the installer to repair it"

@@ -147,7 +147,9 @@ DO-NOT-DELETE
     $channelBytes = [System.IO.File]::ReadAllBytes((Join-Path $betaAura '.channel'))
     Assert-True ($channelBytes.Length -eq 4 -and $channelBytes[0] -eq [byte][char]'b') '.channel is written without a BOM or newline (read by bash)'
     $cmdPath = [System.IO.File]::ReadAllText((Join-Path $betaAura '.command-path'))
-    Assert-True ($cmdPath.EndsWith('/distill.md') -and -not $cmdPath.Contains('\')) '.command-path is written with forward slashes for Git Bash'
+    Assert-True ($cmdPath.TrimEnd("`n").EndsWith('/distill.md') -and -not $cmdPath.Contains('\') -and -not $cmdPath.Contains("`r")) '.command-path is written with forward slashes and LF for Git Bash'
+    Invoke-ChannelInstall $beta 'beta'
+    Assert-True (([System.IO.File]::ReadAllText((Join-Path $betaAura '.command-path')) -split "`n" | Where-Object { $_ }).Count -eq 1) 're-installing does not duplicate the .command-path entry'
     Invoke-ChannelInstall $beta $null
     Assert-True ((Read-Trim (Join-Path $betaAura '.channel')) -eq 'beta') 're-install without DISTILL_CHANNEL keeps the persisted beta choice'
     Invoke-ChannelInstall $beta 'stable'

@@ -275,7 +275,16 @@ Remove-Item -LiteralPath $Stage -Recurse -Force -ErrorAction SilentlyContinue
 $NoBom = New-Object System.Text.UTF8Encoding($false)
 [System.IO.File]::WriteAllText($versionFile, $PayloadVersion, $NoBom)
 [System.IO.File]::WriteAllText($channelFile, $Channel, $NoBom)
-[System.IO.File]::WriteAllText((Join-Path $DistillDir '.command-path'), ((Join-Path $CmdDir 'distill.md') -replace '\\', '/'), $NoBom)
+# .command-path lists every profile's dispatcher that shares this store (one per line,
+# LF, no BOM); add ours once.
+$cmdPathFile = Join-Path $DistillDir '.command-path'
+$ourCmd = (Join-Path $CmdDir 'distill.md') -replace '\\', '/'
+$cmdLines = @()
+if (Test-Path $cmdPathFile) {
+    $cmdLines = @(([System.IO.File]::ReadAllText($cmdPathFile)).TrimStart([char]0xFEFF) -split "`r?`n" | Where-Object { $_ })
+}
+if ($cmdLines -notcontains $ourCmd) { $cmdLines += $ourCmd }
+[System.IO.File]::WriteAllText($cmdPathFile, (($cmdLines -join "`n") + "`n"), $NoBom)
 
 # Spine
 $spinePath = Join-Path $DistillDir 'SPINE.md'

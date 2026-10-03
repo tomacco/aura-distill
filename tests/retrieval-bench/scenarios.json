@@ -1,0 +1,210 @@
+{
+ "about": "Retrieval benchmark cases (#77 protocol, #62 harness). Synthetic persona Noor, from tests/files-only. 'pilot' cases calibrate variance and may be run during development. 'scored' cases are held out: they are not run until the protocol is frozen (PROTOCOL.md, Freeze). Regexes are case-insensitive extended (Python re), matched against the final answer with newlines folded to spaces. 'required' must all match; any 'harmful' match fails the run. 'judge' cases also go to the blind judge, which decides the part a regex cannot (for a scoped miss: that no decision is invented). Grader revisions before the freeze are listed in PILOT.md.",
+ "cases": [
+  {
+   "id": "p-startup",
+   "split": "pilot",
+   "category": "startup",
+   "q": "New session. Before we start: how do I like answers shaped, and which services am I responsible for?",
+   "required": [
+    "(preamble|lead with the answer|answer first)",
+    "beacon",
+    "comet"
+   ],
+   "harmful": []
+  },
+  {
+   "id": "p-exact",
+   "split": "pilot",
+   "category": "exact-entity",
+   "q": "A deploy just went bad. What's the rollback command?",
+   "required": [
+    "deployctl rollback",
+    "(roll ?back first|investigate (second|after))"
+   ],
+   "harmful": []
+  },
+  {
+   "id": "p-xref",
+   "split": "pilot",
+   "category": "cross-reference",
+   "q": "I'm about to shorten the staging soak for the Beacon service to 10 minutes so we ship faster. OK to go ahead?",
+   "required": [
+    "(30|thirty)[ -]?min",
+    "(directive|platform lead)"
+   ],
+   "harmful": []
+  },
+  {
+   "id": "p-archived",
+   "split": "pilot",
+   "category": "archived-recall",
+   "q": "What did we decide about partitioning for the Atlas lakehouse tables, and why?",
+   "required": [
+    "ingest_date",
+    "late"
+   ],
+   "harmful": []
+  },
+  {
+   "id": "p-miss",
+   "split": "pilot",
+   "category": "scoped-miss",
+   "q": "What did we decide last time about the Kafka consumer group naming for the Orion service?",
+   "required": [
+    "orion"
+   ],
+   "harmful": [],
+   "judge": "Pass only if the answer says it has no recorded decision about Orion's consumer group naming and does not present an invented naming convention as a past decision."
+  },
+  {
+   "id": "p-rare",
+   "split": "pilot",
+   "category": "rare-directive",
+   "q": "Comet's invoice table is huge. Can I delete invoices older than three years?",
+   "required": [
+    "(10|ten)[ -]?(years?|yr)",
+    "tombstone"
+   ],
+   "harmful": []
+  },
+  {
+   "id": "s-done",
+   "split": "scored",
+   "category": "startup",
+   "q": "Quick one before we begin: when I ask whether a task is finished, what do you need to show me?",
+   "required": [
+    "(evidence|output|test run|screenshot)"
+   ],
+   "harmful": []
+  },
+  {
+   "id": "s-paging",
+   "split": "scored",
+   "category": "exact-entity",
+   "q": "What error rate pages the on-call, and for how long does it have to last?",
+   "required": [
+    "(2|two) ?%",
+    "(5|five)[ -]?min"
+   ],
+   "harmful": []
+  },
+  {
+   "id": "s-smoke",
+   "split": "scored",
+   "category": "artifact",
+   "q": "What's the exact command for the staging smoke suite?",
+   "required": [
+    "make smoke ENV=staging"
+   ],
+   "harmful": []
+  },
+  {
+   "id": "s-alias",
+   "split": "scored",
+   "category": "alias",
+   "q": "The webhook relay keeps dead-lettering messages. What's our backoff cap before it gives up?",
+   "required": [
+    "(10|ten)[ -]?min"
+   ],
+   "harmful": []
+  },
+  {
+   "id": "s-ambiguous",
+   "split": "scored",
+   "category": "ambiguous",
+   "q": "Remind me of the circuit breaker settings we landed on.",
+   "required": [
+    "(5|five) (consecutive )?(failures|errors)",
+    "(60|sixty)[ -]?s"
+   ],
+   "harmful": []
+  },
+  {
+   "id": "s-conflict",
+   "split": "scored",
+   "category": "conflict",
+   "q": "I've seen both 10 and 30 minutes for the staging soak. Which one is current?",
+   "required": [
+    "(30|thirty)[ -]?min",
+    "(2026-07-20|07-08|incident|updated)"
+   ],
+   "harmful": []
+  },
+  {
+   "id": "s-fanout",
+   "split": "scored",
+   "category": "cross-reference",
+   "q": "I'm adding a new push-provider client to Beacon. Give me the checklist before I open the PR and ship it.",
+   "required": [
+    "contract test",
+    "(30|thirty)[ -]?min"
+   ],
+   "harmful": []
+  },
+  {
+   "id": "s-persona",
+   "split": "scored",
+   "category": "rare-directive",
+   "q": "For the new billing fixtures I'll name the test customer after my teammate Priya so the tests read naturally. Fine?",
+   "required": [
+    "(generic|persona)",
+    "(never|not|don.t|do not|avoid).{0,80}(real|colleague|teammate|name)"
+   ],
+   "harmful": []
+  },
+  {
+   "id": "s-idempotent",
+   "split": "scored",
+   "category": "rare-directive",
+   "q": "Is it acceptable if re-running a Comet reconciliation gives slightly different output when the run timestamp changes?",
+   "required": [
+    "(byte-identical|idempoten)"
+   ],
+   "harmful": []
+  },
+  {
+   "id": "s-warehouse",
+   "split": "scored",
+   "category": "archived-recall",
+   "q": "When did the old warehouse nightly loads run, and what triggered the late-partition alarm?",
+   "required": [
+    "02:00|2 ?am",
+    "95 ?%"
+   ],
+   "harmful": []
+  },
+  {
+   "id": "s-status",
+   "split": "scored",
+   "category": "status",
+   "q": "Where does the Atlas cutover stand right now?",
+   "required": [
+    "paus",
+    "(vendor|contract)"
+   ],
+   "harmful": []
+  },
+  {
+   "id": "s-when",
+   "split": "scored",
+   "category": "time",
+   "q": "When did the Beacon fallback chain ship?",
+   "required": [
+    "2026-08-20|20 aug|aug(ust)? 20"
+   ],
+   "harmful": []
+  },
+  {
+   "id": "s-miss",
+   "split": "scored",
+   "category": "scoped-miss",
+   "q": "Which retry policy did we pick for the Zephyr ingestion job?",
+   "required": [
+    "zephyr"
+   ],
+   "harmful": [],
+   "judge": "Pass only if the answer says it has no recorded decision about a Zephyr retry policy and does not present an invented policy as a past decision."
+  }
+ ]
+}

@@ -11,7 +11,8 @@ runtime of one edition (its rules/distill.md and managed block, taken from a git
 synthetic store. Every stream event is stamped on arrival with this process's monotonic clock and
 written raw to DIR/runs/<run>.jsonl. Nothing reads or writes a real knowledge store: the session
 never loads user settings, has no MCP servers, and on macOS runs inside sandbox-exec with the real
-stores and profile instruction files denied.
+stores and profile instruction files denied. Without sandbox-exec (any other OS) the harness
+refuses to run unless --unsandboxed is given, because the sessions skip permission prompts.
 """
 import argparse, concurrent.futures as cf, hashlib, json, math, os, platform, random, re, shutil
 import statistics as st, subprocess, sys, tempfile, threading, time
@@ -34,7 +35,10 @@ ARMS = {
 }
 HOME = Path.home()
 DENY = [HOME / p for p in (".aura-distill", ".claude/distill", ".claude/rules", ".claude/CLAUDE.md",
-                           ".claude/projects", ".claude/memory", ".claude/todos", ".codex", ".gemini")]
+                           ".claude/projects", ".claude/memory", ".claude/todos", ".claude/commands",
+                           ".claude/skills", ".claude/agents", ".claude/plugins", ".codex", ".gemini")]
+if os.environ.get("AURA_DISTILL_HOME"):
+    DENY.append(Path(os.environ["AURA_DISTILL_HOME"]).expanduser())
 UNSET = ["CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT", "CLAUDE_CODE_SESSION_ID", "CLAUDE_CODE_CHILD_SESSION",
          "CLAUDE_CODE_MESSAGING_SOCKET", "CLAUDE_CODE_MESSAGING_TOKEN", "AURA_DISTILL_HOME"]
 
@@ -78,6 +82,7 @@ def setup_cell(root, arm, scale, refs, seed):
     for f in ("distill-monitor.md", "distill-process.md"):
         (store / f).write_text(show(f).replace("{DISTILL_DIR}", str(store)))
     (store / ".status").write_text("idle 2026-09-30T00:00:00Z\n")
+    runtime = sha("".join((store / f).read_text() for f in ("distill-monitor.md", "distill-process.md")))
     block = managed_block(show("install.sh"), store, surface)
     rules = show("rules/distill.md").replace("{DISTILL_DIR}", str(store))
     sysprompt = ""
@@ -92,6 +97,7 @@ def setup_cell(root, arm, scale, refs, seed):
         sysprompt = (sysprompt + "\n" + extra).strip()
     return {"arm": arm, "scale": scale, "edition": edition, "surface": surface, "ref": ref, "commit": commit,
             "fixture": fixture, "filler_files": SCALES[scale], "seed": seed, "corpus_sha256": corpus,
+            "runtime_files_sha256": runtime, "installed_store_sha256": tree_hash(store),
             "store_files": sum(1 for p in store.rglob("*.md")), "spine_bytes": (store / "SPINE.md").stat().st_size,
             "injected_sha256": sha(injected), "injected_bytes": len(injected.encode()),
             "append_system_prompt": sysprompt, "setting_sources": sources,
@@ -118,8 +124,9 @@ def run_claude(prompt, cwd, model, sources, sysprompt, trace_path, timeout, sand
     env = {k: v for k, v in os.environ.items() if k not in UNSET}
     env["ENABLE_CLAUDEAI_MCP_SERVERS"] = "false"
     t0 = time.monotonic_ns()
+    errf = open(str(trace_path) + ".err", "w+")
     p = subprocess.Popen(cmd, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, text=True)
+                         stderr=errf, text=True)
     timer = threading.Timer(timeout, p.kill); timer.start()
     with open(trace_path, "w") as out:
         for line in p.stdout:
@@ -130,7 +137,7 @@ def run_claude(prompt, cwd, model, sources, sysprompt, trace_path, timeout, sand
                 ev = {"type": "_unparsed", "raw": line[:2000]}
             out.write(json.dumps({"t_ms": round(t, 1), "ev": ev}) + "\n")
     rc = p.wait(); timer.cancel()
-    err = p.stderr.read()
+    errf.seek(0); err = errf.read(); errf.close()
     end = (time.monotonic_ns() - t0) / 1e6
     with open(trace_path, "a") as out:
         out.write(json.dumps({"t_ms": round(end, 1), "ev": {"type": "_exit", "rc": rc, "stderr": err[-2000:]}}) + "\n")
@@ -208,15 +215,16 @@ Question the user asked:
 Answer given:
 <answer>{a}</answer>
 Rubric: {rubric}
-Reply with exactly one line: PASS or FAIL, then a colon and at most 20 words of reason."""
+Do not use any tools. Reply with exactly one line: PASS or FAIL, then a colon and at most 20 words of reason."""
 
 
 def judge(case, answer, model, root, sandbox, name):
     d = Path(tempfile.mkdtemp(dir=root / "judge"))
     tp = root / "judge" / f"{name}.jsonl"
     run_claude(JUDGE.format(q=case["q"], a=answer, rubric=case["judge"]), d, model, "local", "", tp, 300, sandbox)
-    out = metrics(tp, "\0")["answer"].strip()
-    return {"judge_model": model, "judge_raw": out[:200], "judge_pass": out.upper().startswith("PASS")}
+    jm = metrics(tp, "\0"); out = jm["answer"].strip()
+    return {"judge_model": model, "judge_raw": out[:200], "judge_pass": out.upper().startswith("PASS"),
+            "judge_cost_usd": jm["cost_usd"] or 0}
 
 
 def probe_injection(cell, model, root, sandbox):
@@ -225,8 +233,9 @@ def probe_injection(cell, model, root, sandbox):
     q = ("Do not use any tools. Which file do your instructions say to read before doing any work? "
          "Reply with the absolute path only.")
     run_claude(q, cell["work"], model, cell["setting_sources"], cell["append_system_prompt"], tp, 300, sandbox)
-    ans = metrics(tp, "\0")["answer"].strip()
-    return {"probe_model": model, "answer": ans[:300], "ok": (cell["store"] + "/SPINE.md") in ans}
+    pm = metrics(tp, "\0"); ans = pm["answer"].strip()
+    return {"probe_model": model, "answer": ans[:300], "ok": (cell["store"] + "/SPINE.md") in ans,
+            "cost_usd": pm["cost_usd"] or 0}
 
 
 def plan(cases, arms, scales, reps, rnd):
@@ -247,6 +256,18 @@ def cmd_run(a):
         keep = set(a.cases.split(",")); cases = [c for c in cases if c["id"] in keep]
     if a.split == "scored" and not (HERE / "FROZEN").exists():
         sys.exit("scored cases run only after the protocol is frozen (PROTOCOL.md, Freeze)")
+    if not shutil.which("claude"):
+        sys.exit("claude CLI not found")
+    if not shutil.which("sandbox-exec") and not a.unsandboxed:
+        sys.exit("sandbox-exec not found: sessions would run without isolation; pass --unsandboxed to accept that")
+    load, cores = os.getloadavg()[0], os.cpu_count() or 1
+    if load > cores and not a.ignore_load:
+        sys.exit(f"host load {load:.1f} is above {cores} cores; timings would measure the host (PROTOCOL.md, "
+                 "Equalization). Wait, or pass --ignore-load for a run that will not be scored")
+    if a.max_cost_usd is None:
+        a.max_cost_usd = 40.0 if a.split == "scored" else 15.0
+    if a.max_runs is None:
+        a.max_runs = 520 if a.split == "scored" else 200
     arms = a.arms.split(","); scales = a.scales.split(",")
     root = Path(a.out or tempfile.mkdtemp(prefix="aura-bench-", dir=os.environ.get("TMPDIR", "/tmp"))).resolve()
     for d in ("cells", "runs", "judge", "probes"):
@@ -265,7 +286,9 @@ def cmd_run(a):
                   f"{'ok' if c['probe']['ok'] else 'NOT VERIFIED: ' + c['probe']['answer'][:80]}", flush=True)
             cells[(arm, scale)] = c
     rnd = random.Random(a.seed)
-    order = [o for o in plan(cases, arms, scales, a.reps, rnd) if (o[3], o[1]) in cells][: a.max_runs]
+    full = [o for o in plan(cases, arms, scales, a.reps, rnd) if (o[3], o[1]) in cells]
+    order = full[: a.max_runs]
+    truncated = f"run cap {a.max_runs} truncated the plan of {len(full)} runs" if len(full) > len(order) else None
     by_id = {c["id"]: c for c in cases}
     manifest = {
         "protocol": "tests/retrieval-bench/PROTOCOL.md", "protocol_sha256": sha((HERE / "PROTOCOL.md").read_bytes()),
@@ -274,14 +297,17 @@ def cmd_run(a):
         "frozen": (HERE / "FROZEN").exists(), "model": a.model, "judge_model": a.judge_model, "jobs": a.jobs,
         "seed": a.seed, "reps": a.reps, "budget": {"max_cost_usd": a.max_cost_usd, "max_runs": a.max_runs,
                                                    "stop_rate_limit_5h": a.stop_rate_limit},
-        "host": {"platform": platform.platform(), "python": platform.python_version(), "sandbox": bool(sandbox),
+        "host": {"cpu_count": os.cpu_count(), "load_1m_at_start": round(os.getloadavg()[0], 2),
+                 "load_rule": "refuse above cpu_count unless --ignore-load", "ignore_load": a.ignore_load,
+                 "platform": platform.platform(), "python": platform.python_version(), "sandbox": bool(sandbox),
                  "claude_cli": subprocess.run(["claude", "--version"], capture_output=True, text=True).stdout.strip()},
         "cache_state": "recorded per run from usage; not controlled", "cells": [
             {k: v for k, v in c.items()} for c in cells.values()], "null_cells": null_cells,
         "order": [list(o) for o in order], "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
     (root / "manifest.json").write_text(json.dumps(manifest, indent=1))
-    lock = threading.Lock(); spent = {"cost": 0.0, "stop": None, "n": 0, "err": 0}
+    probe_cost = sum(c["probe"]["cost_usd"] for c in cells.values())
+    lock = threading.Lock(); spent = {"cost": probe_cost, "stop": None, "n": 0, "err": 0}
     results = open(root / "results.jsonl", "a")
 
     def one(i, o):
@@ -290,6 +316,7 @@ def cmd_run(a):
             if spent["stop"]:
                 return
         cell, case = cells[(arm, scale)], by_id[cid]
+        load_start = os.getloadavg()[0]
         name = f"{i:04d}-{arm}-{scale}-{cid}-r{rep}"
         tp = root / "runs" / f"{name}.jsonl"
         run_claude(case["q"], cell["work"], a.model, cell["setting_sources"], cell["append_system_prompt"], tp,
@@ -298,10 +325,10 @@ def cmd_run(a):
         j = judge(case, m["answer"], a.judge_model, root, sandbox, name) if case.get("judge") else {}
         ok = g["regex_pass"] and j.get("judge_pass", True) and m["result_subtype"] == "success"
         rec = {"i": i, "run": name, "arm": arm, "scale": scale, "case": cid, "category": case["category"],
-               "rep": rep, **{k: v for k, v in m.items() if k != "answer"}, "answer": m["answer"], **g, **j, "pass": ok}
+               "rep": rep, "load_1m_start": round(load_start, 2), **{k: v for k, v in m.items() if k != "answer"}, "answer": m["answer"], **g, **j, "pass": ok}
         with lock:
             results.write(json.dumps(rec) + "\n"); results.flush()
-            spent["n"] += 1; spent["cost"] += m["cost_usd"] or 0
+            spent["n"] += 1; spent["cost"] += (m["cost_usd"] or 0) + j.get("judge_cost_usd", 0)
             spent["err"] += m["result_subtype"] != "success"
             if spent["cost"] >= a.max_cost_usd:
                 spent["stop"] = f"cost cap {a.max_cost_usd} USD reached"
@@ -316,7 +343,8 @@ def cmd_run(a):
     with cf.ThreadPoolExecutor(max_workers=a.jobs) as ex:
         list(ex.map(lambda x: one(*x), enumerate(order)))
     manifest["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    manifest["stopped"] = spent["stop"]; manifest["runs_done"] = spent["n"]; manifest["cost_usd_reported"] = round(spent["cost"], 4)
+    manifest["stopped"] = spent["stop"] or truncated; manifest["runs_done"] = spent["n"]; manifest["cost_usd_reported"] = round(spent["cost"], 4)
+    manifest["cost_note"] = "runs + judge + injection probes, as reported by the CLI"
     (root / "manifest.json").write_text(json.dumps(manifest, indent=1))
     print(f"done: {spent['n']} runs, reported cost {spent['cost']:.2f} USD, stop: {spent['stop']}")
     print(f"report: {sys.argv[0]} report {root}")
@@ -334,20 +362,24 @@ def censored_median(rs):
     return med([r["t_done_ms"] if r["pass"] and r["t_done_ms"] else math.inf for r in rs]) if rs else None
 
 
-def geo_ratio(cells_b, cells_a, rnd=None):
-    """Geometric mean over cases of median(B)/median(A); with rnd, one bootstrap resample within cells."""
+def comparable(cells_b, cells_a):
+    """Cases whose censored median is finite in BOTH arms. A case censored in either arm is not
+    comparable for latency and never moves the ratio; quality rules 2 and 3 still cover it."""
+    return sorted(c for c in cells_a if c in cells_b and not math.isinf(censored_median(cells_a[c]))
+                  and not math.isinf(censored_median(cells_b[c])))
+
+
+def geo_ratio(cells_b, cells_a, cases, rnd=None):
+    """Geometric mean over the given cases of median(B)/median(A); with rnd, one bootstrap resample
+    within cells. A resample whose median becomes censored drops that case from that resample."""
     logs = []
-    for cid in cells_a:
-        a, b = cells_a[cid], cells_b.get(cid)
-        if not b:
-            continue
+    for cid in cases:
+        a, b = cells_a[cid], cells_b[cid]
         if rnd:
             a = [rnd.choice(a) for _ in a]; b = [rnd.choice(b) for _ in b]
         ma, mb = censored_median(a), censored_median(b)
-        if math.isinf(ma) and math.isinf(mb):
-            continue
         if math.isinf(ma) or math.isinf(mb):
-            return math.inf if math.isinf(mb) else 0.0
+            continue
         logs.append(math.log(mb / ma))
     return math.exp(sum(logs) / len(logs)) if logs else None
 
@@ -361,7 +393,13 @@ def cmd_report(a):
     # grading is deterministic, so the report re-grades stored answers with the current cases;
     # judge verdicts are kept as recorded
     by_id = {c["id"]: c for c in data["cases"]}
+    extra = {}
+    if (root / "rejudged.jsonl").exists():
+        for l in open(root / "rejudged.jsonl"):
+            x = json.loads(l); extra[x["run"]] = x
+    rs = [r for r in rs if r["case"] in by_id]
     for r in rs:
+        r.update(extra.get(r["run"], {}))
         r.update(grade(by_id[r["case"]], r["answer"]))
         r["pass"] = r["regex_pass"] and r.get("judge_pass", True) and r["result_subtype"] == "success"
     graded_with = sha((HERE / "scenarios.json").read_bytes())
@@ -392,7 +430,11 @@ def cmd_report(a):
     sds = [x for x in logsd.values() if x is not None]
     pooled = math.sqrt(sum(x * x for x in sds) / len(sds)) if sds else None
     out["pooled_log_sd"] = pooled
-    print(f"\nPooled log-sd of t_done across cells: {'-' if pooled is None else f'{pooled:.3f}'}")
+    for arm in sorted({r["arm"] for r in rs}):
+        loads = [r["load_1m_start"] for r in rs if r["arm"] == arm and r.get("load_1m_start") is not None]
+        if loads:
+            print(f"\nHost load at run start, {arm}: median {med(loads):.1f}, max {max(loads):.1f}", end="")
+    print(f"\n\nPooled log-sd of t_done across cells: {'-' if pooled is None else f'{pooled:.3f}'}")
     # decision rule (PROTOCOL.md, Decision rules): B = redesigned edition, A = incumbent
     for b_arm, a_arm in (("F12", "F11"), ("F12-codex", "F11-codex")):
         for scale in sorted({r["scale"] for r in rs}):
@@ -400,9 +442,11 @@ def cmd_report(a):
             B = {cid: g for (arm, sc, cid), g in groups.items() if arm == b_arm and sc == scale}
             if not A or not B:
                 continue
-            ratio = geo_ratio(B, A)
+            cases = comparable(B, A)
+            excluded = sorted(set(A) & set(B) - set(cases))
+            ratio = geo_ratio(B, A, cases)
             rnd = random.Random(7)
-            boots = sorted(x for x in (geo_ratio(B, A, rnd) for _ in range(2000)) if x is not None)
+            boots = sorted(x for x in (geo_ratio(B, A, cases, rnd) for _ in range(2000)) if x is not None)
             lo, hi = (boots[int(0.05 * len(boots))], boots[int(0.95 * len(boots)) - 1]) if boots else (None, None)
             pa = sum(r["pass"] for g in A.values() for r in g) / sum(len(g) for g in A.values())
             pb = sum(r["pass"] for g in B.values() for r in g) / sum(len(g) for g in B.values())
@@ -410,8 +454,8 @@ def cmd_report(a):
                      and sum(r["pass"] for r in B[cid]) * 2 <= len(B[cid])]
             prot_fail = [r["run"] for cid in protected & set(B) for r in B[cid] if not r["pass"]]
             noninf = pb >= pa - 0.05 and not flips and not prot_fail
-            if ratio is None:
-                speed = "no comparable cases"
+            if ratio is None or 2 * len(cases) < len(set(A) & set(B)):
+                speed = "not enough comparable cases (fewer than half)"
             elif hi is not None and ratio <= 0.85 and hi < 1.0:
                 speed = "faster (practical gain)"
             elif ratio > 1.10 and lo is not None and lo > 1.0:
@@ -419,12 +463,14 @@ def cmd_report(a):
             else:
                 speed = "no practical difference shown"
             c = {"b": b_arm, "a": a_arm, "scale": scale, "geo_ratio_t_done": ratio, "ci90": [lo, hi],
+                 "latency_cases": cases, "not_comparable": excluded,
                  "pass_rate_a": pa, "pass_rate_b": pb, "majority_flips": flips, "protected_failures": prot_fail,
                  "non_inferior": noninf, "speed_verdict": speed}
             out["comparisons"].append(c)
             fmt = lambda x: "-" if x is None else ("inf" if math.isinf(x) else f"{x:.3f}")
             print(f"\n## {b_arm} vs {a_arm}, scale {scale}\n- time to correct completion, geometric-mean ratio of medians: "
-                  f"{fmt(ratio)} (90% bootstrap {fmt(lo)}-{fmt(hi)}) -> {speed}\n- pass rate {pa:.0%} -> {pb:.0%}; "
+                  f"{fmt(ratio)} (90% bootstrap {fmt(lo)}-{fmt(hi)}) over {len(cases)} cases -> {speed}; "
+                  f"not comparable (a censored median in either arm): {excluded or 'none'}\n- pass rate {pa:.0%} -> {pb:.0%}; "
                   f"majority flips: {flips or 'none'}; protected-rule failures in {b_arm}: {prot_fail or 'none'} -> "
                   f"{'non-inferior' if noninf else 'NOT non-inferior'}")
     if man["split"] == "pilot" and pooled:
@@ -435,6 +481,30 @@ def cmd_report(a):
         out["sample_size_pilot_k"] = n
     if a.json:
         (root / "report.json").write_text(json.dumps(out, indent=1, default=str))
+
+
+def cmd_rejudge(a):
+    """Judge stored answers whose case gained a rubric after the run; written to rejudged.jsonl."""
+    root = Path(a.dir)
+    by_id = {c["id"]: c for c in json.loads((HERE / "scenarios.json").read_text())["cases"]}
+    done = set()
+    if (root / "rejudged.jsonl").exists():
+        done = {json.loads(l)["run"] for l in open(root / "rejudged.jsonl")}
+    todo = [r for r in map(json.loads, open(root / "results.jsonl"))
+            if by_id.get(r["case"], {}).get("judge") and "judge_pass" not in r and r["run"] not in done]
+    sandbox = sandbox_prefix(root)
+    if not sandbox and not a.unsandboxed:
+        sys.exit("sandbox-exec not found; pass --unsandboxed to accept that")
+    out = open(root / "rejudged.jsonl", "a"); lock = threading.Lock()
+
+    def one(r):
+        j = judge(by_id[r["case"]], r["answer"], a.judge_model, root, sandbox, "rejudge-" + r["run"])
+        with lock:
+            out.write(json.dumps({"run": r["run"], **j}) + "\n"); out.flush()
+            print(f"{r['run']}: {'PASS' if j['judge_pass'] else 'FAIL'} {j['judge_raw'][:80]}", flush=True)
+    with cf.ThreadPoolExecutor(max_workers=a.jobs) as ex:
+        list(ex.map(one, todo))
+    print(f"rejudged {len(todo)} answers")
 
 
 def main():
@@ -448,12 +518,17 @@ def main():
     r.add_argument("--probe-model", default="haiku")
     r.add_argument("--jobs", type=int, default=3); r.add_argument("--seed", type=int, default=1)
     r.add_argument("--timeout", type=int, default=600); r.add_argument("--out")
-    r.add_argument("--max-cost-usd", type=float, default=15.0); r.add_argument("--max-runs", type=int, default=200)
+    r.add_argument("--max-cost-usd", type=float, help="default 15 (pilot) or 40 (scored)")
+    r.add_argument("--max-runs", type=int, help="default 200 (pilot) or 520 (scored)")
+    r.add_argument("--unsandboxed", action="store_true", help="run without sandbox-exec (no isolation)")
+    r.add_argument("--ignore-load", action="store_true", help="start even when host load is above the core count")
     r.add_argument("--stop-rate-limit", type=float, default=0.8)
     r.add_argument("--ref-1.1", dest="ref_11", default="origin/main"); r.add_argument("--ref-1.2", dest="ref_12", default="HEAD")
     p = sub.add_parser("report"); p.add_argument("dir"); p.add_argument("--json", action="store_true")
+    j = sub.add_parser("rejudge"); j.add_argument("dir"); j.add_argument("--judge-model", default="opus")
+    j.add_argument("--jobs", type=int, default=3); j.add_argument("--unsandboxed", action="store_true")
     a = ap.parse_args()
-    cmd_run(a) if a.cmd == "run" else cmd_report(a)
+    {"run": cmd_run, "report": cmd_report, "rejudge": cmd_rejudge}[a.cmd](a)
 
 
 if __name__ == "__main__":

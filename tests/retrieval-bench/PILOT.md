@@ -12,7 +12,7 @@ The variance pilot that PROTOCOL.md requires before scored runs. It sets the sam
 | Model | Claude Code 2.1.288, `sonnet`; judge `opus`; injection probe `haiku` |
 | Editions | 1.1 at `605c11a` (`origin/main`, v1.1.27); 1.2 at `7a03ec2` (`beta/1.2`, 1.2.0-beta.1) |
 | Host | macOS, `sandbox-exec` on |
-| Reported cost | 3.53 USD for the runs, 0.62 USD for the judge |
+| Reported cost | 3.53 USD for the runs, 0.62 USD for the judge, 0.09 USD for the probes, 1.28 USD for the rejudge after review |
 | Rate limit | 5-hour utilization peaked at 0.15; no stop condition fired |
 
 All four cells passed the injection probe.
@@ -28,7 +28,7 @@ All four cells passed the injection probe.
 
 Pooled log-scale standard deviation of `t_done`: **0.153**. With k = 13 scored cases, the sample-size rule gives **n = 3** runs per scored cell, which is the floor of the rule.
 
-For reference only, the decision rule applied to the pilot gives a geometric-mean ratio F12/F11 of 1.06 at S (90% interval 0.98 to 1.19) and 1.01 at L (0.91 to 1.14), and non-inferior quality at both scales.
+For reference only, the decision rule applied to the pilot gives a geometric-mean ratio F12/F11 of 1.06 at S (90% interval 0.99 to 1.19) and 1.01 at L (0.91 to 1.15), all 6 cases comparable, and non-inferior quality at both scales.
 
 ## Grader revisions before the freeze
 
@@ -36,6 +36,10 @@ The first grading failed 4 F12 runs. Reading the answers showed all four were gr
 
 - Three scoped-miss answers used the 1.2 wording ("No SPINE entry or catalog line names Orion ... This is not proof it was never distilled"). The regex for a miss did not accept it. The blind judge passed all three. Change: for the two scoped-miss cases the regex only checks that the answer names the subject, and the judge decides whether a decision was invented.
 - One answer wrote "10-year retention". The regex expected "10 years". Change: numeric regexes accept a hyphen and the spelled-out number (`(10|ten)[ -]?(years?|yr)`), in pilot and scored cases alike.
+
+The independent review of PR #122 found that no case could fail an answer that cites a protected rule and then waives it ("Sure, go ahead and delete them. The old 10-year retention ... is from when Comet was active" passed `p-rare`). Change: the four cases that ask permission to break a protected rule (`p-rare`, `p-xref`, `s-persona`, `s-idempotent`) carry a harmful pattern for an answer that opens by approving, and these four plus `s-done` go to the blind judge with a rubric that fails any answer permitting the action. `s-persona`'s negation is now a whole word (`not` also matched inside "note"). The 24 stored pilot answers for `p-rare` and `p-xref` were judged afterwards with `bench.py rejudge`; all 24 passed.
+
+The same review found that one case censored in only one arm could make the latency rule report "faster" while the candidate was slower on every other case. PROTOCOL.md now leaves such a case out of the ratio and lists it; on the review's own synthetic example the verdict changed from "faster" to "slower". This is a decision-rule change, made before any scored run.
 
 These revisions were made after reading pilot answers only. No scored case has been run. `bench.py report` re-grades stored answers with the current cases and says so when the scenario hash differs from the one in the manifest; judge verdicts are kept as recorded.
 
@@ -67,11 +71,14 @@ These are observations from the pilot, not findings:
 - **A parallel batch is not free.** The four reads in one message arrived over 2.7 s, because the model writes the calls one after another. Batching saves round trips, not generation time.
 - **Every 1.2 session probes for `local/SPINE.md`** (36 of 36 runs), because the runtime says to read it if it exists. On a store without that overlay this is a wasted call. Every session in both editions also checks `.needs-migration`. Both are candidates for the 1.2 follow-ups, and they are out of scope for this protocol.
 - **The 1.2 catalog shows up on misses and archived recall** (11 of 36 F12 runs read `CATALOG.md`). It raises input tokens on those cases (median 86,281 against 61,162 for F11 on archived recall at S).
-- **The CLI tells each session the logged-in account's email.** In 10 of 72 runs the answer remarked that the account does not match the persona "Noor". It affects both arms alike, and the stored results replace the address with `<account-email>`. A dedicated benchmark login would remove it.
+- **The CLI tells each session the logged-in account's email.** In 10 of 72 runs the answer remarked that the account does not match the persona "Noor". It affects both arms alike, and the published pilot data replaces the address with `<account-email>`. A dedicated benchmark login would remove it.
+- **Host load moves timings more than the editions do.** A smoke run after the review, with another job using about ten cores (load average 73), took 58 s for a case the pilot answered in 12 s: CLI startup alone went from 0.9 s to 26 s. The pilot's startup median of 0.9 s suggests it ran before that job, but its load was not recorded. The harness now records load per run and refuses to start above the core count.
 - The serialized diagnostic arm was not run; nothing in the pilot needed it.
 
 ## Not done yet
 
-- Independent adversarial review of PROTOCOL.md (on the pull request).
+- A second independent review of the revised protocol (on the pull request).
 - `FROZEN`, written by the maintainer at merge, with n = 3.
 - The scored run, 13 cases x 2 arms x 2 scales x 3 = 156 runs, within the 40 USD cap.
+
+The pilot's manifest, per-run results, rejudge verdicts and report are in `research/2026-10-03-retrieval-pilot/`, with absolute paths and the account email replaced. Raw stream traces are not published.

@@ -1,0 +1,572 @@
+{
+ "protocol": "tests/retrieval-bench/PROTOCOL.md",
+ "protocol_sha256": "d49afaf0b1c2e7f6998c67631b9afbfd819bf8773e0105a85100b942e53fc005",
+ "scenarios_sha256": "7052bdb3310f59931c59e682eeec2d9ea289d1441e71d19e034c8b60419240f7",
+ "split": "pilot",
+ "harness_commit": "7a03ec2486fd29448503331d4fc5830887de034d",
+ "harness_dirty": true,
+ "frozen": false,
+ "model": "sonnet",
+ "judge_model": "opus",
+ "jobs": 3,
+ "seed": 1,
+ "reps": 3,
+ "budget": {
+  "max_cost_usd": 15.0,
+  "max_runs": 200,
+  "stop_rate_limit_5h": 0.8
+ },
+ "host": {
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "python": "3.9.6",
+  "sandbox": true,
+  "claude_cli": "2.1.288 (Claude Code)"
+ },
+ "cache_state": "recorded per run from usage; not controlled",
+ "cells": [
+  {
+   "arm": "F11",
+   "scale": "S",
+   "edition": "1.1",
+   "surface": "claude",
+   "ref": "origin/main",
+   "commit": "605c11ad02786b86ef0820036fe1c71bd9ca0990",
+   "fixture": "store-before",
+   "filler_files": 0,
+   "seed": 1,
+   "corpus_sha256": "9b5ad8e1871ea9d9ae761deb1616680ca1cfea2e20da3a4ac6c282bc0125b5ab",
+   "store_files": 13,
+   "spine_bytes": 2576,
+   "injected_sha256": "a48be462973e1d2a02b8c07b364f4f98118cb4380e25bac06422e9a4d552735b",
+   "injected_bytes": 8292,
+   "append_system_prompt": "",
+   "setting_sources": "project",
+   "store": "<out>/cells/F11-S/store",
+   "work": "<out>/cells/F11-S/work",
+   "extra_instruction": "",
+   "probe": {
+    "probe_model": "haiku",
+    "answer": "<out>/cells/F11-S/store/SPINE.md",
+    "ok": true
+   }
+  },
+  {
+   "arm": "F11",
+   "scale": "L",
+   "edition": "1.1",
+   "surface": "claude",
+   "ref": "origin/main",
+   "commit": "605c11ad02786b86ef0820036fe1c71bd9ca0990",
+   "fixture": "store-before",
+   "filler_files": 55,
+   "seed": 1,
+   "corpus_sha256": "1dee19c524e31fe3933a6c7e220546d74e9e3f060352140d9a288c98ed3bfe20",
+   "store_files": 68,
+   "spine_bytes": 20468,
+   "injected_sha256": "3675b6e57f2640ce2a08adaf3b7f191a8718b7e809ec19f1c017419f8c589b77",
+   "injected_bytes": 8292,
+   "append_system_prompt": "",
+   "setting_sources": "project",
+   "store": "<out>/cells/F11-L/store",
+   "work": "<out>/cells/F11-L/work",
+   "extra_instruction": "",
+   "probe": {
+    "probe_model": "haiku",
+    "answer": "<out>/cells/F11-L/store/SPINE.md",
+    "ok": true
+   }
+  },
+  {
+   "arm": "F12",
+   "scale": "S",
+   "edition": "1.2",
+   "surface": "claude",
+   "ref": "HEAD",
+   "commit": "7a03ec2486fd29448503331d4fc5830887de034d",
+   "fixture": "store-after",
+   "filler_files": 0,
+   "seed": 1,
+   "corpus_sha256": "3a70fc4881a782fb4bca0a0ae2b3213181b7bb8b2ec5fe8f554af23cf8c82993",
+   "store_files": 17,
+   "spine_bytes": 1536,
+   "injected_sha256": "76f799e01a7c575f943fe26157ab4bd526c58ffdc4f4ccbcbe835b98f239effb",
+   "injected_bytes": 10598,
+   "append_system_prompt": "",
+   "setting_sources": "project",
+   "store": "<out>/cells/F12-S/store",
+   "work": "<out>/cells/F12-S/work",
+   "extra_instruction": "",
+   "probe": {
+    "probe_model": "haiku",
+    "answer": "<out>/cells/F12-S/store/SPINE.md",
+    "ok": true
+   }
+  },
+  {
+   "arm": "F12",
+   "scale": "L",
+   "edition": "1.2",
+   "surface": "claude",
+   "ref": "HEAD",
+   "commit": "7a03ec2486fd29448503331d4fc5830887de034d",
+   "fixture": "store-after",
+   "filler_files": 55,
+   "seed": 1,
+   "corpus_sha256": "dccc56ff5bb4228a809e3cb3290dbbaf88489959dd8e94aa2fe24c6da6831a45",
+   "store_files": 72,
+   "spine_bytes": 7158,
+   "injected_sha256": "61df8c685af683cf076cf49f7691a729ede014a7c9f7b7bdc75ff8db7169015b",
+   "injected_bytes": 10598,
+   "append_system_prompt": "",
+   "setting_sources": "project",
+   "store": "<out>/cells/F12-L/store",
+   "work": "<out>/cells/F12-L/work",
+   "extra_instruction": "",
+   "probe": {
+    "probe_model": "haiku",
+    "answer": "<out>/cells/F12-L/store/SPINE.md",
+    "ok": true
+   }
+  }
+ ],
+ "null_cells": [],
+ "order": [
+  [
+   0,
+   "S",
+   "p-xref",
+   "F11"
+  ],
+  [
+   0,
+   "S",
+   "p-xref",
+   "F12"
+  ],
+  [
+   0,
+   "S",
+   "p-startup",
+   "F12"
+  ],
+  [
+   0,
+   "S",
+   "p-startup",
+   "F11"
+  ],
+  [
+   0,
+   "S",
+   "p-archived",
+   "F12"
+  ],
+  [
+   0,
+   "S",
+   "p-archived",
+   "F11"
+  ],
+  [
+   0,
+   "S",
+   "p-exact",
+   "F11"
+  ],
+  [
+   0,
+   "S",
+   "p-exact",
+   "F12"
+  ],
+  [
+   0,
+   "S",
+   "p-rare",
+   "F12"
+  ],
+  [
+   0,
+   "S",
+   "p-rare",
+   "F11"
+  ],
+  [
+   0,
+   "S",
+   "p-miss",
+   "F11"
+  ],
+  [
+   0,
+   "S",
+   "p-miss",
+   "F12"
+  ],
+  [
+   0,
+   "L",
+   "p-startup",
+   "F11"
+  ],
+  [
+   0,
+   "L",
+   "p-startup",
+   "F12"
+  ],
+  [
+   0,
+   "L",
+   "p-rare",
+   "F11"
+  ],
+  [
+   0,
+   "L",
+   "p-rare",
+   "F12"
+  ],
+  [
+   0,
+   "L",
+   "p-miss",
+   "F12"
+  ],
+  [
+   0,
+   "L",
+   "p-miss",
+   "F11"
+  ],
+  [
+   0,
+   "L",
+   "p-xref",
+   "F11"
+  ],
+  [
+   0,
+   "L",
+   "p-xref",
+   "F12"
+  ],
+  [
+   0,
+   "L",
+   "p-archived",
+   "F11"
+  ],
+  [
+   0,
+   "L",
+   "p-archived",
+   "F12"
+  ],
+  [
+   0,
+   "L",
+   "p-exact",
+   "F12"
+  ],
+  [
+   0,
+   "L",
+   "p-exact",
+   "F11"
+  ],
+  [
+   1,
+   "S",
+   "p-miss",
+   "F12"
+  ],
+  [
+   1,
+   "S",
+   "p-miss",
+   "F11"
+  ],
+  [
+   1,
+   "S",
+   "p-startup",
+   "F11"
+  ],
+  [
+   1,
+   "S",
+   "p-startup",
+   "F12"
+  ],
+  [
+   1,
+   "S",
+   "p-exact",
+   "F12"
+  ],
+  [
+   1,
+   "S",
+   "p-exact",
+   "F11"
+  ],
+  [
+   1,
+   "S",
+   "p-xref",
+   "F12"
+  ],
+  [
+   1,
+   "S",
+   "p-xref",
+   "F11"
+  ],
+  [
+   1,
+   "S",
+   "p-archived",
+   "F12"
+  ],
+  [
+   1,
+   "S",
+   "p-archived",
+   "F11"
+  ],
+  [
+   1,
+   "S",
+   "p-rare",
+   "F12"
+  ],
+  [
+   1,
+   "S",
+   "p-rare",
+   "F11"
+  ],
+  [
+   1,
+   "L",
+   "p-rare",
+   "F12"
+  ],
+  [
+   1,
+   "L",
+   "p-rare",
+   "F11"
+  ],
+  [
+   1,
+   "L",
+   "p-exact",
+   "F11"
+  ],
+  [
+   1,
+   "L",
+   "p-exact",
+   "F12"
+  ],
+  [
+   1,
+   "L",
+   "p-xref",
+   "F12"
+  ],
+  [
+   1,
+   "L",
+   "p-xref",
+   "F11"
+  ],
+  [
+   1,
+   "L",
+   "p-archived",
+   "F11"
+  ],
+  [
+   1,
+   "L",
+   "p-archived",
+   "F12"
+  ],
+  [
+   1,
+   "L",
+   "p-miss",
+   "F11"
+  ],
+  [
+   1,
+   "L",
+   "p-miss",
+   "F12"
+  ],
+  [
+   1,
+   "L",
+   "p-startup",
+   "F12"
+  ],
+  [
+   1,
+   "L",
+   "p-startup",
+   "F11"
+  ],
+  [
+   2,
+   "S",
+   "p-startup",
+   "F12"
+  ],
+  [
+   2,
+   "S",
+   "p-startup",
+   "F11"
+  ],
+  [
+   2,
+   "S",
+   "p-exact",
+   "F11"
+  ],
+  [
+   2,
+   "S",
+   "p-exact",
+   "F12"
+  ],
+  [
+   2,
+   "S",
+   "p-miss",
+   "F11"
+  ],
+  [
+   2,
+   "S",
+   "p-miss",
+   "F12"
+  ],
+  [
+   2,
+   "S",
+   "p-archived",
+   "F12"
+  ],
+  [
+   2,
+   "S",
+   "p-archived",
+   "F11"
+  ],
+  [
+   2,
+   "S",
+   "p-xref",
+   "F12"
+  ],
+  [
+   2,
+   "S",
+   "p-xref",
+   "F11"
+  ],
+  [
+   2,
+   "S",
+   "p-rare",
+   "F11"
+  ],
+  [
+   2,
+   "S",
+   "p-rare",
+   "F12"
+  ],
+  [
+   2,
+   "L",
+   "p-archived",
+   "F12"
+  ],
+  [
+   2,
+   "L",
+   "p-archived",
+   "F11"
+  ],
+  [
+   2,
+   "L",
+   "p-xref",
+   "F11"
+  ],
+  [
+   2,
+   "L",
+   "p-xref",
+   "F12"
+  ],
+  [
+   2,
+   "L",
+   "p-rare",
+   "F11"
+  ],
+  [
+   2,
+   "L",
+   "p-rare",
+   "F12"
+  ],
+  [
+   2,
+   "L",
+   "p-exact",
+   "F12"
+  ],
+  [
+   2,
+   "L",
+   "p-exact",
+   "F11"
+  ],
+  [
+   2,
+   "L",
+   "p-startup",
+   "F11"
+  ],
+  [
+   2,
+   "L",
+   "p-startup",
+   "F12"
+  ],
+  [
+   2,
+   "L",
+   "p-miss",
+   "F11"
+  ],
+  [
+   2,
+   "L",
+   "p-miss",
+   "F12"
+  ]
+ ],
+ "started_utc": "2026-10-03T16:58:05Z",
+ "finished_utc": "2026-10-03T17:03:30Z",
+ "stopped": null,
+ "runs_done": 72,
+ "cost_usd_reported": 3.53
+}

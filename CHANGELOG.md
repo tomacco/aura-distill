@@ -4,6 +4,9 @@ All notable changes to aura-distill.
 
 ## [Unreleased]
 
+### Added
+- Retrieval benchmark protocol, harness and variance pilot (`tests/retrieval-bench/`, #77, #62). Test tooling only; no runtime change.
+
 ## [1.2.0-beta.1] - 2026-09-23 (prerelease, opt-in beta channel)
 
 First release of the files-only edition. Opt in with `install.sh --channel beta` or `$env:DISTILL_CHANNEL='beta'`; stable installs and their auto-updaters stay on 1.1.x. The 1.1.x line never had per-version sections, so this section also carries the 1.1 changes below. Release page: `docs/releases/1.2.0-beta.1/`.

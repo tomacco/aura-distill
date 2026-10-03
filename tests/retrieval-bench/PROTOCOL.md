@@ -86,7 +86,9 @@ Retries and failures stay in the data. A run that times out or errors is a faile
 
 A run passes when the session ends in success, every required regex matches, no harmful regex matches and, for judge cases, the judge says PASS.
 
-The judge runs outside the scored arms, in its own session with no store, and sees only the question, the answer and the rubric. It does not know which arm produced the answer.
+A required regex only shows that a fact is present, and the same fact can appear in an answer that waives it ("the 10-year retention is from when Comet was active, go ahead"). So every case that asks permission to break a protected rule, and the evidence-for-done case, carries a harmful pattern for an answer that opens by approving, and goes to the judge with a rubric that fails any answer permitting the action. Rule 3 below depends on this.
+
+The judge runs outside the scored arms, in its own session with no store, and sees only the question, the answer and the rubric. It does not know which arm produced the answer and is told not to use tools. A rubric added after runs exist is applied to the stored answers with `bench.py rejudge`; those verdicts are kept in `rejudged.jsonl` beside the original results.
 
 Quality is measured on required facts and constraints, not on which files were read. File sets are reported as context because the 1.2 layout moves content between files.
 
@@ -98,17 +100,19 @@ Both arms use the same model, CLI version, tools, permissions, working-directory
 
 Before any runs, each arm and scale gets an injection probe: a separate session asks which file the instructions say to read first, and the answer must be that cell's `SPINE.md`. A cell that fails the probe is reported as unverified.
 
+Host load is part of the measurement, so it is controlled. The harness records the 1-minute load average with every run and refuses to start while it is above the core count. A scored run is started on an otherwise idle machine, and the report shows load per arm. A run started with `--ignore-load` is not scored.
+
 Order is randomized and interleaved from a recorded seed: each block is one repetition, scale and case, with the arms shuffled inside it. Runs execute with a fixed number of parallel jobs, the same for every arm.
 
 ## Reproducibility manifest
 
-`manifest.json` in each output directory records: protocol and scenario hashes, harness commit and dirty flag, each edition's ref and commit, model and judge model, CLI version, host and sandbox, corpus hash per cell, injected-bytes hash and size per cell, injection probe result, seed, order, job count, budget, stop reason and reported cost. Raw traces are under `runs/`, judge traces under `judge/`, probes under `probes/`.
+`manifest.json` in each output directory records: protocol and scenario hashes, harness commit and dirty flag, each edition's ref and commit, model and judge model, CLI version, host and sandbox, per cell the corpus hash, the installed store hash (corpus plus the edition's `distill-monitor.md` and `distill-process.md`), and the hash and size of the injected instructions (managed block plus rules file), injection probe result, seed, order, job count, budget, stop reason and reported cost. Raw traces are under `runs/`, judge traces under `judge/`, probes under `probes/`.
 
 ## Decision rules
 
 Fixed now, applied by `bench.py report`. A is the incumbent (F11), B the candidate (F12). Each scale is judged on its own.
 
-**Primary latency endpoint.** For each case, the median of time to completed correct task in each arm. The effect is the geometric mean over cases of median(B) / median(A). A 90% interval comes from 2000 bootstrap resamples of runs within each cell.
+**Primary latency endpoint.** For each case, the median of time to completed correct task in each arm. A failed run counts as never finishing, so a cell where most runs fail has an infinite (censored) median. A case censored in either arm is not comparable for latency: it is left out of the ratio and listed in the report, and quality rules 2 and 3 below still judge it. The effect is the geometric mean over the comparable cases of median(B) / median(A). A 90% interval comes from 2000 bootstrap resamples of runs within each cell; a resample in which a case becomes censored leaves that case out of that resample. When fewer than half of the cases are comparable, the verdict is "not enough comparable cases".
 
 | Result | Verdict |
 |---|---|
@@ -134,14 +138,15 @@ Repetitions per scored cell, from the pooled pilot standard deviation `s` and `k
 
 `n = clamp(3, 10, ceil(2 * (1.645 + 0.842)^2 * s^2 / (k * ln(1/0.85)^2)))`
 
-This targets a 15% difference in the geometric mean at one-sided 5% and 80% power. The value of `n` is written into `FROZEN` and does not change after scored runs start.
+This targets a 15% difference in the geometric mean at one-sided 5% and 80% power. It treats cases as independent replicates and uses the per-run spread, while the endpoint is a median of a few runs (less efficient than a mean at n = 3). At the pilot's spread the computed value is below 1 and the floor of 3 absorbs both approximations; above a spread of about 0.3 they would matter, and the rule would need revisiting before a scored run. The value of `n` is written into `FROZEN` and does not change after scored runs start.
 
 ## Budget and stop conditions
 
 - Scored run cap: 13 cases x 2 arms x 2 scales x n runs, at most 520 runs (156 at the pilot's n = 3).
 - Cost cap: 40 USD reported cost for the scored run (the pilot cap is 15 USD).
 - Stop when the 5-hour rate-limit utilization reaches 0.8, or when more than 20% of runs end without success after the first 10.
-- A stopped run is reported as stopped, with the cells it completed. It is resumed with the same seed and order, never re-planned.
+- The cost cap counts runs, judge calls and injection probes, as the CLI reports them. A run cap that cuts the plan short is recorded as a stop reason.
+- A stopped run is reported as stopped, with the cells it completed, and is never re-planned. The harness has no resume yet, so a stopped scored run is reported as incomplete; finishing it needs resume support and a protocol note before it starts.
 
 ## Trust in the instrument
 
@@ -165,7 +170,8 @@ The harness refuses `--split scored` until `FROZEN` exists. Release gate #90 con
 
 ```
 python3 tests/retrieval-bench/bench.py run --split pilot --arms F11,F12 --scales S,L --reps 3
+python3 tests/retrieval-bench/bench.py run --split scored --arms F11,F12 --scales S,L --reps <n from FROZEN>
 python3 tests/retrieval-bench/bench.py report <out-dir>
 ```
 
-Needs a logged-in `claude` CLI and costs model tokens, so it does not run in CI. The output directory is a temp directory unless `--out` is given.
+Needs a logged-in `claude` CLI and costs model tokens, so it does not run in CI. Isolation relies on macOS `sandbox-exec`, which denies the real stores, the profile's instruction files, commands, skills, agents and plugins; elsewhere the harness refuses to run unless `--unsandboxed` is given. The output directory is a temp directory unless `--out` is given. Output carries answers verbatim, and the CLI tells sessions the logged-in account's email, so output directories are not committed as they are: a published copy goes under `research/` with the email replaced.

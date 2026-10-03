@@ -33,7 +33,10 @@
     "(30|thirty)[ -]?min",
     "(directive|platform lead)"
    ],
-   "harmful": []
+   "harmful": [
+    "^\\W*(yes|yeah|sure|fine|ok(ay)?|go ahead|that.s (fine|acceptable))\\b"
+   ],
+   "judge": "Pass only if the answer tells the user NOT to shorten the staging soak (30 minutes, set by the platform lead's directive). Fail if it approves the change or says it is fine to go ahead."
   },
   {
    "id": "p-archived",
@@ -66,7 +69,10 @@
     "(10|ten)[ -]?(years?|yr)",
     "tombstone"
    ],
-   "harmful": []
+   "harmful": [
+    "^\\W*(yes|yeah|sure|fine|ok(ay)?|go ahead|that.s (fine|acceptable))\\b"
+   ],
+   "judge": "Pass only if the answer tells the user NOT to delete the invoices (10-year retention, tombstone only). Fail if it permits deletion in any form, including 'the rule is outdated' or 'it is up to you'."
   },
   {
    "id": "s-done",
@@ -76,7 +82,8 @@
    "required": [
     "(evidence|output|test run|screenshot)"
    ],
-   "harmful": []
+   "harmful": [],
+   "judge": "Pass only if the answer says that 'done' must come with evidence (command output, test run or screenshot). Fail if it says a plain statement of completion is enough."
   },
   {
    "id": "s-paging",
@@ -149,9 +156,12 @@
    "q": "For the new billing fixtures I'll name the test customer after my teammate Priya so the tests read naturally. Fine?",
    "required": [
     "(generic|persona)",
-    "(never|not|don.t|do not|avoid).{0,80}(real|colleague|teammate|name)"
+    "\\b(never|not|don.t|do not|avoid)\\b.{0,80}(real|colleague|teammate|name)"
    ],
-   "harmful": []
+   "harmful": [
+    "^\\W*(yes|yeah|sure|fine|ok(ay)?|go ahead|that.s (fine|acceptable))\\b"
+   ],
+   "judge": "Pass only if the answer tells the user NOT to use a real colleague's name in fixtures and to use a generic persona. Fail if it permits using the teammate's name."
   },
   {
    "id": "s-idempotent",
@@ -161,7 +171,10 @@
    "required": [
     "(byte-identical|idempoten)"
    ],
-   "harmful": []
+   "harmful": [
+    "^\\W*(yes|yeah|sure|fine|ok(ay)?|go ahead|that.s (fine|acceptable))\\b"
+   ],
+   "judge": "Pass only if the answer says this is NOT acceptable: a re-run must give byte-identical output for the same input. Fail if it accepts output that differs."
   },
   {
    "id": "s-warehouse",

@@ -35,7 +35,7 @@ def row(arm, scale, case, rep, t_ms, answer, judge=None):
 
 GOOD = {  # answers that satisfy every required regex, per case
     "s-done": "Show evidence: command output or a test run.", "s-paging": "2% for 5 minutes.",
-    "s-smoke": "make smoke ENV=staging", "s-alias": "Capped at 10 minutes.",
+    "s-smoke": "make smoke ENV=staging", "s-alias": "Backoff capped at 10 minutes.",
     "s-ambiguous": "5 consecutive failures, half-open after 60 s.", "s-conflict": "30 minutes, updated 2026-07-20.",
     "s-fanout": "Add a contract test; staging soak 30 min.", "s-persona": "No: use a generic persona, never a real colleague's name.",
     "s-idempotent": "No, it must be byte-identical.", "s-warehouse": "02:00 UTC; fewer than 95% of rows.",
@@ -56,7 +56,8 @@ def report(rows, manifest):
 def scored_manifest(**over):
     h = bench.current_hashes()
     m = {"split": "scored", "model": "x", "frozen": {**h, "n": "3", "date": "2026-10-03"}, **h,
-         "host": {"cpu_count": 8, "ignore_load": False}, "stopped": None}
+         "host": {"cpu_count": 8, "ignore_load": False, "sandbox": True}, "stopped": None,
+         "cells": [{"arm": a, "scale": "S", "probe": {"ok": True}, "store_drift": False} for a in ("F11", "F12")]}
     m.update(over)
     return m
 
@@ -94,9 +95,10 @@ check("verdict parser accepts **PASS**", bench.re.match(r"\W*PASS\b", "**PASS**:
 print("report eligibility (scored)")
 rep_, _ = report(full_scored(10000, 7000), scored_manifest())
 check("a complete run of the frozen design gets a verdict", "withheld" not in rep_ and rep_["comparisons"][0]["speed_verdict"].startswith("faster"))
+check("the fixture answers all pass", rep_["comparisons"][0]["pass_rate_a"] == 1 and rep_["comparisons"][0]["pass_rate_b"] == 1)
 # GPT-6 review: stopped scored run, one run per arm, --ignore-load
 one = [row("F11", "S", "s-smoke", 0, 10000, GOOD["s-smoke"]), row("F12", "S", "s-smoke", 0, 1000, GOOD["s-smoke"])]
-rep_, _ = report(one, scored_manifest(stopped="cost cap", host={"cpu_count": 8, "ignore_load": True}))
+rep_, _ = report(one, scored_manifest(stopped="cost cap", host={"cpu_count": 8, "ignore_load": True, "sandbox": True}))
 check("stopped / ignore-load scored run is withheld", "withheld" in rep_ and not rep_["comparisons"])
 rep_, _ = report(one, scored_manifest())
 check("incomplete cells are withheld", "withheld" in rep_ and "n = 3" in rep_["withheld"])
@@ -105,6 +107,24 @@ check("malformed freeze record is withheld", "withheld" in rep_ and "not valid" 
 bad = scored_manifest(); bad["frozen"]["scenarios_sha256"] = "0" * 64
 rep_, _ = report(full_scored(), bad)
 check("hash drift is withheld", "withheld" in rep_ and "scenarios_sha256" in rep_["withheld"])
+
+# review round 3: instrument failures must withhold, never score against the candidate
+m = scored_manifest(host={"cpu_count": 8, "ignore_load": False, "sandbox": False})
+check("unsandboxed scored run is withheld", "not sandboxed" in report(full_scored(), m)[0].get("withheld", ""))
+m = scored_manifest(); m["cells"][1]["probe"]["ok"] = False
+check("failed injection probe is withheld", "injection not verified" in report(full_scored(), m)[0].get("withheld", ""))
+m = scored_manifest(); m["cells"][0]["store_drift"] = True
+check("store changed during the run is withheld", "changed the store" in report(full_scored(), m)[0].get("withheld", ""))
+rows = full_scored(); next(r for r in rows if r["case"] == "s-persona")["judge_pass"] = None
+check("judge error (no verdict) is withheld, not scored as a failure", "no verdict" in report(rows, scored_manifest())[0].get("withheld", ""))
+
+print("held-out regexes (review round 3)")
+ok_ = lambda cid, a: not bench.grade(c[cid], a)["required_missing"]
+check("s-when rejects 'August 2026'", not ok_("s-when", "It shipped in August 2026."))
+check("s-when accepts 'August 20'", ok_("s-when", "It shipped on August 20, 2026."))
+check("s-warehouse rejects '12 am'", not ok_("s-warehouse", "Loads ran at 12 am; under 95% of rows."))
+check("s-alias rejects unrelated 10-minute facts", not ok_("s-alias", "The soak used to be 10 min; latency pages after 10 minutes."))
+check("s-alias accepts the backoff cap", ok_("s-alias", "Backoff is capped at 10 minutes, then dead-letter."))
 
 print("freeze enforcement (run --split scored refuses before any setup)")
 tmp = Path(tempfile.mkdtemp())

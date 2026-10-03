@@ -80,3 +80,17 @@ The maintainer no longer reviews every step. Quality comes from protocols that r
 (independent PR review, adversarial design review, measurement preregistration, release gates) and
 from agents looking for gaps in the instructions and observations. Proposed changes to the method
 are made as reviewed PRs, marked `provisional`, and reported on the run status page.
+
+**D-2026-10-03-1 · Retrieval editions are compared under a preregistered, frozen protocol.** `evidence` · provisional
+`tests/retrieval-bench/PROTOCOL.md` (#77) fixes the arms, timing boundaries, decision rules
+(latency gain or regression from the geometric mean of per-case medians, a case censored in either
+arm left out; quality non-inferiority with no protected-rule failure), the sample-size rule and the
+budget before any scored run. Verdicts are given only to a complete run of the frozen design;
+`FROZEN` pins the protocol and cases. Basis: the 2026-10-03 variance pilot and three independent
+reviews of PR #122. Provisional until the first scored run.
+
+**D-2026-10-03-2 · Research experiments wait when resources are scarce.** `directive` · active
+A benchmark or experiment yields to other work on the machine: it waits for an idle host before it
+starts and before each run, and gives up after a bounded wait without running anything further.
+Basis: the maintainer, 2026-10-03, after host load from an unrelated job moved one case from 12 s
+to 58 s.

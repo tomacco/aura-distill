@@ -5,6 +5,8 @@
                   [--jobs 3] [--seed 1] [--out DIR] [--max-cost-usd 15] [--max-runs 200]
                   [--cases id,id] [--ref-1.1 origin/main] [--ref-1.2 HEAD]
   bench.py report DIR [--json]
+  bench.py rejudge DIR             judge stored answers that lack a verdict
+  bench.py freeze --n N            write FROZEN (maintainer, at merge)
 
 Each run is one fresh headless Claude Code session in a temp working directory, loading only the
 runtime of one edition (its rules/distill.md and managed block, taken from a git ref) against a
@@ -37,8 +39,9 @@ HOME = Path.home()
 DENY = [HOME / p for p in (".aura-distill", ".claude/distill", ".claude/rules", ".claude/CLAUDE.md",
                            ".claude/projects", ".claude/memory", ".claude/todos", ".claude/commands",
                            ".claude/skills", ".claude/agents", ".claude/plugins", ".codex", ".gemini")]
-if os.environ.get("AURA_DISTILL_HOME"):
-    DENY.append(Path(os.environ["AURA_DISTILL_HOME"]).expanduser())
+for var in ("AURA_DISTILL_HOME", "CLAUDE_CONFIG_DIR"):  # a relocated store or profile
+    if os.environ.get(var):
+        DENY.append(Path(os.environ[var]).expanduser())
 UNSET = ["CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT", "CLAUDE_CODE_SESSION_ID", "CLAUDE_CODE_CHILD_SESSION",
          "CLAUDE_CODE_MESSAGING_SOCKET", "CLAUDE_CODE_MESSAGING_TOKEN", "AURA_DISTILL_HOME"]
 
@@ -237,9 +240,15 @@ def judge(case, answer, model, root, sandbox, name):
     tp = root / "judge" / f"{name}.jsonl"
     run_claude(JUDGE.format(q=case["q"], a=answer, rubric=case["judge"]), d, model, "local", "", tp, 300, sandbox,
                deny_tools=NO_TOOLS)
-    jm = metrics(tp, "\0"); out = jm["answer"].strip()
-    return {"judge_model": model, "judge_raw": out[:200], "judge_pass": bool(re.match(r"\W*PASS\b", out, re.I)),
-            "judge_cost_usd": jm["cost_usd"] or 0}
+    jm = metrics(tp, "\0"); cost = jm["cost_usd"] or 0
+    if jm["result_subtype"] != "success":  # judge infrastructure failed: one retry, then no verdict
+        run_claude(JUDGE.format(q=case["q"], a=answer, rubric=case["judge"]), d, model, "local", "", tp, 300, sandbox,
+                   deny_tools=NO_TOOLS)
+        jm = metrics(tp, "\0"); cost += jm["cost_usd"] or 0
+    out = jm["answer"].strip()
+    verdict = bool(re.match(r"\W*PASS\b", out, re.I)) if jm["result_subtype"] == "success" else None
+    return {"judge_model": model, "judge_raw": out[:200], "judge_pass": verdict,
+            "judge_subtype": jm["result_subtype"], "judge_cost_usd": cost}
 
 
 def probe_injection(cell, model, root, sandbox):
@@ -370,7 +379,7 @@ def cmd_run(a):
     manifest = {
         "protocol": "tests/retrieval-bench/PROTOCOL.md", "protocol_sha256": sha((HERE / "PROTOCOL.md").read_bytes()),
         "scenarios_sha256": sha((HERE / "scenarios.json").read_bytes()), "split": a.split,
-        "harness_commit": git("rev-parse", "HEAD").strip(), "harness_dirty": bool(git("status", "--porcelain", "--", "tests/retrieval-bench").strip()),
+        "harness_commit": git("rev-parse", "HEAD").strip(), "harness_dirty": bool(git("status", "--porcelain", "--", "tests/retrieval-bench", "tests/files-only").strip()),
         "frozen": frozen(), "model": a.model, "judge_model": a.judge_model, "jobs": a.jobs,
         "seed": a.seed, "reps": a.reps, "budget": {"max_cost_usd": a.max_cost_usd, "max_runs": a.max_runs,
                                                    "stop_rate_limit_5h": a.stop_rate_limit},
@@ -428,6 +437,8 @@ def cmd_run(a):
     with cf.ThreadPoolExecutor(max_workers=a.jobs) as ex:
         list(ex.map(lambda x: one(*x), enumerate(order)))
     manifest["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    for c in manifest["cells"]:  # a session that wrote to the shared store changes what later runs read
+        c["store_drift"] = tree_hash(c["store"]) != c["installed_store_sha256"]
     manifest["stopped"] = spent["stop"] or truncated; manifest["runs_done"] = spent["n"]; manifest["cost_usd_reported"] = round(spent["cost"], 4)
     manifest["cost_note"] = "runs + judge + injection probes, as reported by the CLI"
     (root / "manifest.json").write_text(json.dumps(manifest, indent=1))
@@ -482,6 +493,18 @@ def scored_ineligible(man, rs, groups):
         return "the run used --ignore-load"
     if man.get("stopped"):
         return f"the run stopped early ({man['stopped']})"
+    if not man.get("host", {}).get("sandbox"):
+        return "the run was not sandboxed"
+    bad = [f"{c['arm']}-{c['scale']}" for c in man.get("cells", []) if not c.get("probe", {}).get("ok")]
+    if bad:
+        return f"injection not verified for {bad}"
+    drift = [f"{c['arm']}-{c['scale']}" for c in man.get("cells", []) if c.get("store_drift")]
+    if drift:
+        return f"a session changed the store of {drift}"
+    by_id = {c["id"]: c for c in json.loads((HERE / "scenarios.json").read_text())["cases"]}
+    unjudged = [r["run"] for r in rs if by_id.get(r["case"], {}).get("judge") and r.get("judge_pass") is None]
+    if unjudged:
+        return f"{len(unjudged)} judged runs have no verdict (bench.py rejudge), e.g. {unjudged[:3]}"
     n = int(fz["n"])
     scored = [c["id"] for c in json.loads((HERE / "scenarios.json").read_text())["cases"] if c["split"] == "scored"]
     cells = {(arm, scale) for arm, scale, _ in groups}
@@ -608,7 +631,7 @@ def cmd_rejudge(a):
     if (root / "rejudged.jsonl").exists():
         done = {json.loads(l)["run"] for l in open(root / "rejudged.jsonl")}
     todo = [r for r in map(json.loads, open(root / "results.jsonl"))
-            if by_id.get(r["case"], {}).get("judge") and "judge_pass" not in r and r["run"] not in done]
+            if by_id.get(r["case"], {}).get("judge") and r.get("judge_pass") is None and r["run"] not in done]
     sandbox = sandbox_prefix(root)
     if not sandbox and not a.unsandboxed:
         sys.exit("sandbox-exec not found; pass --unsandboxed to accept that")

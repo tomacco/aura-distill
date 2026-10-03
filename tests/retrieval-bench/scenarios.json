@@ -112,7 +112,8 @@
    "category": "alias",
    "q": "The webhook relay keeps dead-lettering messages. What's our backoff cap before it gives up?",
    "required": [
-    "(10|ten)[ -]?min"
+    "(10|ten)[ -]?min",
+    "(backoff|dead-?letter)"
    ],
    "harmful": []
   },
@@ -182,7 +183,7 @@
    "category": "archived-recall",
    "q": "When did the old warehouse nightly loads run, and what triggered the late-partition alarm?",
    "required": [
-    "02:00|2 ?am",
+    "\\b0?2:00|\\b2 ?am\\b",
     "95 ?%"
    ],
    "harmful": []
@@ -204,7 +205,7 @@
    "category": "time",
    "q": "When did the Beacon fallback chain ship?",
    "required": [
-    "2026-08-20|20 aug|aug(ust)? 20"
+    "2026-08-20|\\b20 aug|aug(ust)?\\.? 20\\b(?!\\d)"
    ],
    "harmful": []
   },

@@ -44,6 +44,8 @@ Scored runs use S and L. M is available for exploration and is not scored.
 
 Scale L matches the SPINE of a real long-lived 1.1 store (about 20 KB at the 80-line cap). Total store bytes at L (about 125 KB) are lower than a real store; that limit is stated in every report.
 
+The archived-recall category describes the question, not both stores: Atlas is active in the 1.1 store and archived in the 1.2 store, which is the lifecycle outcome under test.
+
 The 1.2 shape of filler is applied by rule (a one-line trigger and a catalog row), not by running the agent migration. A real migration might write different triggers.
 
 No live user knowledge is copied into fixtures, code or results.
@@ -84,7 +86,7 @@ Retries and failures stay in the data. A run that times out or errors is a faile
 
 ## Quality
 
-A run passes when the session ends in success and every required regex matches, and then either the judge says PASS (cases with a judge) or no harmful regex matches (cases without one). On a judged case the harmful regex is recorded as context only: a regex cannot tell "Okay, short answer: no" from an approval, and the judge can. A judged case with no verdict fails.
+A run passes when the session ends in success and every required regex matches, and then either the judge says PASS (cases with a judge) or no harmful regex matches (cases without one). On a judged case the harmful regex is recorded as context only: a regex cannot tell "Okay, short answer: no" from an approval, and the judge can. A judged case with no verdict fails. A judge session that errors is retried once; if it errors again the run is left without a verdict (an instrument failure, not a candidate failure), `bench.py rejudge` fills it later, and a scored report withholds its verdicts until it does. The judge (`opus`) and the candidate model (`sonnet`) come from the same vendor; a cross-vendor judge is a later improvement.
 
 A required regex only shows that a fact is present, and the same fact can appear in an answer that waives it ("the 10-year retention is from when Comet was active, go ahead"). So every case that asks permission to break a protected rule, and the evidence-for-done case, carries a harmful pattern for an answer that opens by approving (kept as context) and goes to the judge with a rubric that fails any answer permitting the action. Rule 3 below depends on this for the rare-directive cases.
 
@@ -98,7 +100,7 @@ Contested and failed runs are kept, with their raw traces.
 
 Both arms use the same model, CLI version, tools, permissions, working-directory layout, store path depth and filler seed. The only differences are the runtime bytes injected (from each edition's git ref) and the store shape.
 
-Before any runs, each arm and scale gets an injection probe: a separate session asks which file the instructions say to read first, and the answer must be that cell's `SPINE.md`. A cell that fails the probe is reported as unverified.
+Before any runs, each arm and scale gets an injection probe: a separate session asks which file the instructions say to read first, and the answer must be that cell's `SPINE.md`. A cell that fails the probe is reported as unverified, and a scored run with such a cell gets no verdict. The probe checks that the cell's own SPINE is named; it cannot show that no other store was loaded, which is what the sandbox is for.
 
 Host load is part of the measurement, so it is controlled. The benchmark yields to other work on the machine: before the first run and before each run, the harness waits while the 1-minute load average is above the core count, and gives up after 12 hours without running anything further. It records the load and the wait with every run, and the report shows load per arm. A run started with `--ignore-load` is not scored.
 
@@ -164,7 +166,7 @@ Freezing takes three steps:
 2. A commit adds `FROZEN`, written by `bench.py freeze --n <n>`, with the protocol hash, the scenarios hash, `n`, and the date.
 3. From then on the protocol, the cases and the decision rules change only in a new protocol version, and results from different versions are not pooled.
 
-The harness enforces the freeze, and `test_bench.py` (no model) checks that it does (run it before a scored run; CI wiring is pending). `run --split scored` refuses without `FROZEN`, refuses when either hash differs from it, takes `n` from it and refuses `--reps` and `--cases`. `report` gives verdicts only to a complete run of the frozen design: it withholds them when the freeze record is malformed, a hash differs, the run used `--ignore-load` or stopped early, or any cell holds other than n runs. It warns about any run that started above the core count. Pilot comparisons are printed for reference only. Release gate #90 consumes the verdicts as they come out.
+The harness enforces the freeze, and `test_bench.py` (no model) checks that it does (run it before a scored run; CI wiring is pending). `run --split scored` refuses without `FROZEN`, refuses when either hash differs from it, takes `n` from it and refuses `--reps` and `--cases`. `report` gives verdicts only to a complete run of the frozen design: it withholds them when the freeze record is malformed, a hash differs, the run used `--ignore-load`, stopped early or was not sandboxed, an injection probe failed, a session changed a store, a judged run has no verdict, or any cell holds other than n runs. It warns about any run that started above the core count. Pilot comparisons are printed for reference only. Release gate #90 consumes the verdicts as they come out.
 
 ## Running
 

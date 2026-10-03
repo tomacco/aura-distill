@@ -111,11 +111,14 @@ def sandbox_prefix(root):
     return ["sandbox-exec", "-p", f"(version 1)(allow default){deny}"]
 
 
-def run_claude(prompt, cwd, model, sources, sysprompt, trace_path, timeout, sandbox, add_dir=None):
+NO_TOOLS = ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "Agent", "Task", "NotebookEdit", "Skill"]
+
+
+def run_claude(prompt, cwd, model, sources, sysprompt, trace_path, timeout, sandbox, add_dir=None, deny_tools=()):
     """One headless session; every stdout line is stamped with ms since spawn (monotonic)."""
     cmd = [*sandbox, "claude", "-p", prompt, "--model", model, "--setting-sources", sources,
            "--strict-mcp-config", "--mcp-config", '{"mcpServers":{}}', "--no-session-persistence",
-           "--dangerously-skip-permissions", "--disallowedTools", "WebFetch", "WebSearch",
+           "--dangerously-skip-permissions", "--disallowedTools", "WebFetch", "WebSearch", *deny_tools,
            "--output-format", "stream-json", "--verbose"]
     if add_dir:
         cmd += ["--add-dir", add_dir]
@@ -209,6 +212,17 @@ def grade(case, answer):
     return {"required_missing": missing, "harmful_hits": harmful, "regex_pass": not missing and not harmful}
 
 
+def run_passes(case, r):
+    """PROTOCOL.md, Quality. A judged case: the required facts and the judge decide, and the harmful
+    regex is recorded as context only (it cannot read 'Okay, no: ...' as a refusal). A judged case
+    with no verdict fails. Other cases: required facts present and no harmful match."""
+    if r.get("result_subtype") != "success":
+        return False
+    if case.get("judge"):
+        return not r["required_missing"] and r.get("judge_pass") is True
+    return r["regex_pass"]
+
+
 JUDGE = """You grade one answer from an assistant against a rubric. You do not know which system produced it.
 Question the user asked:
 <question>{q}</question>
@@ -221,9 +235,10 @@ Do not use any tools. Reply with exactly one line: PASS or FAIL, then a colon an
 def judge(case, answer, model, root, sandbox, name):
     d = Path(tempfile.mkdtemp(dir=root / "judge"))
     tp = root / "judge" / f"{name}.jsonl"
-    run_claude(JUDGE.format(q=case["q"], a=answer, rubric=case["judge"]), d, model, "local", "", tp, 300, sandbox)
+    run_claude(JUDGE.format(q=case["q"], a=answer, rubric=case["judge"]), d, model, "local", "", tp, 300, sandbox,
+               deny_tools=NO_TOOLS)
     jm = metrics(tp, "\0"); out = jm["answer"].strip()
-    return {"judge_model": model, "judge_raw": out[:200], "judge_pass": out.upper().startswith("PASS"),
+    return {"judge_model": model, "judge_raw": out[:200], "judge_pass": bool(re.match(r"\W*PASS\b", out, re.I)),
             "judge_cost_usd": jm["cost_usd"] or 0}
 
 
@@ -263,13 +278,45 @@ def plan(cases, arms, scales, reps, rnd):
     return order
 
 
+def frozen():
+    """FROZEN as 'key: value' lines, or None. PROTOCOL.md, Freeze."""
+    f = HERE / "FROZEN"
+    if not f.exists():
+        return None
+    return dict(l.split(": ", 1) for l in f.read_text().splitlines() if ": " in l)
+
+
+def current_hashes():
+    return {"protocol_sha256": sha((HERE / "PROTOCOL.md").read_bytes()),
+            "scenarios_sha256": sha((HERE / "scenarios.json").read_bytes())}
+
+
+def cmd_freeze(a):
+    if (HERE / "FROZEN").exists():
+        sys.exit("FROZEN exists; a change after the freeze is a new protocol version")
+    h = current_hashes()
+    (HERE / "FROZEN").write_text(f"protocol_sha256: {h['protocol_sha256']}\nscenarios_sha256: {h['scenarios_sha256']}\n"
+                                 f"n: {a.n}\ndate: {time.strftime('%Y-%m-%d', time.gmtime())}\n")
+    print((HERE / "FROZEN").read_text() + "Commit this file; scored runs now take n from it.")
+
+
 def cmd_run(a):
     data = json.loads((HERE / "scenarios.json").read_text())
     cases = [c for c in data["cases"] if c["split"] == a.split]
     if a.cases:
         keep = set(a.cases.split(",")); cases = [c for c in cases if c["id"] in keep]
-    if a.split == "scored" and not (HERE / "FROZEN").exists():
-        sys.exit("scored cases run only after the protocol is frozen (PROTOCOL.md, Freeze)")
+    if a.split == "scored":
+        fz = frozen()
+        if fz is None:
+            sys.exit("scored cases run only after the protocol is frozen (PROTOCOL.md, Freeze)")
+        drift = [k for k, v in current_hashes().items() if fz.get(k) != v]
+        if drift:
+            sys.exit(f"{', '.join(drift)} differ from FROZEN: the protocol or cases changed after the freeze")
+        if a.reps is not None or a.cases:
+            sys.exit("a scored run takes n from FROZEN and runs every scored case; drop --reps and --cases")
+        a.reps = int(fz["n"])
+    elif a.reps is None:
+        a.reps = 3
     if not shutil.which("claude"):
         sys.exit("claude CLI not found")
     if not shutil.which("sandbox-exec") and not a.unsandboxed:
@@ -308,7 +355,7 @@ def cmd_run(a):
         "protocol": "tests/retrieval-bench/PROTOCOL.md", "protocol_sha256": sha((HERE / "PROTOCOL.md").read_bytes()),
         "scenarios_sha256": sha((HERE / "scenarios.json").read_bytes()), "split": a.split,
         "harness_commit": git("rev-parse", "HEAD").strip(), "harness_dirty": bool(git("status", "--porcelain", "--", "tests/retrieval-bench").strip()),
-        "frozen": (HERE / "FROZEN").exists(), "model": a.model, "judge_model": a.judge_model, "jobs": a.jobs,
+        "frozen": frozen(), "model": a.model, "judge_model": a.judge_model, "jobs": a.jobs,
         "seed": a.seed, "reps": a.reps, "budget": {"max_cost_usd": a.max_cost_usd, "max_runs": a.max_runs,
                                                    "stop_rate_limit_5h": a.stop_rate_limit},
         "host": {"cpu_count": os.cpu_count(), "load_1m_at_start": round(os.getloadavg()[0], 2),
@@ -345,7 +392,7 @@ def cmd_run(a):
                    a.timeout, sandbox, add_dir=cell["store"])
         m = metrics(tp, cell["store"]); g = grade(case, m["answer"])
         j = judge(case, m["answer"], a.judge_model, root, sandbox, name) if case.get("judge") else {}
-        ok = g["regex_pass"] and j.get("judge_pass", True) and m["result_subtype"] == "success"
+        ok = run_passes(case, {**m, **g, **j})
         rec = {"i": i, "run": name, "arm": arm, "scale": scale, "case": cid, "category": case["category"],
                "rep": rep, "load_1m_start": round(load_start, 2), "waited_for_idle_s": waited, **{k: v for k, v in m.items() if k != "answer"}, "answer": m["answer"], **g, **j, "pass": ok}
         with lock:
@@ -423,7 +470,7 @@ def cmd_report(a):
     for r in rs:
         r.update(extra.get(r["run"], {}))
         r.update(grade(by_id[r["case"]], r["answer"]))
-        r["pass"] = r["regex_pass"] and r.get("judge_pass", True) and r["result_subtype"] == "success"
+        r["pass"] = run_passes(by_id[r["case"]], r)
     graded_with = sha((HERE / "scenarios.json").read_bytes())
     if graded_with != man["scenarios_sha256"]:
         print(f"Note: re-graded with scenarios {graded_with[:12]}; the runs used {man['scenarios_sha256'][:12]}.\n")
@@ -458,7 +505,21 @@ def cmd_report(a):
             print(f"\nHost load at run start, {arm}: median {med(loads):.1f}, max {max(loads):.1f}", end="")
     print(f"\n\nPooled log-sd of t_done across cells: {'-' if pooled is None else f'{pooled:.3f}'}")
     # decision rule (PROTOCOL.md, Decision rules): B = redesigned edition, A = incumbent
-    for b_arm, a_arm in (("F12", "F11"), ("F12-codex", "F11-codex")):
+    withhold = None
+    if man["split"] == "scored":
+        fz = man.get("frozen") or {}
+        drift = [k for k, v in current_hashes().items() if fz.get(k) != v or man.get(k) != v]
+        if drift:
+            withhold = f"{', '.join(drift)} differ from the frozen run; no verdict"
+        elif man.get("host", {}).get("ignore_load"):
+            withhold = "the run used --ignore-load; not scored"
+    hot = [r["run"] for r in rs if (r.get("load_1m_start") or 0) > (man.get("host", {}).get("cpu_count") or 1e9)]
+    if hot:
+        print(f"\nWarning: {len(hot)} runs started above the core count: {hot[:5]}")
+    if withhold:
+        print(f"\nVerdicts withheld: {withhold}")
+        out["withheld"] = withhold
+    for b_arm, a_arm in (() if withhold else (("F12", "F11"), ("F12-codex", "F11-codex"))):
         for scale in sorted({r["scale"] for r in rs}):
             A = {cid: g for (arm, sc, cid), g in groups.items() if arm == a_arm and sc == scale}
             B = {cid: g for (arm, sc, cid), g in groups.items() if arm == b_arm and sc == scale}
@@ -535,7 +596,7 @@ def main():
     r = sub.add_parser("run")
     r.add_argument("--split", choices=["pilot", "scored"], required=True)
     r.add_argument("--arms", default="F11,F12"); r.add_argument("--scales", default="S,L")
-    r.add_argument("--reps", type=int, default=3); r.add_argument("--cases")
+    r.add_argument("--reps", type=int, help="pilot only (default 3); scored runs take n from FROZEN"); r.add_argument("--cases")
     r.add_argument("--model", default="sonnet"); r.add_argument("--judge-model", default="opus")
     r.add_argument("--probe-model", default="haiku")
     r.add_argument("--jobs", type=int, default=3); r.add_argument("--seed", type=int, default=1)
@@ -549,10 +610,12 @@ def main():
     r.add_argument("--stop-rate-limit", type=float, default=0.8)
     r.add_argument("--ref-1.1", dest="ref_11", default="origin/main"); r.add_argument("--ref-1.2", dest="ref_12", default="HEAD")
     p = sub.add_parser("report"); p.add_argument("dir"); p.add_argument("--json", action="store_true")
+    fz = sub.add_parser("freeze", help="write FROZEN (maintainer, at merge)")
+    fz.add_argument("--n", type=int, required=True)
     j = sub.add_parser("rejudge"); j.add_argument("dir"); j.add_argument("--judge-model", default="opus")
     j.add_argument("--jobs", type=int, default=3); j.add_argument("--unsandboxed", action="store_true")
     a = ap.parse_args()
-    {"run": cmd_run, "report": cmd_report, "rejudge": cmd_rejudge}[a.cmd](a)
+    {"run": cmd_run, "report": cmd_report, "rejudge": cmd_rejudge, "freeze": cmd_freeze}[a.cmd](a)
 
 
 if __name__ == "__main__":

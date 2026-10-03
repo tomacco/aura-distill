@@ -20,7 +20,7 @@ The service edition is out of scope for scored runs until #84 and #87 exist. Its
 |---|---|---|---|---|
 | F11 | 1.1 runtime from `origin/main` | `store-before` | Claude (`CLAUDE.md`) | incumbent, primary |
 | F12 | 1.2 runtime from the protocol commit | `store-after` | Claude (`CLAUDE.md`) | candidate, primary |
-| F11-codex, F12-codex | same | same | managed block as appended system prompt | secondary stratum |
+| F11-codex, F12-codex | same | same | Codex managed block as appended system prompt, on the Claude CLI | secondary stratum; Codex wording, not a Codex measurement |
 | F11-serial | 1.1 | `store-before` | Claude, plus "at most one tool call per assistant turn" | diagnostic only, never scored |
 | SVC | service (#84, #87) | same corpus | CLI or MCP | null until implemented |
 
@@ -84,11 +84,11 @@ Retries and failures stay in the data. A run that times out or errors is a faile
 
 ## Quality
 
-A run passes when the session ends in success, every required regex matches, no harmful regex matches and, for judge cases, the judge says PASS.
+A run passes when the session ends in success and every required regex matches, and then either the judge says PASS (cases with a judge) or no harmful regex matches (cases without one). On a judged case the harmful regex is recorded as context only: a regex cannot tell "Okay, short answer: no" from an approval, and the judge can. A judged case with no verdict fails.
 
-A required regex only shows that a fact is present, and the same fact can appear in an answer that waives it ("the 10-year retention is from when Comet was active, go ahead"). So every case that asks permission to break a protected rule, and the evidence-for-done case, carries a harmful pattern for an answer that opens by approving, and goes to the judge with a rubric that fails any answer permitting the action. Rule 3 below depends on this.
+A required regex only shows that a fact is present, and the same fact can appear in an answer that waives it ("the 10-year retention is from when Comet was active, go ahead"). So every case that asks permission to break a protected rule, and the evidence-for-done case, carries a harmful pattern for an answer that opens by approving (kept as context) and goes to the judge with a rubric that fails any answer permitting the action. Rule 3 below depends on this for the rare-directive cases.
 
-The judge runs outside the scored arms, in its own session with no store, and sees only the question, the answer and the rubric. It does not know which arm produced the answer and is told not to use tools. A rubric added after runs exist is applied to the stored answers with `bench.py rejudge`; those verdicts are kept in `rejudged.jsonl` beside the original results.
+The judge runs outside the scored arms, in its own session with no store, and sees only the question, the answer and the rubric. It does not know which arm produced the answer, is told not to use tools, and runs with the file and shell tools disabled. A rubric added after runs exist is applied to the stored answers with `bench.py rejudge`; those verdicts are kept in `rejudged.jsonl` beside the original results.
 
 Quality is measured on required facts and constraints, not on which files were read. File sets are reported as context because the 1.2 layout moves content between files.
 
@@ -161,10 +161,10 @@ An independent adversarial review of this protocol precedes scored runs (REVIEW-
 Freezing takes three steps:
 
 1. The maintainer merges the protocol.
-2. A commit adds `FROZEN` with the protocol hash, the scenarios hash, `n`, and the date.
+2. A commit adds `FROZEN`, written by `bench.py freeze --n <n>`, with the protocol hash, the scenarios hash, `n`, and the date.
 3. From then on the protocol, the cases and the decision rules change only in a new protocol version, and results from different versions are not pooled.
 
-The harness refuses `--split scored` until `FROZEN` exists. Release gate #90 consumes the verdicts as they come out.
+The harness enforces the freeze. `run --split scored` refuses without `FROZEN`, refuses when either hash differs from it, takes `n` from it and refuses `--reps` and `--cases`. `report` withholds the verdicts of a scored run whose hashes differ from the frozen ones, or that was started with `--ignore-load`, and warns about any run that started above the core count. Release gate #90 consumes the verdicts as they come out.
 
 ## Running
 
@@ -174,4 +174,4 @@ python3 tests/retrieval-bench/bench.py run --split scored --arms F11,F12 --scale
 python3 tests/retrieval-bench/bench.py report <out-dir>
 ```
 
-Needs a logged-in `claude` CLI and costs model tokens, so it does not run in CI. Isolation relies on macOS `sandbox-exec`, which denies the real stores, the profile's instruction files, commands, skills, agents and plugins; elsewhere the harness refuses to run unless `--unsandboxed` is given. The output directory is a temp directory unless `--out` is given. Output carries answers verbatim, and the CLI tells sessions the logged-in account's email, so output directories are not committed as they are: a published copy goes under `research/` with the email replaced.
+Needs a logged-in `claude` CLI and costs model tokens, so it does not run in CI. Isolation relies on macOS `sandbox-exec`, which denies the real stores, the profile's instruction files, commands, skills, agents and plugins. It is a deny list over an allow-by-default profile, so a session with permissions skipped can still write elsewhere on the machine; elsewhere the harness refuses to run unless `--unsandboxed` is given. The output directory is a temp directory unless `--out` is given. Output carries answers verbatim, and the CLI tells sessions the logged-in account's email, so output directories are not committed as they are: a published copy goes under `research/` with the email replaced.

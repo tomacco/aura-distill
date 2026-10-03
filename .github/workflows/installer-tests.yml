@@ -1,7 +1,8 @@
 name: Installer tests
 
 # Deterministic CI for install.sh / install.ps1 plus the files-only store
-# invariants (tests/files-only). The install-behavior job
+# invariants (tests/files-only) and the retrieval benchmark's deterministic
+# checks (tests/retrieval-bench/test_bench.py). The install-behavior job
 # depends on tests that install from the local checkout (AURA_DISTILL_REPO
 # override) into throwaway temp homes — no network, no real profile dirs.
 # It is guarded by file existence so this workflow is safe to merge before
@@ -24,6 +25,9 @@ jobs:
 
       - name: bash -n bin/distill-update.sh
         run: if [ -f bin/distill-update.sh ]; then bash -n bin/distill-update.sh; fi
+
+      - name: Retrieval benchmark harness checks (deterministic, no model)
+        run: if [ -f tests/retrieval-bench/test_bench.py ]; then python3 tests/retrieval-bench/test_bench.py; fi
 
       - name: Legacy endpoint guard (docs/adr/0001, 0002)
         # Stable surface when the change targets main (a PR into main, or a push

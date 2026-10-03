@@ -86,3 +86,5 @@ These are observations from the pilot, not findings:
 - The scored run, 13 cases x 2 arms x 2 scales x 3 = 156 runs, within the 40 USD cap.
 
 The pilot's manifest, per-run results, rejudge verdicts and report are in `research/2026-10-03-retrieval-pilot/`, with absolute paths and the account email replaced. Raw stream traces are not published.
+
+PROTOCOL.md says CI wiring for `test_bench.py` is pending. That changed after the freeze (PR #124); the sentence is corrected in the next protocol version, since editing the frozen file would change its hash. CI now also fails if PROTOCOL.md or scenarios.json drift from `FROZEN`.

@@ -85,7 +85,7 @@ When developing or testing:
 - Run deterministic Claude/Codex installer tests: `pwsh tests/test-codex.ps1`
 - Run the Windows update path (install.ps1, then the updater under bash; skips without `pwsh`): `bash tests/updater-compat/windows-smoke.sh`
 - Run a real isolated Codex retrieval test: `pwsh tests/test-codex.ps1 -LiveRetrieval`
-- Retrieval latency and quality benchmark (live model, not in CI): `python3 tests/retrieval-bench/bench.py run --split pilot`; the rules are in `tests/retrieval-bench/PROTOCOL.md`; its deterministic checks: `python3 tests/retrieval-bench/test_bench.py`
+- Retrieval latency and quality benchmark (live model, not in CI): `python3 tests/retrieval-bench/bench.py run --split pilot`; the rules are in `tests/retrieval-bench/PROTOCOL.md`; its deterministic checks: `python3 tests/retrieval-bench/test_bench.py` (in CI)
 
 ## Issues & PRs
 

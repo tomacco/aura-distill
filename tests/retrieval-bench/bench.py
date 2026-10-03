@@ -238,6 +238,20 @@ def probe_injection(cell, model, root, sandbox):
             "cost_usd": pm["cost_usd"] or 0}
 
 
+def wait_for_idle(limit, poll, deadline, say=print):
+    """Benchmarks yield to other work: block while the 1-minute load is above limit.
+    Returns seconds waited, or None when the deadline passed first."""
+    t0 = time.monotonic(); told = False
+    while os.getloadavg()[0] > limit:
+        if time.monotonic() >= deadline:
+            return None
+        if not told:
+            say(f"host load {os.getloadavg()[0]:.1f} > {limit}: waiting for the machine to go idle", flush=True)
+            told = True
+        time.sleep(poll)
+    return round(time.monotonic() - t0, 1)
+
+
 def plan(cases, arms, scales, reps, rnd):
     """Interleaved, randomized order: each block = one rep x scale x case, arms shuffled inside it."""
     order = []
@@ -260,10 +274,10 @@ def cmd_run(a):
         sys.exit("claude CLI not found")
     if not shutil.which("sandbox-exec") and not a.unsandboxed:
         sys.exit("sandbox-exec not found: sessions would run without isolation; pass --unsandboxed to accept that")
-    load, cores = os.getloadavg()[0], os.cpu_count() or 1
-    if load > cores and not a.ignore_load:
-        sys.exit(f"host load {load:.1f} is above {cores} cores; timings would measure the host (PROTOCOL.md, "
-                 "Equalization). Wait, or pass --ignore-load for a run that will not be scored")
+    limit = a.max_load if a.max_load is not None else (os.cpu_count() or 1)
+    deadline = time.monotonic() + a.max_wait_hours * 3600
+    if not a.ignore_load and wait_for_idle(limit, a.poll_seconds, deadline) is None:
+        sys.exit(f"host load stayed above {limit} for {a.max_wait_hours} h; nothing was run")
     if a.max_cost_usd is None:
         a.max_cost_usd = 40.0 if a.split == "scored" else 15.0
     if a.max_runs is None:
@@ -298,7 +312,8 @@ def cmd_run(a):
         "seed": a.seed, "reps": a.reps, "budget": {"max_cost_usd": a.max_cost_usd, "max_runs": a.max_runs,
                                                    "stop_rate_limit_5h": a.stop_rate_limit},
         "host": {"cpu_count": os.cpu_count(), "load_1m_at_start": round(os.getloadavg()[0], 2),
-                 "load_rule": "refuse above cpu_count unless --ignore-load", "ignore_load": a.ignore_load,
+                 "load_rule": f"wait while 1-minute load > {limit}, before the first run and before each run",
+                 "ignore_load": a.ignore_load,
                  "platform": platform.platform(), "python": platform.python_version(), "sandbox": bool(sandbox),
                  "claude_cli": subprocess.run(["claude", "--version"], capture_output=True, text=True).stdout.strip()},
         "cache_state": "recorded per run from usage; not controlled", "cells": [
@@ -316,6 +331,13 @@ def cmd_run(a):
             if spent["stop"]:
                 return
         cell, case = cells[(arm, scale)], by_id[cid]
+        waited = 0.0
+        if not a.ignore_load:
+            waited = wait_for_idle(limit, a.poll_seconds, deadline)
+            if waited is None:
+                with lock:
+                    spent["stop"] = spent["stop"] or f"host load stayed above {limit} past the {a.max_wait_hours} h wait"
+                return
         load_start = os.getloadavg()[0]
         name = f"{i:04d}-{arm}-{scale}-{cid}-r{rep}"
         tp = root / "runs" / f"{name}.jsonl"
@@ -325,7 +347,7 @@ def cmd_run(a):
         j = judge(case, m["answer"], a.judge_model, root, sandbox, name) if case.get("judge") else {}
         ok = g["regex_pass"] and j.get("judge_pass", True) and m["result_subtype"] == "success"
         rec = {"i": i, "run": name, "arm": arm, "scale": scale, "case": cid, "category": case["category"],
-               "rep": rep, "load_1m_start": round(load_start, 2), **{k: v for k, v in m.items() if k != "answer"}, "answer": m["answer"], **g, **j, "pass": ok}
+               "rep": rep, "load_1m_start": round(load_start, 2), "waited_for_idle_s": waited, **{k: v for k, v in m.items() if k != "answer"}, "answer": m["answer"], **g, **j, "pass": ok}
         with lock:
             results.write(json.dumps(rec) + "\n"); results.flush()
             spent["n"] += 1; spent["cost"] += (m["cost_usd"] or 0) + j.get("judge_cost_usd", 0)
@@ -521,7 +543,9 @@ def main():
     r.add_argument("--max-cost-usd", type=float, help="default 15 (pilot) or 40 (scored)")
     r.add_argument("--max-runs", type=int, help="default 200 (pilot) or 520 (scored)")
     r.add_argument("--unsandboxed", action="store_true", help="run without sandbox-exec (no isolation)")
-    r.add_argument("--ignore-load", action="store_true", help="start even when host load is above the core count")
+    r.add_argument("--ignore-load", action="store_true", help="do not wait for an idle host (such a run is not scored)")
+    r.add_argument("--max-load", type=float, help="1-minute load to wait below (default: core count)")
+    r.add_argument("--poll-seconds", type=int, default=60); r.add_argument("--max-wait-hours", type=float, default=12)
     r.add_argument("--stop-rate-limit", type=float, default=0.8)
     r.add_argument("--ref-1.1", dest="ref_11", default="origin/main"); r.add_argument("--ref-1.2", dest="ref_12", default="HEAD")
     p = sub.add_parser("report"); p.add_argument("dir"); p.add_argument("--json", action="store_true")

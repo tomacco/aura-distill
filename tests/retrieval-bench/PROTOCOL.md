@@ -100,7 +100,7 @@ Both arms use the same model, CLI version, tools, permissions, working-directory
 
 Before any runs, each arm and scale gets an injection probe: a separate session asks which file the instructions say to read first, and the answer must be that cell's `SPINE.md`. A cell that fails the probe is reported as unverified.
 
-Host load is part of the measurement, so it is controlled. The harness records the 1-minute load average with every run and refuses to start while it is above the core count. A scored run is started on an otherwise idle machine, and the report shows load per arm. A run started with `--ignore-load` is not scored.
+Host load is part of the measurement, so it is controlled. The benchmark yields to other work on the machine: before the first run and before each run, the harness waits while the 1-minute load average is above the core count, and gives up after 12 hours without running anything further. It records the load and the wait with every run, and the report shows load per arm. A run started with `--ignore-load` is not scored.
 
 Order is randomized and interleaved from a recorded seed: each block is one repetition, scale and case, with the arms shuffled inside it. Runs execute with a fixed number of parallel jobs, the same for every arm.
 

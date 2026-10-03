@@ -126,6 +126,15 @@ check("s-warehouse rejects '12 am'", not ok_("s-warehouse", "Loads ran at 12 am;
 check("s-alias rejects unrelated 10-minute facts", not ok_("s-alias", "The soak used to be 10 min; latency pages after 10 minutes."))
 check("s-alias accepts the backoff cap", ok_("s-alias", "Backoff is capped at 10 minutes, then dead-letter."))
 
+print("committed freeze")
+fz = bench.frozen()
+if fz is None:
+    check("no committed FROZEN yet", True)
+else:
+    check("committed FROZEN is well formed", bench.frozen_error(fz) is None)
+    check("committed PROTOCOL.md and scenarios.json match FROZEN (else: a new protocol version)",
+          all(fz.get(k) == v for k, v in bench.current_hashes().items()))
+
 print("freeze enforcement (run --split scored refuses before any setup)")
 tmp = Path(tempfile.mkdtemp())
 for f in ("PROTOCOL.md", "scenarios.json", "gen_corpus.py"):

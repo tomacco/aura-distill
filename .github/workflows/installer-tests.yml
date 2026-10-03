@@ -25,6 +25,9 @@ jobs:
       - name: bash -n bin/distill-update.sh
         run: if [ -f bin/distill-update.sh ]; then bash -n bin/distill-update.sh; fi
 
+      - name: Retrieval benchmark harness checks (deterministic, no model)
+        run: if [ -f tests/retrieval-bench/test_bench.py ]; then python3 tests/retrieval-bench/test_bench.py; fi
+
       - name: Legacy endpoint guard (docs/adr/0001, 0002)
         # Stable surface when the change targets main (a PR into main, or a push
         # to main); beta surface otherwise (prerelease VERSION values allowed).

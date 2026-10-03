@@ -286,6 +286,20 @@ def frozen():
     return dict(l.split(": ", 1) for l in f.read_text().splitlines() if ": " in l)
 
 
+def frozen_error(fz):
+    """None when FROZEN is well formed, else what is wrong with it."""
+    if fz is None:
+        return "no FROZEN file"
+    for k in ("protocol_sha256", "scenarios_sha256"):
+        if not re.fullmatch(r"[0-9a-f]{64}", fz.get(k, "")):
+            return f"FROZEN {k} is missing or not a sha256"
+    if not re.fullmatch(r"\d+", fz.get("n", "")) or not 3 <= int(fz["n"]) <= 10:
+        return "FROZEN n is missing or outside 3..10 (PROTOCOL.md, Pilot and sample size)"
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", fz.get("date", "")):
+        return "FROZEN date is missing"
+    return None
+
+
 def current_hashes():
     return {"protocol_sha256": sha((HERE / "PROTOCOL.md").read_bytes()),
             "scenarios_sha256": sha((HERE / "scenarios.json").read_bytes())}
@@ -309,6 +323,8 @@ def cmd_run(a):
         fz = frozen()
         if fz is None:
             sys.exit("scored cases run only after the protocol is frozen (PROTOCOL.md, Freeze)")
+        if frozen_error(fz):
+            sys.exit(frozen_error(fz))
         drift = [k for k, v in current_hashes().items() if fz.get(k) != v]
         if drift:
             sys.exit(f"{', '.join(drift)} differ from FROZEN: the protocol or cases changed after the freeze")
@@ -453,6 +469,29 @@ def geo_ratio(cells_b, cells_a, cases, rnd=None):
     return math.exp(sum(logs) / len(logs)) if logs else None
 
 
+def scored_ineligible(man, rs, groups):
+    """Why a scored run gets no verdict, or None. PROTOCOL.md, Freeze: only a complete run of the
+    frozen design, on the frozen files, on a host it waited for, is judged."""
+    fz = man.get("frozen")
+    if not isinstance(fz, dict) or frozen_error(fz):
+        return f"the run's freeze record is not valid ({frozen_error(fz if isinstance(fz, dict) else None)})"
+    drift = [k for k, v in current_hashes().items() if fz.get(k) != v or man.get(k) != v]
+    if drift:
+        return f"{', '.join(drift)} differ from the frozen run"
+    if man.get("host", {}).get("ignore_load"):
+        return "the run used --ignore-load"
+    if man.get("stopped"):
+        return f"the run stopped early ({man['stopped']})"
+    n = int(fz["n"])
+    scored = [c["id"] for c in json.loads((HERE / "scenarios.json").read_text())["cases"] if c["split"] == "scored"]
+    cells = {(arm, scale) for arm, scale, _ in groups}
+    short = [f"{arm}-{scale}-{cid}: {len(groups.get((arm, scale, cid), []))}/{n}"
+             for arm, scale in sorted(cells) for cid in scored if len(groups.get((arm, scale, cid), [])) != n]
+    if short:
+        return f"{len(short)} cells do not hold exactly n = {n} runs, e.g. {short[:3]}"
+    return None
+
+
 def cmd_report(a):
     root = Path(a.dir)
     man = json.loads((root / "manifest.json").read_text())
@@ -505,20 +544,15 @@ def cmd_report(a):
             print(f"\nHost load at run start, {arm}: median {med(loads):.1f}, max {max(loads):.1f}", end="")
     print(f"\n\nPooled log-sd of t_done across cells: {'-' if pooled is None else f'{pooled:.3f}'}")
     # decision rule (PROTOCOL.md, Decision rules): B = redesigned edition, A = incumbent
-    withhold = None
-    if man["split"] == "scored":
-        fz = man.get("frozen") or {}
-        drift = [k for k, v in current_hashes().items() if fz.get(k) != v or man.get(k) != v]
-        if drift:
-            withhold = f"{', '.join(drift)} differ from the frozen run; no verdict"
-        elif man.get("host", {}).get("ignore_load"):
-            withhold = "the run used --ignore-load; not scored"
+    withhold = scored_ineligible(man, rs, groups) if man["split"] == "scored" else None
     hot = [r["run"] for r in rs if (r.get("load_1m_start") or 0) > (man.get("host", {}).get("cpu_count") or 1e9)]
     if hot:
         print(f"\nWarning: {len(hot)} runs started above the core count: {hot[:5]}")
     if withhold:
         print(f"\nVerdicts withheld: {withhold}")
         out["withheld"] = withhold
+    elif man["split"] == "pilot":
+        print("\nPilot: the comparisons below are for reference only and carry no verdict (PROTOCOL.md).")
     for b_arm, a_arm in (() if withhold else (("F12", "F11"), ("F12-codex", "F11-codex"))):
         for scale in sorted({r["scale"] for r in rs}):
             A = {cid: g for (arm, sc, cid), g in groups.items() if arm == a_arm and sc == scale}

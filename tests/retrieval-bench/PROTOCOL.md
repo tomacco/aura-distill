@@ -164,7 +164,7 @@ Freezing takes three steps:
 2. A commit adds `FROZEN`, written by `bench.py freeze --n <n>`, with the protocol hash, the scenarios hash, `n`, and the date.
 3. From then on the protocol, the cases and the decision rules change only in a new protocol version, and results from different versions are not pooled.
 
-The harness enforces the freeze. `run --split scored` refuses without `FROZEN`, refuses when either hash differs from it, takes `n` from it and refuses `--reps` and `--cases`. `report` withholds the verdicts of a scored run whose hashes differ from the frozen ones, or that was started with `--ignore-load`, and warns about any run that started above the core count. Release gate #90 consumes the verdicts as they come out.
+The harness enforces the freeze, and `test_bench.py` (no model) checks that it does (run it before a scored run; CI wiring is pending). `run --split scored` refuses without `FROZEN`, refuses when either hash differs from it, takes `n` from it and refuses `--reps` and `--cases`. `report` gives verdicts only to a complete run of the frozen design: it withholds them when the freeze record is malformed, a hash differs, the run used `--ignore-load` or stopped early, or any cell holds other than n runs. It warns about any run that started above the core count. Pilot comparisons are printed for reference only. Release gate #90 consumes the verdicts as they come out.
 
 ## Running
 

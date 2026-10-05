@@ -96,23 +96,27 @@ function New-ExclusiveFile([string]$Path, [string]$line) {
 
 function Try-Create([string]$owner) { New-ExclusiveFile $Lock "$owner $(Now) $(Iso)`n" }
 
-# The takeover mutex guards every change to an existing lock. It is held for milliseconds;
-# one left by a crashed process is cleared after 30 seconds.
-# The wait is wall-clock and stays well under the 30 second cutoff, so a live holder is never
-# cleared.
+# The takeover mutex guards every change to an existing lock: an OS lock on the persistent
+# file .lock.takeover, opened with FileShare.None (LockFileEx on Windows, flock(2) on Unix,
+# the same lock bin/distill-lock.sh takes through perl). The OS drops it when this process
+# exits or crashes, so there is no stale mutex to clean up, and the file is never deleted.
+# Waits at most 10 seconds. Permission and other non-sharing errors propagate (exit 4).
+$script:MutexStream = $null
 function Lock-Mutex {
-    $deadline = (Now) + 10
-    while ((Now) -lt $deadline) {
-        if (New-ExclusiveFile $Mutex "$PID`n") { return $true }
+    $deadline = [DateTime]::UtcNow.AddSeconds(10)
+    while ($true) {
         try {
-            $m = [DateTimeOffset]::new([IO.File]::GetLastWriteTimeUtc($Mutex)).ToUnixTimeSeconds()
-            if ([IO.File]::Exists($Mutex) -and ((Now) - $m) -ge 30) { [IO.File]::Delete($Mutex) }
-        } catch { }
-        Start-Sleep -Milliseconds 50
+            $script:MutexStream = [IO.FileStream]::new($Mutex, [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
+            return $true
+        } catch [IO.IOException] {
+            if ([DateTime]::UtcNow -ge $deadline) { return $false }
+            Start-Sleep -Milliseconds 50
+        }
     }
-    return $false
 }
-function Unlock-Mutex { try { [IO.File]::Delete($Mutex) } catch { } }
+function Unlock-Mutex {
+    if ($script:MutexStream) { $script:MutexStream.Dispose(); $script:MutexStream = $null }
+}
 
 function Same-Lock($a, $b) { $a -and $b -and $a[0] -eq $b[0] -and $a[1] -eq $b[1] }
 

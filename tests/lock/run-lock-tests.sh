@@ -165,7 +165,7 @@ run_unit() {
     check "$impl: an owner with a slash is a usage error (exit 2)" test "$rc" -eq 2
     lock "$impl" frobnicate >/dev/null 2>&1; rc=$?
     check "$impl: an unknown command is a usage error (exit 2)" test "$rc" -eq 2
-    check "$impl: no temp files left behind" test -z "$(ls -A "$store" | grep -vE '^\.status$')"
+    check "$impl: no temp files left behind" test -z "$(ls -A "$store" | grep -vE '^\.status$|^\.lock\.takeover$')"
     rm -rf "$store"
 }
 
@@ -256,23 +256,23 @@ SHIM
 }
 
 # Deterministic interleaving (bash), from the second Codex review: an owner's heartbeat is
-# frozen after it read the lock line and before it takes the mutex (an ln shim pauses the
-# mutex create). The lease expires, another caller takes the lock over, then the heartbeat
+# frozen after it read the lock line and before it takes the mutex (a perl shim pauses the
+# mutex acquisition). The lease expires, another caller takes the lock over, then the heartbeat
 # resumes. It must report the loss (exit 3) and leave the new owner's line alone.
 run_delayed_heartbeat() {
     local store shim rc h_pid b_rc
     echo "-- sh: delayed heartbeat (deterministic interleaving)"
     store=$(new_store); export DISTILL_DIR=$store
     shim=$(mktemp -d)
-    cat > "$shim/ln" <<SHIM
+    cat > "$shim/perl" <<SHIM
 #!/usr/bin/env bash
-if [ "\${2:-}" = "$store/.lock.takeover" ] && [ ! -e "$shim/passed" ]; then
+if [ ! -e "$shim/passed" ]; then
     touch "$shim/paused" "$shim/passed"
     while [ ! -e "$shim/resume" ]; do sleep 0.02; done
 fi
-exec /bin/ln "\$@"
+exec $(command -v perl) "\$@"
 SHIM
-    chmod +x "$shim/ln"
+    chmod +x "$shim/perl"
     export DISTILL_LOCK_STALE_SECONDS=2
     "$SH" acquire alpha >/dev/null
     PATH="$shim:$PATH" "$SH" heartbeat alpha step:3 signals:1 >"$shim/hb.out" 2>&1 &
@@ -300,11 +300,58 @@ SHIM
     rm -rf "$store" "$shim"
 }
 
+# The mutex is an OS lock, so a holder that dies releases it at once and a mutex file left
+# behind is harmless. Covers the third Codex review: with the old file mutex, two stale-mutex
+# cleaners could each delete the other's fresh mutex and both take the lock over.
+run_mutex_os_lock() {
+    local store shim t_pid holder rc t0 i
+    echo "-- sh: mutex is an OS lock (killed holder, leftover mutex file)"
+    store=$(new_store); export DISTILL_DIR=$store
+
+    # A leftover mutex file, old and with junk in it, blocks nobody and is not deleted.
+    echo "junk from a crashed run" > "$store/.lock.takeover"; touch -t 200101010000 "$store/.lock.takeover"
+    echo "dead 1000 2001-09-09T01:46:40Z" > "$store/.lock"
+    for i in $(seq 1 8); do ( "$SH" acquire "v$i" >/dev/null 2>&1 && echo "v$i" >> "$store/won" ) & done; wait
+    check "leftover mutex file: exactly one of 8 racers takes the stale lock over" test "$(wc -l < "$store/won" | tr -d ' ')" -eq 1
+    check "leftover mutex file: it still exists (no cleaner deletes mutex files)" test -e "$store/.lock.takeover"
+    "$SH" release "$(cat "$store/won")" >/dev/null
+
+    # Freeze a takeover inside the mutex, then kill it: the next caller must not wait out a
+    # stale-mutex timer, because the OS released the lock with the process.
+    shim=$(mktemp -d)
+    cat > "$shim/mv" <<SHIM
+#!/usr/bin/env bash
+if [ "\$1" = "-f" ] && [ "\${3:-}" = "$store/.lock" ]; then
+    echo "\$PPID" > "$shim/holder"; touch "$shim/paused"
+    while :; do sleep 0.05; done
+fi
+exec /bin/mv "\$@"
+SHIM
+    chmod +x "$shim/mv"
+    echo "dead 1000 2001-09-09T01:46:40Z" > "$store/.lock"
+    PATH="$shim:$PATH" "$SH" acquire victim >/dev/null 2>&1 &
+    t_pid=$!
+    for i in $(seq 1 250); do [ -e "$shim/paused" ] && break; sleep 0.02; done
+    holder=$(cat "$shim/holder" 2>/dev/null)
+    check "killed holder: the takeover froze inside the mutex" test -n "$holder"
+    pkill -9 -P "$holder" 2>/dev/null; kill -9 "$holder" "$t_pid" 2>/dev/null; wait "$t_pid" 2>/dev/null
+    t0=$SECONDS
+    "$SH" acquire survivor >/dev/null 2>&1; rc=$?
+    check "killed holder: the next caller takes the stale lock over (exit 0)" test "$rc" -eq 0
+    check "killed holder: ...without waiting on a stale mutex (under 5 s)" test $(( SECONDS - t0 )) -lt 5
+    check "killed holder: the survivor owns the lock" test "$(cut -d' ' -f1 "$store/.lock")" = "survivor"
+    rm -rf "$store" "$shim"
+}
+
 echo "== bash implementation"
 run_unit sh
 run_io_failure sh
-run_interleaving
-run_delayed_heartbeat
+# The shim-driven interleavings exercise the bash primitives. On Windows the bash script hands
+# over to the PowerShell one, so they do not apply there.
+case "$(uname -s 2>/dev/null)" in
+    MINGW*|MSYS*|CYGWIN*) echo "-- sh: deterministic interleavings SKIPPED on Windows (bash hands over to PowerShell)" ;;
+    *) run_interleaving; run_delayed_heartbeat; run_mutex_os_lock ;;
+esac
 run_exclusion "sh: 4 concurrent distills" "sh" 4 0.4
 run_exclusion "sh: 12 concurrent distills" "sh" 12 0.05
 run_stale_race "sh: stale takeover race" sh 40 16

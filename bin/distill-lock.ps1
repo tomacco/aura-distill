@@ -7,7 +7,9 @@
 # CREATE_NEW on Windows), so exactly one caller wins; a reader that catches it before the line
 # is written sees a fresh malformed lock, which counts as held. Only the owner can refresh or
 # release it. A lock whose heartbeat is older than DISTILL_LOCK_STALE_SECONDS (default 300)
-# can be taken over: it is moved aside (only one move can succeed) and checked first.
+# can be taken over. Takeovers, near-stale heartbeats and releases run under a short-lived
+# second lock ({DISTILL_DIR}/.lock.takeover), re-check the lock line under it, and replace the
+# lock with an atomic rename, so the lock file never goes missing while someone could create it.
 #
 # Usage:
 #   distill-lock.ps1 acquire   <owner> [--wait SECONDS]
@@ -20,6 +22,7 @@ $ErrorActionPreference = 'Stop'
 
 $Dir    = if ($env:DISTILL_DIR) { $env:DISTILL_DIR } else { Split-Path -Parent $PSScriptRoot }
 $Lock   = Join-Path $Dir '.lock'
+$Mutex  = Join-Path $Dir '.lock.takeover'
 $Status = Join-Path $Dir '.status'
 $Stale  = if ($env:DISTILL_LOCK_STALE_SECONDS) { [int]$env:DISTILL_LOCK_STALE_SECONDS } else { 300 }
 $Poll   = if ($env:DISTILL_LOCK_POLL_SECONDS)  { [double]$env:DISTILL_LOCK_POLL_SECONDS }  else { 2 }
@@ -63,41 +66,51 @@ function Move-Over([string]$src, [string]$dst) {
     else { [IO.File]::Move($src, $dst) }
 }
 
-# Rename to a name nobody else uses. Fails if the source is gone, so of several callers
-# moving the same lock only one succeeds. (File.Move's no-overwrite check is not atomic on
-# Unix, so it is never used to create the lock itself.)
-function Try-Move([string]$src, [string]$dst) {
-    try { [IO.File]::Move($src, $dst); return $true } catch { return $false }
-}
-
-# Creates the lock only if absent and writes $line into it.
-function New-LockFile([string]$line) {
-    try { $fs = [IO.FileStream]::new($Lock, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read) }
+# Creates $Path only if absent and writes $line into it.
+function New-ExclusiveFile([string]$Path, [string]$line) {
+    try { $fs = [IO.FileStream]::new($Path, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read) }
     catch { return $false }
     try { $b = [Text.Encoding]::ASCII.GetBytes($line); $fs.Write($b, 0, $b.Length) } finally { $fs.Dispose() }
     return $true
 }
 
-function Try-Create([string]$owner) { New-LockFile "$owner $(Now) $(Iso)`n" }
+function Try-Create([string]$owner) { New-ExclusiveFile $Lock "$owner $(Now) $(Iso)`n" }
 
-# Moves the lock aside if it still holds exactly $expected. If the move caught a newer
-# lock, the newer lock is put back and this fails.
-function Take-Aside($expected) {
-    $aside = TmpName 'aside'
-    if (-not (Try-Move $Lock $aside)) { return $false }
-    $moved = Read-Lock $aside
-    if ($moved -and $moved[0] -eq $expected[0] -and $moved[1] -eq $expected[1]) {
-        Remove-Item -LiteralPath $aside -Force -ErrorAction SilentlyContinue
-        return $true
+# The takeover mutex guards every change to an existing lock. It is held for milliseconds;
+# one left by a crashed process is cleared after 30 seconds.
+function Lock-Mutex {
+    for ($i = 0; $i -lt 200; $i++) {
+        if (New-ExclusiveFile $Mutex "$PID`n") { return $true }
+        try {
+            $m = [DateTimeOffset]::new([IO.File]::GetLastWriteTimeUtc($Mutex)).ToUnixTimeSeconds()
+            if ([IO.File]::Exists($Mutex) -and ((Now) - $m) -ge 30) { [IO.File]::Delete($Mutex) }
+        } catch { }
+        Start-Sleep -Milliseconds 50
     }
-    try { [void](New-LockFile ([IO.File]::ReadAllText($aside))) } catch { }
-    Remove-Item -LiteralPath $aside -Force -ErrorAction SilentlyContinue
     return $false
+}
+function Unlock-Mutex { try { [IO.File]::Delete($Mutex) } catch { } }
+
+function Same-Lock($a, $b) { $a -and $b -and $a[0] -eq $b[0] -and $a[1] -eq $b[1] }
+
+# Under the mutex: if the lock still reads $expected, atomically replace it with a fresh
+# line for $owner.
+function Replace-If($expected, [string]$owner) {
+    if (-not (Lock-Mutex)) { return $false }
+    $ok = $false
+    try {
+        if (Same-Lock (Read-Lock) $expected) {
+            $tmp = TmpName 'swap'
+            [IO.File]::WriteAllText($tmp, "$owner $(Now) $(Iso)`n")
+            try { Move-Over $tmp $Lock; $ok = $true } catch { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue }
+        }
+    } finally { Unlock-Mutex }
+    return $ok
 }
 
 function Is-Stale([long]$epoch) { ((Now) - $epoch) -ge $Stale }
 # Past half the stale window a waiter may be close to a takeover, so the owner refreshes
-# through Take-Aside and never blindly overwrites.
+# through Replace-If and never blindly overwrites.
 function Near-Stale([long]$epoch) { (((Now) - $epoch) * 2) -ge $Stale }
 
 function Test-Owner([string]$owner) {
@@ -111,9 +124,9 @@ function Invoke-Heartbeat([string]$owner, [string[]]$rest, [switch]$Quiet) {
     if (-not $cur) { Say 'lost: lock not held'; return 3 }
     if ($cur[0] -ne $owner) { Say "lost: held by $($cur[0])"; return 3 }
     if (Near-Stale $cur[1]) {
-        # A waiter may be taking this lock over right now. Re-take it through the same
-        # aside-and-check path so we never overwrite a new owner's lock.
-        if (-not ((Take-Aside $cur) -and (Try-Create $owner))) { Say 'lost: stale lock taken over'; return 3 }
+        # A waiter may be taking this lock over right now. Refresh through the same
+        # mutex-and-check path so we never overwrite a new owner's lock.
+        if (-not (Replace-If $cur $owner)) { Say 'lost: stale lock taken over'; return 3 }
     } else {
         $tmp = TmpName 'beat'
         [IO.File]::WriteAllText($tmp, "$owner $(Now) $(Iso)`n")
@@ -137,7 +150,7 @@ function Invoke-Acquire([string]$owner, [string[]]$rest) {
             if (Try-Create $owner) { Write-Status 'running'; Say 'acquired'; return 0 }
         } elseif ($cur[0] -eq $owner) {
             if ((Invoke-Heartbeat $owner @() -Quiet) -eq 0) { Say 'acquired (already held)'; return 0 }
-        } elseif ((Is-Stale $cur[1]) -and (Take-Aside $cur) -and (Try-Create $owner)) {
+        } elseif ((Is-Stale $cur[1]) -and (Replace-If $cur $owner)) {
             Write-Status 'running'; Say "acquired (took over stale lock from $($cur[0]))"; return 0
         }
         if ((Now) -ge $deadline) {
@@ -153,7 +166,11 @@ function Invoke-Release([string]$owner) {
     $cur = Read-Lock
     if (-not $cur) { Say 'not held'; return 3 }
     if ($cur[0] -ne $owner) { Say "not owner: held by $($cur[0])"; return 3 }
-    if (-not (Take-Aside $cur)) { Say 'not owner: lock changed during release'; return 3 }
+    if (-not (Lock-Mutex)) { Say 'not owner: lock contended during release'; return 3 }
+    try {
+        if (-not (Same-Lock (Read-Lock) $cur)) { Say 'not owner: lock changed during release'; return 3 }
+        [IO.File]::Delete($Lock)
+    } finally { Unlock-Mutex }
     Write-Status 'idle'; Say 'released'; return 0
 }
 

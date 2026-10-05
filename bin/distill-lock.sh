@@ -5,8 +5,10 @@
 # It is created with link(2), which fails if the name exists, so exactly one caller wins and
 # the line is complete the moment it is visible. Only the owner can refresh or release it.
 # A lock whose heartbeat is older than DISTILL_LOCK_STALE_SECONDS (default 300) can be taken
-# over: the stale file is renamed aside (only one rename can succeed) and checked before the
-# takeover counts. .status keeps its existing human-readable forms for checkpoints.
+# over. Takeovers, near-stale heartbeats and releases run under a short-lived second lock
+# ({DISTILL_DIR}/.lock.takeover), re-check the lock line under it, and replace the lock with an
+# atomic rename, so the lock file never goes missing while someone else could create it.
+# .status keeps its existing human-readable forms for checkpoints.
 # Same file format and semantics as bin/distill-lock.ps1 (parity: tests/lock/run-lock-tests.sh).
 #
 # Usage:
@@ -21,6 +23,7 @@ set -f  # word-split lock lines without globbing
 
 DIR="${DISTILL_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
 LOCK="$DIR/.lock"
+MUTEX="$DIR/.lock.takeover"
 STATUS="$DIR/.status"
 STALE="${DISTILL_LOCK_STALE_SECONDS:-300}"
 POLL="${DISTILL_LOCK_POLL_SECONDS:-2}"
@@ -52,21 +55,36 @@ try_create() {
     rm -f "$tmp"; return 1
 }
 
-# Moves the lock aside if it still holds exactly <expected> (an "<owner> <epoch>" pair).
-# If the rename caught a newer lock, the newer lock is put back and this fails.
-take_aside() {
-    local expected="$1" aside moved
-    aside=$(tmpname aside)
-    mv "$LOCK" "$aside" 2>/dev/null || return 1
-    moved=$(LOCK="$aside" read_lock)
-    if [ "$moved" = "$expected" ]; then rm -f "$aside"; return 0; fi
-    ln "$aside" "$LOCK" 2>/dev/null
-    rm -f "$aside"; return 1
+# The takeover mutex guards every change to an existing lock. It is held for milliseconds;
+# one left by a crashed process is cleared after 30 seconds.
+mutex_lock() {
+    local tmp i m
+    tmp=$(tmpname mx); echo "$$" > "$tmp" || return 1
+    for i in $(seq 1 200); do
+        if ln "$tmp" "$MUTEX" 2>/dev/null; then rm -f "$tmp"; return 0; fi
+        m=$(date -r "$MUTEX" +%s 2>/dev/null) && [ $(( $(now) - m )) -ge 30 ] && rm -f "$MUTEX"
+        sleep 0.05
+    done
+    rm -f "$tmp"; return 1
+}
+mutex_unlock() { rm -f "$MUTEX"; }
+
+# Under the mutex: if the lock still reads <expected> ("<owner> <epoch>"), atomically replace
+# it with a fresh line for <owner>.
+replace_if() {
+    local expected="$1" owner="$2" tmp rc=1
+    mutex_lock || return 1
+    if [ "$(read_lock)" = "$expected" ]; then
+        tmp=$(tmpname swap)
+        printf '%s %s %s\n' "$owner" "$(now)" "$(iso)" > "$tmp" && mv -f "$tmp" "$LOCK" && rc=0
+        rm -f "$tmp"
+    fi
+    mutex_unlock; return $rc
 }
 
 is_stale() { [ $(( $(now) - $1 )) -ge "$STALE" ]; }
 # Past half the stale window a waiter may be close to a takeover, so the owner refreshes
-# through take_aside and never blindly overwrites.
+# through replace_if and never blindly overwrites.
 near_stale() { [ $(( ($(now) - $1) * 2 )) -ge "$STALE" ]; }
 
 check_owner() {
@@ -91,7 +109,7 @@ cmd_acquire() {
             set -- $cur; cur_owner=$1; cur_epoch=$2
             if [ "$cur_owner" = "$owner" ]; then
                 cmd_heartbeat "$owner" >/dev/null && { echo "acquired (already held)"; return 0; }
-            elif is_stale "$cur_epoch" && take_aside "$cur" && try_create "$owner"; then
+            elif is_stale "$cur_epoch" && replace_if "$cur" "$owner"; then
                 write_status "running"; echo "acquired (took over stale lock from $cur_owner)"; return 0
             fi
         fi
@@ -112,9 +130,9 @@ cmd_heartbeat() {
     set -- $cur "$@"
     if [ "$1" != "$owner" ]; then echo "lost: held by $1"; return 3; fi
     if near_stale "$2"; then
-        # A waiter may be taking this lock over right now. Re-take it through the same
-        # aside-and-check path so we never overwrite a new owner's lock.
-        take_aside "$cur" && try_create "$owner" || { echo "lost: stale lock taken over"; return 3; }
+        # A waiter may be taking this lock over right now. Refresh through the same
+        # mutex-and-check path so we never overwrite a new owner's lock.
+        replace_if "$cur" "$owner" || { echo "lost: stale lock taken over"; return 3; }
     else
         tmp=$(tmpname beat)
         printf '%s %s %s\n' "$owner" "$(now)" "$(iso)" > "$tmp" && mv -f "$tmp" "$LOCK"
@@ -130,7 +148,9 @@ cmd_release() {
     if [ -z "$cur" ]; then echo "not held"; return 3; fi
     set -- $cur
     if [ "$1" != "$owner" ]; then echo "not owner: held by $1"; return 3; fi
-    take_aside "$cur" || { echo "not owner: lock changed during release"; return 3; }
+    mutex_lock || { echo "not owner: lock contended during release"; return 3; }
+    if [ "$(read_lock)" != "$cur" ]; then mutex_unlock; echo "not owner: lock changed during release"; return 3; fi
+    rm -f "$LOCK"; mutex_unlock
     write_status "idle"; echo "released"; return 0
 }
 

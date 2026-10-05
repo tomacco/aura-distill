@@ -7,11 +7,15 @@
 set -uo pipefail
 cd "$(dirname "$0")"
 
-SH="$(pwd)/../../bin/distill-lock.sh"
+SH="${LOCK_SH:-$(pwd)/../../bin/distill-lock.sh}"
 PS1="$(pwd)/../../bin/distill-lock.ps1"
+# PS_BIN=none skips the PowerShell twin; LOCK_SH points the bash runs at another script.
 PS_BIN="${PS_BIN:-}"
-[ -z "$PS_BIN" ] && command -v pwsh >/dev/null 2>&1 && PS_BIN=pwsh
-[ -z "$PS_BIN" ] && command -v powershell.exe >/dev/null 2>&1 && PS_BIN=powershell.exe
+if [ "$PS_BIN" = none ]; then PS_BIN=
+else
+    [ -z "$PS_BIN" ] && command -v pwsh >/dev/null 2>&1 && PS_BIN=pwsh
+    [ -z "$PS_BIN" ] && command -v powershell.exe >/dev/null 2>&1 && PS_BIN=powershell.exe
+fi
 PASS=0; FAIL=0
 
 check() { # check <desc> <cmd...>
@@ -169,13 +173,13 @@ echo "== bash implementation"
 run_unit sh
 run_exclusion "sh: 4 concurrent distills" "sh" 4 0.4
 run_exclusion "sh: 12 concurrent distills" "sh" 12 0.05
-run_stale_race "sh: stale takeover race" sh 20 6
+run_stale_race "sh: stale takeover race" sh 40 16
 
 if [ -n "$PS_BIN" ]; then
     echo "== PowerShell implementation ($PS_BIN)"
     run_unit ps1
     run_exclusion "ps1: 4 concurrent distills" "ps1" 4 0.4
-    run_stale_race "ps1: stale takeover race" ps1 5 4
+    run_stale_race "ps1: stale takeover race" ps1 10 8
     echo "== mixed field (bash and PowerShell share one store)"
     run_exclusion "mixed: 6 concurrent distills" "sh ps1" 6 0.3
 else

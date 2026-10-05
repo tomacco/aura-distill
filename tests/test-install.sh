@@ -126,3 +126,36 @@ empty=$(grep -l "$beacon" $(ls -t "$TEST_HOME"/nonexistent/*/*.jsonl 2>/dev/null
 test -z "$empty"
 
 printf 'PASS ledger beacon grep resolves fixtures and survives empty transcript roots\n'
+
+# Update procedure (#130): run the bash block from the INSTALLED dispatcher, the way an agent
+# does, against a store set with AURA_DISTILL_HOME. No file may keep {DISTILL_DIR}, the
+# custom store must be the one written, and a failed download must leave everything as it was.
+UP_HOME=$(mktemp -d)
+UP_STORE="$UP_HOME/custom-store"
+HOME="$UP_HOME" AURA_DISTILL_HOME="$UP_STORE" AURA_DISTILL_REPO="$REPO_ROOT" DISTILL_TOKEN_SAVER=off \
+  bash "$INSTALLER" </dev/null >/dev/null
+update_block() {
+  awk '/^### Update procedure/{f=1} f&&/^```bash$/{g=1;next} g&&/^```$/{exit} g' "$UP_HOME/.claude/commands/distill.md"
+}
+test -n "$(update_block)"
+echo "stale" > "$UP_STORE/.version"
+HOME="$UP_HOME" AURA_DISTILL_REPO="$REPO_ROOT" bash -c "$(update_block)"
+for f in "$UP_HOME/.claude/commands/distill.md" "$UP_STORE/distill-process.md" "$UP_STORE/distill-monitor.md"; do
+  if grep -q '{DISTILL_DIR}' "$f"; then echo "FAIL update left {DISTILL_DIR} in $f" >&2; exit 1; fi
+done
+grep -q "$UP_STORE/bin/distill-lock.sh" "$UP_HOME/.claude/commands/distill.md"
+test ! -e "$UP_HOME/.aura-distill/distill-process.md"   # the default store was not written
+test -x "$UP_STORE/bin/distill-lock.sh"
+test "$(cat "$UP_STORE/.version")" = "$(cat "$REPO_ROOT/VERSION")"
+# The placeholder survives the installer's own substitution, so a second update still works.
+HOME="$UP_HOME" AURA_DISTILL_REPO="$REPO_ROOT" bash -c "$(update_block)"
+grep -q "$UP_STORE/bin/distill-lock.sh" "$UP_HOME/.claude/commands/distill.md"
+
+BROKEN=$(mktemp -d); cp -R "$REPO_ROOT"/. "$BROKEN"/; rm "$BROKEN/distill-monitor.md"
+before=$(cat "$UP_STORE/distill-process.md" "$UP_HOME/.claude/commands/distill.md" | cksum)
+if HOME="$UP_HOME" AURA_DISTILL_REPO="$BROKEN" bash -c "$(update_block)" 2>/dev/null; then
+  echo "FAIL update reported success with a missing file" >&2; exit 1
+fi
+test "$(cat "$UP_STORE/distill-process.md" "$UP_HOME/.claude/commands/distill.md" | cksum)" = "$before"
+rm -rf "$UP_HOME" "$BROKEN"
+printf 'PASS update procedure resolves the store path, keeps a custom store, and is all-or-nothing\n'

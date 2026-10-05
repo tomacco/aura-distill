@@ -121,7 +121,7 @@ Use the client's sub-agent/delegation tool (Claude's Agent tool or Codex sub-age
 - Exit 4 → the store could not be written (permissions, disk). Do NOT spawn. Show the user the error line.
 - If the spawn itself fails (the sub-agent never started), release the lock yourself: `{DISTILL_DIR}/bin/distill-lock.sh release <owner>`.
 
-**IMPORTANT:** Keep the distillation agent attached until it completes. It must have write access to `{DISTILL_DIR}/`; do not use a mode that suppresses required write permissions. In Claude Code specifically, never use `run_in_background: true`: background agents cannot obtain the write permissions this workflow requires.
+**IMPORTANT:** Where the client lets you choose, run the distillation agent attached (in Claude Code, do not pass `run_in_background: true`). Some clients run it in the background regardless. Either way, wait for its completion before Step 3: do not report results, touch the store, or start another distillation until its report arrives. It needs write access to `{DISTILL_DIR}/`; do not use a mode that suppresses write permissions. If it reports a denied write, relay that to the user: nothing past that point was distilled.
 
 ```
 Agent({
@@ -251,15 +251,27 @@ Update silently, then briefly confirm:
 
 ### Update procedure (when accepted):
 
+Run it as one script. It downloads everything first and replaces the installed files only if every download succeeded, and it resolves the store path in the downloaded files the way the installers do, so a store set with `AURA_DISTILL_HOME` keeps working after the update.
+
 ```bash
-curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill.md -o ~/.claude/commands/distill.md
-curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill-process.md -o {DISTILL_DIR}/distill-process.md
-curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill-monitor.md -o {DISTILL_DIR}/distill-monitor.md
-mkdir -p {DISTILL_DIR}/data {DISTILL_DIR}/inbox {DISTILL_DIR}/bin
-curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/bin/distill-lock.sh -o {DISTILL_DIR}/bin/distill-lock.sh
-curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/bin/distill-lock.ps1 -o {DISTILL_DIR}/bin/distill-lock.ps1
-chmod +x {DISTILL_DIR}/bin/distill-lock.sh
-echo "NEW_VERSION" > {DISTILL_DIR}/.version
+set -eo pipefail
+DIR="{DISTILL_DIR}"
+SRC="${AURA_DISTILL_REPO:-https://raw.githubusercontent.com/tomacco/aura-distill/main}"
+case "$SRC" in /*) SRC="file://$SRC" ;; esac
+PH='{DISTILL''_DIR}'   # split so the installer's own substitution leaves this placeholder intact
+TMP=$(mktemp -d)
+for f in distill.md distill-process.md distill-monitor.md; do
+  curl -fsSL "$SRC/$f" | sed "s|$PH|$DIR|g" > "$TMP/$f"
+done
+for f in distill-lock.sh distill-lock.ps1; do curl -fsSL "$SRC/bin/$f" -o "$TMP/$f"; done
+curl -fsSL "$SRC/VERSION" -o "$TMP/VERSION"
+mkdir -p "$DIR/data" "$DIR/inbox" "$DIR/bin" ~/.claude/commands
+mv "$TMP/distill.md" ~/.claude/commands/distill.md
+mv "$TMP/distill-process.md" "$TMP/distill-monitor.md" "$DIR/"
+mv "$TMP/distill-lock.sh" "$TMP/distill-lock.ps1" "$DIR/bin/"
+chmod +x "$DIR/bin/distill-lock.sh"
+mv "$TMP/VERSION" "$DIR/.version"
+rm -rf "$TMP"
 ```
 
 After updating, inform the user what changed (fetch the commit log or just state the new version).

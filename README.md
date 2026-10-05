@@ -71,9 +71,9 @@ This installs:
 | managed pointer | `~/.claude/CLAUDE.md` | Makes Claude load the shared SPINE |
 | managed pointer | `~/.codex/AGENTS.md` | Makes Codex load the shared SPINE |
 
-Zero dependencies. No Node.js. No MCP server. No database. Just files.
+No Node.js. No MCP server. No database. Just files, plus perl for the run lock on macOS and Linux.
 
-**Google Antigravity (agy)** support ships in-repo as a plugin (not yet wired into the installers — tracked in [#67](https://github.com/tomacco/aura-distill/issues/67)): copy `plugins/aura-distill/` into an Antigravity customization root's `plugins/` folder and it is discovered automatically — `skills/distill/SKILL.md` (the distill workflow), `rules/AGENTS.md` (session rules deferring to the canonical monitor), plus `bin/distill-recent-agy.sh`/`.ps1`, a Time Index over Antigravity brain transcripts. Knowledge lives in the same shared `~/.aura-distill/`. One dependency note: the POSIX Time Index twin is Python-backed (the PowerShell twin needs nothing); the core system stays dependency-free. The run lock's bash script (`bin/distill-lock.sh`) uses perl for its mutex, preinstalled on macOS and mainstream Linux, and refuses to run without it; on Windows it hands over to the PowerShell script, which needs nothing.
+**Google Antigravity (agy)** support ships in-repo as a plugin (not yet wired into the installers — tracked in [#67](https://github.com/tomacco/aura-distill/issues/67)): copy `plugins/aura-distill/` into an Antigravity customization root's `plugins/` folder and it is discovered automatically — `skills/distill/SKILL.md` (the distill workflow), `rules/AGENTS.md` (session rules deferring to the canonical monitor), plus `bin/distill-recent-agy.sh`/`.ps1`, a Time Index over Antigravity brain transcripts. Knowledge lives in the same shared `~/.aura-distill/`. One dependency note: the POSIX Time Index twin is Python-backed (the PowerShell twin needs nothing); the knowledge files and prompts need nothing. The run lock's bash script (`bin/distill-lock.sh`) uses perl for its mutex, preinstalled on macOS and mainstream Linux, and refuses to run without it; on Windows it hands over to the PowerShell script, which needs nothing.
 
 ---
 

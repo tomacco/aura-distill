@@ -36,7 +36,7 @@ assert_true "grep -q 'name: distill' '$PLUGIN/skills/distill/SKILL.md'" "SKILL.m
 assert_true "grep -q 'SPINE.md' '$PLUGIN/skills/distill/SKILL.md'" "SKILL.md references SPINE.md"
 assert_true "grep -q 'invoke_subagent' '$PLUGIN/skills/distill/SKILL.md'" "SKILL.md references subagent invocation"
 assert_true "grep -q '.needs-migration' '$PLUGIN/skills/distill/SKILL.md'" "SKILL.md gates on pending migration"
-assert_true "grep -q 'idle <ISO_TIMESTAMP>' '$PLUGIN/skills/distill/SKILL.md'" "SKILL.md resets .status on spawn failure"
+assert_true "grep -q 'distill-lock release <owner>' '$PLUGIN/skills/distill/SKILL.md'" "SKILL.md releases the run lock on spawn failure"
 
 # Test 3: rules sit at the DISCOVERED path and defer to the canonical monitor
 assert_true "[[ -f '$PLUGIN/rules/AGENTS.md' ]]" "plugins/aura-distill/rules/AGENTS.md exists (discovery path)"

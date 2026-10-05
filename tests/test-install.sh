@@ -45,6 +45,12 @@ if grep -q '{DISTILL_DIR}' "$TEST_HOME/.claude/commands/distill.md"; then
   exit 1
 fi
 
+# Run lock: both twins installed into the shared store, the bash one executable
+test -x "$TEST_HOME/.aura-distill/bin/distill-lock.sh"
+test -f "$TEST_HOME/.aura-distill/bin/distill-lock.ps1"
+grep -q 'bin/distill-lock.sh acquire' "$TEST_HOME/.claude/commands/distill.md"
+DISTILL_DIR= "$TEST_HOME/.aura-distill/bin/distill-lock.sh" status | grep -qx 'free'
+
 # INBOX (#47): inbox/ dir exists; consume instructions in the process engine;
 # explicit-save instructions in the monitor and the always-on rules file
 test -d "$TEST_HOME/.aura-distill/inbox"

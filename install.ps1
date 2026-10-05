@@ -136,6 +136,12 @@ Write-Done "distill-process.md ${DIM}(process engine)${RESET}"
 Get-File "$Repo/distill-monitor.md"  (Join-Path $DistillDir 'distill-monitor.md')
 Write-Done "distill-monitor.md ${DIM}(session monitor)${RESET}"
 
+# Both twins: Claude Code on Windows runs Git Bash, Codex runs PowerShell.
+foreach ($lockScript in @('distill-lock.sh', 'distill-lock.ps1')) {
+    Get-File "$Repo/bin/$lockScript" (Join-Path $DistillDir "bin/$lockScript")
+}
+Write-Done "bin/distill-lock ${DIM}(run lock)${RESET}"
+
 foreach ($resolvedFile in @((Join-Path $CmdDir 'distill.md'),
                             (Join-Path $DistillDir 'distill-process.md'),
                             (Join-Path $DistillDir 'distill-monitor.md'))) {

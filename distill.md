@@ -8,20 +8,21 @@
 
 Before doing ANYTHING else, run these checks:
 
-**Status check:**
-1. Read `{DISTILL_DIR}/.status` (use Bash: `cat {DISTILL_DIR}/.status 2>/dev/null`)
-2. If it starts with `running` and the timestamp is **less than 5 minutes old** → another distillation is in progress. Tell the user:
-   > "Another distillation is currently running (started at [timestamp]). I can harvest signals now and wait for it to finish, or you can try again later. What do you prefer?"
-   - If user says wait/queue: proceed with signal harvest (Step 1), then poll the status file every 30 seconds before spawning. Once it reads `idle`, spawn the sub-agent.
+**Lock check:**
+Only one distillation may write to `{DISTILL_DIR}` at a time. The run lock is `{DISTILL_DIR}/.lock`, managed ONLY through `{DISTILL_DIR}/bin/distill-lock.sh` (PowerShell: `& "{DISTILL_DIR}/bin/distill-lock.ps1"`, same arguments). Never write `.lock` or `.status` by hand: reading `.status` and then writing it lets two sessions both see `idle` and both start.
+1. Run `{DISTILL_DIR}/bin/distill-lock.sh status`. If the script is missing, the install predates the lock: run the update procedure (Version Checking below) first.
+2. `held <owner> <age>s` → another distillation is in progress. Tell the user:
+   > "Another distillation is currently running. I can harvest signals now and queue behind it, or you can try again later. What do you prefer?"
+   - If user says wait/queue: proceed with signal harvest (Step 1). The acquire in Step 2 waits for the lock.
    - If user says later: stop, don't distill.
-3. If it starts with `running` and the timestamp is **older than 5 minutes** → stale status from a crashed session. Check for checkpoint data (see below). Proceed.
-4. If it reads `idle`, doesn't exist, or is empty → proceed normally.
+3. `stale <owner> <age>s` → a crashed session left the lock behind. Check for checkpoint data (see below). Proceed; the acquire in Step 2 takes the stale lock over.
+4. `free` → proceed normally.
 
 **Checkpoint recovery:**
 If `.status` starts with `running step:` — a prior distillation was interrupted. Parse the step number and signal count from the status line. Tell the user:
 > "A previous distillation was interrupted at [step]. It had harvested N signals. Want me to resume from where it left off, or start fresh?"
 - Resume: skip harvest, use the checkpoint data, spawn sub-agent with it.
-- Fresh: overwrite status with `running <timestamp>`, proceed with new harvest.
+- Fresh: proceed with a new harvest; the acquire in Step 2 resets `.status`.
 
 **Version check (once per session):**
 If this is the first `/distill` invocation this session, run the version check (see Version Checking section below).
@@ -103,9 +104,21 @@ Write-Output "aura-distill-beacon $((Get-Date).ToUniversalTime().ToString('yyyyM
 
 Keep the full beacon string from the output — Step 3 uses it to identify WHICH conversation was distilled. If the command fails, continue anyway; the ledger entry will simply record an unresolved identity.
 
+The part after `aura-distill-beacon ` (for example `20261005T074014Z-27822`) is also this run's **lock owner** in Step 2. If the beacon command failed, use `run-` plus a UTC timestamp and a random number.
+
 ### Step 2: Spawn the distillation agent
 
 Use the client's sub-agent/delegation tool (Claude's Agent tool or Codex sub-agents). The sub-agent receives the FULL distillation process plus your harvested signals.
+
+**Take the lock first**, immediately before spawning:
+
+```bash
+{DISTILL_DIR}/bin/distill-lock.sh acquire <owner> --wait 540
+```
+
+- Exit 0 → you hold the lock. Spawn the sub-agent and put `<owner>` in its prompt (the `## Lock` section below). The sub-agent heartbeats and releases it.
+- Exit 1 → another run still held it after 9 minutes. Do NOT spawn. Tell the user which owner holds it and offer to retry.
+- If the spawn itself fails (the sub-agent never started), release the lock yourself: `{DISTILL_DIR}/bin/distill-lock.sh release <owner>`.
 
 **IMPORTANT:** Keep the distillation agent attached until it completes. It must have write access to `{DISTILL_DIR}/`; do not use a mode that suppresses required write permissions. In Claude Code specifically, never use `run_in_background: true`: background agents cannot obtain the write permissions this workflow requires.
 
@@ -119,6 +132,10 @@ You CANNOT see the original conversation. Everything you know comes from the sig
 ## Session Signal Harvest
 
 [INSERT THE FULL HARVEST FROM STEP 1 HERE — failures, corrections, user observations, metadata, ALL OF IT]
+
+## Lock
+
+This run holds the distillation lock as owner `<OWNER>`. Follow "Concurrency & Status" in distill-process.md with this owner: heartbeat at each checkpoint, stop writing if a heartbeat exits 3, release at the end. Do not acquire a new lock.
 
 ## Your Process
 
@@ -237,7 +254,10 @@ Update silently, then briefly confirm:
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill.md -o ~/.claude/commands/distill.md
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill-process.md -o {DISTILL_DIR}/distill-process.md
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/distill-monitor.md -o {DISTILL_DIR}/distill-monitor.md
-mkdir -p {DISTILL_DIR}/data {DISTILL_DIR}/inbox
+mkdir -p {DISTILL_DIR}/data {DISTILL_DIR}/inbox {DISTILL_DIR}/bin
+curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/bin/distill-lock.sh -o {DISTILL_DIR}/bin/distill-lock.sh
+curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/bin/distill-lock.ps1 -o {DISTILL_DIR}/bin/distill-lock.ps1
+chmod +x {DISTILL_DIR}/bin/distill-lock.sh
 echo "NEW_VERSION" > {DISTILL_DIR}/.version
 ```
 

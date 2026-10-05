@@ -45,7 +45,7 @@ if (Test-Path $skillPath) {
     Assert-True ($content -match 'SPINE\.md') "SKILL.md references SPINE.md"
     Assert-True ($content -match 'invoke_subagent') "SKILL.md references Antigravity subagent invocation"
     Assert-True ($content -match '\.needs-migration') "SKILL.md gates on pending migration"
-    Assert-True ($content -match 'idle <ISO_TIMESTAMP>') "SKILL.md resets .status on spawn failure"
+    Assert-True ($content -match 'distill-lock release <owner>') "SKILL.md releases the run lock on spawn failure"
     Assert-True ($content -match 'AURA_DISTILL_HOME') "SKILL.md resolves the shared store via AURA_DISTILL_HOME"
     Assert-True ($content -notmatch '\.agents/distill') "SKILL.md does not invent a workspace-local store"
 }

@@ -31,17 +31,17 @@ description: Retrospective memory and context distillation for Antigravity sessi
      (d) DELETE `{DISTILL_DIR}/.needs-migration` (existence-only gates treat its presence as
      "migration pending"), and (e) report what was migrated. The old memory files are NOT
      deleted — they remain as backup.
-3. **Check Lock / Status (`{DISTILL_DIR}/.status`):**
-   - The `.status` file format is OWNED by `distill-process.md` — write exactly its forms
-     (`running <ISO_TIMESTAMP>`, `running step:[N] signals:[count] <ISO_TIMESTAMP>`, `idle <ISO_TIMESTAMP>`);
-     this file is shared with the Claude Code and Codex clients.
-   - If `.status` begins with `running` and its timestamp is < 5 minutes old:
-     Notify user: *"Another distillation is in progress. Would you like to wait or proceed later?"*
-   - If `.status` indicates an interrupted run (`running step:[N] ...` with a stale timestamp):
-     Offer checkpoint resumption. Resuming SKIPS Step 1 (harvest) — pass the recorded step and
+3. **Check the Run Lock (`{DISTILL_DIR}/.lock`):**
+   - Only one distillation may write to the store at a time, across Claude Code, Codex and
+     Antigravity. Manage the lock ONLY through `{DISTILL_DIR}/bin/distill-lock.ps1` (Windows) or
+     `{DISTILL_DIR}/bin/distill-lock.sh` (POSIX); both take the same arguments. Never write
+     `.lock` or `.status` by hand: read-then-write lets two sessions start at once.
+   - Run `distill-lock status`. `held <owner> <age>s` → notify the user: *"Another
+     distillation is in progress. Would you like to wait or proceed later?"*
+   - `stale <owner> <age>s` with `.status` reading `running step:[N] ...` → an interrupted run:
+     offer checkpoint resumption. Resuming SKIPS Step 1 (harvest) — pass the recorded step and
      signal count from `.status` to the sub-agent so it continues where the interrupted run stopped.
-   - Otherwise, set `{DISTILL_DIR}/.status` to `running <ISO_TIMESTAMP>` — but only immediately
-     before spawning in Step 2, never earlier.
+   - Otherwise proceed. The lock is taken in Step 2, immediately before spawning, never earlier.
 
 ---
 
@@ -73,25 +73,31 @@ Format these into a clean structured signal payload.
 
 Spawn an isolated sub-agent using `invoke_subagent` (with `TypeName: 'self'` or `Role: 'Distillation Sub-Agent'`). If sub-agent spawning is unavailable in this session, run the pipeline in an isolated task turn — never inline in the main conversation loop (see the MANDATORY note above).
 
+Immediately before spawning, take the lock with a unique owner (for example
+`run-<UTC yyyymmddTHHMMSSZ>-<random>`): `distill-lock acquire <owner> --wait 540`.
+Exit 1 means another run still holds it after 9 minutes, and exit 4 means the store could not be
+written: in both cases do not spawn; tell the user.
+
 Provide the sub-agent with:
 1. The harvested signals payload from Step 1.
 2. The full process specification (`{DISTILL_DIR}/distill-process.md`).
 3. The absolute path to `{DISTILL_DIR}`.
+4. The lock owner, with the instruction to heartbeat and release it as distill-process.md describes.
 
 The sub-agent executes the phases exactly as defined in `{DISTILL_DIR}/distill-process.md`
 (ingestion & deduplication, Tier 2 knowledge updates, SPINE index update, always-on
-preferences sync, status reset). That file — not this skill — is the source of truth for
+preferences sync, lock release). That file — not this skill — is the source of truth for
 phase mechanics, file layouts, and line caps; do not re-specify them here.
 
 **Failure policy (never leave the lock stuck, never destroy a checkpoint):**
-- If the SPAWN ITSELF fails (the sub-agent never started): reset `{DISTILL_DIR}/.status` to
-  `idle <ISO_TIMESTAMP>` and report — nothing ran, there is no checkpoint to keep, and a stale
-  `running` entry would block every client sharing the store for 5 minutes.
+- If the SPAWN ITSELF fails (the sub-agent never started): `distill-lock release <owner>` and
+  report — nothing ran, there is no checkpoint to keep, and a held lock would block every
+  client sharing the store for 5 minutes.
 - If the sub-agent STARTED and then errored or returned without confirming completion: do NOT
-  blanket-reset. `.status` may hold a `running step:[N] signals:[count]` checkpoint that the
+  release the lock or reset `.status`. `.status` may hold a `running step:[N] signals:[count]` checkpoint that the
   process writes precisely so the next run can resume — leave it in place, report the failure,
   and offer checkpoint resumption (Step 0.3) on the next invocation.
-- The only pre-spawn write is the `.status` line itself — fail BEFORE writing knowledge.
+- The only pre-spawn write is the lock acquire — fail BEFORE writing knowledge.
 
 ---
 

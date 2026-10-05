@@ -245,6 +245,13 @@ done_msg "distill-process.md ${DIM}(process engine)${RESET}"
 fetch_file "$REPO/distill-monitor.md" | sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" > "$DISTILL_DIR/distill-monitor.md"
 done_msg "distill-monitor.md ${DIM}(session monitor)${RESET}"
 
+mkdir -p "$DISTILL_DIR/bin"
+for lock_script in distill-lock.sh distill-lock.ps1; do
+    fetch_file "$REPO/bin/$lock_script" > "$DISTILL_DIR/bin/$lock_script"
+done
+chmod +x "$DISTILL_DIR/bin/distill-lock.sh"
+done_msg "bin/distill-lock ${DIM}(run lock)${RESET}"
+
 # Version
 echo "$VERSION" > "$DISTILL_DIR/.version"
 

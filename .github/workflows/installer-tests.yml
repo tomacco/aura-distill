@@ -60,3 +60,19 @@ jobs:
           else
             echo "tests/test-install.sh not on this branch yet; skipping."
           fi
+
+  run-lock:
+    name: Run lock tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Bash and PowerShell twins plus a mixed field on one store; pwsh is preinstalled
+      # on all three runners, and Windows runs the bash twin under Git Bash.
+      - name: Lock suite
+        shell: bash
+        run: bash tests/lock/run-lock-tests.sh

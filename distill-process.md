@@ -26,37 +26,38 @@ Before distilling anything, understand where this user keeps their knowledge AND
 
 ### Concurrency & Status (critical)
 
-Multiple Claude sessions may run `/distill` simultaneously. To prevent file corruption, all state is tracked in a single `.status` file — no `rm` commands needed.
+Multiple sessions (Claude Code, Codex, Antigravity) may run a distillation at the same time against the same store. Only one may write. The run lock is `{DISTILL_DIR}/.lock`, managed ONLY through `{DISTILL_DIR}/bin/distill-lock.sh` (PowerShell: `& "{DISTILL_DIR}/bin/distill-lock.ps1"`, same arguments and exit codes). Never write `.lock` or `.status` by hand.
 
-**Acquire lock immediately on start:**
+**Owning the lock:**
+- If your prompt names a lock owner, the dispatcher holds the lock for you. Use that owner; do not acquire a new one.
+- If it does not (a client ran this process directly), choose an owner such as `run-<UTC yyyymmddTHHMMSSZ>-<random>` and take the lock before reading or writing anything:
 ```bash
-echo "running $(date -u +%Y-%m-%dT%H:%M:%SZ)" > {DISTILL_DIR}/.status
+{DISTILL_DIR}/bin/distill-lock.sh acquire <owner> --wait 540
 ```
+  Exit 1 means another run still holds it after 9 minutes; exit 4 means the store is not writable. Either way, stop and report it without writing anything.
 
-Note: The dispatcher (distill.md) already checked the status before spawning you. If you're running, you own the lock.
-
-**Write checkpoints at each major step:**
-After completing each step, write progress so interrupted sessions can resume:
+**Heartbeat with a checkpoint after each major step.** This refreshes the lock and records progress in `.status` so an interrupted run can be resumed:
 ```bash
-echo "running step:[N] signals:[count] $(date -u +%Y-%m-%dT%H:%M:%SZ)" > {DISTILL_DIR}/.status
+{DISTILL_DIR}/bin/distill-lock.sh heartbeat <owner> step:[N] signals:[count]
 ```
 
 Steps to checkpoint:
-- After Step 0 (discovery): `running step:0 signals:N <timestamp>`
-- After Step 2 (tracing principles): `running step:2 signals:N <timestamp>`
-- After Step 3 (encoding): `running step:3 signals:N <timestamp>`
+- After Step 0 (discovery): `step:0 signals:N`
+- After Step 2 (tracing principles): `step:2 signals:N`
+- After Step 3 (encoding): `step:3 signals:N`
 
-**On successful completion**, mark status as idle:
+A lock with no heartbeat for 5 minutes counts as abandoned and another run may take it over. During a long step (large encoding, compaction), run `heartbeat <owner>` (no checkpoint text) at least every 2 minutes.
+
+**If any heartbeat exits nonzero, STOP writing immediately.** Exit 3: the lock went stale and another run took it over, so further writes would interleave with that run. Exit 4: the lock or checkpoint could not be written, so the lock may go stale while you write. Report "lock lost at step N" or "lock I/O error at step N", and the files you wrote before stopping. If `release` exits nonzero, report it; do not retry by hand.
+
+**On successful completion**, release the lock (this also sets `.status` to `idle <timestamp>`):
 ```bash
-echo "idle $(date -u +%Y-%m-%dT%H:%M:%SZ)" > {DISTILL_DIR}/.status
+{DISTILL_DIR}/bin/distill-lock.sh release <owner>
 ```
 
-**If you detect a checkpoint on start** (status starts with `running step:`), a prior distillation was interrupted. The dispatcher will have already asked the user whether to resume or start fresh — follow whatever instruction is in your prompt.
+**If you fail partway**, do not release. The lock goes stale after 5 minutes and the checkpoint in `.status` stays for resumption.
 
-**Lock timeout:** The dispatcher considers a `running` status older than 5 minutes as stale (crashed session). If you expect to run longer than 5 minutes, refresh the timestamp periodically:
-```bash
-echo "running $(date -u +%Y-%m-%dT%H:%M:%SZ)" > {DISTILL_DIR}/.status
-```
+**If you detect a checkpoint on start** (`.status` starts with `running step:`), a prior distillation was interrupted. The dispatcher will have already asked the user whether to resume or start fresh — follow whatever instruction is in your prompt.
 
 ### Isolation Rule (critical)
 

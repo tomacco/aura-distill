@@ -169,8 +169,96 @@ run_unit() {
     rm -rf "$store"
 }
 
+# I/O failures must never read as success: a read-only store makes every write fail, and each
+# command has to exit 4 without printing "ok". Skipped where chmod does not block writes
+# (root, Windows).
+run_io_failure() {
+    local impl=$1 store out rc
+    echo "-- $impl: I/O failures exit 4"
+    store=$(new_store); export DISTILL_DIR=$store
+    lock "$impl" acquire alpha >/dev/null
+    chmod 555 "$store"
+    if touch "$store/probe" 2>/dev/null; then
+        rm -f "$store/probe"; chmod 755 "$store"; rm -rf "$store"
+        echo "  skip: $impl: chmod does not block writes here (root or Windows)"; return
+    fi
+    out=$(lock "$impl" heartbeat alpha step:2 signals:3 2>/dev/null); rc=$?
+    check "$impl: heartbeat with a checkpoint in a read-only store exits 4" test "$rc" -eq 4
+    check "$impl: ...and does not print ok" bash -c "! echo '$out' | grep -qx ok"
+    lock "$impl" release alpha >/dev/null 2>&1; rc=$?
+    check "$impl: release in a read-only store exits 4" test "$rc" -eq 4
+    chmod 755 "$store"; echo "alpha $(( $(date -u +%s) - 200 )) x" > "$store/.lock"; chmod 555 "$store"
+    lock "$impl" heartbeat alpha >/dev/null 2>&1; rc=$?
+    check "$impl: near-stale heartbeat in a read-only store exits 4" test "$rc" -eq 4
+    chmod 755 "$store"; rm -f "$store/.lock"; chmod 555 "$store"
+    lock "$impl" acquire beta >/dev/null 2>&1; rc=$?
+    check "$impl: acquire in a read-only store exits 4, not 1" test "$rc" -eq 4
+    chmod 755 "$store"; rm -f "$store/.lock"
+    chmod -R u+w "$store" 2>/dev/null; rm -rf "$store"
+}
+
+# Deterministic interleaving (bash): a stale takeover is frozen inside the takeover mutex, right
+# before it renames its line over .lock, by an mv shim on its PATH. While it is frozen, the lock
+# must never go missing, a second contender cannot win, and the old owner can neither refresh
+# nor release. After it resumes there is exactly one owner and the old owner has lost.
+run_interleaving() {
+    local store shim rc t_pid c_rc hb_rc rel_rc stale
+    echo "-- sh: frozen takeover (deterministic interleaving)"
+    store=$(new_store); export DISTILL_DIR=$store
+    shim=$(mktemp -d)
+    cat > "$shim/mv" <<SHIM
+#!/usr/bin/env bash
+if [ "\$1" = "-f" ] && [ "\${3:-}" = "$store/.lock" ]; then
+    touch "$shim/paused"
+    while [ ! -e "$shim/resume" ]; do sleep 0.02; done
+fi
+exec /bin/mv "\$@"
+SHIM
+    chmod +x "$shim/mv"
+    stale=$(( $(date -u +%s) - 1000 ))
+    echo "old $stale 2001-09-09T01:46:40Z" > "$store/.lock"
+
+    PATH="$shim:$PATH" "$SH" acquire taker >"$shim/taker.out" 2>&1 &
+    t_pid=$!
+    local waited=0
+    while [ ! -e "$shim/paused" ]; do
+        sleep 0.02; waited=$((waited + 1))
+        if [ "$waited" -ge 500 ]; then
+            touch "$shim/resume"; wait "$t_pid"
+            FAIL=$((FAIL+1)); echo "  FAIL: frozen: the takeover never replaced .lock in place (no atomic replace step)"
+            rm -rf "$store" "$shim"; return
+        fi
+    done
+
+    ( while [ ! -e "$shim/resume" ]; do [ -e "$store/.lock" ] || echo MISSING >> "$shim/gaps"; sleep 0.01; done ) &
+    local watch_pid=$!
+    "$SH" acquire contender >/dev/null 2>&1 & local c_pid=$!
+    "$SH" heartbeat old >/dev/null 2>&1 & local h_pid=$!
+    "$SH" release old >/dev/null 2>&1 & local r_pid=$!
+    wait "$c_pid"; c_rc=$?
+    wait "$h_pid"; hb_rc=$?
+    wait "$r_pid"; rel_rc=$?
+    check "frozen: a second stale contender cannot win (exit 1)" test "$c_rc" -eq 1
+    check "frozen: the old owner's near-stale heartbeat cannot refresh (exit 3)" test "$hb_rc" -eq 3
+    check "frozen: the old owner's release cannot remove the lock (exit 3)" test "$rel_rc" -eq 3
+    check "frozen: the lock line is still the old one" grep -q "^old $stale " "$store/.lock"
+
+    touch "$shim/resume"; wait "$t_pid"; rc=$?; wait "$watch_pid"
+    check "frozen: the lock file never went missing" test ! -e "$shim/gaps"
+    check "resumed: the takeover completes (exit 0)" test "$rc" -eq 0
+    check "resumed: exactly one owner, the taker" test "$(cut -d' ' -f1 "$store/.lock")" = "taker"
+    "$SH" heartbeat old >/dev/null 2>&1; rc=$?
+    check "resumed: the old owner's heartbeat exits 3" test "$rc" -eq 3
+    "$SH" release old >/dev/null 2>&1; rc=$?
+    check "resumed: the old owner's release exits 3" test "$rc" -eq 3
+    check "resumed: the taker still holds the lock" test "$(cut -d' ' -f1 "$store/.lock")" = "taker"
+    rm -rf "$store" "$shim"
+}
+
 echo "== bash implementation"
 run_unit sh
+run_io_failure sh
+run_interleaving
 run_exclusion "sh: 4 concurrent distills" "sh" 4 0.4
 run_exclusion "sh: 12 concurrent distills" "sh" 12 0.05
 run_stale_race "sh: stale takeover race" sh 40 16
@@ -178,6 +266,7 @@ run_stale_race "sh: stale takeover race" sh 40 16
 if [ -n "$PS_BIN" ]; then
     echo "== PowerShell implementation ($PS_BIN)"
     run_unit ps1
+    run_io_failure ps1
     run_exclusion "ps1: 4 concurrent distills" "ps1" 4 0.4
     run_stale_race "ps1: stale takeover race" ps1 10 8
     echo "== mixed field (bash and PowerShell share one store)"

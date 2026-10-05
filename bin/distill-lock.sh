@@ -17,7 +17,8 @@
 #   distill-lock.sh release   <owner>
 #   distill-lock.sh status
 # Exit codes: 0 ok, 1 held by another owner (after any --wait), 2 usage,
-#             3 caller is not the owner (lock lost, stolen as stale, or never held).
+#             3 caller is not the owner (lock lost, stolen as stale, or never held),
+#             4 I/O error (the lock or .status could not be written; treat the lock as lost).
 set -u
 set -f  # word-split lock lines without globbing
 
@@ -28,7 +29,8 @@ STATUS="$DIR/.status"
 STALE="${DISTILL_LOCK_STALE_SECONDS:-300}"
 POLL="${DISTILL_LOCK_POLL_SECONDS:-2}"
 
-usage() { sed -n '12,18p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '/^# Usage:/,/^set -u/p' "$0" | sed '$d; s/^# \{0,1\}//' >&2; exit 2; }
+fail() { echo "error: $1"; exit 4; }
 now() { date -u +%s; }
 iso() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 tmpname() { printf '%s.%s.%s.%s' "$LOCK" "$1" "$$" "$RANDOM$RANDOM"; }
@@ -46,20 +48,25 @@ read_lock() {
     esac
 }
 
-write_status() { printf '%s %s\n' "$1" "$(iso)" > "$STATUS.tmp.$$" && mv -f "$STATUS.tmp.$$" "$STATUS"; }
+write_status() {
+    printf '%s %s\n' "$1" "$(iso)" > "$STATUS.tmp.$$" && mv -f "$STATUS.tmp.$$" "$STATUS" && return 0
+    rm -f "$STATUS.tmp.$$"; return 1
+}
 
+# Returns 0 created, 1 the lock exists, 4 the temp file could not be written.
 try_create() {
     local tmp; tmp=$(tmpname new)
-    printf '%s %s %s\n' "$1" "$(now)" "$(iso)" > "$tmp" || return 1
+    printf '%s %s %s\n' "$1" "$(now)" "$(iso)" > "$tmp" || { rm -f "$tmp"; return 4; }
     if ln "$tmp" "$LOCK" 2>/dev/null; then rm -f "$tmp"; return 0; fi
     rm -f "$tmp"; return 1
 }
 
 # The takeover mutex guards every change to an existing lock. It is held for milliseconds;
 # one left by a crashed process is cleared after 30 seconds.
+# Returns 0 held, 1 still contended after 10 seconds, 4 the temp file could not be written.
 mutex_lock() {
     local tmp i m
-    tmp=$(tmpname mx); echo "$$" > "$tmp" || return 1
+    tmp=$(tmpname mx); echo "$$" > "$tmp" || { rm -f "$tmp"; return 4; }
     for i in $(seq 1 200); do
         if ln "$tmp" "$MUTEX" 2>/dev/null; then rm -f "$tmp"; return 0; fi
         m=$(date -r "$MUTEX" +%s 2>/dev/null) && [ $(( $(now) - m )) -ge 30 ] && rm -f "$MUTEX"
@@ -70,16 +77,31 @@ mutex_lock() {
 mutex_unlock() { rm -f "$MUTEX"; }
 
 # Under the mutex: if the lock still reads <expected> ("<owner> <epoch>"), atomically replace
-# it with a fresh line for <owner>.
+# it with a fresh line for <owner>. Returns 0 replaced, 1 the lock changed or the mutex stayed
+# contended, 4 a write failed.
 replace_if() {
     local expected="$1" owner="$2" tmp rc=1
-    mutex_lock || return 1
+    mutex_lock || return $?
     if [ "$(read_lock)" = "$expected" ]; then
         tmp=$(tmpname swap)
-        printf '%s %s %s\n' "$owner" "$(now)" "$(iso)" > "$tmp" && mv -f "$tmp" "$LOCK" && rc=0
+        if printf '%s %s %s\n' "$owner" "$(now)" "$(iso)" > "$tmp" && mv -f "$tmp" "$LOCK"; then rc=0; else rc=4; fi
         rm -f "$tmp"
     fi
     mutex_unlock; return $rc
+}
+
+# Under the mutex: remove the lock if <owner> holds it. Used when a fresh acquire cannot
+# record itself, so a half-acquired lock never blocks the store.
+drop_if_owner() {
+    mutex_lock || return $?
+    [ "$(read_lock | cut -d' ' -f1)" = "$1" ] && rm -f "$LOCK"
+    mutex_unlock
+}
+
+# The lock was just taken: record it in .status, or give it back and fail with exit 4.
+acquired() {
+    if write_status "running"; then echo "$2"; return 0; fi
+    drop_if_owner "$1"; fail "lock taken but .status could not be written; lock released"
 }
 
 is_stale() { [ $(( $(now) - $1 )) -ge "$STALE" ]; }
@@ -94,7 +116,7 @@ check_owner() {
 }
 
 cmd_acquire() {
-    local owner="$1" wait=0 deadline cur cur_owner="" cur_epoch=""
+    local owner="$1" wait=0 deadline cur cur_owner="" cur_epoch="" rc out
     shift
     if [ $# -gt 0 ]; then
         [ "$1" = "--wait" ] && [ $# -eq 2 ] || usage
@@ -104,13 +126,19 @@ cmd_acquire() {
     while :; do
         cur=$(read_lock)
         if [ -z "$cur" ]; then
-            if try_create "$owner"; then write_status "running"; echo "acquired"; return 0; fi
+            try_create "$owner"; rc=$?
+            [ $rc -eq 0 ] && { acquired "$owner" "acquired"; return; }
+            [ $rc -eq 4 ] && fail "cannot write in $DIR"
         else
             set -- $cur; cur_owner=$1; cur_epoch=$2
             if [ "$cur_owner" = "$owner" ]; then
-                cmd_heartbeat "$owner" >/dev/null && { echo "acquired (already held)"; return 0; }
-            elif is_stale "$cur_epoch" && replace_if "$cur" "$owner"; then
-                write_status "running"; echo "acquired (took over stale lock from $cur_owner)"; return 0
+                out=$(cmd_heartbeat "$owner"); rc=$?
+                [ $rc -eq 0 ] && { echo "acquired (already held)"; return 0; }
+                [ $rc -eq 4 ] && { echo "$out"; return 4; }
+            elif is_stale "$cur_epoch"; then
+                replace_if "$cur" "$owner"; rc=$?
+                [ $rc -eq 0 ] && { acquired "$owner" "acquired (took over stale lock from $cur_owner)"; return; }
+                [ $rc -eq 4 ] && fail "cannot write in $DIR"
             fi
         fi
         if [ "$(now)" -ge "$deadline" ]; then
@@ -123,7 +151,7 @@ cmd_acquire() {
 }
 
 cmd_heartbeat() {
-    local owner="$1" cur tmp
+    local owner="$1" cur tmp rc
     shift
     cur=$(read_lock)
     if [ -z "$cur" ]; then echo "lost: lock not held"; return 3; fi
@@ -132,26 +160,33 @@ cmd_heartbeat() {
     if near_stale "$2"; then
         # A waiter may be taking this lock over right now. Refresh through the same
         # mutex-and-check path so we never overwrite a new owner's lock.
-        replace_if "$cur" "$owner" || { echo "lost: stale lock taken over"; return 3; }
+        replace_if "$cur" "$owner"; rc=$?
+        [ $rc -eq 4 ] && fail "cannot refresh the lock"
+        [ $rc -ne 0 ] && { echo "lost: stale lock taken over"; return 3; }
     else
         tmp=$(tmpname beat)
-        printf '%s %s %s\n' "$owner" "$(now)" "$(iso)" > "$tmp" && mv -f "$tmp" "$LOCK"
+        printf '%s %s %s\n' "$owner" "$(now)" "$(iso)" > "$tmp" && mv -f "$tmp" "$LOCK" \
+            || { rm -f "$tmp"; fail "cannot refresh the lock"; }
     fi
     shift 2
-    [ $# -gt 0 ] && write_status "running $*"
+    if [ $# -gt 0 ]; then write_status "running $*" || fail "lock refreshed but the checkpoint could not be written"; fi
     echo "ok"; return 0
 }
 
 cmd_release() {
-    local owner="$1" cur
+    local owner="$1" cur rc
     cur=$(read_lock)
     if [ -z "$cur" ]; then echo "not held"; return 3; fi
     set -- $cur
     if [ "$1" != "$owner" ]; then echo "not owner: held by $1"; return 3; fi
-    mutex_lock || { echo "not owner: lock contended during release"; return 3; }
+    mutex_lock; rc=$?
+    [ $rc -eq 4 ] && fail "cannot write in $DIR"
+    [ $rc -ne 0 ] && { echo "not owner: lock contended during release"; return 3; }
     if [ "$(read_lock)" != "$cur" ]; then mutex_unlock; echo "not owner: lock changed during release"; return 3; fi
-    rm -f "$LOCK"; mutex_unlock
-    write_status "idle"; echo "released"; return 0
+    rm -f "$LOCK" 2>/dev/null || { mutex_unlock; fail "cannot remove the lock"; }
+    mutex_unlock
+    write_status "idle" || fail "lock released but .status could not be written"
+    echo "released"; return 0
 }
 
 cmd_status() {

@@ -17,7 +17,8 @@
 #   distill-lock.ps1 release   <owner>
 #   distill-lock.ps1 status
 # Exit codes: 0 ok, 1 held by another owner (after any --wait), 2 usage,
-#             3 caller is not the owner (lock lost, stolen as stale, or never held).
+#             3 caller is not the owner (lock lost, stolen as stale, or never held),
+#             4 I/O error (the lock or .status could not be written; treat the lock as lost).
 $ErrorActionPreference = 'Stop'
 
 $Dir    = if ($env:DISTILL_DIR) { $env:DISTILL_DIR } else { Split-Path -Parent $PSScriptRoot }
@@ -29,7 +30,9 @@ $Poll   = if ($env:DISTILL_LOCK_POLL_SECONDS)  { [double]$env:DISTILL_LOCK_POLL_
 
 function Show-Usage {
     $lines = Get-Content -LiteralPath $PSCommandPath
-    $lines[10..16] | ForEach-Object { [Console]::Error.WriteLine(($_ -replace '^# ?', '')) }
+    $from = [Array]::IndexOf($lines, '# Usage:')
+    $to = [Array]::IndexOf($lines, ($lines | Where-Object { $_ -like '$ErrorActionPreference*' } | Select-Object -First 1)) - 1
+    $lines[$from..$to] | ForEach-Object { [Console]::Error.WriteLine(($_ -replace '^# ?', '')) }
     exit 2
 }
 $script:Msgs = [Collections.Generic.List[string]]::new()
@@ -59,18 +62,35 @@ function Write-Status([string]$text) {
 }
 
 # Atomic replace. File.Move(src, dst, overwrite) exists on .NET Core 3+ (PowerShell 6+);
-# Windows PowerShell 5.1 uses File.Replace, which needs the destination to exist.
+# Windows PowerShell 5.1 uses File.Replace, which needs the destination to exist. On Windows a
+# reader holding the destination open makes the move fail for a moment, so it is retried; a
+# failure that persists throws, and the caller exits 4.
 function Move-Over([string]$src, [string]$dst) {
-    if ($PSVersionTable.PSVersion.Major -ge 6) { [IO.File]::Move($src, $dst, $true) }
-    elseif ([IO.File]::Exists($dst)) { [IO.File]::Replace($src, $dst, $null) }
-    else { [IO.File]::Move($src, $dst) }
+    for ($i = 0; ; $i++) {
+        try {
+            if ($PSVersionTable.PSVersion.Major -ge 6) { [IO.File]::Move($src, $dst, $true) }
+            elseif ([IO.File]::Exists($dst)) { [IO.File]::Replace($src, $dst, $null) }
+            else { [IO.File]::Move($src, $dst) }
+            return
+        } catch {
+            if ($i -ge 10) { Remove-Item -LiteralPath $src -Force -ErrorAction SilentlyContinue; throw }
+            Start-Sleep -Milliseconds 20
+        }
+    }
 }
 
-# Creates $Path only if absent and writes $line into it.
+# Creates $Path only if absent and writes $line into it. Returns $false if the file exists;
+# throws if it cannot be created for another reason (permissions, disk), so the caller exits 4.
 function New-ExclusiveFile([string]$Path, [string]$line) {
     try { $fs = [IO.FileStream]::new($Path, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read) }
-    catch { return $false }
-    try { $b = [Text.Encoding]::ASCII.GetBytes($line); $fs.Write($b, 0, $b.Length) } finally { $fs.Dispose() }
+    catch {
+        # Windows reports a file that is still being deleted as access denied, so an existing
+        # name means "taken" whatever the exception says.
+        if ([IO.File]::Exists($Path)) { return $false }
+        throw
+    }
+    try { $b = [Text.Encoding]::ASCII.GetBytes($line); $fs.Write($b, 0, $b.Length); $fs.Dispose() }
+    catch { $fs.Dispose(); try { [IO.File]::Delete($Path) } catch { }; throw }
     return $true
 }
 
@@ -94,7 +114,8 @@ function Unlock-Mutex { try { [IO.File]::Delete($Mutex) } catch { } }
 function Same-Lock($a, $b) { $a -and $b -and $a[0] -eq $b[0] -and $a[1] -eq $b[1] }
 
 # Under the mutex: if the lock still reads $expected, atomically replace it with a fresh
-# line for $owner.
+# line for $owner. Returns $false if the lock changed or the mutex stayed contended; throws
+# on a write failure.
 function Replace-If($expected, [string]$owner) {
     if (-not (Lock-Mutex)) { return $false }
     $ok = $false
@@ -102,10 +123,27 @@ function Replace-If($expected, [string]$owner) {
         if (Same-Lock (Read-Lock) $expected) {
             $tmp = TmpName 'swap'
             [IO.File]::WriteAllText($tmp, "$owner $(Now) $(Iso)`n")
-            try { Move-Over $tmp $Lock; $ok = $true } catch { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue }
+            Move-Over $tmp $Lock; $ok = $true
         }
     } finally { Unlock-Mutex }
     return $ok
+}
+
+# Under the mutex: remove the lock if $owner holds it. Used when a fresh acquire cannot
+# record itself, so a half-acquired lock never blocks the store.
+function Remove-IfOwner([string]$owner) {
+    if (-not (Lock-Mutex)) { return }
+    try { $cur = Read-Lock; if ($cur -and $cur[0] -eq $owner) { [IO.File]::Delete($Lock) } } finally { Unlock-Mutex }
+}
+
+# The lock was just taken: record it in .status, or give it back and fail with exit 4.
+function Complete-Acquire([string]$owner, [string]$msg) {
+    try { Write-Status 'running' }
+    catch {
+        try { Remove-IfOwner $owner } catch { }
+        throw "lock taken but .status could not be written; lock released ($($_.Exception.Message))"
+    }
+    Say $msg; return 0
 }
 
 function Is-Stale([long]$epoch) { ((Now) - $epoch) -ge $Stale }
@@ -147,11 +185,11 @@ function Invoke-Acquire([string]$owner, [string[]]$rest) {
     while ($true) {
         $cur = Read-Lock
         if (-not $cur) {
-            if (Try-Create $owner) { Write-Status 'running'; Say 'acquired'; return 0 }
+            if (Try-Create $owner) { return (Complete-Acquire $owner 'acquired') }
         } elseif ($cur[0] -eq $owner) {
             if ((Invoke-Heartbeat $owner @() -Quiet) -eq 0) { Say 'acquired (already held)'; return 0 }
         } elseif ((Is-Stale $cur[1]) -and (Replace-If $cur $owner)) {
-            Write-Status 'running'; Say "acquired (took over stale lock from $($cur[0]))"; return 0
+            return (Complete-Acquire $owner "acquired (took over stale lock from $($cur[0]))")
         }
         if ((Now) -ge $deadline) {
             $cur = Read-Lock
@@ -185,12 +223,17 @@ function Invoke-Status {
 if ($args.Count -lt 1) { Show-Usage }
 $cmd = $args[0]
 $rest = @($args | Select-Object -Skip 2)
-switch ($cmd) {
-    'acquire'   { if ($args.Count -lt 2) { Show-Usage }; Test-Owner $args[1]; $rc = Invoke-Acquire $args[1] $rest }
-    'heartbeat' { if ($args.Count -lt 2) { Show-Usage }; Test-Owner $args[1]; $rc = Invoke-Heartbeat $args[1] $rest }
-    'release'   { if ($args.Count -ne 2) { Show-Usage }; Test-Owner $args[1]; $rc = Invoke-Release $args[1] }
-    'status'    { $rc = Invoke-Status }
-    default     { Show-Usage }
+# Any exception is an I/O failure: exit 4, never 1, which means "held by another owner".
+try {
+    switch ($cmd) {
+        'acquire'   { if ($args.Count -lt 2) { Show-Usage }; Test-Owner $args[1]; $rc = Invoke-Acquire $args[1] $rest }
+        'heartbeat' { if ($args.Count -lt 2) { Show-Usage }; Test-Owner $args[1]; $rc = Invoke-Heartbeat $args[1] $rest }
+        'release'   { if ($args.Count -ne 2) { Show-Usage }; Test-Owner $args[1]; $rc = Invoke-Release $args[1] }
+        'status'    { $rc = Invoke-Status }
+        default     { Show-Usage }
+    }
+} catch {
+    Say "error: $($_.Exception.Message)"; $rc = 4
 }
 $script:Msgs | ForEach-Object { [Console]::Out.WriteLine($_) }
 exit [int]$rc

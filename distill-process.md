@@ -34,7 +34,7 @@ Multiple sessions (Claude Code, Codex, Antigravity) may run a distillation at th
 ```bash
 {DISTILL_DIR}/bin/distill-lock.sh acquire <owner> --wait 540
 ```
-  Exit 1 means another run still holds it after 9 minutes: stop and report that, without writing anything.
+  Exit 1 means another run still holds it after 9 minutes; exit 4 means the store is not writable. Either way, stop and report it without writing anything.
 
 **Heartbeat with a checkpoint after each major step.** This refreshes the lock and records progress in `.status` so an interrupted run can be resumed:
 ```bash
@@ -48,7 +48,7 @@ Steps to checkpoint:
 
 A lock with no heartbeat for 5 minutes counts as abandoned and another run may take it over. During a long step (large encoding, compaction), run `heartbeat <owner>` (no checkpoint text) at least every 2 minutes.
 
-**If any heartbeat exits 3, STOP writing immediately.** The lock went stale and another run took it over, so further writes would interleave with that run. Report "lock lost at step N" and the files you wrote before stopping.
+**If any heartbeat exits nonzero, STOP writing immediately.** Exit 3: the lock went stale and another run took it over, so further writes would interleave with that run. Exit 4: the lock or checkpoint could not be written, so the lock may go stale while you write. Report "lock lost at step N" or "lock I/O error at step N", and the files you wrote before stopping. If `release` exits nonzero, report it; do not retry by hand.
 
 **On successful completion**, release the lock (this also sets `.status` to `idle <timestamp>`):
 ```bash

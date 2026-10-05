@@ -75,7 +75,8 @@ Spawn an isolated sub-agent using `invoke_subagent` (with `TypeName: 'self'` or 
 
 Immediately before spawning, take the lock with a unique owner (for example
 `run-<UTC yyyymmddTHHMMSSZ>-<random>`): `distill-lock acquire <owner> --wait 540`.
-Exit 1 means another run still holds it after 9 minutes: do not spawn; tell the user.
+Exit 1 means another run still holds it after 9 minutes, and exit 4 means the store could not be
+written: in both cases do not spawn; tell the user.
 
 Provide the sub-agent with:
 1. The harvested signals payload from Step 1.

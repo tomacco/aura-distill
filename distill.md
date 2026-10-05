@@ -118,6 +118,7 @@ Use the client's sub-agent/delegation tool (Claude's Agent tool or Codex sub-age
 
 - Exit 0 → you hold the lock. Spawn the sub-agent and put `<owner>` in its prompt (the `## Lock` section below). The sub-agent heartbeats and releases it.
 - Exit 1 → another run still held it after 9 minutes. Do NOT spawn. Tell the user which owner holds it and offer to retry.
+- Exit 4 → the store could not be written (permissions, disk). Do NOT spawn. Show the user the error line.
 - If the spawn itself fails (the sub-agent never started), release the lock yourself: `{DISTILL_DIR}/bin/distill-lock.sh release <owner>`.
 
 **IMPORTANT:** Keep the distillation agent attached until it completes. It must have write access to `{DISTILL_DIR}/`; do not use a mode that suppresses required write permissions. In Claude Code specifically, never use `run_in_background: true`: background agents cannot obtain the write permissions this workflow requires.
@@ -135,7 +136,7 @@ You CANNOT see the original conversation. Everything you know comes from the sig
 
 ## Lock
 
-This run holds the distillation lock as owner `<OWNER>`. Follow "Concurrency & Status" in distill-process.md with this owner: heartbeat at each checkpoint, stop writing if a heartbeat exits 3, release at the end. Do not acquire a new lock.
+This run holds the distillation lock as owner `<OWNER>`. Follow "Concurrency & Status" in distill-process.md with this owner: heartbeat at each checkpoint, stop writing if a heartbeat exits nonzero (3 = lock lost, 4 = I/O error), release at the end. Do not acquire a new lock.
 
 ## Your Process
 

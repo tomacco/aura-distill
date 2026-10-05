@@ -64,10 +64,13 @@ try_create() {
 # The takeover mutex guards every change to an existing lock. It is held for milliseconds;
 # one left by a crashed process is cleared after 30 seconds.
 # Returns 0 held, 1 still contended after 10 seconds, 4 the temp file could not be written.
+# The wait is wall-clock (a loop count runs long where forks are slow, such as Git Bash) and
+# stays well under the 30 second cutoff, so a live holder is never cleared.
 mutex_lock() {
-    local tmp i m
+    local tmp m deadline
     tmp=$(tmpname mx); echo "$$" > "$tmp" || { rm -f "$tmp"; return 4; }
-    for i in $(seq 1 200); do
+    deadline=$(( $(now) + 10 ))
+    while [ "$(now)" -lt "$deadline" ]; do
         if ln "$tmp" "$MUTEX" 2>/dev/null; then rm -f "$tmp"; return 0; fi
         m=$(date -r "$MUTEX" +%s 2>/dev/null) && [ $(( $(now) - m )) -ge 30 ] && rm -f "$MUTEX"
         sleep 0.05

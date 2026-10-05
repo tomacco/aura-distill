@@ -98,8 +98,11 @@ function Try-Create([string]$owner) { New-ExclusiveFile $Lock "$owner $(Now) $(I
 
 # The takeover mutex guards every change to an existing lock. It is held for milliseconds;
 # one left by a crashed process is cleared after 30 seconds.
+# The wait is wall-clock and stays well under the 30 second cutoff, so a live holder is never
+# cleared.
 function Lock-Mutex {
-    for ($i = 0; $i -lt 200; $i++) {
+    $deadline = (Now) + 10
+    while ((Now) -lt $deadline) {
         if (New-ExclusiveFile $Mutex "$PID`n") { return $true }
         try {
             $m = [DateTimeOffset]::new([IO.File]::GetLastWriteTimeUtc($Mutex)).ToUnixTimeSeconds()

@@ -343,6 +343,63 @@ SHIM
     rm -rf "$store" "$shim"
 }
 
+# Fails closed without perl: a PATH that has every tool except perl. Every command but status
+# exits 4 and leaves the store untouched.
+run_no_perl() {
+    local store bin f rc out
+    echo "-- sh: no perl on PATH (fail closed)"
+    store=$(new_store); export DISTILL_DIR=$store
+    bin=$(mktemp -d)
+    for f in /bin/* /usr/bin/* /usr/local/bin/* /opt/homebrew/bin/*; do
+        [ -x "$f" ] || continue
+        case "$(basename "$f")" in perl*) continue ;; esac
+        [ -e "$bin/$(basename "$f")" ] || ln -s "$f" "$bin/$(basename "$f")"
+    done
+    out=$(PATH="$bin" bash "$SH" acquire alpha 2>&1); rc=$?
+    check "no perl: acquire exits 4" test "$rc" -eq 4
+    check "no perl: ...and says perl is needed" bash -c "echo '$out' | grep -q perl"
+    check "no perl: no lock was created" test ! -e "$store/.lock"
+    check "no perl: status still works" test "$(PATH="$bin" bash "$SH" status)" = "free"
+    "$SH" acquire alpha >/dev/null
+    PATH="$bin" bash "$SH" heartbeat alpha step:1 signals:1 >/dev/null 2>&1; rc=$?
+    check "no perl: heartbeat exits 4 (the run stops writing)" test "$rc" -eq 4
+    PATH="$bin" bash "$SH" release alpha >/dev/null 2>&1; rc=$?
+    check "no perl: release exits 4 and keeps the lock" bash -c "[ $rc -eq 4 ] && [ -e '$store/.lock' ]"
+    rm -rf "$store" "$bin"
+}
+
+# A checkpoint is written inside the mutex: freeze the .status rename of a heartbeat and the
+# lock cannot be taken over meanwhile, even once the lease is stale.
+run_status_under_mutex() {
+    local store shim h_pid rc
+    echo "-- sh: checkpoint written under the mutex"
+    store=$(new_store); export DISTILL_DIR=$store
+    shim=$(mktemp -d)
+    cat > "$shim/mv" <<SHIM
+#!/usr/bin/env bash
+if [ "\${3:-}" = "$store/.status" ] && [ ! -e "$shim/passed" ]; then
+    touch "$shim/paused" "$shim/passed"
+    while [ ! -e "$shim/resume" ]; do sleep 0.02; done
+fi
+exec /bin/mv "\$@"
+SHIM
+    chmod +x "$shim/mv"
+    export DISTILL_LOCK_STALE_SECONDS=2
+    "$SH" acquire alpha >/dev/null
+    PATH="$shim:$PATH" "$SH" heartbeat alpha step:4 signals:2 >/dev/null 2>&1 &
+    h_pid=$!
+    for i in $(seq 1 250); do [ -e "$shim/paused" ] && break; sleep 0.02; done
+    sleep 2.5
+    "$SH" acquire beta >/dev/null 2>&1; rc=$?
+    check "status: no takeover while a checkpoint is being written (exit 1)" test "$rc" -eq 1
+    touch "$shim/resume"; wait "$h_pid"; rc=$?
+    check "status: the heartbeat completes (exit 0)" test "$rc" -eq 0
+    check "status: its checkpoint is in .status" grep -q "step:4 signals:2" "$store/.status"
+    check "status: alpha still owns the lock" test "$(cut -d' ' -f1 "$store/.lock")" = "alpha"
+    unset DISTILL_LOCK_STALE_SECONDS
+    rm -rf "$store" "$shim"
+}
+
 echo "== bash implementation"
 run_unit sh
 run_io_failure sh
@@ -350,7 +407,7 @@ run_io_failure sh
 # over to the PowerShell one, so they do not apply there.
 case "$(uname -s 2>/dev/null)" in
     MINGW*|MSYS*|CYGWIN*) echo "-- sh: deterministic interleavings SKIPPED on Windows (bash hands over to PowerShell)" ;;
-    *) run_interleaving; run_delayed_heartbeat; run_mutex_os_lock ;;
+    *) run_interleaving; run_delayed_heartbeat; run_mutex_os_lock; run_status_under_mutex; run_no_perl ;;
 esac
 run_exclusion "sh: 4 concurrent distills" "sh" 4 0.4
 run_exclusion "sh: 12 concurrent distills" "sh" 12 0.05

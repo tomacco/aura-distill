@@ -193,7 +193,7 @@ If only `~/.claude/` exists, the installer uses it automatically. No `--profile`
 | `inbox/` | `~/.aura-distill/` | Queue: explicit "remember this" saves for the next distill |
 | `data/` | `~/.aura-distill/` | Local diagnostic ledgers (economics, distillation coverage) |
 
-**Total: 5 files + 1 index. No dependencies. No Node.js. No database.**
+**Total: 5 files + 1 index. No Node.js. No database.** One dependency: the run lock's bash script uses perl (preinstalled on macOS and mainstream Linux) and exits 4 without it; on Windows the PowerShell script is used and needs nothing.
 
 ---
 

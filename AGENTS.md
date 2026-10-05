@@ -13,7 +13,7 @@ A first-principles memory system shared by Claude Code, Codex, and Google Antigr
 - `distill-monitor.md` — Session-start monitor (minimal, loaded via the client integration)
 - `plugins/aura-distill/` — Antigravity (agy) plugin, laid out per Antigravity's discovery contract: `plugin.json` (marker), `skills/distill/SKILL.md` (the distill workflow), `rules/AGENTS.md` (thin pointer to the canonical `distill-monitor.md` + Antigravity-specific Time Index)
 - `bin/distill-recent-agy.sh` / `.ps1` — Antigravity Time Index over brain transcripts (output-identical twins; parity enforced by `tests/antigravity/run-parity-test.sh`)
-- `bin/distill-lock.sh` / `.ps1` — Run lock: only one distillation writes the store at a time (twins share one lock file; tested by `tests/lock/run-lock-tests.sh`)
+- `bin/distill-lock.sh` / `.ps1` — Run lock: only one distillation writes the store at a time (twins share one lock file and one OS-level mutex; the bash twin needs perl and hands over to the PowerShell twin on Windows; tested by `tests/lock/run-lock-tests.sh`)
 - `knowledge-architecture.md` — Tier system design doc
 - `install.sh` / `install.ps1` — User-facing installers
 - `tests/` — A/B test scenarios, cognitive bias tests, persona-based methodology tests

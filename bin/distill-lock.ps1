@@ -121,19 +121,32 @@ function Unlock-Mutex {
 function Same-Lock($a, $b) { $a -and $b -and $a[0] -eq $b[0] -and $a[1] -eq $b[1] }
 
 # Under the mutex: if the lock still reads $expected, atomically replace it with a fresh
-# line for $owner. Returns $false if the lock changed or the mutex stayed contended; throws
-# on a write failure.
-function Replace-If($expected, [string]$owner) {
+# line for $owner and, when $statusText is given, write it to .status. Every .status write
+# happens under the mutex after this check, so an owner whose lease expired cannot overwrite
+# the checkpoint of the run that took over. Returns $false if the lock changed or the mutex
+# stayed contended; throws on a write failure.
+function Replace-If($expected, [string]$owner, [string]$statusText = '') {
     if (-not (Lock-Mutex)) { return $false }
     $ok = $false
     try {
         if (Same-Lock (Read-Lock) $expected) {
             $tmp = TmpName 'swap'
             [IO.File]::WriteAllText($tmp, "$owner $(Now) $(Iso)`n")
-            Move-Over $tmp $Lock; $ok = $true
+            Move-Over $tmp $Lock
+            if ($statusText) { Write-Status $statusText }
+            $ok = $true
         }
     } finally { Unlock-Mutex }
     return $ok
+}
+
+# Under the mutex: write .status only while the lock still reads exactly $expected.
+function Set-StatusIf($expected, [string]$statusText) {
+    if (-not (Lock-Mutex)) { return $false }
+    try {
+        if (-not (Same-Lock (Read-Lock) $expected)) { return $false }
+        Write-Status $statusText; return $true
+    } finally { Unlock-Mutex }
 }
 
 # Under the mutex: remove the lock if $owner holds it. Used when a fresh acquire cannot
@@ -145,8 +158,12 @@ function Remove-IfOwner([string]$owner) {
 
 # The lock was just taken: record it in .status, or give it back and fail with exit 4.
 function Complete-Acquire([string]$owner, [string]$msg) {
-    try { Write-Status 'running' }
-    catch {
+    $cur = Read-Lock
+    try {
+        if (-not ($cur -and $cur[0] -eq $owner -and (Set-StatusIf $cur 'running'))) {
+            Say 'lost: lock taken over before it was recorded'; return 3
+        }
+    } catch {
         try { Remove-IfOwner $owner } catch { }
         throw "lock taken but .status could not be written; lock released ($($_.Exception.Message))"
     }
@@ -167,8 +184,8 @@ function Invoke-Heartbeat([string]$owner, [string[]]$rest, [switch]$Quiet) {
     if ($cur[0] -ne $owner) { Say "lost: held by $($cur[0])"; return 3 }
     # Every refresh goes through the mutex and re-checks the line, so a heartbeat delayed
     # past the stale cutoff can never overwrite an owner that took over in the meantime.
-    if (-not (Replace-If $cur $owner)) { Say 'lost: lock taken over or contended'; return 3 }
-    if ($rest -and $rest.Count -gt 0) { Write-Status ('running ' + ($rest -join ' ')) }
+    $statusText = if ($rest -and $rest.Count -gt 0) { 'running ' + ($rest -join ' ') } else { '' }
+    if (-not (Replace-If $cur $owner $statusText)) { Say 'lost: lock taken over or contended'; return 3 }
     if (-not $Quiet) { Say 'ok' }
     return 0
 }
@@ -206,8 +223,9 @@ function Invoke-Release([string]$owner) {
     try {
         if (-not (Same-Lock (Read-Lock) $cur)) { Say 'not owner: lock changed during release'; return 3 }
         [IO.File]::Delete($Lock)
+        Write-Status 'idle'
     } finally { Unlock-Mutex }
-    Write-Status 'idle'; Say 'released'; return 0
+    Say 'released'; return 0
 }
 
 function Invoke-Status {

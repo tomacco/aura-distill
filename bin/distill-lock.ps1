@@ -150,9 +150,6 @@ function Complete-Acquire([string]$owner, [string]$msg) {
 }
 
 function Is-Stale([long]$epoch) { ((Now) - $epoch) -ge $Stale }
-# Past half the stale window a waiter may be close to a takeover, so the owner refreshes
-# through Replace-If and never blindly overwrites.
-function Near-Stale([long]$epoch) { (((Now) - $epoch) * 2) -ge $Stale }
 
 function Test-Owner([string]$owner) {
     if ($owner -notmatch '^[A-Za-z0-9._:-]+$') {
@@ -164,15 +161,9 @@ function Invoke-Heartbeat([string]$owner, [string[]]$rest, [switch]$Quiet) {
     $cur = Read-Lock
     if (-not $cur) { Say 'lost: lock not held'; return 3 }
     if ($cur[0] -ne $owner) { Say "lost: held by $($cur[0])"; return 3 }
-    if (Near-Stale $cur[1]) {
-        # A waiter may be taking this lock over right now. Refresh through the same
-        # mutex-and-check path so we never overwrite a new owner's lock.
-        if (-not (Replace-If $cur $owner)) { Say 'lost: stale lock taken over'; return 3 }
-    } else {
-        $tmp = TmpName 'beat'
-        [IO.File]::WriteAllText($tmp, "$owner $(Now) $(Iso)`n")
-        Move-Over $tmp $Lock
-    }
+    # Every refresh goes through the mutex and re-checks the line, so a heartbeat delayed
+    # past the stale cutoff can never overwrite an owner that took over in the meantime.
+    if (-not (Replace-If $cur $owner)) { Say 'lost: lock taken over or contended'; return 3 }
     if ($rest -and $rest.Count -gt 0) { Write-Status ('running ' + ($rest -join ' ')) }
     if (-not $Quiet) { Say 'ok' }
     return 0

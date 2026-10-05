@@ -108,9 +108,6 @@ acquired() {
 }
 
 is_stale() { [ $(( $(now) - $1 )) -ge "$STALE" ]; }
-# Past half the stale window a waiter may be close to a takeover, so the owner refreshes
-# through replace_if and never blindly overwrites.
-near_stale() { [ $(( ($(now) - $1) * 2 )) -ge "$STALE" ]; }
 
 check_owner() {
     case "$1" in
@@ -160,17 +157,11 @@ cmd_heartbeat() {
     if [ -z "$cur" ]; then echo "lost: lock not held"; return 3; fi
     set -- $cur "$@"
     if [ "$1" != "$owner" ]; then echo "lost: held by $1"; return 3; fi
-    if near_stale "$2"; then
-        # A waiter may be taking this lock over right now. Refresh through the same
-        # mutex-and-check path so we never overwrite a new owner's lock.
-        replace_if "$cur" "$owner"; rc=$?
-        [ $rc -eq 4 ] && fail "cannot refresh the lock"
-        [ $rc -ne 0 ] && { echo "lost: stale lock taken over"; return 3; }
-    else
-        tmp=$(tmpname beat)
-        printf '%s %s %s\n' "$owner" "$(now)" "$(iso)" > "$tmp" && mv -f "$tmp" "$LOCK" \
-            || { rm -f "$tmp"; fail "cannot refresh the lock"; }
-    fi
+    # Every refresh goes through the mutex and re-checks the line, so a heartbeat delayed
+    # past the stale cutoff can never overwrite an owner that took over in the meantime.
+    replace_if "$cur" "$owner"; rc=$?
+    [ $rc -eq 4 ] && fail "cannot refresh the lock"
+    [ $rc -ne 0 ] && { echo "lost: lock taken over or contended"; return 3; }
     shift 2
     if [ $# -gt 0 ]; then write_status "running $*" || fail "lock refreshed but the checkpoint could not be written"; fi
     echo "ok"; return 0

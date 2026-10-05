@@ -255,10 +255,56 @@ SHIM
     rm -rf "$store" "$shim"
 }
 
+# Deterministic interleaving (bash), from the second Codex review: an owner's heartbeat is
+# frozen after it read the lock line and before it takes the mutex (an ln shim pauses the
+# mutex create). The lease expires, another caller takes the lock over, then the heartbeat
+# resumes. It must report the loss (exit 3) and leave the new owner's line alone.
+run_delayed_heartbeat() {
+    local store shim rc h_pid b_rc
+    echo "-- sh: delayed heartbeat (deterministic interleaving)"
+    store=$(new_store); export DISTILL_DIR=$store
+    shim=$(mktemp -d)
+    cat > "$shim/ln" <<SHIM
+#!/usr/bin/env bash
+if [ "\${2:-}" = "$store/.lock.takeover" ] && [ ! -e "$shim/passed" ]; then
+    touch "$shim/paused" "$shim/passed"
+    while [ ! -e "$shim/resume" ]; do sleep 0.02; done
+fi
+exec /bin/ln "\$@"
+SHIM
+    chmod +x "$shim/ln"
+    export DISTILL_LOCK_STALE_SECONDS=2
+    "$SH" acquire alpha >/dev/null
+    PATH="$shim:$PATH" "$SH" heartbeat alpha step:3 signals:1 >"$shim/hb.out" 2>&1 &
+    h_pid=$!
+    local waited=0
+    while [ ! -e "$shim/paused" ]; do
+        sleep 0.02; waited=$((waited + 1))
+        if [ "$waited" -ge 500 ]; then
+            touch "$shim/resume"; wait "$h_pid"
+            FAIL=$((FAIL+1)); echo "  FAIL: delayed: the heartbeat never took the mutex (unguarded refresh)"
+            unset DISTILL_LOCK_STALE_SECONDS; rm -rf "$store" "$shim"; return
+        fi
+    done
+    sleep 2.5
+    "$SH" acquire beta >/dev/null 2>&1; b_rc=$?
+    check "delayed: after the lease expires another caller takes over (exit 0)" test "$b_rc" -eq 0
+    touch "$shim/resume"; wait "$h_pid"; rc=$?
+    check "delayed: the resumed heartbeat reports the loss (exit 3)" test "$rc" -eq 3
+    check "delayed: ...and does not print ok" bash -c "! grep -qx ok '$shim/hb.out'"
+    check "delayed: the new owner's line is intact" test "$(cut -d' ' -f1 "$store/.lock")" = "beta"
+    check "delayed: the stale owner's checkpoint was not written" bash -c "! grep -q 'step:3' '$store/.status'"
+    "$SH" release beta >/dev/null 2>&1; rc=$?
+    check "delayed: the new owner can still release (exit 0)" test "$rc" -eq 0
+    unset DISTILL_LOCK_STALE_SECONDS
+    rm -rf "$store" "$shim"
+}
+
 echo "== bash implementation"
 run_unit sh
 run_io_failure sh
 run_interleaving
+run_delayed_heartbeat
 run_exclusion "sh: 4 concurrent distills" "sh" 4 0.4
 run_exclusion "sh: 12 concurrent distills" "sh" 12 0.05
 run_stale_race "sh: stale takeover race" sh 40 16

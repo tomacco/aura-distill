@@ -28,3 +28,7 @@ research/**/judge/*.claims.json
 
 # Agent worktrees
 .claude/worktrees/
+
+# backlog: generated on demand; committing it would conflict between agents.
+backlog/INDEX.md
+.backlog-state/

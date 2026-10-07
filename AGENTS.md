@@ -17,6 +17,7 @@ A first-principles memory system shared by Claude Code, Codex, and Google Antigr
 - `knowledge-architecture.md` — Tier system design doc
 - `install.sh` / `install.ps1` — User-facing installers
 - `tests/` — A/B test scenarios, cognitive bias tests, persona-based methodology tests
+- `backlog/` + `tools/backlog.py` — repo work tracking for agents: tasks (open issues imported), handoff trails, decisions with evidence, archive. Owns the `backlog` block below; not part of the shipped product
 - `docs/` — GitHub Pages site (landing, research)
 - `dashboard/` — Analytics dashboard
 
@@ -76,3 +77,15 @@ When developing or testing:
 - `main` — stable, released (quality gate: REVIEW-PROTOCOL.md)
 - `feature/*` — in-progress work
 - `research/*` — experiments and published research (never merged to main directly)
+
+<!-- backlog:start -->
+<!-- Managed by tools/backlog.py init. Text outside this block is yours and is never touched. -->
+## Live work and decisions
+
+Run `python3 tools/backlog.py brief` first: work in progress with its last handoff, ready tasks and the latest
+decisions. Claude Code runs it at session start.
+
+- Claim a task before you change anything for it. Hand off before you stop, and when your context runs low.
+- Close a task with evidence (a repo path, URL or commit). Record every choice between methods as a decision.
+- Full rules: `backlog/README.md`.
+<!-- backlog:end -->

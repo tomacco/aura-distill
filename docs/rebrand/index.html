@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<title>Aura Distill</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --ink:#05060A;
+    --ink-2:#0A0C12;
+    --ink-3:#10131C;
+    --bone:#EDEAE3;
+    --dim:#8A8F98;
+    --line:rgba(237,234,227,.10);
+    --green:#46F2A0;
+    --cyan:#3ED6E0;
+    --violet:#B18CFF;
+    --display:'Archivo Black', Archivo, Arial-Black, sans-serif;
+    --body:'Archivo', 'Helvetica Neue', sans-serif;
+    --mono:'IBM Plex Mono', Consolas, monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--ink);
+    color:var(--bone);
+    font-family:var(--body);
+    font-size:17px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--green);color:var(--ink)}
+
+  a{color:var(--bone)}
+  a:focus-visible,button:focus-visible{outline:2px solid var(--green);outline-offset:3px}
+
+  .wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+
+  /* ---------- grain ---------- */
+  .grain{
+    position:fixed;inset:0;pointer-events:none;z-index:50;opacity:.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+  }
+
+  /* ---------- nav ---------- */
+  header{
+    position:sticky;top:0;z-index:40;
+    background:rgba(5,6,10,.82);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav{display:flex;align-items:center;justify-content:space-between;height:60px}
+  .wordmark{
+    font-family:var(--display);font-size:15px;letter-spacing:.14em;
+    text-decoration:none;display:flex;align-items:center;gap:10px;
+  }
+  .wordmark .dot{width:9px;height:9px;background:var(--green);box-shadow:0 0 12px var(--green)}
+  .nav nav{display:flex;gap:26px}
+  .nav nav a{
+    font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;
+    color:var(--dim);text-decoration:none;text-transform:uppercase;
+  }
+  .nav nav a:hover{color:var(--green)}
+  .nav nav a.gh{color:var(--bone)}
+  @media(max-width:720px){.nav nav a:not(.gh){display:none}}
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;min-height:88vh;display:flex;align-items:center;overflow:hidden}
+  #aura{position:absolute;inset:0;width:100%;height:100%}
+  .hero-fade{
+    position:absolute;inset:0;pointer-events:none;
+    background:
+      linear-gradient(90deg, rgba(5,6,10,.92) 0%, rgba(5,6,10,.55) 38%, rgba(5,6,10,0) 62%),
+      linear-gradient(180deg, rgba(5,6,10,0) 55%, rgba(5,6,10,.95) 100%);
+  }
+  .hero-inner{position:relative;z-index:2;padding:90px 0 120px;max-width:640px}
+  .eyebrow{
+    font-family:var(--mono);font-size:12.5px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--green);margin-bottom:26px;display:flex;align-items:center;gap:12px;
+  }
+  .eyebrow::before{content:"";width:26px;height:1px;background:var(--green)}
+  h1{
+    font-family:var(--display);
+    font-size:clamp(38px,6vw,72px);
+    line-height:.98;
+    text-transform:uppercase;
+    letter-spacing:.005em;
+    text-wrap:balance;
+  }
+  h1 .ghost{color:transparent;-webkit-text-stroke:1.5px rgba(237,234,227,.55)}
+  .hero-sub{
+    margin-top:30px;font-size:18.5px;color:var(--dim);max-width:52ch;
+  }
+  .hero-sub strong{color:var(--bone);font-weight:600}
+  .hero-sub em{color:var(--green);font-style:normal}
+  .cta-row{margin-top:38px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+  .btn{
+    font-family:var(--mono);font-size:13.5px;letter-spacing:.04em;
+    text-decoration:none;padding:14px 22px;display:inline-block;
+  }
+  .btn-primary{background:var(--green);color:var(--ink);font-weight:500}
+  .btn-primary:hover{box-shadow:0 0 26px rgba(70,242,160,.45)}
+  .btn-ghost{border:1px solid var(--line);color:var(--bone)}
+  .btn-ghost:hover{border-color:var(--green);color:var(--green)}
+  .aura-caption{
+    position:absolute;right:24px;bottom:18px;z-index:2;
+    font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.05em;
+  }
+
+  /* ---------- sections ---------- */
+  section{border-top:1px solid var(--line);padding:110px 0}
+  .sec-head{margin-bottom:56px;max-width:720px}
+  h2{
+    font-family:var(--display);font-size:clamp(26px,3.6vw,42px);
+    text-transform:uppercase;line-height:1.05;text-wrap:balance;
+  }
+  .sec-head p{margin-top:20px;color:var(--dim);max-width:58ch}
+  .sec-head p strong{color:var(--bone);font-weight:600}
+
+  /* problem */
+  .problem-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:60px;align-items:start}
+  @media(max-width:860px){.problem-grid{grid-template-columns:1fr}}
+  .repeat-lines{font-family:var(--mono);font-size:13.5px;color:var(--dim);border-left:1px solid var(--line)}
+  .repeat-lines div{padding:10px 0 10px 20px;border-bottom:1px dashed rgba(237,234,227,.07)}
+  .repeat-lines div:last-child{border-bottom:none;color:var(--bone)}
+  .repeat-lines .n{color:rgba(138,143,152,.5);margin-right:14px}
+
+  /* loop */
+  .loop{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+  @media(max-width:860px){.loop{grid-template-columns:1fr}}
+  .loop-step{background:var(--ink-2);padding:36px 30px 42px}
+  .loop-step .num{
+    font-family:var(--mono);font-size:12px;color:var(--green);letter-spacing:.2em;margin-bottom:22px;
+  }
+  .loop-step h3{
+    font-family:var(--display);font-size:19px;text-transform:uppercase;margin-bottom:14px;letter-spacing:.02em;
+  }
+  .loop-step h3 code{font-family:var(--mono);font-size:17px;color:var(--green);text-transform:none}
+  .loop-step p{font-size:15.5px;color:var(--dim)}
+  .loop-step p code{font-family:var(--mono);font-size:13.5px;color:var(--bone);background:var(--ink-3);padding:2px 6px}
+
+  /* files */
+  .files-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:60px;align-items:center}
+  @media(max-width:860px){.files-grid{grid-template-columns:1fr}}
+  .filecard{
+    background:var(--ink-2);border:1px solid var(--line);
+    font-family:var(--mono);font-size:13px;line-height:1.75;
+    overflow-x:auto;
+  }
+  .filecard .bar{
+    display:flex;gap:8px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);
+    color:var(--dim);font-size:11.5px;letter-spacing:.05em;
+  }
+  .filecard .bar .dot{width:8px;height:8px;border-radius:50%;background:var(--ink-3);border:1px solid var(--line)}
+  .filecard pre{padding:22px 24px;white-space:pre;color:var(--dim)}
+  .filecard .c-key{color:var(--bone)}
+  .filecard .c-green{color:var(--green)}
+  .filecard .c-cyan{color:var(--cyan)}
+  .filecard .c-violet{color:var(--violet)}
+  .filecard .c-faint{color:rgba(138,143,152,.55)}
+  .files-copy p{color:var(--dim);margin-bottom:18px}
+  .files-copy p strong{color:var(--bone);font-weight:600}
+  .files-copy .no-list{font-family:var(--mono);font-size:13px;color:var(--dim);margin-top:26px;line-height:2.1}
+  .files-copy .no-list span{color:var(--green);margin-right:10px}
+
+  /* markers */
+  .marker-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+  @media(max-width:960px){.marker-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){.marker-grid{grid-template-columns:1fr}}
+  .marker{background:var(--ink-2);padding:28px 24px 34px}
+  .marker .tag{
+    font-family:var(--mono);font-size:12.5px;letter-spacing:.08em;display:inline-block;
+    padding:5px 10px;margin-bottom:16px;
+  }
+  .t-green{color:var(--green);border:1px solid rgba(70,242,160,.35)}
+  .t-cyan{color:var(--cyan);border:1px solid rgba(62,214,224,.35)}
+  .t-violet{color:var(--violet);border:1px solid rgba(177,140,255,.35)}
+  .t-bone{color:var(--bone);border:1px solid var(--line)}
+  .marker p{font-size:14.5px;color:var(--dim)}
+  .conf-rail{
+    margin-top:56px;display:flex;align-items:center;gap:0;font-family:var(--mono);
+    font-size:12.5px;color:var(--dim);flex-wrap:wrap;
+  }
+  .conf-rail .stage{padding:10px 18px;border:1px solid var(--line);letter-spacing:.06em}
+  .conf-rail .stage.hot{color:var(--green);border-color:rgba(70,242,160,.4)}
+  .conf-rail .arrow{padding:0 12px;color:rgba(138,143,152,.6)}
+  .conf-note{margin-top:18px;font-size:14px;color:var(--dim);max-width:60ch}
+
+  /* receipts */
+  .receipts{background:var(--ink-2)}
+  .receipts-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:60px;align-items:start}
+  @media(max-width:860px){.receipts-grid{grid-template-columns:1fr}}
+  .receipts p{color:var(--dim);margin-bottom:18px;max-width:56ch}
+  .receipts p strong{color:var(--bone);font-weight:600}
+  .ledger-link{
+    font-family:var(--mono);font-size:13.5px;color:var(--green);text-decoration:none;
+    border-bottom:1px solid rgba(70,242,160,.4);padding-bottom:2px;
+  }
+  .ledger-link:hover{border-bottom-color:var(--green)}
+  .quote-card{
+    border:1px solid var(--line);padding:36px 32px;background:var(--ink);
+  }
+  .quote-card .q{
+    font-family:var(--display);font-size:clamp(20px,2.4vw,27px);
+    text-transform:uppercase;line-height:1.15;
+  }
+  .quote-card .q em{color:var(--green);font-style:normal}
+  .quote-card .attr{margin-top:20px;font-family:var(--mono);font-size:12px;color:var(--dim);letter-spacing:.06em}
+
+  /* install */
+  .install .clients{
+    display:flex;gap:14px;flex-wrap:wrap;margin-bottom:44px;
+  }
+  .client-chip{
+    font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;color:var(--dim);
+    border:1px solid var(--line);padding:9px 16px;
+  }
+  .client-chip b{color:var(--bone);font-weight:500}
+  .tabs{display:flex;gap:1px;background:var(--line);border:1px solid var(--line);border-bottom:none;width:max-content;max-width:100%}
+  .tab{
+    font-family:var(--mono);font-size:12.5px;letter-spacing:.05em;color:var(--dim);
+    background:var(--ink-2);border:none;padding:12px 20px;cursor:pointer;
+  }
+  .tab[aria-selected="true"]{color:var(--ink);background:var(--green);font-weight:500}
+  .termcard{border:1px solid var(--line);background:var(--ink-2)}
+  .termcard pre{
+    padding:26px 26px;font-family:var(--mono);font-size:14px;color:var(--bone);
+    overflow-x:auto;white-space:pre;
+  }
+  .termcard pre .prompt{color:var(--green)}
+  .copy-row{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding:10px 16px}
+  .copy-row span{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.05em}
+  .copy-btn{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;background:none;border:1px solid var(--line);
+    color:var(--bone);padding:7px 14px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:var(--green);color:var(--green)}
+
+  /* footer */
+  footer{border-top:1px solid var(--line);padding:44px 0 60px}
+  .foot{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+  .foot .meta{font-family:var(--mono);font-size:12px;color:var(--dim);letter-spacing:.06em}
+  .foot a{color:var(--dim);text-decoration:none;font-family:var(--mono);font-size:12px;letter-spacing:.06em}
+  .foot a:hover{color:var(--green)}
+
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+
+<div class="grain"></div>
+
+<header>
+  <div class="wrap nav">
+    <a class="wordmark" href="#"><span class="dot"></span>AURA&nbsp;DISTILL</a>
+    <nav>
+      <a href="#loop">How it works</a>
+      <a href="#markers">Knowledge</a>
+      <a href="#receipts">Receipts</a>
+      <a href="#install">Install</a>
+      <a class="gh" href="https://github.com/tomacco/aura-distill">GitHub ↗</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero" style="border-top:none;padding:0">
+  <canvas id="aura" aria-hidden="true"></canvas>
+  <div class="hero-fade"></div>
+  <div class="wrap" style="width:100%">
+    <div class="hero-inner">
+      <div class="eyebrow">Memory for coding agents</div>
+      <h1>Every session, your agent meets you <span class="ghost">for the first time.</span></h1>
+      <p class="hero-sub">
+        Aura Distill fixes that. One command distills what your agent learned about you
+        into plain files on your machine. Next session it reads them back and gets to work.
+        The knowledge compounds. <strong>We call it your <em>aura</em>.</strong>
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#install">Install in one line</a>
+        <a class="btn btn-ghost" href="https://github.com/tomacco/aura-distill">Read the source ↗</a>
+      </div>
+    </div>
+  </div>
+  <div class="aura-caption">a synthetic aura · yours will look like you</div>
+</section>
+
+<section id="problem">
+  <div class="wrap problem-grid">
+    <div class="sec-head" style="margin-bottom:0">
+      <h2>You keep re-explaining yourself</h2>
+      <p>
+        Your conventions. The deploy gotcha it already hit last Tuesday.
+        Coding agents wake up empty, so you pay the same context tax every
+        morning, and the hundredth session starts exactly as uninformed as the first.
+      </p>
+      <p><strong>Everyone accepts this as the cost of working with agents. You don't have to.</strong></p>
+    </div>
+    <div class="repeat-lines" aria-hidden="true">
+      <div><span class="n">day 1</span>"we use bun here, not npm"</div>
+      <div><span class="n">day 4</span>"we use bun here, not npm"</div>
+      <div><span class="n">day 9</span>"we use bun. here. not npm"</div>
+      <div><span class="n">day 12</span>"BUN."</div>
+      <div><span class="n">day 13</span>· agent reaches for bun on its own ·</div>
+    </div>
+  </div>
+</section>
+
+<section id="loop">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>How an aura grows</h2>
+      <p>A tight loop, run at the end of real sessions. No background daemon, no magic.</p>
+    </div>
+    <div class="loop">
+      <div class="loop-step">
+        <div class="num">01 · WORK</div>
+        <h3>Sessions produce signals</h3>
+        <p>A correction you made. A preference you stated once and expect to hold.
+           A failure that surprised you both. These are worth keeping, and mid-session
+           you can just say <code>remember this</code>.</p>
+      </div>
+      <div class="loop-step">
+        <div class="num">02 · DISTILL</div>
+        <h3><code>/distill</code></h3>
+        <p>One command turns the session into durable knowledge. Each entry gets a
+           confidence level and an origin, then lands in a markdown file a human
+           can open and argue with.</p>
+      </div>
+      <div class="loop-step">
+        <div class="num">03 · RECALL</div>
+        <h3>The next session knows</h3>
+        <p>Every session starts by reading a thin index. Knowledge relevant to the
+           task loads before the first line of code. Everything else stays on disk,
+           costing nothing.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="files">
+  <div class="wrap files-grid">
+    <div class="files-copy">
+      <div class="sec-head" style="margin-bottom:28px"><h2>It's just files</h2></div>
+      <p>
+        Your aura lives in <strong>~/.aura-distill/</strong> as plain markdown.
+        Read it. Edit it. Version it. Grep it. Delete the parts you disagree with.
+      </p>
+      <p>The agent treats it as authoritative memory. You treat it as text.</p>
+      <div class="no-list">
+        <div><span>—</span>no server</div>
+        <div><span>—</span>no database</div>
+        <div><span>—</span>no vector store</div>
+        <div><span>—</span>no dependencies</div>
+      </div>
+    </div>
+    <div class="filecard">
+      <div class="bar"><span class="dot"></span><span class="dot"></span>~/.aura-distill/feedback/preferences.md</div>
+      <pre><span class="c-faint">## Tooling</span>
+- <span class="c-key">Runtime:</span> bun over node, always.
+  <span class="c-violet">origin: directive</span> · <span class="c-green">confidence: hardened</span>
+
+<span class="c-faint">## Testing</span>
+- <span class="c-key">Fixtures use synthetic personas.</span>
+  Live data never enters the repo. <span class="c-cyan">[NON-NEGOTIABLE]</span>
+
+<span class="c-faint">## Deploys</span>
+- <span class="c-key">Staging needs the VPN up first.</span>
+  Learned the hard way, 3 failed deploys.
+  <span class="c-violet">origin: evidence</span> · <span class="c-green">confidence: validated</span></pre>
+    </div>
+  </div>
+</section>
+
+<section id="markers">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Knowledge that knows why it exists</h2>
+      <p>
+        Every entry carries an origin. A rule imposed by your tech lead is respected
+        as a directive. A hunch from one session ships as provisional. When context
+        changes, the agent knows which knowledge is ripe for revisiting, and which
+        is untouchable.
+      </p>
+    </div>
+    <div class="marker-grid">
+      <div class="marker">
+        <span class="tag t-green">origin: evidence</span>
+        <p>Earned through testing, data, or a failure you both remember. The default, and the strongest.</p>
+      </div>
+      <div class="marker">
+        <span class="tag t-violet">origin: directive</span>
+        <p>Imposed by authority. Fully respected in execution, and flagged for review when the authority or the context moves on.</p>
+      </div>
+      <div class="marker">
+        <span class="tag t-cyan">origin: convention</span>
+        <p>Arbitrary but agreed. Naming schemes, style calls. Cheap to change, expensive to argue about twice.</p>
+      </div>
+      <div class="marker">
+        <span class="tag t-bone">origin: constraint</span>
+        <p>Forced from outside. Vendor lock-in, compliance, the API that only speaks XML. Not a preference.</p>
+      </div>
+    </div>
+    <div class="conf-rail" aria-label="confidence lifecycle">
+      <span class="stage">experimental</span><span class="arrow">→</span>
+      <span class="stage">provisional</span><span class="arrow">→</span>
+      <span class="stage">validated</span><span class="arrow">→</span>
+      <span class="stage hot">hardened</span>
+    </div>
+    <p class="conf-note">
+      Confidence rises with confirmation and falls with correction. The agent applies
+      hardened knowledge without hesitation and treats experimental knowledge as a suggestion.
+    </p>
+  </div>
+</section>
+
+<section id="receipts" class="receipts">
+  <div class="wrap receipts-grid">
+    <div>
+      <div class="sec-head" style="margin-bottom:28px">
+        <h2>Real numbers or no numbers</h2>
+      </div>
+      <p>
+        Memory tools launch with big token headlines. We benchmark ourselves instead,
+        A/B, with the methodology and raw data published next to every claim.
+      </p>
+      <p>
+        <strong>When a result comes back null, we publish that too.</strong> Our current
+        measured verdict is deliberately modest: distilled memory reshapes where your
+        tokens go before it provably shrinks the bill. That honesty is the product.
+      </p>
+      <a class="ledger-link" href="https://github.com/tomacco/aura-distill">Read the research ledger ↗</a>
+    </div>
+    <div class="quote-card">
+      <div class="q">Every claim ships with its <em>evidence</em>. Same rule we apply to your knowledge, applied to ours.</div>
+      <div class="attr">— the whole methodology, in one sentence</div>
+    </div>
+  </div>
+</section>
+
+<section id="install" class="install">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Start your aura</h2>
+      <p>One line. It only touches your user configuration, and everything it writes stays on your machine.</p>
+    </div>
+    <div class="clients">
+      <span class="client-chip">works with <b>Claude Code</b></span>
+      <span class="client-chip">works with <b>Codex</b></span>
+      <span class="client-chip">works with <b>Google Antigravity</b></span>
+    </div>
+    <div class="tabs" role="tablist" aria-label="install method">
+      <button class="tab" role="tab" aria-selected="true" data-t="bash">macOS / Linux</button>
+      <button class="tab" role="tab" aria-selected="false" data-t="ps">Windows</button>
+      <button class="tab" role="tab" aria-selected="false" data-t="brew">Homebrew</button>
+    </div>
+    <div class="termcard">
+      <pre id="install-cmd"><span class="prompt">$</span> curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh | bash</pre>
+      <div class="copy-row">
+        <span id="install-note">installs for your shell · MIT licensed</span>
+        <button class="copy-btn" id="copy-install">copy</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <span class="meta">AURA DISTILL · v1.1.17 · MIT</span>
+    <div style="display:flex;gap:24px">
+      <a href="https://github.com/tomacco/aura-distill">github/tomacco/aura-distill</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ---------- install tabs ----------
+const CMDS = {
+  bash: {html:'<span class="prompt">$</span> curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh | bash',
+         raw:'curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh | bash'},
+  ps:   {html:'<span class="prompt">PS&gt;</span> irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1 | iex',
+         raw:'irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1 | iex'},
+  brew: {html:'<span class="prompt">$</span> brew install tomacco/aura-distill/aura-distill && aura-distill install',
+         raw:'brew install tomacco/aura-distill/aura-distill && aura-distill install'}
+};
+let currentCmd = CMDS.bash.raw;
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected','false'));
+    t.setAttribute('aria-selected','true');
+    const c = CMDS[t.dataset.t];
+    document.getElementById('install-cmd').innerHTML = c.html;
+    currentCmd = c.raw;
+  });
+});
+document.getElementById('copy-install').addEventListener('click',async e=>{
+  try{ await navigator.clipboard.writeText(currentCmd);
+       e.target.textContent='copied'; setTimeout(()=>e.target.textContent='copy',1600);
+  }catch(_){ e.target.textContent='select + ctrl-c'; setTimeout(()=>e.target.textContent='copy',2000); }
+});
+
+// ---------- the aura ----------
+(function(){
+  const canvas = document.getElementById('aura');
+  const ctx = canvas.getContext('2d');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const CLUSTERS = [
+    {name:'craft',    color:[70,242,160],  cx:.68, cy:.38},
+    {name:'ops',      color:[62,214,224],  cx:.88, cy:.62},
+    {name:'projects', color:[177,140,255], cx:.60, cy:.72},
+    {name:'profile',  color:[237,234,227], cx:.80, cy:.24}
+  ];
+  const LABELS = [
+    [0,'prefers bun over node'],[0,'commit style: imperative'],[0,'tests before refactors'],
+    [1,'staging needs VPN first'],[1,'deploys friday = never'],[1,'python means python3 here'],
+    [2,'repo: payments-api'],[2,'owns the billing service'],
+    [3,'terse in the morning'],[3,'never mock live data'],[3,'explains by example']
+  ];
+
+  let W,H,DPR,nodes=[],edges=[];
+  function rand(a,b){return a+Math.random()*(b-a)}
+
+  function build(){
+    DPR = Math.min(devicePixelRatio||1,2);
+    W = canvas.clientWidth; H = canvas.clientHeight;
+    canvas.width = W*DPR; canvas.height = H*DPR;
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    nodes=[];edges=[];
+    const mobile = W < 760;
+    const perCluster = mobile ? 10 : 17;
+    CLUSTERS.forEach((c,ci)=>{
+      const cx = (mobile? .5 + (c.cx-.74)*.9 : c.cx)*W;
+      const cy = c.cy*H;
+      const spread = Math.min(W,H)* (mobile? .22 : .17);
+      for(let i=0;i<perCluster;i++){
+        nodes.push({
+          c:ci, ax:cx+rand(-spread,spread), ay:cy+rand(-spread,spread),
+          r:rand(1.2,3.2), ph:rand(0,Math.PI*2), sp:rand(.15,.5), orb:rand(4,16),
+          flare:0, label:null
+        });
+      }
+    });
+    // attach labels to the biggest node of each mention
+    LABELS.forEach(([ci,text])=>{
+      const cand = nodes.filter(n=>n.c===ci && !n.label);
+      if(cand.length) cand[Math.floor(Math.random()*cand.length)].label = text;
+    });
+    // intra-cluster edges: 2 nearest neighbours
+    nodes.forEach((n,i)=>{
+      const near = nodes.map((m,j)=>({j,d:(n.ax-m.ax)**2+(n.ay-m.ay)**2,c:m.c}))
+        .filter(o=>o.j!==i && o.c===n.c).sort((a,b)=>a.d-b.d).slice(0,2);
+      near.forEach(o=>{ if(!edges.some(e=>(e.a===o.j&&e.b===i))) edges.push({a:i,b:o.j}); });
+    });
+    // a few cross-cluster bridges
+    for(let k=0;k<7;k++){
+      const a=Math.floor(Math.random()*nodes.length);
+      let b=Math.floor(Math.random()*nodes.length);
+      if(nodes[a].c!==nodes[b].c) edges.push({a,b,bridge:true});
+    }
+  }
+
+  let mouse={x:-999,y:-999};
+  canvas.parentElement.addEventListener('mousemove',e=>{
+    const r=canvas.getBoundingClientRect(); mouse.x=e.clientX-r.left; mouse.y=e.clientY-r.top;
+  });
+
+  let t=0, lastFlare=0;
+  function pos(n){
+    return reduced ? {x:n.ax,y:n.ay}
+      : {x:n.ax + Math.cos(t*n.sp+n.ph)*n.orb, y:n.ay + Math.sin(t*n.sp*.8+n.ph)*n.orb};
+  }
+
+  function frame(now){
+    t = now/1000;
+    ctx.clearRect(0,0,W,H);
+
+    // ambient plasma wash
+    const g = ctx.createRadialGradient(W*.74,H*.45,0,W*.74,H*.45,Math.max(W,H)*.55);
+    g.addColorStop(0,'rgba(70,242,160,0.055)');
+    g.addColorStop(.5,'rgba(62,214,224,0.03)');
+    g.addColorStop(1,'rgba(5,6,10,0)');
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+    // occasional flare = "learning"
+    if(!reduced && t-lastFlare>2.8){
+      lastFlare=t;
+      nodes[Math.floor(Math.random()*nodes.length)].flare=1;
+    }
+
+    const P = nodes.map(pos);
+
+    edges.forEach(e=>{
+      const a=P[e.a],b=P[e.b];
+      const fl=Math.max(nodes[e.a].flare,nodes[e.b].flare);
+      const col=CLUSTERS[nodes[e.a].c].color;
+      ctx.strokeStyle = e.bridge
+        ? `rgba(237,234,227,${.04+fl*.25})`
+        : `rgba(${col[0]},${col[1]},${col[2]},${.09+fl*.5})`;
+      ctx.lineWidth = .7+fl*.8;
+      ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+    });
+
+    let hover=null,hd=3600;
+    nodes.forEach((n,i)=>{
+      const p=P[i], col=CLUSTERS[n.c].color;
+      if(n.flare>0) n.flare=Math.max(0,n.flare-.012);
+      const glow = n.r*(4+n.flare*10);
+      const rg=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,glow);
+      rg.addColorStop(0,`rgba(${col[0]},${col[1]},${col[2]},${.5+n.flare*.5})`);
+      rg.addColorStop(1,`rgba(${col[0]},${col[1]},${col[2]},0)`);
+      ctx.fillStyle=rg;
+      ctx.beginPath();ctx.arc(p.x,p.y,glow,0,7);ctx.fill();
+      ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},.95)`;
+      ctx.beginPath();ctx.arc(p.x,p.y,n.r,0,7);ctx.fill();
+      const d=(mouse.x-p.x)**2+(mouse.y-p.y)**2;
+      if(n.label && d<hd){hd=d;hover={n,p};}
+    });
+
+    // labels
+    ctx.font='10.5px "IBM Plex Mono", monospace';
+    nodes.forEach((n,i)=>{
+      if(!n.label) return;
+      const p=P[i];
+      const hot = hover && hover.n===n;
+      ctx.fillStyle = hot? 'rgba(237,234,227,.95)' : `rgba(237,234,227,${.28+n.flare*.5})`;
+      ctx.fillText(n.label, p.x+9, p.y+3.5);
+    });
+
+    if(!reduced) requestAnimationFrame(frame);
+  }
+
+  function start(){ build(); if(reduced){ frame(0); } else requestAnimationFrame(frame); }
+  addEventListener('resize',()=>{ build(); if(reduced) frame(0); });
+  if(document.fonts && document.fonts.ready){ document.fonts.ready.then(start); } else start();
+})();
+</script>
+</body>
+</html>

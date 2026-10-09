@@ -23,3 +23,15 @@ jobs:
             exit 1
           fi
           echo "All tracked paths are Windows-safe."
+
+      - name: Reject private note paths in research data
+        # Research output once published the file names of the author's private
+        # knowledge store (2026-10-09). Data files under research/ must not name notes.
+        run: |
+          bad=$(git grep -l -E '(ops|profile|projects|feedback|craft|topics|private)/[a-z0-9-]+\.md' -- 'research/*.json' 'research/*.jsonl' || true)
+          if [ -n "$bad" ]; then
+            echo "::error::Research data names private knowledge-store notes. Replace each path with an opaque id:"
+            echo "$bad"
+            exit 1
+          fi
+          echo "No private note paths in research data."

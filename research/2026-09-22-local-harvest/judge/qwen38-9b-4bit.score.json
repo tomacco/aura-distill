@@ -517,7 +517,7 @@
    },
    {
     "status": "GROUNDED",
-    "note": "Matches the recorded 'marks' case in projects/aura-distill.md, though the candidate presents it as newly derived rather than recalled knowledge."
+    "note": "Matches the recorded 'marks' case in <private-note>, though the candidate presents it as newly derived rather than recalled knowledge."
    },
    {
     "status": "GROUNDED"
@@ -554,7 +554,7 @@
    },
    {
     "status": "DISTORTED",
-    "note": "The recipe lives in the user's knowledge base (ops/headless-clean-agents.md) and was applied by the assistant; the user only asked for a 'new, clean agent'. Over-claimed as demonstrated expertise.",
+    "note": "The recipe lives in the user's knowledge base (<private-note>) and was applied by the assistant; the user only asked for a 'new, clean agent'. Over-claimed as demonstrated expertise.",
     "adjudicated": true,
     "reason": "The headless-cell recipe exists in the user's KB and the user asked for a clean agent; presenting this as his demonstrated expertise over-claims."
    },
@@ -584,7 +584,7 @@
    },
    {
     "status": "DISTORTED",
-    "note": "'Live data is sacred' is a real core value from profile/the-user.md, but it concerns not mutating/faking production data; the candidate repurposes it as a benchmarking preference, and elevates it to the session's 'Key insight'.",
+    "note": "'Live data is sacred' is a real core value from <private-note>, but it concerns not mutating/faking production data; the candidate repurposes it as a benchmarking preference, and elevates it to the session's 'Key insight'.",
     "adjudicated": true,
     "reason": "'Live data is sacred' is a real KB value; the claim repurposes its meaning into a benchmarking preference."
    },

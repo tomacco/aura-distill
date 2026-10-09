@@ -523,9 +523,9 @@
    },
    {
     "status": "DISTORTED",
-    "note": "This was a previously recorded 'marks' case (2026-08-02) in projects/aura-distill.md, not an attempt in this session; and the reason was that the conversation is already in warm context, not that the process is costly.",
+    "note": "This was a previously recorded 'marks' case (2026-08-02) in <private-note>, not an attempt in this session; and the reason was that the conversation is already in warm context, not that the process is costly.",
     "adjudicated": true,
-    "reason": "The 'marks' case is real in projects/aura-distill.md; the claim relocates it to this session and gives the wrong reason (warm context, not process cost)."
+    "reason": "The 'marks' case is real in <private-note>; the claim relocates it to this session and gives the wrong reason (warm context, not process cost)."
    },
    {
     "status": "GROUNDED"
@@ -579,7 +579,7 @@
    },
    {
     "status": "DISTORTED",
-    "note": "The 59%/41% figure came from projects/aura-distill.md knowledge, not the ledger; the ledger was proposed as the future ground-truth source. Also drops the 41% number.",
+    "note": "The 59%/41% figure came from <private-note> knowledge, not the ledger; the ledger was proposed as the future ground-truth source. Also drops the 41% number.",
     "adjudicated": true,
     "reason": "The 59%/41% coverage figure is real but came from the aura-distill project knowledge, not the ledger; wrong source and dropped number."
    },

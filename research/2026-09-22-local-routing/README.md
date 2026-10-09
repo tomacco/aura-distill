@@ -601,9 +601,11 @@ store; `tools/` reads it.
 ```
 tools/          the harness (stdlib only, except the Laya arms)
 prototype/      the shippable router, stdlib only
-topics-eval.json  the 30-query evaluation set
-results/        scored summaries + ledgers for every run cited below
 ```
+
+The evaluation set (`topics-eval.json`, `topics.json`) and the per-run `results/` were withdrawn on
+2026-10-09: they named files in the author's private knowledge store. The figures below stand as
+measured; reproduce them against your own store with `tools/run.py`.
 
 ```bash
 cd research/2026-09-22-local-routing
@@ -636,8 +638,8 @@ uv venv -p 3.12 && uv pip install --python .venv/bin/python laya torch transform
   not bit-identical across machines.
 - **Will not reproduce:** E4's absolute figures. `tools/distill_cost.py` reads the *live*
   `~/.claude/projects`, which grows continuously — re-running gives different totals by design. The
-  published snapshot is `results/e4-transcript-composition-snapshot.json`.
+  published snapshot was withdrawn with the rest of `results/` (see above).
 - **Costs money:** E5 runs real `claude -p` cells (~$0.25 each). Everything else is free.
 
-Results in `results/<stamp>-<arm>/`. Fresh runs write to `runs/`, which is gitignored so a re-run
+Fresh runs write to `runs/`, which is gitignored so a re-run
 never overwrites the published snapshots.

@@ -1,8 +1,0 @@
-{
-  "n": 3,
-  "candidates": [
-    "ops/linux-shell-ssh.md",
-    "ops/windows-tooling.md",
-    "projects/homelab-pi.md"
-  ]
-}

@@ -15,6 +15,12 @@ on:
       # Research folders publish measurements, not shipped behaviour — a version
       # bump there would widen VERSION/Homebrew-formula drift for no user change.
       - 'research/**'
+      # Contributor work tracking (tasks, handoffs, decisions) changes daily and ships nothing.
+      - 'backlog/**'
+      - 'tools/backlog.py'
+      - 'tests/test_backlog.py'
+      - '.githooks/**'
+      - '.claude/**'
 
 jobs:
   bump:

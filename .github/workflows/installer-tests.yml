@@ -76,3 +76,10 @@ jobs:
       - name: Lock suite
         shell: bash
         run: bash tests/lock/run-lock-tests.sh
+
+      # pwsh wins above, so run the PowerShell suite again under Windows PowerShell 5.1,
+      # which takes a different branch in the script (#136).
+      - name: Lock suite (Windows PowerShell 5.1)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: PS_BIN=powershell.exe bash tests/lock/run-lock-tests.sh

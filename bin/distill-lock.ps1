@@ -69,7 +69,7 @@ function Move-Over([string]$src, [string]$dst) {
     for ($i = 0; ; $i++) {
         try {
             if ($PSVersionTable.PSVersion.Major -ge 6) { [IO.File]::Move($src, $dst, $true) }
-            elseif ([IO.File]::Exists($dst)) { [IO.File]::Replace($src, $dst, $null) }
+            elseif ([IO.File]::Exists($dst)) { [IO.File]::Replace($src, $dst, [NullString]::Value) }
             else { [IO.File]::Move($src, $dst) }
             return
         } catch {

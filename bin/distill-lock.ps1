@@ -68,8 +68,10 @@ function Write-Status([string]$text) {
 function Move-Over([string]$src, [string]$dst) {
     for ($i = 0; ; $i++) {
         try {
+            # Windows PowerShell 5.1 converts $null to "" for a [string] .NET parameter, and File.Replace rejects an
+            # empty backup path ("The path is not of a legal form"); [NullString]::Value passes a real null (#136).
             if ($PSVersionTable.PSVersion.Major -ge 6) { [IO.File]::Move($src, $dst, $true) }
-            elseif ([IO.File]::Exists($dst)) { [IO.File]::Replace($src, $dst, $null) }
+            elseif ([IO.File]::Exists($dst)) { [IO.File]::Replace($src, $dst, [NullString]::Value) }
             else { [IO.File]::Move($src, $dst) }
             return
         } catch {

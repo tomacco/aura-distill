@@ -141,6 +141,8 @@ foreach ($lockScript in @('distill-lock.sh', 'distill-lock.ps1')) {
     Get-File "$Repo/bin/$lockScript" (Join-Path $DistillDir "bin/$lockScript")
 }
 Write-Done "bin/distill-lock ${DIM}(run lock)${RESET}"
+Get-File "$Repo/bin/distill-said-at.sh" (Join-Path $DistillDir 'bin/distill-said-at.sh')
+Write-Done "bin/distill-said-at ${DIM}(signal times)${RESET}"
 
 foreach ($resolvedFile in @((Join-Path $CmdDir 'distill.md'),
                             (Join-Path $DistillDir 'distill-process.md'),

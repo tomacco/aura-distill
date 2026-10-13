@@ -66,6 +66,9 @@ Scan the current session transcript (or context history) and extract:
 5. **Timeline Landmarks:**
    - Key milestones, deliveries, major refactors, or releases named during this session.
 
+6. **Signal times:**
+   - Write `said_at: unknown` and `session_started_at: unknown` for every signal: the time reader (`bin/distill-said-at.sh`) does not read Antigravity transcripts yet. Never estimate a time. The sub-agent uses these to stop an old session from overwriting newer knowledge (distill-process.md Step 1e).
+
 Format these into a clean structured signal payload.
 
 ---
@@ -109,3 +112,4 @@ Upon completion, output a concise distillation report:
 - **Signals captured:** Count of friction points, decisions, and preferences.
 - **Knowledge files updated:** Specific markdown files modified in `{DISTILL_DIR}`.
 - **SPINE changes:** Any new pointers added to `SPINE.md`.
+- **Stale signals held back:** Each signal older than the knowledge it contradicts, with both dates, so the user can confirm or drop it.

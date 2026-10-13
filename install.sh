@@ -251,6 +251,9 @@ for lock_script in distill-lock.sh distill-lock.ps1; do
 done
 chmod +x "$DISTILL_DIR/bin/distill-lock.sh"
 done_msg "bin/distill-lock ${DIM}(run lock)${RESET}"
+fetch_file "$REPO/bin/distill-said-at.sh" > "$DISTILL_DIR/bin/distill-said-at.sh"
+chmod +x "$DISTILL_DIR/bin/distill-said-at.sh"
+done_msg "bin/distill-said-at ${DIM}(signal times)${RESET}"
 
 # Version
 echo "$VERSION" > "$DISTILL_DIR/.version"

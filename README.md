@@ -178,6 +178,14 @@ Your knowledge files in `~/.aura-distill/` are preserved. They're yours.
 
 ---
 
+## License
+
+aura-distill is created by **Ivan Gonzalez ([@tomacco](https://github.com/tomacco))** and released under the [Apache License 2.0](LICENSE).
+
+Forks, derivative works and commercial use are welcome. If you redistribute it, keep the [NOTICE](NOTICE) file and the copyright headers in the source files, and mark the files you changed (License §4). If you build on it, please credit the project. [CITATION.cff](CITATION.cff) has the citation details. "aura-distill" is a trademark of Ivan Gonzalez. Earlier releases were published under the MIT License.
+
+---
+
 <p align="center">
-  <sub>v1.1.29 · MIT · Built for Claude Code and Codex</sub>
+  <sub>v1.1.29 · Apache-2.0 · Built for Claude Code and Codex</sub>
 </p>

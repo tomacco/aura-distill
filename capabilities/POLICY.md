@@ -1,3 +1,6 @@
+<!-- SPDX-License-Identifier: Apache-2.0
+     Copyright 2026 Ivan Gonzalez (tomacco) · https://github.com/tomacco/aura-distill -->
+
 # Routing policy v1 (name-free, durable)
 
 The rules an orchestrator follows when choosing where work runs. No model names, no scores —

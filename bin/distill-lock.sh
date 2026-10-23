@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Ivan Gonzalez (tomacco) - https://github.com/tomacco/aura-distill
+#
 # distill-lock -- owner-checked mutual exclusion for distillation runs that share one store.
 #
 # The lock is the file {DISTILL_DIR}/.lock holding one line: "<owner> <epoch-seconds> <iso-utc>".

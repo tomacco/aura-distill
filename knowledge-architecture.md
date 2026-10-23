@@ -1,3 +1,6 @@
+<!-- SPDX-License-Identifier: Apache-2.0
+     Copyright 2026 Ivan Gonzalez (tomacco) · https://github.com/tomacco/aura-distill -->
+
 # Knowledge Architecture
 
 How `aura-distill` organizes knowledge to stay useful without bloating LLM context.

@@ -1,3 +1,6 @@
+<!-- SPDX-License-Identifier: Apache-2.0
+     Copyright 2026 Ivan Gonzalez (tomacco) · https://github.com/tomacco/aura-distill -->
+
 # Retrospective Distillation
 
 > **MANDATORY**: This workflow MUST execute via an isolated sub-agent when the client supports sub-agents. NEVER run the distillation process in the main conversation context unless isolation is unavailable and the user explicitly accepts the context cost.

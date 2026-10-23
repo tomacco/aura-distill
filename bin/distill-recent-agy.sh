@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Ivan Gonzalez (tomacco) - https://github.com/tomacco/aura-distill
+#
 # distill-recent-agy -- aura-distill Time Index ("When" axis) for Antigravity (agy) sessions.
 #
 # Scans Antigravity brain transcripts

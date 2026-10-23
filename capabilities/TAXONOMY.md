@@ -1,3 +1,6 @@
+<!-- SPDX-License-Identifier: Apache-2.0
+     Copyright 2026 Ivan Gonzalez (tomacco) · https://github.com/tomacco/aura-distill -->
+
 # Demand taxonomy v1
 
 A task (or subagent spawn) declares WHAT IT NEEDS — never which model it wants. Version:

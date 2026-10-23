@@ -3,6 +3,9 @@ name: distill
 description: Retrospective memory and context distillation for Antigravity sessions. Harvests conversation signals, friction, user preferences, and decisions, then executes the distillation pipeline to update tiered knowledge in SPINE.md and domain knowledge files.
 ---
 
+<!-- SPDX-License-Identifier: Apache-2.0
+     Copyright 2026 Ivan Gonzalez (tomacco) · https://github.com/tomacco/aura-distill -->
+
 # Retrospective Distillation for Antigravity (agy)
 
 > **MANDATORY**: Distillation MUST execute via a spawned sub-agent or isolated task turn. Never run the detailed knowledge synthesis directly in the main prompt loop, as it consumes context window needed for your primary task.

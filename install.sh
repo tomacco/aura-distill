@@ -1,4 +1,7 @@
 #!/bin/bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Ivan Gonzalez (tomacco) - https://github.com/tomacco/aura-distill
+#
 # aura-distill installer
 # https://github.com/tomacco/aura-distill
 

@@ -4,7 +4,7 @@ description: Retrospective memory and context distillation for Antigravity sessi
 ---
 
 <!-- SPDX-License-Identifier: Apache-2.0
-     Copyright 2026 Ivan Gonzalez (tomacco) · https://github.com/tomacco/aura-distill -->
+     Copyright 2026 Ivan Gonzalez (tomacco) - https://github.com/tomacco/aura-distill -->
 
 # Retrospective Distillation for Antigravity (agy)
 

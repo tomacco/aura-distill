@@ -1,7 +1,7 @@
-<!-- SPDX-License-Identifier: Apache-2.0
-     Copyright 2026 Ivan Gonzalez (tomacco) · https://github.com/tomacco/aura-distill -->
-
 # Capabilities — the durable layers of model routing
+
+<!-- SPDX-License-Identifier: Apache-2.0
+     Copyright 2026 Ivan Gonzalez (tomacco) - https://github.com/tomacco/aura-distill -->
 
 Distill's model-routing foundation, split by how fast each layer rots:
 

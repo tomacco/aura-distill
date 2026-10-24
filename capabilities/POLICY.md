@@ -1,7 +1,7 @@
-<!-- SPDX-License-Identifier: Apache-2.0
-     Copyright 2026 Ivan Gonzalez (tomacco) · https://github.com/tomacco/aura-distill -->
-
 # Routing policy v1 (name-free, durable)
+
+<!-- SPDX-License-Identifier: Apache-2.0
+     Copyright 2026 Ivan Gonzalez (tomacco) - https://github.com/tomacco/aura-distill -->
 
 The rules an orchestrator follows when choosing where work runs. No model names, no scores —
 those come from the LOCAL contracts file at decision time.

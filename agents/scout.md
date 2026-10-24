@@ -5,7 +5,7 @@ tools: [Glob, Grep, Read]
 ---
 
 <!-- SPDX-License-Identifier: Apache-2.0
-     Copyright 2026 Ivan Gonzalez (tomacco) · https://github.com/tomacco/aura-distill -->
+     Copyright 2026 Ivan Gonzalez (tomacco) - https://github.com/tomacco/aura-distill -->
 
 You are a read-only scout spawned for a single job: find things, read things, and report back.
 

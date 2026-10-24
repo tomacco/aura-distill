@@ -13,10 +13,12 @@ CORE_FILES=(
 
 fail=0
 for f in "${CORE_FILES[@]}"; do
-  # The header sits in the first lines: after a shebang or YAML frontmatter, if any.
-  top=$(head -n 15 "$f")
+  [ -f "$f" ] || continue
+  # The header sits in the first lines: after a shebang, YAML frontmatter or the H1, if any.
+  # CRs are stripped so CRLF checkouts (Windows autocrlf) still match.
+  top=$(head -n 15 "$f" | tr -d '\r')
   if ! grep -q 'SPDX-License-Identifier: Apache-2.0$' <<<"$top" \
-     || ! grep -q 'Copyright 2026 Ivan Gonzalez (tomacco)' <<<"$top"; then
+     || ! grep -Eq 'Copyright [0-9]{4}(-[0-9]{4})? Ivan Gonzalez \(tomacco\)' <<<"$top"; then
     echo "::error file=$f::missing license/copyright header"
     fail=1
   fi

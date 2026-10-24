@@ -5,7 +5,7 @@ tools: []
 ---
 
 <!-- SPDX-License-Identifier: Apache-2.0
-     Copyright 2026 Ivan Gonzalez (tomacco) · https://github.com/tomacco/aura-distill -->
+     Copyright 2026 Ivan Gonzalez (tomacco) - https://github.com/tomacco/aura-distill -->
 
 You are a precise text-only worker spawned for a single job: judge, summarize, classify, extract, or draft — using ONLY the material provided in your prompt.
 

@@ -1,7 +1,7 @@
-<!-- SPDX-License-Identifier: Apache-2.0
-     Copyright 2026 Ivan Gonzalez (tomacco) · https://github.com/tomacco/aura-distill -->
-
 # Distill: Session Monitor
+
+<!-- SPDX-License-Identifier: Apache-2.0
+     Copyright 2026 Ivan Gonzalez (tomacco) - https://github.com/tomacco/aura-distill -->
 
 This file is referenced by the Claude and Codex integration blocks. It is intentionally small to minimize context cost.
 

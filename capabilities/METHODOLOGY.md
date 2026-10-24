@@ -1,7 +1,7 @@
-<!-- SPDX-License-Identifier: Apache-2.0
-     Copyright 2026 Ivan Gonzalez (tomacco) · https://github.com/tomacco/aura-distill -->
-
 # Measurement methodology v1 — private probes, local scores
+
+<!-- SPDX-License-Identifier: Apache-2.0
+     Copyright 2026 Ivan Gonzalez (tomacco) - https://github.com/tomacco/aura-distill -->
 
 How demand-coverage scores are produced. The METHOD is public; probe INSTANCES never are.
 

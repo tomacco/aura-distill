@@ -1,7 +1,7 @@
-<!-- SPDX-License-Identifier: Apache-2.0
-     Copyright 2026 Ivan Gonzalez (tomacco) · https://github.com/tomacco/aura-distill -->
-
 # Distill Knowledge System
+
+<!-- SPDX-License-Identifier: Apache-2.0
+     Copyright 2026 Ivan Gonzalez (tomacco) - https://github.com/tomacco/aura-distill -->
 
 **{DISTILL_DIR}** = the shared Aura Distill directory, normally `~/.aura-distill/`. Automated installers resolve this placeholder to an absolute path. If it is still literal (for example after a manual install), treat `{DISTILL_DIR}` as `~/.aura-distill`.
 

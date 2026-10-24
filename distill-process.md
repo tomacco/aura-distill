@@ -1,5 +1,8 @@
 # Retrospective Distillation
 
+<!-- SPDX-License-Identifier: Apache-2.0
+     Copyright 2026 Ivan Gonzalez (tomacco) - https://github.com/tomacco/aura-distill -->
+
 Review this session's friction points, failures, and surprises. Trace each to a first principle, then encode the learning in the right place. Evolve your understanding of who the user is and how they work.
 
 ---

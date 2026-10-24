@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Ivan Gonzalez (tomacco) - https://github.com/tomacco/aura-distill
+#
 # aura-distill installer (Windows / PowerShell)
 # https://github.com/tomacco/aura-distill
 #

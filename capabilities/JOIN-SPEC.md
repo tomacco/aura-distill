@@ -1,5 +1,8 @@
 # Join spec v1 — commodity metadata by reference, never rebuilt
 
+<!-- SPDX-License-Identifier: Apache-2.0
+     Copyright 2026 Ivan Gonzalez (tomacco) - https://github.com/tomacco/aura-distill -->
+
 A local contracts file is a JOIN of three data classes. Only one is ours to measure.
 
 | Class | Source | How it enters the contract |

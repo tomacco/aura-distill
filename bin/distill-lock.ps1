@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Ivan Gonzalez (tomacco) - https://github.com/tomacco/aura-distill
+#
 # distill-lock -- owner-checked mutual exclusion for distillation runs that share one store.
 #
 # PowerShell twin of bin/distill-lock.sh: same lock file, line format, exit codes and output,

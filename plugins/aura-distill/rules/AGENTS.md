@@ -1,5 +1,8 @@
 # Aura Distill shared knowledge (Antigravity)
 
+<!-- SPDX-License-Identifier: Apache-2.0
+     Copyright 2026 Ivan Gonzalez (tomacco) - https://github.com/tomacco/aura-distill -->
+
 **Knowledge directory**: `$AURA_DISTILL_HOME` if set (the same override the installers honor), else `~/.aura-distill` (Windows: `%USERPROFILE%\.aura-distill`). ONE shared store serves Claude Code, Codex, and Antigravity — never create or read a workspace-local or client-local knowledge directory. Below, `{DISTILL_DIR}` means this resolved directory.
 
 Before doing any work, read `{DISTILL_DIR}/SPINE.md`. When the request or an announced action matches a SPINE entry, read the linked file before responding and apply it. Trigger on actions, not just questions: "I'm deploying X" is a domain match — check knowledge BEFORE acknowledging.

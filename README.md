@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/header.svg?v=1.1.29" alt="aura-distill" width="800"/>
+  <img src="docs/header.svg?v=1.1.30" alt="aura-distill" width="800"/>
 </p>
 
 <p align="center">
@@ -187,5 +187,5 @@ Forks, derivative works and commercial use are welcome. If you redistribute it, 
 ---
 
 <p align="center">
-  <sub>v1.1.29 · Apache-2.0 · Built for Claude Code and Codex</sub>
+  <sub>v1.1.30 · Apache-2.0 · Built for Claude Code and Codex</sub>
 </p>

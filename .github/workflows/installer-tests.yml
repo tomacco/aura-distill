@@ -76,3 +76,7 @@ jobs:
       - name: Lock suite
         shell: bash
         run: bash tests/lock/run-lock-tests.sh
+
+      - name: Signal-time reader
+        shell: bash
+        run: bash tests/said-at/run-said-at-tests.sh

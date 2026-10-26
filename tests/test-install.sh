@@ -48,6 +48,7 @@ fi
 # Run lock: both twins installed into the shared store, the bash one executable
 test -x "$TEST_HOME/.aura-distill/bin/distill-lock.sh"
 test -f "$TEST_HOME/.aura-distill/bin/distill-lock.ps1"
+test -x "$TEST_HOME/.aura-distill/bin/distill-said-at.sh"
 grep -q 'bin/distill-lock.sh acquire' "$TEST_HOME/.claude/commands/distill.md"
 DISTILL_DIR= "$TEST_HOME/.aura-distill/bin/distill-lock.sh" status | grep -qx 'free'
 

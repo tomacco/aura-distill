@@ -45,6 +45,7 @@ try {
     Assert-True (Test-Path (Join-Path $aura 'data')) 'fresh install creates the data dir'
     Assert-True (Test-Path (Join-Path $aura 'bin/distill-lock.ps1')) 'installer ships the PowerShell run lock'
     Assert-True (Test-Path (Join-Path $aura 'bin/distill-lock.sh')) 'installer ships the bash run lock'
+    Assert-True (Test-Path (Join-Path $aura 'bin/distill-said-at.sh')) 'installer ships the signal-time reader'
     Assert-True ((Get-Content (Join-Path $aura 'distill-process.md') -Raw).Contains('Step 0b: Consume the INBOX')) 'process engine carries inbox consumption'
     Assert-True ((Get-Content (Join-Path $aura 'distill-monitor.md') -Raw).Contains('user-explicit')) 'monitor carries explicit-save instructions'
 

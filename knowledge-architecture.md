@@ -94,7 +94,7 @@ Knowledge accumulates. A user who runs `/distill` weekly for six months will hav
 ---
 domain: [craft|ops|profile|project|feedback]
 scope: [what this file covers]
-last_updated: [date of last distillation that touched this]
+last_updated: [newest `said_at` encoded in this file, never the run date]
 staleness_threshold: [days before this should be reviewed — default 90]
 ---
 
@@ -212,7 +212,7 @@ After validating, update the file's frontmatter:
 
 ```markdown
 ---
-last_validated: [today's date]
+last_validated: [`said_at` of the signal that confirmed it, never the run date]
 validation_note: [optional — "confirmed still accurate" or "updated X because Y"]
 ---
 ```
@@ -251,7 +251,7 @@ Actions:
 During each distillation, check `last_validated` on Tier 2 files:
 - Files not validated in > `staleness_threshold` days get flagged
 - The user is asked: "Is [file] still relevant? Should we compress it to Tier 3?"
-- If yes → compress and archive. If still relevant → validate and bump `last_validated`
+- If yes → compress and archive. If still relevant → set `last_validated` to the `said_at` of the user's answer
 - **Never suggest deletion.** If something was true once, the compressed version belongs in Tier 3.
 
 ---
@@ -288,7 +288,7 @@ Less frequently than Tier 2, but NOT "almost never." Read a Tier 3 file when:
 Every time you read a knowledge file, perform a lightweight validation:
 1. Does this still match the current state of the codebase/project/user?
 2. If you notice something outdated, update it NOW — this is the cheapest time to fix it.
-3. Update `last_validated` in the frontmatter.
+3. Change no date unless a user signal confirmed the entry; then set `last_validated` to its `said_at`.
 
 This keeps the knowledge system self-healing. Every read is also a micro-maintenance pass.
 

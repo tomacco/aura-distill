@@ -14,6 +14,7 @@ A first-principles memory system shared by Claude Code, Codex, and Google Antigr
 - `plugins/aura-distill/` — Antigravity (agy) plugin, laid out per Antigravity's discovery contract: `plugin.json` (marker), `skills/distill/SKILL.md` (the distill workflow), `rules/AGENTS.md` (thin pointer to the canonical `distill-monitor.md` + Antigravity-specific Time Index)
 - `bin/distill-recent-agy.sh` / `.ps1` — Antigravity Time Index over brain transcripts (output-identical twins; parity enforced by `tests/antigravity/run-parity-test.sh`)
 - `bin/distill-lock.sh` / `.ps1` — Run lock: only one distillation writes the store at a time (twins share one lock file and one OS-level mutex; the bash twin needs perl and hands over to the PowerShell twin on Windows; tested by `tests/lock/run-lock-tests.sh`)
+- `bin/distill-said-at.sh` — When the user said something: reads a Claude Code or Codex transcript and prints the UTC timestamp of the one user message containing a phrase, else `unknown` (tested by `tests/said-at/run-said-at-tests.sh`)
 - `knowledge-architecture.md` — Tier system design doc
 - `install.sh` / `install.ps1` — User-facing installers
 - `tests/` — A/B test scenarios, cognitive bias tests, persona-based methodology tests
@@ -62,6 +63,8 @@ When developing or testing:
 - Run integration tests: `./test-sandbox.sh`
 - Run Antigravity Time Index parity + hostile-input tests: `./tests/antigravity/run-parity-test.sh` (and the connector runners `run-antigravity-connector-tests.sh` / `.ps1`)
 - Run the run-lock tests (bash, PowerShell when present, and both on one store): `./tests/lock/run-lock-tests.sh`
+- Run the signal-time tests (fixture Claude Code and Codex transcripts): `./tests/said-at/run-said-at-tests.sh`
+- Run the stale-session test (an old session distilled last must not overwrite newer knowledge; runs one live agent): `./tests/scenarios/distillation/stale-session/run-stale-session-test.sh`
 - Run deterministic Claude/Codex installer tests: `pwsh tests/test-codex.ps1`
 - Run a real isolated Codex retrieval test: `pwsh tests/test-codex.ps1 -LiveRetrieval`
 

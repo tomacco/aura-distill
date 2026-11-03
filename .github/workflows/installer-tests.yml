@@ -76,3 +76,9 @@ jobs:
       - name: Lock suite
         shell: bash
         run: bash tests/lock/run-lock-tests.sh
+
+      # The suite prefers pwsh, which takes the File.Move branch; Windows PowerShell 5.1 takes File.Replace (#136).
+      - name: Lock suite under Windows PowerShell 5.1
+        if: runner.os == 'Windows'
+        shell: bash
+        run: PS_BIN=powershell.exe bash tests/lock/run-lock-tests.sh

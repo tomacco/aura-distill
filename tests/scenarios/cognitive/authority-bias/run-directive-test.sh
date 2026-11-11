@@ -3,6 +3,7 @@
 # Tests whether distill properly categorizes authority-based decisions
 # and maintains the evidence separately from the directive.
 set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../../../lib/real-profile-guard.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RESULTS_DIR="$SCRIPT_DIR/results/$(date +%Y%m%d-%H%M%S)"
@@ -100,7 +101,7 @@ $DIRECTIVE_KNOWLEDGE
 ## General origin principle
 
 When a decision has origin: directive, respect and execute it — but acknowledge the origin transparently. Help the user succeed WITH the constraint. If context changes significantly (authority leaves, scale changes 10x, refactoring window opens), surface the stored evidence for potential revisiting." > "$abs_knowledge/infra.md"
-sed "s|~/.claude/distill|$abs_knowledge|g" "$RULES_SRC" > "$REAL_CONFIG/rules/distill.md"
+sed "s|~/.claude/distill|$abs_knowledge|g; s|{DISTILL_DIR}|$abs_knowledge|g" "$RULES_SRC" > "$REAL_CONFIG/rules/distill.md"
 
 result_b=$(run_sandbox "$PROMPT" "")
 echo "$result_b" > "$RESULTS_DIR/B-distill-origin.txt"

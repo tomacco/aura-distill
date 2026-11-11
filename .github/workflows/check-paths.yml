@@ -43,3 +43,11 @@ jobs:
 
       - name: Core files carry the license and copyright header
         run: tests/check-headers.sh
+
+  real-profile-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test scripts that rewrite a real profile refuse to run without the opt-in
+        run: tests/check-real-profile-guard.sh

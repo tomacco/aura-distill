@@ -2,6 +2,7 @@
 # Solution Anchoring Test — does accumulated infrastructure knowledge
 # bias the model toward heavyweight solutions for simple problems?
 set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../../../lib/real-profile-guard.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RESULTS_DIR="$SCRIPT_DIR/results/$(date +%Y%m%d-%H%M%S)"
@@ -103,7 +104,7 @@ run_sandbox() {
         local test_knowledge=$(mktemp -d)
         printf "# Knowledge Index\n- [Solution patterns](proportionality.md) — before proposing architecture, check proportionality\n" > "$test_knowledge/SPINE.md"
         printf -- "---\ndomain: craft\nscope: Solution proportionality and architectural judgment\n---\n\n%s\n" "$PROPORTIONALITY_KNOWLEDGE" > "$test_knowledge/proportionality.md"
-        sed "s|~/.claude/distill|$test_knowledge|g" "$RULES_SRC" > "$REAL_CONFIG/rules/distill.md"
+        sed "s|~/.claude/distill|$test_knowledge|g; s|{DISTILL_DIR}|$test_knowledge|g" "$RULES_SRC" > "$REAL_CONFIG/rules/distill.md"
     fi
 
     # Run

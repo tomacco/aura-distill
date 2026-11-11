@@ -1,6 +1,7 @@
 #!/bin/bash
 # Philosophical Principles Research — tests same prompt across 3 conditions
 set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../../../lib/real-profile-guard.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RESULTS_DIR="$SCRIPT_DIR/results/$(date +%Y%m%d-%H%M%S)"
@@ -57,7 +58,7 @@ run_condition() {
     rm -rf "$REAL_CONFIG/rules" 2>/dev/null || true
     mkdir -p "$REAL_CONFIG/rules"
     local abs_knowledge=$(cd "$SCRIPT_DIR/condition-$condition/knowledge" && pwd)
-    sed "s|~/.claude/distill|$abs_knowledge|g" "$RULES_SRC" > "$REAL_CONFIG/rules/distill.md"
+    sed "s|~/.claude/distill|$abs_knowledge|g; s|{DISTILL_DIR}|$abs_knowledge|g" "$RULES_SRC" > "$REAL_CONFIG/rules/distill.md"
 
     local result
     result=$(run_sandbox "$prompt" "$REAL_CONFIG")

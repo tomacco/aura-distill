@@ -20,6 +20,7 @@
 #   - Summary printed to stdout
 # ═══════════════════════════════════════════════════════════════════════════════
 set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/real-profile-guard.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -88,7 +89,7 @@ run_test() {
     if [ -n "$knowledge_dir" ] && [ -d "$knowledge_dir" ]; then
         test_knowledge=$(mktemp -d)
         cp "$knowledge_dir"/* "$test_knowledge/" 2>/dev/null || true
-        sed "s|~/.claude/distill|$test_knowledge|g" "$RULES_SRC" > "$REAL_CONFIG/rules/distill.md"
+        sed "s|~/.claude/distill|$test_knowledge|g; s|{DISTILL_DIR}|$test_knowledge|g" "$RULES_SRC" > "$REAL_CONFIG/rules/distill.md"
     fi
 
     # Run

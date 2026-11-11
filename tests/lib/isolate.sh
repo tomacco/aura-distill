@@ -1,4 +1,5 @@
 #!/bin/bash
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/real-profile-guard.sh"
 # ═══════════════════════════════════════════════════════════════════════════════
 # Test Isolation Protocol for aura-distill research
 #
@@ -191,7 +192,7 @@ isolate_run() {
     if [ -n "$knowledge_dir" ] && [ -d "$knowledge_dir" ]; then
         local test_knowledge=$(mktemp -d)
         cp "$knowledge_dir"/* "$test_knowledge/" 2>/dev/null || true
-        sed "s|~/.claude/distill|$test_knowledge|g" "$RULES_SRC" > "$REAL_CONFIG/rules/distill.md"
+        sed "s|~/.claude/distill|$test_knowledge|g; s|{DISTILL_DIR}|$test_knowledge|g" "$RULES_SRC" > "$REAL_CONFIG/rules/distill.md"
     fi
 
     # Run from neutral workspace

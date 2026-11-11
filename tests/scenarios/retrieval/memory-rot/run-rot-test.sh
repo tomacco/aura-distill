@@ -1,6 +1,7 @@
 #!/bin/bash
 # Memory Rot Research — tests same prompt across memory.md stages vs distill
 set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../../../lib/real-profile-guard.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RESULTS_DIR="$SCRIPT_DIR/results/$(date +%Y%m%d-%H%M%S)"
@@ -73,7 +74,7 @@ $(cat "$SCRIPT_DIR/month6/MEMORY.md" | head -200)" > "$REAL_CONFIG/rules/memory-
     # Install distill rule pointing to structured knowledge
     local abs_knowledge=$(cd "$SCRIPT_DIR/distill-equivalent/knowledge" && pwd)
     local rules_src="$SCRIPT_DIR/../../../rules/distill.md"
-    sed "s|~/.claude/distill|$abs_knowledge|g; s|\~/.claude/distill|$abs_knowledge|g" \
+    sed "s|~/.claude/distill|$abs_knowledge|g; s|\~/.claude/distill|$abs_knowledge|g; s|{DISTILL_DIR}|$abs_knowledge|g" \
         "$rules_src" > "$REAL_CONFIG/rules/distill.md"
 
     local result_distill

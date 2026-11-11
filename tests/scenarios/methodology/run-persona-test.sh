@@ -19,6 +19,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../../lib/real-profile-guard.sh"
 
 PERSONA="${1:-}"
 TEST="${2:-}"
@@ -136,7 +137,7 @@ run_condition() {
         # Point rules to test knowledge ONLY
         rm -rf "$REAL_CONFIG/rules" 2>/dev/null || true
         mkdir -p "$REAL_CONFIG/rules"
-        sed "s|~/.claude/distill|$test_knowledge|g" "$CONFIG_DIR/rules/distill.md" > "$REAL_CONFIG/rules/distill.md" 2>/dev/null || true
+        sed "s|~/.claude/distill|$test_knowledge|g; s|{DISTILL_DIR}|$test_knowledge|g" "$CONFIG_DIR/rules/distill.md" > "$REAL_CONFIG/rules/distill.md" 2>/dev/null || true
     fi
 
     # Run

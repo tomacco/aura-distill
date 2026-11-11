@@ -111,6 +111,30 @@ printf '\n\n' >> "$SECTION_FILE"
 prefs_case 'an untouched template (whitespace differs)' replaced
 prefs_case 'a file without the heading' replaced MISSING
 
+# Legacy seed (#152): a legacy store is never copied over a shared store that holds
+# knowledge. Second profile with an old distill/ directory, store without the marker.
+SEED_HOME=$(mktemp -d)
+mkdir -p "$SEED_HOME/.claude"
+HOME="$SEED_HOME" AURA_DISTILL_REPO="$REPO_ROOT" bash "$INSTALLER" --no-token-saver </dev/null >/dev/null
+test ! -e "$SEED_HOME/.aura-distill/.legacy-imported"
+printf 'CURRENT-SPINE\n' > "$SEED_HOME/.aura-distill/SPINE.md"
+printf 'CURRENT-CARD\n' > "$SEED_HOME/.aura-distill/craft/a.md"
+mkdir -p "$SEED_HOME/.claude-work/distill/craft"
+printf 'OLD-SPINE\n' > "$SEED_HOME/.claude-work/distill/SPINE.md"
+printf 'OLD-CARD\n' > "$SEED_HOME/.claude-work/distill/craft/a.md"
+printf 'OLD-ONLY\n' > "$SEED_HOME/.claude-work/distill/craft/only-in-legacy.md"
+HOME="$SEED_HOME" AURA_DISTILL_REPO="$REPO_ROOT" bash "$INSTALLER" --profile work --no-token-saver \
+  </dev/null >"$SEED_HOME/out" 2>&1
+grep -qx 'CURRENT-SPINE' "$SEED_HOME/.aura-distill/SPINE.md" \
+  || { echo "FAIL a legacy store overwrote the shared SPINE" >&2; exit 1; }
+grep -qx 'CURRENT-CARD' "$SEED_HOME/.aura-distill/craft/a.md" \
+  || { echo "FAIL a legacy store overwrote a shared card" >&2; exit 1; }
+test ! -e "$SEED_HOME/.aura-distill/craft/only-in-legacy.md"
+grep -qx 'OLD-SPINE' "$SEED_HOME/.claude-work/distill/SPINE.md"
+grep -q 'was not imported' "$SEED_HOME/out"
+rm -rf "$SEED_HOME"
+printf 'PASS install.sh never seeds a legacy store over a populated shared store\n'
+
 # Ledger beacon resolution (#46): exercise the documented grep pipeline shape
 # against fixture transcripts — both the match case and the empty-glob case
 # (a bare grep with no file operands would hang on stdin; </dev/null guards it).

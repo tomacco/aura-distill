@@ -121,8 +121,14 @@ foreach ($d in @($CmdDir, $DistillDir,
 
 # Seed the new client-neutral store from a legacy Claude installation. Copying
 # keeps existing users' files and configuration untouched.
+# Only an empty store is seeded: a store that holds knowledge is never overwritten.
 $legacyMarker = Join-Path $DistillDir '.legacy-imported'
-if ((Test-Path $LegacyDistillDir) -and ($LegacyDistillDir -ne $DistillDir) -and -not (Test-Path $legacyMarker)) {
+$storeHasKnowledge = (Test-Path (Join-Path $DistillDir 'SPINE.md')) -or
+    (@('craft','ops','profile','projects','feedback','archive') | Where-Object {
+        @(Get-ChildItem -Path (Join-Path $DistillDir $_) -File -Recurse -ErrorAction SilentlyContinue).Count -gt 0 }).Count -gt 0
+if ((Test-Path $LegacyDistillDir) -and ($LegacyDistillDir -ne $DistillDir) -and -not (Test-Path $legacyMarker) -and $storeHasKnowledge) {
+    Write-Warn "$LegacyDistillDir was not imported: $DistillDir holds knowledge and is left as it is"
+} elseif ((Test-Path $LegacyDistillDir) -and ($LegacyDistillDir -ne $DistillDir) -and -not (Test-Path $legacyMarker)) {
     Copy-Item -Path (Join-Path $LegacyDistillDir '*') -Destination $DistillDir -Recurse -Force -ErrorAction SilentlyContinue
     "copied from $LegacyDistillDir on $((Get-Date).ToUniversalTime().ToString('s'))Z" | Set-Content $legacyMarker -NoNewline
     Write-Info 'Existing Claude knowledge copied to shared store; legacy files preserved'

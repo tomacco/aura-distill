@@ -106,6 +106,40 @@ if (Test-Path $versionFile) {
 
 Write-Section 'Core files'
 
+# Download every core file to a staging directory, check it and resolve its
+# placeholders there. The installed copies are replaced only when all of them
+# arrived, so a failed download leaves the install as it was (#151).
+$coreFiles = @(
+    @{ Rel = 'distill.md';           Dest = (Join-Path $CmdDir 'distill.md');                 Resolve = $true  },
+    @{ Rel = 'distill-process.md';   Dest = (Join-Path $DistillDir 'distill-process.md');     Resolve = $true  },
+    @{ Rel = 'distill-monitor.md';   Dest = (Join-Path $DistillDir 'distill-monitor.md');     Resolve = $true  },
+    @{ Rel = 'bin/distill-lock.sh';  Dest = (Join-Path $DistillDir 'bin/distill-lock.sh');    Resolve = $false },
+    @{ Rel = 'bin/distill-lock.ps1'; Dest = (Join-Path $DistillDir 'bin/distill-lock.ps1');   Resolve = $false }
+)
+$stageDir = Join-Path ([System.IO.Path]::GetTempPath()) ('aura-distill-stage-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Force -Path $stageDir | Out-Null
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+try {
+    foreach ($f in $coreFiles) {
+        $staged = Join-Path $stageDir (Split-Path -Leaf $f.Rel)
+        try {
+            Get-File "$Repo/$($f.Rel)" $staged
+            $text = [System.IO.File]::ReadAllText($staged)
+        } catch { $text = '' }
+        # "aura-distill" is in the license header of every core file; a proxy error
+        # page or a truncated body does not carry it.
+        if (-not $text.Contains('aura-distill')) {
+            throw "Could not download $($f.Rel) from $Repo. Nothing was changed. Check your connection and run the installer again."
+        }
+        if ($f.Resolve) {
+            [System.IO.File]::WriteAllText($staged, $text.Replace('{DISTILL_DIR}', $DistillDir), $utf8NoBom)
+        }
+    }
+} catch {
+    Remove-Item -LiteralPath $stageDir -Recurse -Force -ErrorAction SilentlyContinue
+    throw
+}
+
 # Ensure directories exist
 foreach ($d in @($CmdDir, $DistillDir,
                  (Join-Path $DistillDir 'craft'),
@@ -130,27 +164,19 @@ if ((Test-Path $LegacyDistillDir) -and ($LegacyDistillDir -ne $DistillDir) -and 
     Write-Info "Shared store was already seeded; $LegacyDistillDir left untouched (set AURA_DISTILL_HOME for an isolated profile)"
 }
 
-Get-File "$Repo/distill.md"          (Join-Path $CmdDir 'distill.md')
+foreach ($f in $coreFiles) {
+    $parent = Split-Path -Parent $f.Dest
+    if (-not (Test-Path $parent)) { New-Item -ItemType Directory -Force -Path $parent | Out-Null }
+    $incoming = "$($f.Dest).new.$PID"
+    Copy-Item -LiteralPath (Join-Path $stageDir (Split-Path -Leaf $f.Rel)) -Destination $incoming -Force
+    Move-Item -LiteralPath $incoming -Destination $f.Dest -Force
+}
+Remove-Item -LiteralPath $stageDir -Recurse -Force -ErrorAction SilentlyContinue
 Write-Done "distill.md ${DIM}(command)${RESET}"
-
-Get-File "$Repo/distill-process.md"  (Join-Path $DistillDir 'distill-process.md')
 Write-Done "distill-process.md ${DIM}(process engine)${RESET}"
-
-Get-File "$Repo/distill-monitor.md"  (Join-Path $DistillDir 'distill-monitor.md')
 Write-Done "distill-monitor.md ${DIM}(session monitor)${RESET}"
-
 # Both twins: Claude Code on Windows runs Git Bash, Codex runs PowerShell.
-foreach ($lockScript in @('distill-lock.sh', 'distill-lock.ps1')) {
-    Get-File "$Repo/bin/$lockScript" (Join-Path $DistillDir "bin/$lockScript")
-}
 Write-Done "bin/distill-lock ${DIM}(run lock)${RESET}"
-
-foreach ($resolvedFile in @((Join-Path $CmdDir 'distill.md'),
-                            (Join-Path $DistillDir 'distill-process.md'),
-                            (Join-Path $DistillDir 'distill-monitor.md'))) {
-    $resolved = (Get-Content $resolvedFile -Raw).Replace('{DISTILL_DIR}', $DistillDir)
-    [System.IO.File]::WriteAllText($resolvedFile, $resolved, (New-Object System.Text.UTF8Encoding($false)))
-}
 
 # Version
 Set-Content -Path $versionFile -Value $Version -Encoding utf8 -NoNewline

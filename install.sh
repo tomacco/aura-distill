@@ -233,6 +233,36 @@ fi
 
 show_section "Core files"
 
+# Download core files and resolve {DISTILL_DIR} to actual path.
+# Every file is fetched to a staging directory and checked first; the installed
+# copies are replaced only when all of them arrived, so a failed download never
+# leaves an empty or half-updated install (#151).
+STAGE_DIR=$(mktemp -d)
+trap 'rm -rf "$STAGE_DIR"' EXIT
+
+stage_core_file() {  # <repo path> <resolve|raw>
+    local rel="$1" mode="$2" out="$STAGE_DIR/$(basename "$1")"
+    if ! fetch_file "$REPO/$rel" > "$out.raw" 2>/dev/null \
+       || [ ! -s "$out.raw" ] || ! grep -q "aura-distill" "$out.raw"; then
+        # "aura-distill" is in the license header of every core file; a proxy error
+        # page or a truncated body does not carry it.
+        fail_msg "Could not download $rel from $REPO"
+        fail_msg "Nothing was changed. Check your connection and run the installer again."
+        exit 1
+    fi
+    if [ "$mode" = "resolve" ]; then
+        sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" "$out.raw" > "$out"
+    else
+        cp "$out.raw" "$out"
+    fi
+}
+
+stage_core_file distill.md resolve
+stage_core_file distill-process.md resolve
+stage_core_file distill-monitor.md resolve
+stage_core_file bin/distill-lock.sh raw
+stage_core_file bin/distill-lock.ps1 raw
+
 # Ensure directories exist
 mkdir -p "$CMD_DIR"
 mkdir -p "$DISTILL_DIR"/{craft,ops,profile,projects,feedback,archive,data,inbox}
@@ -248,22 +278,25 @@ elif [ -d "$LEGACY_DISTILL_DIR" ] && [ -f "$DISTILL_DIR/.legacy-imported" ]; the
     info_msg "Shared store was already seeded; $LEGACY_DISTILL_DIR left untouched (use AURA_DISTILL_HOME for an isolated profile)"
 fi
 
-# Download core files and resolve {DISTILL_DIR} to actual path
+mkdir -p "$DISTILL_DIR/bin"
+place_core_file() {  # <staged name> <target>
+    # A symlinked target (dotfile managers) is written through, as before; a
+    # regular file is replaced by rename so it is never seen half-written.
+    if [ -L "$2" ]; then cat "$STAGE_DIR/$1" > "$2"
+    else cat "$STAGE_DIR/$1" > "$2.new.$$" && mv -f "$2.new.$$" "$2"; fi
+}
 
-fetch_file "$REPO/distill.md" | sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" > "$CMD_DIR/distill.md"
+place_core_file distill.md "$CMD_DIR/distill.md"
 done_msg "distill.md ${DIM}(command)${RESET}"
 
-
-fetch_file "$REPO/distill-process.md" | sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" > "$DISTILL_DIR/distill-process.md"
+place_core_file distill-process.md "$DISTILL_DIR/distill-process.md"
 done_msg "distill-process.md ${DIM}(process engine)${RESET}"
 
-
-fetch_file "$REPO/distill-monitor.md" | sed "s|{DISTILL_DIR}|$DISTILL_DIR|g" > "$DISTILL_DIR/distill-monitor.md"
+place_core_file distill-monitor.md "$DISTILL_DIR/distill-monitor.md"
 done_msg "distill-monitor.md ${DIM}(session monitor)${RESET}"
 
-mkdir -p "$DISTILL_DIR/bin"
 for lock_script in distill-lock.sh distill-lock.ps1; do
-    fetch_file "$REPO/bin/$lock_script" > "$DISTILL_DIR/bin/$lock_script"
+    place_core_file "$lock_script" "$DISTILL_DIR/bin/$lock_script"
 done
 chmod +x "$DISTILL_DIR/bin/distill-lock.sh"
 done_msg "bin/distill-lock ${DIM}(run lock)${RESET}"

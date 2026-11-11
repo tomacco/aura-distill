@@ -107,6 +107,48 @@ test "$before_codex" = "$after_codex"
 
 printf 'PASS bash installer preserves partial legacy content and is byte-stable\n'
 
+# Failed download (#151): an upgrade that cannot fetch the core files exits nonzero
+# and leaves every installed file as it was, byte for byte.
+core_files="$TEST_HOME/.claude/commands/distill.md $TEST_HOME/.aura-distill/distill-process.md
+$TEST_HOME/.aura-distill/distill-monitor.md $TEST_HOME/.aura-distill/bin/distill-lock.sh
+$TEST_HOME/.aura-distill/bin/distill-lock.ps1"
+before_core=$(sha256sum $core_files)
+if HOME="$TEST_HOME" AURA_DISTILL_REPO="$TEST_HOME/no-such-repo" DISTILL_TOKEN_SAVER=off \
+     bash "$INSTALLER" </dev/null >"$TEST_HOME/failed-install.out" 2>&1; then
+  echo "FAIL install.sh exited 0 although no core file could be downloaded" >&2; exit 1
+fi
+test "$before_core" = "$(sha256sum $core_files)" \
+  || { echo "FAIL a failed download changed installed core files" >&2; exit 1; }
+grep -q 'Nothing was changed' "$TEST_HOME/failed-install.out"
+# One missing file among good ones: nothing is replaced either (all-or-nothing).
+PARTIAL_REPO="$TEST_HOME/partial-repo"; mkdir -p "$PARTIAL_REPO/bin"
+cp "$REPO_ROOT/distill.md" "$PARTIAL_REPO/"; printf '# changed aura-distill\n' >> "$PARTIAL_REPO/distill.md"
+if HOME="$TEST_HOME" AURA_DISTILL_REPO="$PARTIAL_REPO" DISTILL_TOKEN_SAVER=off \
+     bash "$INSTALLER" </dev/null >/dev/null 2>&1; then
+  echo "FAIL install.sh exited 0 with a partial repo" >&2; exit 1
+fi
+test "$before_core" = "$(sha256sum $core_files)" \
+  || { echo "FAIL a partial download replaced some core files" >&2; exit 1; }
+# A failed first install creates nothing, so "Nothing was changed" is true.
+EMPTY_HOME=$(mktemp -d); mkdir -p "$EMPTY_HOME/.claude/distill"
+printf 'LEGACY\n' > "$EMPTY_HOME/.claude/distill/SPINE.md"
+if HOME="$EMPTY_HOME" AURA_DISTILL_REPO="$EMPTY_HOME/no-such-repo" bash "$INSTALLER" </dev/null >/dev/null 2>&1; then
+  echo "FAIL a first install without a repo exited 0" >&2; exit 1
+fi
+test ! -e "$EMPTY_HOME/.aura-distill" && test ! -e "$EMPTY_HOME/.claude/commands" \
+  || { echo "FAIL a failed first install left files behind" >&2; exit 1; }
+# A symlinked command file is written through, not replaced by a regular file.
+mkdir -p "$TEST_HOME/dotfiles"
+mv "$TEST_HOME/.claude/commands/distill.md" "$TEST_HOME/dotfiles/distill.md"
+ln -s "$TEST_HOME/dotfiles/distill.md" "$TEST_HOME/.claude/commands/distill.md"
+: > "$TEST_HOME/dotfiles/distill.md"
+run_install
+test -L "$TEST_HOME/.claude/commands/distill.md" && test -s "$TEST_HOME/dotfiles/distill.md" \
+  || { echo "FAIL install.sh replaced a symlinked command file" >&2; exit 1; }
+rm "$TEST_HOME/.claude/commands/distill.md"; mv "$TEST_HOME/dotfiles/distill.md" "$TEST_HOME/.claude/commands/distill.md"
+rm -rf "$EMPTY_HOME"
+printf 'PASS install.sh leaves the install untouched when a download fails\n'
+
 # Always-On preferences rule (same as install.ps1): the section from the heading to
 # the end of the file is kept byte for byte unless it equals the shipped template
 # ignoring whitespace; a file without the heading gets the release's file.

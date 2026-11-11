@@ -269,7 +269,19 @@ mkdir -p "$DISTILL_DIR"/{craft,ops,profile,projects,feedback,archive,data,inbox}
 
 # New installs use the client-neutral store. When an older Claude-only install
 # exists, seed the shared store without moving or modifying the legacy copy.
+# Only a store without knowledge is seeded: a store that holds knowledge is never
+# overwritten by a legacy copy (#152). The index template every install writes
+# does not count; an index with at least one entry does.
+store_has_knowledge() {
+    grep -q '^- \[' "$DISTILL_DIR/SPINE.md" 2>/dev/null && return 0
+    [ -n "$(find "$DISTILL_DIR"/craft "$DISTILL_DIR"/ops "$DISTILL_DIR"/profile "$DISTILL_DIR"/projects \
+              "$DISTILL_DIR"/feedback "$DISTILL_DIR"/archive -type f 2>/dev/null | head -n 1)" ]
+}
 if [ -d "$LEGACY_DISTILL_DIR" ] && [ "$LEGACY_DISTILL_DIR" != "$DISTILL_DIR" ] \
+   && [ ! -f "$DISTILL_DIR/.legacy-imported" ] && store_has_knowledge; then
+    warn_msg "$LEGACY_DISTILL_DIR was not imported: $DISTILL_DIR holds knowledge and is left as it is"
+    warn_msg "To bring it over, copy the files you want from there by hand (or set AURA_DISTILL_HOME for a separate store)"
+elif [ -d "$LEGACY_DISTILL_DIR" ] && [ "$LEGACY_DISTILL_DIR" != "$DISTILL_DIR" ] \
    && [ ! -f "$DISTILL_DIR/.legacy-imported" ]; then
     cp -R "$LEGACY_DISTILL_DIR"/. "$DISTILL_DIR"/ 2>/dev/null || true
     printf 'copied from %s on %s\n' "$LEGACY_DISTILL_DIR" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$DISTILL_DIR/.legacy-imported"

@@ -108,6 +108,32 @@ GATE: If ~/.claude/distill/.needs-migration exists, run /distill.
     Assert-True ($legacyClaudeMd.Contains('# user-owned preface')) 'legacy Claude user guidance is preserved'
     Assert-True (-not $legacyClaudeMd.Contains('~/.claude/distill/.needs-migration')) 'legacy Claude pointer is replaced by shared integration'
 
+    # Legacy seed (#152): a legacy store is never copied over a shared store that holds knowledge.
+    $populated = New-TestHome; $homes.Add($populated); Invoke-TestInstall $populated
+    $populatedStore = Join-Path $populated '.aura-distill'
+    '- [Current](craft/a.md) - CURRENT-SPINE' | Add-Content (Join-Path $populatedStore 'SPINE.md')
+    'CURRENT-CARD' | Set-Content (Join-Path $populatedStore 'craft/a.md')
+    $oldStore = Join-Path $populated '.claude/distill'
+    New-Item -ItemType Directory -Path (Join-Path $oldStore 'craft') -Force | Out-Null
+    'OLD-SPINE' | Set-Content (Join-Path $oldStore 'SPINE.md')
+    'OLD-CARD' | Set-Content (Join-Path $oldStore 'craft/a.md')
+    'OLD-ONLY' | Set-Content (Join-Path $oldStore 'craft/only-in-legacy.md')
+    Invoke-TestInstall $populated
+    $populatedSpine = Get-Content (Join-Path $populatedStore 'SPINE.md') -Raw
+    Assert-True ($populatedSpine.Contains('CURRENT-SPINE') -and -not $populatedSpine.Contains('OLD-SPINE')) 'a legacy store does not overwrite a populated shared SPINE'
+    Assert-True (-not (Test-Path (Join-Path $populatedStore 'craft/only-in-legacy.md'))) 'a skipped import adds no legacy-only card'
+    Assert-True ((Get-Content (Join-Path $populatedStore 'craft/a.md') -Raw).Trim() -eq 'CURRENT-CARD') 'a legacy store does not overwrite a populated shared card'
+    Assert-True ((Get-Content (Join-Path $oldStore 'SPINE.md') -Raw).Trim() -eq 'OLD-SPINE') 'the legacy store stays unchanged when it is not imported'
+
+    # Installed but never distilled (template index, empty tiers): a legacy directory found later is still imported.
+    $undistilled = New-TestHome; $homes.Add($undistilled); Invoke-TestInstall $undistilled
+    $lateLegacy = Join-Path $undistilled '.claude/distill'
+    New-Item -ItemType Directory -Path (Join-Path $lateLegacy 'craft') -Force | Out-Null
+    '- [Old](craft/legacy.md) - OLD-SPINE' | Set-Content (Join-Path $lateLegacy 'SPINE.md')
+    'OLD-CARD' | Set-Content (Join-Path $lateLegacy 'craft/legacy.md')
+    Invoke-TestInstall $undistilled
+    Assert-True ((Get-Content (Join-Path $undistilled '.aura-distill/craft/legacy.md') -Raw).Trim() -eq 'OLD-CARD') 'a legacy store is imported into a never-distilled shared store'
+
     # A partial legacy heading must never consume later user-owned content.
     $partial = New-TestHome; $homes.Add($partial)
     New-Item -ItemType Directory -Path (Join-Path $partial '.claude') -Force | Out-Null

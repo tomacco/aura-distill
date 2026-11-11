@@ -11,7 +11,9 @@ of truth.
 
 When the installer finds an older Claude-only knowledge base at
 `~/.claude/distill/`, it copies that knowledge into the shared directory and
-leaves the legacy directory untouched. Re-running the installer is idempotent:
+leaves the legacy directory untouched. It does this only while the shared
+directory holds no knowledge (no index entries, no files in the tier folders);
+otherwise it copies nothing and says so. Re-running the installer is idempotent:
 managed instruction blocks are replaced in place and unrelated user guidance
 is preserved.
 

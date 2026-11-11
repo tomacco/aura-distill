@@ -121,13 +121,17 @@ foreach ($d in @($CmdDir, $DistillDir,
 
 # Seed the new client-neutral store from a legacy Claude installation. Copying
 # keeps existing users' files and configuration untouched.
-# Only an empty store is seeded: a store that holds knowledge is never overwritten.
+# Only a store without knowledge is seeded: a store that holds knowledge is never
+# overwritten by a legacy copy (#152). The index template every install writes does
+# not count; an index with at least one entry does.
 $legacyMarker = Join-Path $DistillDir '.legacy-imported'
-$storeHasKnowledge = (Test-Path (Join-Path $DistillDir 'SPINE.md')) -or
+$sharedSpine = Join-Path $DistillDir 'SPINE.md'
+$storeHasKnowledge = ((Test-Path $sharedSpine) -and [bool](Select-String -Path $sharedSpine -Pattern '^- \[' -Quiet)) -or
     (@('craft','ops','profile','projects','feedback','archive') | Where-Object {
         @(Get-ChildItem -Path (Join-Path $DistillDir $_) -File -Recurse -ErrorAction SilentlyContinue).Count -gt 0 }).Count -gt 0
 if ((Test-Path $LegacyDistillDir) -and ($LegacyDistillDir -ne $DistillDir) -and -not (Test-Path $legacyMarker) -and $storeHasKnowledge) {
     Write-Warn "$LegacyDistillDir was not imported: $DistillDir holds knowledge and is left as it is"
+    Write-Warn 'To bring it over, copy the files you want from there by hand (or set AURA_DISTILL_HOME for a separate store)'
 } elseif ((Test-Path $LegacyDistillDir) -and ($LegacyDistillDir -ne $DistillDir) -and -not (Test-Path $legacyMarker)) {
     Copy-Item -Path (Join-Path $LegacyDistillDir '*') -Destination $DistillDir -Recurse -Force -ErrorAction SilentlyContinue
     "copied from $LegacyDistillDir on $((Get-Date).ToUniversalTime().ToString('s'))Z" | Set-Content $legacyMarker -NoNewline

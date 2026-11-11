@@ -1,0 +1,18 @@
+name: Backlog
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Backlog files and AGENTS.md block are valid
+        run: python3 tools/backlog.py check
+      - name: Backlog tool tests
+        run: python3 -m unittest tests/test_backlog.py

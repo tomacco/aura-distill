@@ -1,0 +1,4 @@
+#!/bin/sh
+# Refuse a commit that leaves the backlog invalid (tools/backlog.py).
+[ -f tools/backlog.py ] && { python3 tools/backlog.py check --quiet || exit 1; }
+exit 0

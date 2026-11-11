@@ -29,7 +29,9 @@ fi
 
 exec "$PY" - "$@" <<'PYEOF'
 import json, os, re, sys, argparse
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+EDGE = timedelta(days=1)
 
 # Locale-independent names: output must be byte-identical to distill-recent-agy.ps1
 WD = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -81,6 +83,12 @@ def parse_ts(v):
         t = t[:-1] + "+00:00"
     try:
         d = datetime.fromisoformat(t)
+        # Range rule, the same in every time zone and on every platform: a value
+        # within one day of the representable range's edges is skipped, because
+        # whether it overflows depends on the local offset and on the C library.
+        u = d if d.tzinfo is None else d.astimezone(timezone.utc).replace(tzinfo=None)
+        if not (datetime.min + EDGE <= u <= datetime.max - EDGE):
+            return None
         if d.tzinfo is not None:
             d = d.astimezone().replace(tzinfo=None)
     except (ValueError, OverflowError, OSError):

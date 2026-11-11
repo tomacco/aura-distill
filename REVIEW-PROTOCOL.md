@@ -105,6 +105,12 @@ For each area, report PASS, FLAG (concern but not blocking), or BLOCK (must fix 
 - Could Claude misinterpret any instruction in a way that causes harm?
 - Are there conflicting instructions between files?
 
+### Posting the review
+
+Write the body to a file and use `gh pr comment <N> --body-file <file>`. Never pass review text as a
+shell argument: it routinely contains backticks and command names, and `--body "$text"` will execute
+them. See `AGENTS.md` → *Working concurrently in this repo*.
+
 ### Step 3: Report
 
 Structure your review as:

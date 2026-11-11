@@ -83,11 +83,23 @@ function Get-File {
     )
     $parent = Split-Path -Parent $Destination
     if (-not (Test-Path $parent)) { New-Item -ItemType Directory -Force -Path $parent | Out-Null }
-    if (Test-Path -LiteralPath $Url) {
-        Copy-Item -LiteralPath $Url -Destination $Destination -Force
-    } else {
-        # PS 5.1 requires -UseBasicParsing; harmless on PS 7+
-        Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing
+    # Fetch to a temp file beside the destination and move it into place only when
+    # it arrived non-empty, so a failed download never truncates the installed copy.
+    $tmp = "$Destination.new.$PID"
+    try {
+        if (Test-Path -LiteralPath $Url) {
+            Copy-Item -LiteralPath $Url -Destination $tmp -Force
+        } else {
+            # PS 5.1 requires -UseBasicParsing; harmless on PS 7+
+            Invoke-WebRequest -Uri $Url -OutFile $tmp -UseBasicParsing
+        }
+        if (-not (Test-Path -LiteralPath $tmp) -or (Get-Item -LiteralPath $tmp).Length -eq 0) {
+            throw "empty download"
+        }
+        Move-Item -LiteralPath $tmp -Destination $Destination -Force
+    } catch {
+        Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue
+        throw "Could not download $Url ($($_.Exception.Message)). The installed copy of $(Split-Path -Leaf $Destination) was left untouched."
     }
 }
 

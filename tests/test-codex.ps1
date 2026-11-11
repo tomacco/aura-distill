@@ -62,6 +62,21 @@ try {
     Assert-True ((Get-Content $claudeMd -Raw) -eq $claudeText) 'Claude integration is byte-stable on repeated install'
     Assert-True ((Get-Content $codexAgents -Raw) -eq $codexText) 'Codex integration is byte-stable on repeated install'
 
+    # Failed download (#151): the installer stops and the installed files stay as they were.
+    $processFile = Join-Path $aura 'distill-process.md'
+    $processBefore = [System.IO.File]::ReadAllText($processFile)
+    $failedInstallThrew = $false
+    try {
+        $env:USERPROFILE = $fresh
+        $env:CODEX_HOME = Join-Path $fresh '.codex'
+        $env:AURA_DISTILL_HOME = $aura
+        $env:AURA_DISTILL_REPO = Join-Path $fresh 'no-such-repo'
+        & (Join-Path $RepoRoot 'install.ps1') *> $null
+    } catch { $failedInstallThrew = $true }
+    Assert-True $failedInstallThrew 'installer stops when a core file cannot be downloaded'
+    Assert-True ([System.IO.File]::ReadAllText($processFile) -eq $processBefore) 'a failed download leaves the installed process file untouched'
+    Assert-True (@(Get-ChildItem -Path $aura -Recurse -Force -Filter '*.new.*').Count -eq 0) 'a failed download leaves no temp files behind'
+
     # A legacy Claude-only installation seeds the shared store without mutation.
     $legacy = New-TestHome; $homes.Add($legacy)
     $legacyStore = Join-Path $legacy '.claude/distill'

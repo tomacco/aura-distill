@@ -55,6 +55,7 @@ mk sess-lastweek-c3
     printf '%s\n' '{"step_index":5,"type":"USER_INPUT","content":"find the flaky retry test"}'
     printf '%s\n' '{"step_index":6,"type":"TOOL_CALL","created_at":"not-a-date","content":55}'
     printf '%s\n' '{"step_index":7,"type":"PLANNER_RESPONSE","created_at":"2026-08-13T10:30:00Z","content":"Root cause found in the retry harness."}'
+    printf '%s\n' '{"step_index":8,"type":"TOOL_CALL","created_at":"0001-01-01T00:00:00Z","content":"low edge"}'
     printf '%s\n' '{"step_index":8,"type":"PLANNER_RESPONSE","created_at":"9999-12-31T23:59:59Z","content":"Range guard survived; timestamp skipped, content kept."}'
 } > "$FIX/sess-lastweek-c3/.system_generated/logs/transcript.jsonl"
 

@@ -76,3 +76,28 @@ jobs:
       - name: Lock suite
         shell: bash
         run: bash tests/lock/run-lock-tests.sh
+
+  antigravity-time-index:
+    name: Antigravity time index (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Bash twin, PowerShell twin and their byte-for-byte parity on a hostile fixture.
+      # A non-UTC zone east of Greenwich is the case that used to hide the range bug.
+      - name: Time index suite (runner time zone)
+        shell: bash
+        run: bash tests/antigravity/run-parity-test.sh
+
+      - name: Time index suite (UTC+14)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: TZ=Pacific/Kiritimati bash tests/antigravity/run-parity-test.sh
+
+      - name: Connector layout
+        shell: bash
+        run: bash tests/antigravity/run-antigravity-connector-tests.sh

@@ -48,6 +48,11 @@ function Clean-Text([string]$s) {
 function Convert-ToLocalDt([System.DateTimeOffset]$dto) {
     # Mirror the bash twin (python astimezone): a local-clock value outside the
     # representable range skips the FIELD instead of clamping to MaxValue.
+    # Range rule shared with the bash twin, the same in every time zone: a value within
+    # one day of the range's edges is skipped, since whether it overflows depends on
+    # the local offset.
+    $edge = [timespan]::TicksPerDay
+    if ($dto.UtcTicks -lt ([datetime]::MinValue.Ticks + $edge) -or $dto.UtcTicks -gt ([datetime]::MaxValue.Ticks - $edge)) { return $null }
     $offset = [System.TimeZoneInfo]::Local.GetUtcOffset($dto)
     $ticks = $dto.UtcTicks + $offset.Ticks
     if ($ticks -lt [datetime]::MinValue.Ticks -or $ticks -gt [datetime]::MaxValue.Ticks) { return $null }

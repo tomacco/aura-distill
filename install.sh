@@ -10,7 +10,7 @@ set -e
 
 
 
-VERSION="1.1.31"
+VERSION="1.1.32"
 
 BUILD="20260518-01"
 REPO="${AURA_DISTILL_REPO:-https://raw.githubusercontent.com/tomacco/aura-distill/main}"

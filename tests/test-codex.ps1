@@ -62,19 +62,29 @@ try {
     Assert-True ((Get-Content $claudeMd -Raw) -eq $claudeText) 'Claude integration is byte-stable on repeated install'
     Assert-True ((Get-Content $codexAgents -Raw) -eq $codexText) 'Codex integration is byte-stable on repeated install'
 
-    # Failed download (#151): the installer stops and the installed files stay as they were.
+    # Failed download (#151): the installer stops and every installed file stays as it was,
+    # including the ones that would have downloaded before the missing one.
+    $commandFile = Join-Path $fresh '.claude/commands/distill.md'
     $processFile = Join-Path $aura 'distill-process.md'
+    $commandBefore = [System.IO.File]::ReadAllText($commandFile)
     $processBefore = [System.IO.File]::ReadAllText($processFile)
-    $failedInstallThrew = $false
-    try {
-        $env:USERPROFILE = $fresh
-        $env:CODEX_HOME = Join-Path $fresh '.codex'
-        $env:AURA_DISTILL_HOME = $aura
-        $env:AURA_DISTILL_REPO = Join-Path $fresh 'no-such-repo'
-        & (Join-Path $RepoRoot 'install.ps1') *> $null
-    } catch { $failedInstallThrew = $true }
-    Assert-True $failedInstallThrew 'installer stops when a core file cannot be downloaded'
-    Assert-True ([System.IO.File]::ReadAllText($processFile) -eq $processBefore) 'a failed download leaves the installed process file untouched'
+    $partialRepo = Join-Path $fresh 'partial-repo'
+    New-Item -ItemType Directory -Path $partialRepo | Out-Null
+    ((Get-Content (Join-Path $RepoRoot 'distill.md') -Raw) + "`nPARTIAL-REPO-MARKER`n") | Set-Content (Join-Path $partialRepo 'distill.md')
+    foreach ($brokenRepo in @($partialRepo, (Join-Path $fresh 'no-such-repo'))) {
+        $failedInstallThrew = $false
+        try {
+            $env:USERPROFILE = $fresh
+            $env:CODEX_HOME = Join-Path $fresh '.codex'
+            $env:AURA_DISTILL_HOME = $aura
+            $env:AURA_DISTILL_REPO = $brokenRepo
+            & (Join-Path $RepoRoot 'install.ps1') *> $null
+        } catch { $failedInstallThrew = $true }
+        $label = Split-Path -Leaf $brokenRepo
+        Assert-True $failedInstallThrew "installer stops when a core file cannot be downloaded ($label)"
+        Assert-True ([System.IO.File]::ReadAllText($commandFile) -eq $commandBefore) "a failed download leaves the installed command untouched ($label)"
+        Assert-True ([System.IO.File]::ReadAllText($processFile) -eq $processBefore) "a failed download leaves the installed process file untouched ($label)"
+    }
     Assert-True (@(Get-ChildItem -Path $aura -Recurse -Force -Filter '*.new.*').Count -eq 0) 'a failed download leaves no temp files behind'
 
     # A legacy Claude-only installation seeds the shared store without mutation.

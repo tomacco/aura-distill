@@ -91,6 +91,24 @@ if HOME="$TEST_HOME" AURA_DISTILL_REPO="$PARTIAL_REPO" DISTILL_TOKEN_SAVER=off \
 fi
 test "$before_core" = "$(sha256sum $core_files)" \
   || { echo "FAIL a partial download replaced some core files" >&2; exit 1; }
+# A failed first install creates nothing, so "Nothing was changed" is true.
+EMPTY_HOME=$(mktemp -d); mkdir -p "$EMPTY_HOME/.claude/distill"
+printf 'LEGACY\n' > "$EMPTY_HOME/.claude/distill/SPINE.md"
+if HOME="$EMPTY_HOME" AURA_DISTILL_REPO="$EMPTY_HOME/no-such-repo" bash "$INSTALLER" </dev/null >/dev/null 2>&1; then
+  echo "FAIL a first install without a repo exited 0" >&2; exit 1
+fi
+test ! -e "$EMPTY_HOME/.aura-distill" && test ! -e "$EMPTY_HOME/.claude/commands" \
+  || { echo "FAIL a failed first install left files behind" >&2; exit 1; }
+# A symlinked command file is written through, not replaced by a regular file.
+mkdir -p "$TEST_HOME/dotfiles"
+mv "$TEST_HOME/.claude/commands/distill.md" "$TEST_HOME/dotfiles/distill.md"
+ln -s "$TEST_HOME/dotfiles/distill.md" "$TEST_HOME/.claude/commands/distill.md"
+: > "$TEST_HOME/dotfiles/distill.md"
+run_install
+test -L "$TEST_HOME/.claude/commands/distill.md" && test -s "$TEST_HOME/dotfiles/distill.md" \
+  || { echo "FAIL install.sh replaced a symlinked command file" >&2; exit 1; }
+rm "$TEST_HOME/.claude/commands/distill.md"; mv "$TEST_HOME/dotfiles/distill.md" "$TEST_HOME/.claude/commands/distill.md"
+rm -rf "$EMPTY_HOME"
 printf 'PASS install.sh leaves the install untouched when a download fails\n'
 
 # Always-On preferences rule (same as install.ps1): the section from the heading to

@@ -220,21 +220,6 @@ fi
 
 show_section "Core files"
 
-# Ensure directories exist
-mkdir -p "$CMD_DIR"
-mkdir -p "$DISTILL_DIR"/{craft,ops,profile,projects,feedback,archive,data,inbox}
-
-# New installs use the client-neutral store. When an older Claude-only install
-# exists, seed the shared store without moving or modifying the legacy copy.
-if [ -d "$LEGACY_DISTILL_DIR" ] && [ "$LEGACY_DISTILL_DIR" != "$DISTILL_DIR" ] \
-   && [ ! -f "$DISTILL_DIR/.legacy-imported" ]; then
-    cp -R "$LEGACY_DISTILL_DIR"/. "$DISTILL_DIR"/ 2>/dev/null || true
-    printf 'copied from %s on %s\n' "$LEGACY_DISTILL_DIR" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$DISTILL_DIR/.legacy-imported"
-    info_msg "Existing Claude knowledge copied to shared store; legacy files preserved"
-elif [ -d "$LEGACY_DISTILL_DIR" ] && [ -f "$DISTILL_DIR/.legacy-imported" ]; then
-    info_msg "Shared store was already seeded; $LEGACY_DISTILL_DIR left untouched (use AURA_DISTILL_HOME for an isolated profile)"
-fi
-
 # Download core files and resolve {DISTILL_DIR} to actual path.
 # Every file is fetched to a staging directory and checked first; the installed
 # copies are replaced only when all of them arrived, so a failed download never
@@ -246,6 +231,8 @@ stage_core_file() {  # <repo path> <resolve|raw>
     local rel="$1" mode="$2" out="$STAGE_DIR/$(basename "$1")"
     if ! fetch_file "$REPO/$rel" > "$out.raw" 2>/dev/null \
        || [ ! -s "$out.raw" ] || ! grep -q "aura-distill" "$out.raw"; then
+        # "aura-distill" is in the license header of every core file; a proxy error
+        # page or a truncated body does not carry it.
         fail_msg "Could not download $rel from $REPO"
         fail_msg "Nothing was changed. Check your connection and run the installer again."
         exit 1
@@ -263,9 +250,27 @@ stage_core_file distill-monitor.md resolve
 stage_core_file bin/distill-lock.sh raw
 stage_core_file bin/distill-lock.ps1 raw
 
+# Ensure directories exist
+mkdir -p "$CMD_DIR"
+mkdir -p "$DISTILL_DIR"/{craft,ops,profile,projects,feedback,archive,data,inbox}
+
+# New installs use the client-neutral store. When an older Claude-only install
+# exists, seed the shared store without moving or modifying the legacy copy.
+if [ -d "$LEGACY_DISTILL_DIR" ] && [ "$LEGACY_DISTILL_DIR" != "$DISTILL_DIR" ] \
+   && [ ! -f "$DISTILL_DIR/.legacy-imported" ]; then
+    cp -R "$LEGACY_DISTILL_DIR"/. "$DISTILL_DIR"/ 2>/dev/null || true
+    printf 'copied from %s on %s\n' "$LEGACY_DISTILL_DIR" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$DISTILL_DIR/.legacy-imported"
+    info_msg "Existing Claude knowledge copied to shared store; legacy files preserved"
+elif [ -d "$LEGACY_DISTILL_DIR" ] && [ -f "$DISTILL_DIR/.legacy-imported" ]; then
+    info_msg "Shared store was already seeded; $LEGACY_DISTILL_DIR left untouched (use AURA_DISTILL_HOME for an isolated profile)"
+fi
+
 mkdir -p "$DISTILL_DIR/bin"
 place_core_file() {  # <staged name> <target>
-    cat "$STAGE_DIR/$1" > "$2.new.$$" && mv -f "$2.new.$$" "$2"
+    # A symlinked target (dotfile managers) is written through, as before; a
+    # regular file is replaced by rename so it is never seen half-written.
+    if [ -L "$2" ]; then cat "$STAGE_DIR/$1" > "$2"
+    else cat "$STAGE_DIR/$1" > "$2.new.$$" && mv -f "$2.new.$$" "$2"; fi
 }
 
 place_core_file distill.md "$CMD_DIR/distill.md"

@@ -3,6 +3,7 @@
 # Tests whether distill proactively applies operational knowledge
 # (learned from past tool failures) to prevent recurrence.
 set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../../../lib/real-profile-guard.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RESULTS_DIR="$SCRIPT_DIR/results/$(date +%Y%m%d-%H%M%S)"
@@ -47,7 +48,7 @@ run_sandbox() {
         cp "$SCRIPT_DIR/knowledge/"* "$test_knowledge/" 2>/dev/null || true
         rm -rf "$REAL_CONFIG/rules" 2>/dev/null || true
         mkdir -p "$REAL_CONFIG/rules"
-        sed "s|~/.claude/distill|$test_knowledge|g" "$RULES_SRC" > "$REAL_CONFIG/rules/distill.md"
+        sed "s|~/.claude/distill|$test_knowledge|g; s|{DISTILL_DIR}|$test_knowledge|g" "$RULES_SRC" > "$REAL_CONFIG/rules/distill.md"
     fi
 
     # Run

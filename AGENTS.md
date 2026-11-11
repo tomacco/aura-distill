@@ -58,7 +58,8 @@ When developing or testing:
 - `tests/scenarios/retrieval/` — Knowledge retrieval accuracy tests
 - `tests/scenarios/distillation/` — Full-loop distillation tests
 - Test personas: Sofia (senior backend engineer) and Marcus (product manager)
-- Run persona tests: `./tests/scenarios/methodology/run-persona-test.sh`
+- The behavioural runners (`tests/run-all.sh`, `tests/run-regression-suite.sh`, everything under `tests/scenarios/`) rewrite a real Claude profile while they run. They refuse to start without `AURA_DISTILL_ALLOW_REAL_PROFILE=yes`; set it only on a disposable machine or account. `tests/check-real-profile-guard.sh` (CI) fails when a test script names a real profile path without the guard.
+- Run persona tests (opt-in above): `./tests/scenarios/methodology/run-persona-test.sh`
 - Run integration tests: `./test-sandbox.sh`
 - Run Antigravity Time Index parity + hostile-input tests: `./tests/antigravity/run-parity-test.sh` (and the connector runners `run-antigravity-connector-tests.sh` / `.ps1`)
 - Run the run-lock tests (bash, PowerShell when present, and both on one store): `./tests/lock/run-lock-tests.sh`

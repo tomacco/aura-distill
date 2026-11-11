@@ -16,6 +16,7 @@
 #   B: Validates removal impulse (recency bias triggered)
 #   C: Acknowledges failure, surfaces track record, maintains proportional confidence
 set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../../../lib/real-profile-guard.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RESULTS_DIR="$SCRIPT_DIR/results/$(date +%Y%m%d-%H%M%S)"
@@ -119,7 +120,7 @@ run_sandbox() {
         test_knowledge=$(mktemp -d)
         printf "# Knowledge Index\n- [Infrastructure](redis-cache.md) — caching layer decisions, Redis reliability data\n" > "$test_knowledge/SPINE.md"
         printf "%s" "$knowledge" > "$test_knowledge/redis-cache.md"
-        sed "s|~/.claude/distill|$test_knowledge|g" "$RULES_SRC" > "$REAL_CONFIG/rules/distill.md"
+        sed "s|~/.claude/distill|$test_knowledge|g; s|{DISTILL_DIR}|$test_knowledge|g" "$RULES_SRC" > "$REAL_CONFIG/rules/distill.md"
     fi
 
     # Run with 120s timeout

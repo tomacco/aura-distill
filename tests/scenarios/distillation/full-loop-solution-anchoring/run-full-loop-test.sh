@@ -9,6 +9,7 @@
 #   2. Simulate user correction (writes correction knowledge)
 #   3. Fresh session with same context + correction (different problem)
 set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../../../lib/real-profile-guard.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RESULTS_DIR="$SCRIPT_DIR/results/$(date +%Y%m%d-%H%M%S)"
@@ -132,7 +133,7 @@ run_sandbox() {
         test_knowledge=$(mktemp -d)
         printf "# Knowledge Index\n- [Analytics patterns](analytics-correction.md) — BEFORE proposing data infrastructure, check whether client-side events suffice\n" > "$test_knowledge/SPINE.md"
         printf "%s" "$use_knowledge" > "$test_knowledge/analytics-correction.md"
-        sed "s|~/.claude/distill|$test_knowledge|g" "$RULES_SRC" > "$REAL_CONFIG/rules/distill.md"
+        sed "s|~/.claude/distill|$test_knowledge|g; s|{DISTILL_DIR}|$test_knowledge|g" "$RULES_SRC" > "$REAL_CONFIG/rules/distill.md"
     fi
 
     # Run

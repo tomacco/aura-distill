@@ -11,6 +11,7 @@
 #   A) Naive: encodes everything (current behavior — expected to poison)
 #   B) Corrected: encodes with correction-awareness (proposed fix)
 set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../../../lib/real-profile-guard.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RESULTS_DIR="$SCRIPT_DIR/results/$(date +%Y%m%d-%H%M%S)"
@@ -128,7 +129,7 @@ run_sandbox() {
         test_knowledge=$(mktemp -d)
         printf "# Knowledge Index\n- [Analytics patterns](analytics.md) — when measuring product metrics or user behavior\n" > "$test_knowledge/SPINE.md"
         printf "%s" "$knowledge" > "$test_knowledge/analytics.md"
-        sed "s|~/.claude/distill|$test_knowledge|g" "$RULES_SRC" > "$REAL_CONFIG/rules/distill.md"
+        sed "s|~/.claude/distill|$test_knowledge|g; s|{DISTILL_DIR}|$test_knowledge|g" "$RULES_SRC" > "$REAL_CONFIG/rules/distill.md"
     fi
 
     # Run

@@ -6,6 +6,7 @@
 # ═══════════════════════════════════════════════════════════════
 
 set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../../lib/real-profile-guard.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RESULTS_DIR="$SCRIPT_DIR/results/$(date +%Y%m%d-%H%M%S)"
@@ -91,7 +92,7 @@ run_scenario() {
         # Create rule that points to scenario knowledge
         local abs_knowledge
         abs_knowledge=$(cd "$knowledge_dir" && pwd)
-        sed "s|~/.claude/distill|$abs_knowledge|g; s|\~/.claude/distill|$abs_knowledge|g" \
+        sed "s|~/.claude/distill|$abs_knowledge|g; s|\~/.claude/distill|$abs_knowledge|g; s|{DISTILL_DIR}|$abs_knowledge|g" \
             "$SCRIPT_DIR/../../rules/distill.md" > "$REAL_CONFIG/rules/distill.md"
     else
         cp "$SCRIPT_DIR/../../rules/distill.md" "$REAL_CONFIG/rules/distill.md"

@@ -1,6 +1,7 @@
 #!/bin/bash
 # Decision Fatigue Research — 3 conditions with simulated context weight
 set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../../../lib/real-profile-guard.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RESULTS_DIR="$SCRIPT_DIR/results/$(date +%Y%m%d-%H%M%S)"
@@ -96,7 +97,7 @@ scope: Session quality signals
 ---
 
 $FATIGUE_KNOWLEDGE" > "$abs_knowledge/fatigue.md"
-sed "s|~/.claude/distill|$abs_knowledge|g" "$RULES_SRC" > "$REAL_CONFIG/rules/distill.md"
+sed "s|~/.claude/distill|$abs_knowledge|g; s|{DISTILL_DIR}|$abs_knowledge|g" "$RULES_SRC" > "$REAL_CONFIG/rules/distill.md"
 
 result_c=$(run_sandbox "$PROMPT" "$HEAVY_CONTEXT")
 echo "$result_c" > "$RESULTS_DIR/C-heavy-distill.txt"

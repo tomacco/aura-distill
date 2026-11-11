@@ -58,6 +58,44 @@ grep -q 'Step 0b: Consume the INBOX' "$TEST_HOME/.aura-distill/distill-process.m
 grep -q 'user-explicit' "$TEST_HOME/.aura-distill/distill-monitor.md"
 grep -q 'INBOX' "$TEST_HOME/.claude/rules/distill.md"
 
+# settings.json (#153): the auto-memory key is added to any object layout, the result
+# is valid JSON with every existing key kept, and a file that is not an object is
+# left byte for byte with a warning instead of a success line.
+settings_case() { # name, content, expect (added|untouched)
+  local name="$1" content="$2" expect="$3" h out
+  h=$(mktemp -d); mkdir -p "$h/.claude"
+  printf '%s' "$content" > "$h/.claude/settings.json"
+  out=$(HOME="$h" AURA_DISTILL_REPO="$REPO_ROOT" bash "$INSTALLER" --no-token-saver </dev/null 2>&1)
+  if [ "$expect" = added ]; then
+    python3 - "$h/.claude/settings.json" "$content" <<'PY' || { echo "FAIL settings.json case: $name" >&2; exit 1; }
+import json, sys
+new = json.load(open(sys.argv[1])); old = json.loads(sys.argv[2])
+assert new.pop("autoMemoryEnabled") is False
+assert new == old, (new, old)
+PY
+    printf '%s' "$out" | grep -q 'Disabled auto-memory' || { echo "FAIL no success line: $name" >&2; exit 1; }
+  else
+    test "$(cat "$h/.claude/settings.json")" = "$content" || { echo "FAIL settings.json changed: $name" >&2; exit 1; }
+    if printf '%s' "$out" | grep -q 'Disabled auto-memory'; then echo "FAIL false success line: $name" >&2; exit 1; fi
+    printf '%s' "$out" | grep -q 'left as it is' || { echo "FAIL no warning: $name" >&2; exit 1; }
+  fi
+  rm -rf "$h"
+}
+settings_case 'multi-line object' '{
+  "model": "opus",
+  "env": {"A": "1"}
+}
+' added
+settings_case 'one-line object' '{"model":"opus"}' added
+settings_case 'empty object on two lines' '{
+}
+' added
+settings_case 'empty object on one line' '{}' added
+settings_case 'indented, CRLF' "$(printf '  {\r\n  "a": [1, {"b": 2}]\r\n}\r\n')" added
+settings_case 'not an object' '[1, 2]' untouched
+settings_case 'empty file' '' untouched
+printf 'PASS install.sh edits settings.json safely in every layout\n'
+
 before_claude=$(sha256sum "$TEST_HOME/.claude/CLAUDE.md")
 before_codex=$(sha256sum "$TEST_HOME/.codex/AGENTS.md")
 run_install

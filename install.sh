@@ -375,14 +375,37 @@ show_section "Session integration"
 
 # Disable auto-memory (distill owns knowledge management)
 SETTINGS_JSON="$PROFILE_DIR/settings.json"
+
+# Insert "autoMemoryEnabled": false as the first member of the top-level object,
+# whatever the file's layout. Prints the new file; exits 3 when the file does not
+# start with an object, so the caller leaves it alone (#153).
+add_auto_memory_key() {
+    awk 'BEGIN { RS = "\001" }
+         { i = index($0, "{")
+           if (!i || substr($0, 1, i - 1) !~ /^[ \t\r\n]*$/) exit 3
+           rest = substr($0, i + 1); first = rest; sub(/^[ \t\r\n]+/, "", first)
+           if (substr(first, 1, 1) == "}")
+               printf "%s{\n  \"autoMemoryEnabled\": false\n%s", substr($0, 1, i - 1), first
+           else
+               printf "%s{\n  \"autoMemoryEnabled\": false,%s", substr($0, 1, i - 1), rest
+           done = 1 }
+         END { if (!done) exit 3 }' "$1"
+}
+
 if [ -f "$SETTINGS_JSON" ]; then
     if grep -q '"autoMemoryEnabled"' "$SETTINGS_JSON" 2>/dev/null; then
         skip_msg "Auto-memory already configured in settings.json"
     else
-        # Add autoMemoryEnabled: false after the opening brace
-        sed -i.bak 's/^{$/{\n  "autoMemoryEnabled": false,/' "$SETTINGS_JSON"
-        rm -f "$SETTINGS_JSON.bak"
-        done_msg "Disabled auto-memory ${DIM}(distill owns knowledge)${RESET}"
+        SETTINGS_TMP=$(mktemp)
+        if add_auto_memory_key "$SETTINGS_JSON" > "$SETTINGS_TMP" 2>/dev/null \
+           && grep -q '"autoMemoryEnabled": false' "$SETTINGS_TMP"; then
+            cat "$SETTINGS_TMP" > "$SETTINGS_JSON"
+            done_msg "Disabled auto-memory ${DIM}(distill owns knowledge)${RESET}"
+        else
+            warn_msg "settings.json was left as it is: it does not start with a JSON object."
+            warn_msg "Add \"autoMemoryEnabled\": false to $SETTINGS_JSON yourself."
+        fi
+        rm -f "$SETTINGS_TMP"
     fi
 else
     echo '{ "autoMemoryEnabled": false }' > "$SETTINGS_JSON"

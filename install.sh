@@ -116,12 +116,18 @@ PROFILE_NAME=""
 TOKEN_SAVER="auto"   # auto = keep prior choice (default on for new installs); on/off/remove = explicit
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --profile) PROFILE_NAME="$2"; shift 2 ;;
+        --profile)
+            [ $# -ge 2 ] || { echo "install.sh: --profile needs a name" >&2; exit 2; }
+            PROFILE_NAME="$2"; shift 2 ;;
         --profile=*) PROFILE_NAME="${1#*=}"; shift ;;
         --token-saver) TOKEN_SAVER="on"; shift ;;
         --no-token-saver) TOKEN_SAVER="off"; shift ;;
         --remove-token-saver) TOKEN_SAVER="remove"; shift ;;
-        *) shift ;;
+        *)
+            # Reject what we do not understand before anything is written (#154)
+            echo "install.sh: unknown option: $1" >&2
+            echo "Usage: install.sh [--profile <name>] [--token-saver | --no-token-saver | --remove-token-saver]" >&2
+            exit 2 ;;
     esac
 done
 
@@ -177,8 +183,15 @@ resolve_profile() {
         i=$((i + 1))
     done
     echo ""
-    printf "  ${BOLD}Choose profile [1-%d]:${RESET} " "$count"
-    read -r choice
+    # Under "curl ... | bash" standard input is the script, so the answer has to
+    # come from the terminal. With no terminal there is nobody to ask (#154).
+    local choice=""
+    if ! { [ -r /dev/tty ] && [ -w /dev/tty ] && : < /dev/tty; } 2>/dev/null; then
+        fail_msg "Cannot ask which profile to use: no terminal. Run again with --profile <name>."
+        exit 1
+    fi
+    printf "  ${BOLD}Choose profile [1-%d]:${RESET} " "$count" > /dev/tty
+    read -r choice < /dev/tty
 
     if [ -z "$choice" ] || [ "$choice" -lt 1 ] || [ "$choice" -gt "$count" ] 2>/dev/null; then
         fail_msg "Invalid choice. Run with --profile <name> to skip this prompt."

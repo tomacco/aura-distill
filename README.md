@@ -36,7 +36,7 @@ We A/B tested the same prompts with and without distill knowledge. Same model, s
 | User follows outdated deploy procedure | Drafts announcement for wrong process | **Catches it**: "Procedure changed after May 8 incident." |
 | User queries another service's DB | Writes the SQL + soft footnote | **Refuses**: "Violates one-service-one-DB." Cites past mistake. |
 
-**Average improvement: +6.0 on a 12-point scale.** [Full methodology and raw outputs →](docs/research.md)
+**Average improvement: +6.0 on a 12-point scale.** [Full methodology and raw outputs →](https://tomacco.github.io/aura-distill/research/ab-testing.html)
 
 ---
 
@@ -65,7 +65,7 @@ This installs:
 | File | Location | Purpose |
 |------|----------|---------|
 | `distill.md` | `~/.claude/commands/` | The `/distill` slash command |
-| `distill.md` | `~/.claude/rules/` | Knowledge retrieval (18 lines, auto-loads every session) |
+| `distill.md` | `~/.claude/rules/` | Knowledge retrieval (auto-loads every session) |
 | `distill-process.md` | `~/.aura-distill/` | Full process (read by sub-agent) |
 | `SPINE.md` | `~/.aura-distill/` | Shared Claude/Codex knowledge index |
 | managed pointer | `~/.claude/CLAUDE.md` | Makes Claude load the shared SPINE |

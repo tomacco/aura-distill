@@ -67,26 +67,33 @@ A lock with no heartbeat for 5 minutes counts as abandoned and another run may t
 Distill operates in its OWN directory: `{DISTILL_DIR}/`. It NEVER writes to user-managed files like `CLAUDE.md`, `memory/`, or any other files the user maintains manually.
 
 ```
-~/.claude/
-├── CLAUDE.md                  ← USER'S FILE. NEVER TOUCH.
-├── commands/
-│   ├── distill.md             ← the dispatcher (installed by us)
-│   └── distill-process.md     ← the process (installed by us)
-└── distill/                   ← OUR DIRECTORY. All distill output lives here.
-    ├── SPINE.md               ← Tier 1 index (max 80 lines)
-    ├── craft/                 ← Tier 2 craft knowledge
-    ├── ops/                   ← Tier 2 operational knowledge
-    ├── profile/               ← Tier 2 user model
-    ├── projects/              ← Tier 2 project context
-    ├── feedback/              ← Tier 2 preferences
-    └── archive/               ← Tier 3 compressed history
+{DISTILL_DIR}/                 ← OUR DIRECTORY. All distill output lives here.
+├── SPINE.md                   ← Tier 1 index (max 80 lines)
+├── distill-process.md         ← this process (installed by us)
+├── distill-monitor.md         ← the session monitor (installed by us)
+├── craft/                     ← Tier 2 craft knowledge
+├── ops/                       ← Tier 2 operational knowledge
+├── profile/                   ← Tier 2 user model
+├── projects/                  ← Tier 2 project context
+├── feedback/                  ← Tier 2 preferences
+├── archive/                   ← Tier 3 compressed history
+├── inbox/                     ← explicit saves queued for the next run
+└── data/                      ← local ledgers
+
+Client profile (for Claude Code: ~/.claude/)
+├── CLAUDE.md                  ← USER'S FILE. The installer keeps one managed block
+│                                between the aura-distill:start/end markers. Distill
+│                                itself never writes here.
+├── commands/distill.md        ← the dispatcher (installed by us)
+└── rules/distill.md           ← retrieval rules (installed by us). Distill writes ONLY
+                                 its "Always-On User Preferences" section (Step 3c).
 ```
 
 **Why isolation?**
-- Users can uninstall by deleting `{DISTILL_DIR}/` and the two command files. Clean. Total.
+- Users can uninstall by deleting `{DISTILL_DIR}/`, the two installed files in the client profile, and the managed block. Clean. Total.
 - No risk of corrupting manually curated context files.
 - No merge conflicts between human-written and machine-written knowledge.
-- Clear ownership: if it's in `distill/`, the machine wrote it. If it's elsewhere, the human wrote it.
+- Clear ownership: if it's in `{DISTILL_DIR}/`, the machine wrote it. If it's elsewhere, the human wrote it.
 
 **Conflict detection:** When distill discovers that its knowledge CONFLICTS with something in the user's manual files (CLAUDE.md, memory/, etc.), it does NOT overwrite. Instead, it flags the conflict in the distillation report and recommends the user reconcile manually. The user is always the authority on their own files.
 
@@ -278,7 +285,7 @@ The principle: **repeated frustration about the same thing means the system fail
 
 **Core human need:** People need to feel heard. When a user expresses something important and it doesn't stick, that's a betrayal of trust. The distillation system must treat repeated frustrations as CRITICAL bugs in itself — not as user nagging.
 
-## Step 1c: Signal classification (anti-poisoning)
+## Step 1d: Signal classification (anti-poisoning)
 
 Every signal involving a CONCLUSION or APPROACH must be classified:
 
@@ -312,7 +319,7 @@ Corrected mid-session: UI events don't need infrastructure.
   origin: evidence (direct correction)
 ```
 
-## Step 1d: Knowledge markers
+## Step 1e: Knowledge markers
 
 When encoding knowledge, use these markers to capture nuance:
 
@@ -501,7 +508,7 @@ After updating profile files, sync critical preferences to the always-on section
 **Bootstrap (first run):**
 If the always-on section contains only the placeholder comment, extract whatever is known from existing profile/feedback files (even `provisional` confidence) to provide initial calibration. Mark with a comment: `<!-- bootstrapped — will refine with more data -->`.
 
-### Step 3b: Bridge detection (knowledge that needs to reach user files)
+### Step 3d: Bridge detection (knowledge that needs to reach user files)
 
 After encoding, ask for EACH learning: **"Will this knowledge be found at the moment it's needed?"**
 
